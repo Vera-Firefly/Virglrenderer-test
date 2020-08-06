@@ -2281,9 +2281,11 @@ static void emit_txq(struct dump_ctx *ctx,
          ctx->shader_req_bits |= SHADER_REQ_TXQ_LEVELS;
          if (inst->Dst[0].Register.WriteMask & 0x7)
             twm = TGSI_WRITEMASK_W;
-         emit_buff(&ctx->glsl_strbufs, "%s%s = %s(textureQueryLevels(%s));\n", dst,
-                   get_wm_string(twm), get_string(dtypeprefix),
-                   srcs[sampler_index]);
+
+         if (!ctx->cfg->use_gles)
+            emit_buff(&ctx->glsl_strbufs, "%s%s = %s(textureQueryLevels(%s));\n", dst,
+                      get_wm_string(twm), get_string(dtypeprefix),
+                      srcs[sampler_index]);
       }
 
       if (inst->Dst[0].Register.WriteMask & 0x7) {
