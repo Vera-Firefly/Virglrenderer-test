@@ -2238,6 +2238,7 @@ static void set_texture_reqs(struct dump_ctx *ctx,
 }
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
+
 /* size queries are pretty much separate */
 static void emit_txq(struct dump_ctx *ctx,
                      const struct tgsi_full_instruction *inst,
@@ -2285,6 +2286,10 @@ static void emit_txq(struct dump_ctx *ctx,
          if (!ctx->cfg->use_gles)
             emit_buff(&ctx->glsl_strbufs, "%s%s = %s(textureQueryLevels(%s));\n", dst,
                       get_wm_string(twm), get_string(dtypeprefix),
+                      srcs[sampler_index]);
+         else
+            emit_buff(&ctx->glsl_strbufs, "%s%s = %s(%s_texlod[%s]);\n", dst, get_wm_string(twm),
+                      get_string(dtypeprefix), tgsi_proc_to_prefix(ctx->info.processor),
                       srcs[sampler_index]);
       }
 
@@ -4114,16 +4119,28 @@ get_source_info(struct dump_ctx *ctx,
                strbuf_fmt(src_buf, "%s%s(%sconst%d[%d]%s)", prefix, get_string(csp), cname, dim, src->Register.Index, swizzle);
          }
       } else if (src->Register.File == TGSI_FILE_SAMPLER) {
-         const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
-         if (ctx->info.indirect_files & (1 << TGSI_FILE_SAMPLER)) {
-            int basearrayidx = lookup_sampler_array(ctx, src->Register.Index);
-            if (src->Register.Indirect) {
-               strbuf_fmt(src_buf, "%ssamp%d[addr%d+%d]%s", cname, basearrayidx, src->Indirect.Index, src->Register.Index - basearrayidx, swizzle);
+         if (!ctx->cfg->use_gles ||
+             !(inst->Instruction.Opcode == TGSI_OPCODE_TXQ) ||
+             !(inst->Dst[0].Register.WriteMask & 0x8)) {
+            const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
+            if (ctx->info.indirect_files & (1 << TGSI_FILE_SAMPLER)) {
+               int basearrayidx = lookup_sampler_array(ctx, src->Register.Index);
+               if (src->Register.Indirect) {
+                  strbuf_fmt(src_buf, "%ssamp%d[addr%d+%d]%s", cname, basearrayidx, src->Indirect.Index, src->Register.Index - basearrayidx, swizzle);
+               } else {
+                  strbuf_fmt(src_buf, "%ssamp%d[%d]%s", cname, basearrayidx, src->Register.Index - basearrayidx, swizzle);
+               }
             } else {
-               strbuf_fmt(src_buf, "%ssamp%d[%d]%s", cname, basearrayidx, src->Register.Index - basearrayidx, swizzle);
+               strbuf_fmt(src_buf, "%ssamp%d%s", cname, src->Register.Index, swizzle);
             }
          } else {
-            strbuf_fmt(src_buf, "%ssamp%d%s", cname, src->Register.Index, swizzle);
+            /* This is probably incorrect, we assume that the base-index is the sum of all arrays sizes up
+             * to this array of samplers */
+            if (ctx->info.indirect_files & (1 << TGSI_FILE_SAMPLER) && src->Register.Indirect) {
+               strbuf_fmt(src_buf, "addr%d+%d", src->Indirect.Index, src->Register.Index);
+            } else {
+               strbuf_fmt(src_buf, "%d", src->Register.Index);
+            }
          }
          sinfo->sreg_index = src->Register.Index;
       } else if (src->Register.File == TGSI_FILE_IMAGE) {
@@ -5898,11 +5915,14 @@ static int emit_ios_common(const struct dump_ctx *ctx,
       }
    }
 
+   unsigned n_samplers = 0;
    if (ctx->info.indirect_files & (1 << TGSI_FILE_SAMPLER)) {
       for (i = 0; i < ctx->num_sampler_arrays; i++) {
          uint32_t first = ctx->sampler_arrays[i].first;
          uint32_t range = ctx->sampler_arrays[i].array_size;
+
          emit_sampler_decl(ctx, glsl_strbufs, shadow_samp_mask, first, range, ctx->samplers + first);
+         n_samplers += range;
       }
    } else {
       uint nsamp = util_last_bit(ctx->samplers_used);
@@ -5912,8 +5932,12 @@ static int emit_ios_common(const struct dump_ctx *ctx,
             continue;
 
          emit_sampler_decl(ctx, glsl_strbufs, shadow_samp_mask, i, 0, ctx->samplers + i);
+         ++n_samplers;
       }
    }
+
+   if (ctx->cfg->use_gles && n_samplers)
+      emit_hdrf(glsl_strbufs, "uniform int %s_texlod[%d];\n", tgsi_proc_to_prefix(ctx->info.processor), n_samplers);
 
    if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
       for (i = 0; i < ctx->num_image_arrays; i++) {
