@@ -490,6 +490,7 @@ struct vrend_sampler_view {
    GLint gl_swizzle[4];
    GLenum depth_texture_mode;
    GLuint srgb_decode;
+   GLuint levels;
    struct vrend_resource *texture;
 };
 
@@ -2257,9 +2258,10 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
         unsigned max_layer = (view->val0 >> 16) & 0xffff;
         int base_level = view->val1 & 0xff;
         int max_level = (view->val1 >> 8) & 0xff;
+        view->levels = (max_level - base_level) + 1;
 
         glTextureView(view->id, view->target, view->texture->id, internalformat,
-                      base_level, (max_level - base_level) + 1,
+                      base_level, view->levels,
                       base_layer, max_layer - base_layer + 1);
 
         glBindTexture(view->target, view->id);
@@ -3070,6 +3072,7 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
 
             GLuint base_level = view->val1 & 0xff;
             GLuint max_level = (view->val1 >> 8) & 0xff;
+            view->levels = max_level - base_level + 1;
 
             if (tex->cur_base != base_level) {
                glTexParameteri(view->texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
