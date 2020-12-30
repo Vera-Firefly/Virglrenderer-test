@@ -418,6 +418,8 @@ struct vrend_linked_shader_program {
 
    uint32_t ssbo_used_mask[PIPE_SHADER_TYPES];
 
+   int32_t tex_levels_uniform_id[PIPE_SHADER_TYPES];
+
    struct vrend_sub_context *ref_context;
 };
 
@@ -632,6 +634,8 @@ struct vrend_sub_context {
    int num_sampler_states[PIPE_SHADER_TYPES];
 
    uint32_t sampler_views_dirty[PIPE_SHADER_TYPES];
+   int32_t texture_levels[PIPE_SHADER_TYPES][PIPE_MAX_SAMPLERS];
+   int32_t n_samplers[PIPE_SHADER_TYPES];
 
    uint32_t fb_id;
    int nr_cbufs, old_nr_cbufs;
@@ -4203,6 +4207,8 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
 {
    int index = 0;
 
+   int n_samplers = 0;
+
    uint32_t dirty = sub_ctx->sampler_views_dirty[shader_type];
 
    uint32_t mask = sub_ctx->prog->samplers_used_mask[shader_type];
@@ -4245,7 +4251,12 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
             glActiveTexture(GL_TEXTURE0 + next_sampler_id);
             glBindTexture(target, id);
 
-            if (sviews->old_ids[i] != id ||
+            if (vrend_state.use_gles) {
+               const unsigned levels = tview->levels ? tview->levels : tview->texture->base.last_level + 1u;
+               sub_ctx->texture_levels[shader_type][n_samplers++] = levels;
+            }
+
+            if (sub_ctx->views[shader_type].old_ids[i] != id ||
                 sub_ctx->sampler_views_dirty[shader_type] & (1 << i)) {
                vrend_apply_sampler_state(sub_ctx, texture, shader_type, i,
                                          next_sampler_id, tview);
@@ -4257,6 +4268,8 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
       next_sampler_id++;
       index++;
    }
+
+   sub_ctx->n_samplers[shader_type] = n_samplers;
    sub_ctx->sampler_views_dirty[shader_type] = dirty;
 
    return next_sampler_id;
@@ -4436,8 +4449,17 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
       vrend_draw_bind_const_shader(sub_ctx, shader_type, new_program);
       next_sampler_id = vrend_draw_bind_samplers_shader(sub_ctx, shader_type,
                                                         next_sampler_id);
+
       vrend_draw_bind_images_shader(sub_ctx, shader_type);
       vrend_draw_bind_ssbo_shader(sub_ctx, shader_type);
+
+      if (vrend_state.use_gles) {
+         if (sub_ctx->prog->tex_levels_uniform_id[shader_type] != -1) {
+            glUniform1iv(sub_ctx->prog->tex_levels_uniform_id[shader_type],
+                         sub_ctx->n_samplers[shader_type],
+                         sub_ctx->texture_levels[shader_type]);
+         }
+      }
    }
 
    vrend_draw_bind_abo_shader(sub_ctx);
@@ -4699,7 +4721,18 @@ int vrend_draw_vbo(struct vrend_context *ctx,
 
    vrend_use_program(sub_ctx, sub_ctx->prog->id);
 
+   if (vrend_state.use_gles) {
+      /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
+       * different prefix arrays */
+      for (unsigned i = PIPE_SHADER_VERTEX; i < PIPE_SHADER_COMPUTE; ++i) {
+         char loc_name[32];
+         snprintf(loc_name, 32, "%s_texlod[0]", pipe_shader_to_prefix(i));
+         sub_ctx->prog->tex_levels_uniform_id[i] = glGetUniformLocation(sub_ctx->prog->id, loc_name);
+      }
+   }
+
    vrend_draw_bind_objects(sub_ctx, new_program);
+
 
    if (!sub_ctx->ve) {
       vrend_printf("illegal VE setup - skipping renderering\n");
