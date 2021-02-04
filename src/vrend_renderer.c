@@ -405,7 +405,6 @@ struct vrend_linked_shader_program {
    GLint *img_locs[PIPE_SHADER_TYPES];
 
    uint32_t ssbo_used_mask[PIPE_SHADER_TYPES];
-   GLuint *ssbo_locs[PIPE_SHADER_TYPES];
 
    struct vrend_sub_context *ref_context;
 };
@@ -1482,22 +1481,8 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
 static void bind_ssbo_locs(struct vrend_linked_shader_program *sprog,
                            int id)
 {
-   int i;
-   char name[32];
    if (!has_feature(feat_ssbo))
       return;
-   if (sprog->ss[id]->sel->sinfo.ssbo_used_mask) {
-      const char *prefix = pipe_shader_to_prefix(id);
-      uint32_t mask = sprog->ss[id]->sel->sinfo.ssbo_used_mask;
-      sprog->ssbo_locs[id] = calloc(util_last_bit(mask), sizeof(uint32_t));
-
-      while (mask) {
-         i = u_bit_scan(&mask);
-         snprintf(name, 32, "%sssbo%d", prefix, i);
-         sprog->ssbo_locs[id][i] = glGetProgramResourceIndex(sprog->id, GL_SHADER_STORAGE_BLOCK, name);
-      }
-   } else
-      sprog->ssbo_locs[id] = NULL;
    sprog->ssbo_used_mask[id] = sprog->ss[id]->sel->sinfo.ssbo_used_mask;
 }
 
@@ -1802,7 +1787,6 @@ static void vrend_destroy_program(struct vrend_linked_shader_program *ent)
          list_del(&ent->sl[i]);
       free(ent->shadow_samp_mask_locs[i]);
       free(ent->shadow_samp_add_locs[i]);
-      free(ent->ssbo_locs[i]);
       free(ent->img_locs[i]);
    }
    free(ent->attrib_locs);
@@ -4357,9 +4341,6 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx, int s
    if (!has_feature(feat_ssbo))
       return;
 
-   if (!sub_ctx->prog->ssbo_locs[shader_type])
-      return;
-
    if (!sub_ctx->ssbo_used_mask[shader_type])
       return;
 
@@ -4370,13 +4351,7 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx, int s
       ssbo = &sub_ctx->ssbo[shader_type][i];
       res = (struct vrend_resource *)ssbo->res;
       glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i, res->id,
-                        ssbo->buffer_offset, ssbo->buffer_size);
-      if (sub_ctx->prog->ssbo_locs[shader_type][i] != GL_INVALID_INDEX) {
-         if (!vrend_state.use_gles)
-            glShaderStorageBlockBinding(sub_ctx->prog->id, sub_ctx->prog->ssbo_locs[shader_type][i], i);
-         else
-            debug_printf("glShaderStorageBlockBinding not supported on gles \n");
-      }
+                        ssbo->buffer_offset, ssbo->buffer_size);     
    }
 }
 
