@@ -66,11 +66,11 @@ struct vrend_array {
 };
 
 struct vrend_layout_info {
-   unsigned name;
-   int sid;
-   int location;
-   int array_id;
-   int usage_mask;
+   unsigned name : 6;
+   unsigned sid : 16 ;
+   unsigned location : 16 ;
+   unsigned array_id : 16 ;
+   unsigned usage_mask : 5;
 };
 
 struct vrend_fs_shader_info {
@@ -123,44 +123,45 @@ struct vrend_shader_info {
 };
 
 struct vrend_shader_key {
-   bool fs_prim_is_points;
+   uint64_t force_invariant_inputs;
+
+   struct vrend_fs_shader_info *fs_info;
+
    uint32_t coord_replace;
-   bool invert_fs_origin;
-   bool pstipple_tex;
-   bool add_alpha_test;
-   bool color_two_side;
-   uint8_t alpha_test;
-   uint8_t clip_plane_enable;
-   bool gs_present;
-   bool tcs_present;
-   bool tes_present;
-   bool flatshade;
-   bool guest_sent_io_arrays;
-   bool fs_logicop_enabled;
-   enum pipe_logicop fs_logicop_func;
-   uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
-
    uint32_t num_prev_generic_and_patch_outputs;
-   struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
-
-   uint8_t prev_stage_num_clip_out;
-   uint8_t prev_stage_num_cull_out;
-   bool next_stage_pervertex_in;
    uint32_t cbufs_are_a8_bitmask;
    uint32_t cbufs_signed_int_bitmask;
    uint32_t cbufs_unsigned_int_bitmask;
    uint32_t attrib_signed_int_bitmask;
    uint32_t attrib_unsigned_int_bitmask;
+   uint32_t generic_outputs_expected_mask;
+   uint32_t compiled_fs_uid;
+
+   uint32_t fs_prim_is_points : 1;
+   uint32_t invert_fs_origin : 1;
+   uint32_t pstipple_tex : 1;
+   uint32_t add_alpha_test : 1;
+   uint32_t color_two_side : 1;
+   uint32_t gs_present : 1;
+   uint32_t tcs_present : 1;
+   uint32_t tes_present : 1;
+   uint32_t flatshade : 1;
+   uint32_t guest_sent_io_arrays : 1;
+   uint32_t fs_logicop_enabled : 1;
+   uint32_t next_stage_pervertex_in : 1;
+   uint32_t fs_logicop_func : 4;
+
+   uint8_t alpha_test;
+   uint8_t clip_plane_enable;
+   uint8_t prev_stage_num_clip_out;
+   uint8_t prev_stage_num_cull_out;
    uint8_t num_indirect_generic_outputs;
    uint8_t num_indirect_patch_outputs;
    uint8_t num_indirect_generic_inputs;
    uint8_t num_indirect_patch_inputs;
-   uint32_t generic_outputs_expected_mask;
    uint8_t fs_swizzle_output_rgb_to_bgr;
-   uint64_t force_invariant_inputs;
-
-   uint32_t compiled_fs_uid;
-   struct vrend_shader_info *fs_info;
+   uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
+   struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
 };
 
 struct vrend_shader_cfg {
