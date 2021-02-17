@@ -3379,7 +3379,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
 
       memcpy(key->prev_stage_generic_and_patch_outputs_layout,
              sub_ctx->shaders[prev_type]->sinfo.generic_outputs_layout,
-             64 * sizeof (struct vrend_layout_info));
+             sub_ctx->shaders[prev_type]->sinfo.num_generic_and_patch_outputs * sizeof (struct vrend_layout_info));
       key->force_invariant_inputs = sub_ctx->shaders[prev_type]->sinfo.invariant_outputs;
    }
 
