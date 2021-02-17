@@ -6775,26 +6775,12 @@ static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vre
 
 static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
 {
-   boolean ret;
-
    if (!ctx->num_interps)
       return true;
    if (ctx->prog_type == TGSI_PROCESSOR_VERTEX || ctx->prog_type == TGSI_PROCESSOR_GEOMETRY)
       return true;
 
-   free(sinfo->interpinfo);
-   sinfo->interpinfo = calloc(ctx->num_interps, sizeof(struct vrend_interp_info));
-   if (!sinfo->interpinfo)
-      return false;
-
-   ret = fill_fragment_interpolants(ctx, sinfo);
-   if (ret == false)
-      goto out_fail;
-
-   return true;
- out_fail:
-   free(sinfo->interpinfo);
-   return false;
+   return fill_fragment_interpolants(ctx, sinfo);
 }
 
 static boolean analyze_instruction(struct tgsi_iterate_context *iter,
@@ -7128,7 +7114,7 @@ static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vre
    if (!vs_info || !fs_info)
       return true;
 
-   if (!fs_info->interpinfo)
+   if (!fs_info->num_interps)
       return true;
 
    if (fs_info->has_sample_input) {

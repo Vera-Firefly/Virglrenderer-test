@@ -54,10 +54,10 @@ enum gl_advanced_blend_mode
 
 /* need to store patching info for interpolation */
 struct vrend_interp_info {
-   int semantic_name;
-   int semantic_index;
-   int interpolate;
-   unsigned location;
+   unsigned semantic_name : 6;
+   unsigned semantic_index : 16;
+   unsigned interpolate : 3;
+   unsigned location : 3;
 };
 
 struct vrend_array {
@@ -112,7 +112,7 @@ struct vrend_shader_info {
 
    struct pipe_stream_output_info so_info;
 
-   struct vrend_interp_info *interpinfo;
+   struct vrend_interp_info interpinfo[PIPE_MAX_SHADER_INPUTS];
    char **so_names;
    uint64_t invariant_outputs;
 };
