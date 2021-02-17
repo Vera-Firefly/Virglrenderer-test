@@ -132,7 +132,6 @@ struct vrend_shader_key {
    bool flatshade;
    bool guest_sent_io_arrays;
    bool fs_logicop_enabled;
-   bool fs_logicop_emulate_coherent;
    enum pipe_logicop fs_logicop_func;
    uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
 
@@ -171,6 +170,7 @@ struct vrend_shader_cfg {
    bool has_conservative_depth;
    bool use_integer;
    bool has_dual_src_blend;
+   bool has_fbfetch_coherent;
 };
 
 struct vrend_context;

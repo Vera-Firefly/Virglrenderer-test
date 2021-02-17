@@ -3343,7 +3343,6 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    if (type == PIPE_SHADER_FRAGMENT && vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
       key->fs_logicop_enabled = sub_ctx->blend_state.logicop_enable;
       key->fs_logicop_func = sub_ctx->blend_state.logicop_func;
-      key->fs_logicop_emulate_coherent = !has_feature(feat_framebuffer_fetch_non_coherent);
    }
 
    key->invert_fs_origin = !sub_ctx->inverted_fbo_content;
@@ -6454,6 +6453,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->shader_cfg.has_conservative_depth = has_feature(feat_conservative_depth);
    grctx->shader_cfg.use_integer = vrend_state.use_integer;
    grctx->shader_cfg.has_dual_src_blend = has_feature(feat_dual_src_blend);
+   grctx->shader_cfg.has_fbfetch_coherent = has_feature(feat_framebuffer_fetch);
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);

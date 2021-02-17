@@ -5473,7 +5473,7 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       }
 
       if (logiop_require_inout(ctx->key)) {
-         if (ctx->key->fs_logicop_emulate_coherent)
+         if (ctx->cfg->has_fbfetch_coherent)
             emit_ext(glsl_strbufs, "EXT_shader_framebuffer_fetch", "require");
          else
             emit_ext(glsl_strbufs, "EXT_shader_framebuffer_fetch_non_coherent", "require");
@@ -6398,7 +6398,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
                emit_hdrf(glsl_strbufs, "%s fsout_tmp_c%d;\n", type, i);
 
             if (logiop_require_inout(ctx->key)) {
-               const char *noncoherent = ctx->key->fs_logicop_emulate_coherent ? "" : ", noncoherent";
+               const char *noncoherent = ctx->cfg->has_fbfetch_coherent ? "" : ", noncoherent";
                emit_hdrf(glsl_strbufs, "layout (location=%d%s) inout highp %s fsout_c%d;\n", i, noncoherent, type, i);
             } else
                emit_hdrf(glsl_strbufs, "layout (location=%d) out %s fsout_c%d;\n", i,
