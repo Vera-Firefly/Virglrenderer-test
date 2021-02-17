@@ -3369,18 +3369,14 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       }
    }
 
-   if (prev_type != -1 && sub_ctx->shaders[prev_type]) {
-      key->prev_stage_num_clip_out = sub_ctx->shaders[prev_type]->sinfo.num_clip_out;
-      key->prev_stage_num_cull_out = sub_ctx->shaders[prev_type]->sinfo.num_cull_out;
-      key->num_indirect_generic_inputs = sub_ctx->shaders[prev_type]->sinfo.num_indirect_generic_outputs;
-      key->num_indirect_patch_inputs = sub_ctx->shaders[prev_type]->sinfo.num_indirect_patch_outputs;
-      key->num_prev_generic_and_patch_outputs = sub_ctx->shaders[prev_type]->sinfo.num_generic_and_patch_outputs;
-      key->guest_sent_io_arrays = sub_ctx->shaders[prev_type]->sinfo.guest_sent_io_arrays;
+   struct vrend_shader_selector *prev = sub_ctx->shaders[prev_type];
+   if (prev_type != -1 && prev) {
+      key->input = prev->sinfo.out;
+      key->force_invariant_inputs = prev->sinfo.invariant_outputs;
 
       memcpy(key->prev_stage_generic_and_patch_outputs_layout,
-             sub_ctx->shaders[prev_type]->sinfo.generic_outputs_layout,
-             sub_ctx->shaders[prev_type]->sinfo.num_generic_and_patch_outputs * sizeof (struct vrend_layout_info));
-      key->force_invariant_inputs = sub_ctx->shaders[prev_type]->sinfo.invariant_outputs;
+             prev->sinfo.generic_outputs_layout,
+             prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
    }
 
    int next_type = -1;

@@ -2891,9 +2891,9 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
 
    char clip_indirect[32] = "";
 
-   bool has_prev_vals = (ctx->key->prev_stage_num_cull_out + ctx->key->prev_stage_num_clip_out) > 0;
-   int num_culls = has_prev_vals ? ctx->key->prev_stage_num_cull_out : 0;
-   int num_clips = has_prev_vals ? ctx->key->prev_stage_num_clip_out : ctx->num_in_clip_dist;
+   bool has_prev_vals = (ctx->key->input.num_cull + ctx->key->input.num_clip) > 0;
+   int num_culls = has_prev_vals ? ctx->key->input.num_cull : 0;
+   int num_clips = has_prev_vals ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
    int base_idx = ctx->inputs[input_idx].sid * 4;
 
    /* With arrays enabled , but only when gl_ClipDistance or gl_CullDistance are emitted (>4)
@@ -2920,12 +2920,12 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
             idx -= num_clips;
             cc_name = "gl_CullDistance";
          }
-         if (ctx->key->prev_stage_num_cull_out)
-            if (idx >= ctx->key->prev_stage_num_cull_out)
+         if (ctx->key->input.num_cull)
+            if (idx >= ctx->key->input.num_cull)
                idx = 0;
       } else {
-         if (ctx->key->prev_stage_num_clip_out)
-            if (idx >= ctx->key->prev_stage_num_clip_out)
+         if (ctx->key->input.num_clip)
+            if (idx >= ctx->key->input.num_clip)
                idx = 0;
       }
       if (gl_in)
@@ -4368,8 +4368,8 @@ static
 void rewrite_io_ranged(struct dump_ctx *ctx)
 {
    if ((ctx->info.indirect_files & (1 << TGSI_FILE_INPUT)) ||
-       ctx->key->num_indirect_generic_inputs ||
-       ctx->key->num_indirect_patch_inputs) {
+       ctx->key->input.num_indirect_generic ||
+       ctx->key->input.num_indirect_patch) {
 
       for (uint i = 0; i < ctx->num_inputs; ++i) {
          if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
@@ -4402,10 +4402,10 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
                ctx->generic_ios.input_range.io.last = ctx->inputs[i].sid;
          }
 
-         if (ctx->key->num_indirect_generic_inputs > 0)
-            ctx->generic_ios.input_range.io.last = ctx->generic_ios.input_range.io.sid + ctx->key->num_indirect_generic_inputs - 1;
-         if (ctx->key->num_indirect_patch_inputs > 0)
-            ctx->patch_ios.input_range.io.last = ctx->patch_ios.input_range.io.sid + ctx->key->num_indirect_patch_inputs - 1;
+         if (ctx->key->input.num_indirect_generic > 0)
+            ctx->generic_ios.input_range.io.last = ctx->generic_ios.input_range.io.sid + ctx->key->input.num_indirect_generic - 1;
+         if (ctx->key->input.num_indirect_patch > 0)
+            ctx->patch_ios.input_range.io.last = ctx->patch_ios.input_range.io.sid + ctx->key->input.num_indirect_patch - 1;
       }
       snprintf(ctx->patch_ios.input_range.io.glsl_name, 64, "%s_p%d",
                get_stage_input_name_prefix(ctx, ctx->prog_type), ctx->patch_ios.input_range.io.sid);
@@ -4571,7 +4571,7 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
    if (!ctx->fs_uses_clipdist_input)
       return;
 
-   int prev_num = ctx->key->prev_stage_num_clip_out + ctx->key->prev_stage_num_cull_out;
+   int prev_num = ctx->key->input.num_clip + ctx->key->input.num_cull;
    int ndists;
    const char *prefix="";
 
@@ -4595,12 +4595,12 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
       }
       bool is_cull = false;
       if (prev_num > 0) {
-         if (i >= ctx->key->prev_stage_num_clip_out && i < prev_num)
+         if (i >= ctx->key->input.num_clip && i < prev_num)
             is_cull = true;
       }
       const char *clip_cull = is_cull ? "Cull" : "Clip";
       emit_buff(glsl_strbufs, "clip_dist_temp[%d].%c = %sgl_%sDistance[%d];\n", clipidx, wm, prefix, clip_cull,
-                is_cull ? i - ctx->key->prev_stage_num_clip_out : i);
+                is_cull ? i - ctx->key->input.num_clip : i);
    }
 }
 
@@ -4627,7 +4627,7 @@ static bool apply_prev_layout(const struct vrend_shader_key *key,
       if (io->name == TGSI_SEMANTIC_GENERIC || io->name == TGSI_SEMANTIC_PATCH) {
 
          const struct vrend_layout_info *layout = key->prev_stage_generic_and_patch_outputs_layout;
-         for (unsigned generic_index = 0; generic_index  < key->num_prev_generic_and_patch_outputs; ++generic_index, ++layout) {
+         for (unsigned generic_index = 0; generic_index  < key->input.num_generic_and_patch; ++generic_index, ++layout) {
 
             bool already_found_one = false;
 
@@ -5524,7 +5524,7 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       if (ctx->ubo_used_mask)
          emit_ext(glsl_strbufs, "ARB_uniform_buffer_object", "require");
 
-      if (ctx->num_cull_dist_prop || ctx->key->prev_stage_num_cull_out)
+      if (ctx->num_cull_dist_prop || ctx->key->input.num_cull)
          emit_ext(glsl_strbufs, "ARB_cull_distance", "require");
       if (ctx->ssbo_used_mask)
          emit_ext(glsl_strbufs, "ARB_shader_storage_buffer_object", "require");
@@ -6014,10 +6014,10 @@ static void emit_ios_indirect_generics_input(const struct dump_ctx *ctx,
    if (ctx->generic_ios.input_range.used) {
       int size = ctx->generic_ios.input_range.io.last - ctx->generic_ios.input_range.io.sid + 1;
       assert(size < 256 && size >= 0);
-      if (size < ctx->key->num_indirect_generic_inputs) {
+      if (size < ctx->key->input.num_indirect_generic) {
          VREND_DEBUG(dbg_shader, NULL, "WARNING: shader key indicates less indirect inputs"
                                        " (%d) then are actually used (%d)\n",
-                     ctx->key->num_indirect_generic_inputs, size);
+                     ctx->key->input.num_indirect_generic, size);
       }
 
       if (prefer_generic_io_block(ctx, io_in)) {
@@ -6436,14 +6436,14 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
    }
 
    if (ctx->num_in_clip_dist) {
-      if (ctx->key->prev_stage_num_clip_out) {
-         emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->key->prev_stage_num_clip_out);
-      } else if (ctx->num_in_clip_dist > 4 && !ctx->key->prev_stage_num_cull_out) {
+      if (ctx->key->input.num_clip) {
+         emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->key->input.num_clip);
+      } else if (ctx->num_in_clip_dist > 4 && !ctx->key->input.num_cull) {
          emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->num_in_clip_dist);
       }
 
-      if (ctx->key->prev_stage_num_cull_out) {
-         emit_hdrf(glsl_strbufs, "in float gl_CullDistance[%d];\n", ctx->key->prev_stage_num_cull_out);
+      if (ctx->key->input.num_cull) {
+         emit_hdrf(glsl_strbufs, "in float gl_CullDistance[%d];\n", ctx->key->input.num_cull);
       }
       if(ctx->fs_uses_clipdist_input)
          emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
@@ -6515,8 +6515,8 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
       char clip_var[64] = "";
       char cull_var[64] = "";
 
-      clip_dist = ctx->key->prev_stage_num_clip_out ? ctx->key->prev_stage_num_clip_out : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->prev_stage_num_cull_out;
+      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
+      cull_dist = ctx->key->input.num_cull;
 
       if (clip_dist)
          snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
@@ -6592,8 +6592,8 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
       int clip_dist, cull_dist;
       char clip_var[64] = "", cull_var[64] = "";
 
-      clip_dist = ctx->key->prev_stage_num_clip_out ? ctx->key->prev_stage_num_clip_out : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->prev_stage_num_cull_out;
+      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
+      cull_dist = ctx->key->input.num_cull;
 
       if (clip_dist)
          snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
@@ -6651,8 +6651,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
       int clip_dist, cull_dist;
       char clip_var[64] = "", cull_var[64] = "";
 
-      clip_dist = ctx->key->prev_stage_num_clip_out ? ctx->key->prev_stage_num_clip_out : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->prev_stage_num_cull_out;
+      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
+      cull_dist = ctx->key->input.num_cull;
 
       if (clip_dist)
          snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
@@ -6821,8 +6821,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->has_pervertex_in = ctx->has_pervertex;
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
-   sinfo->num_clip_out = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
-   sinfo->num_cull_out = has_prop ? ctx->num_cull_dist_prop : 0;
+   sinfo->out.num_clip = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
+   sinfo->out.num_cull = has_prop ? ctx->num_cull_dist_prop : 0;
    sinfo->samplers_used_mask = ctx->samplers_used;
    sinfo->images_used_mask = ctx->images_used_mask;
    sinfo->num_consts = ctx->num_consts;
@@ -6838,9 +6838,9 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
       sinfo->num_indirect_patch_inputs = ctx->patch_ios.input_range.io.last - ctx->patch_ios.input_range.io.sid + 1;
 
    if (ctx->generic_ios.output_range.used)
-      sinfo->num_indirect_generic_outputs = ctx->generic_ios.output_range.io.last - ctx->generic_ios.output_range.io.sid + 1;
+      sinfo->out.num_indirect_generic = ctx->generic_ios.output_range.io.last - ctx->generic_ios.output_range.io.sid + 1;
    if (ctx->patch_ios.output_range.used)
-      sinfo->num_indirect_patch_outputs = ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.sid + 1;
+      sinfo->out.num_indirect_patch = ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.sid + 1;
 
    sinfo->num_inputs = ctx->num_inputs;
    sinfo->fs_info.num_interps = ctx->num_interps;
@@ -6864,16 +6864,16 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
     * to the next shader stage. mesa/tgsi doesn't provide this information for
     * TCS, TES, and GEOM shaders.
     */
-   sinfo->guest_sent_io_arrays = ctx->guest_sent_io_arrays;
-   sinfo->num_generic_and_patch_outputs = 0;
+   sinfo->out.guest_sent_io_arrays = ctx->guest_sent_io_arrays;
+   sinfo->out.num_generic_and_patch = 0;
    for(unsigned i = 0; i < ctx->num_outputs; i++) {
       if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC || ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
-         sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].name = ctx->outputs[i].name;
-         sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].sid = ctx->outputs[i].sid;
-         sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].location = ctx->outputs[i].layout_location;
-         sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].array_id = ctx->outputs[i].array_id;
-         sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].usage_mask = ctx->outputs[i].usage_mask;
-         sinfo->num_generic_and_patch_outputs++;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].name = ctx->outputs[i].name;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].sid = ctx->outputs[i].sid;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].location = ctx->outputs[i].layout_location;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].array_id = ctx->outputs[i].array_id;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].usage_mask = ctx->outputs[i].usage_mask;
+         sinfo->out.num_generic_and_patch++;
       }
    }
 
@@ -6971,7 +6971,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.ssbo_atomic_array_base = 0xffffffff;
    ctx.has_sample_input = false;
    ctx.req_local_mem = req_local_mem;
-   ctx.guest_sent_io_arrays = key->guest_sent_io_arrays;
+   ctx.guest_sent_io_arrays = key->input.guest_sent_io_arrays;
    ctx.generic_ios.outputs_expected_mask = key->generic_outputs_expected_mask;
 
    tgsi_scan_shader(tokens, &ctx.info);

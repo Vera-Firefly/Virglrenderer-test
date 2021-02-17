@@ -80,8 +80,19 @@ struct vrend_fs_shader_info {
    struct vrend_interp_info interpinfo[PIPE_MAX_SHADER_INPUTS];
 };
 
+struct vrend_shader_info_out {
+   uint64_t num_clip : 8;
+   uint64_t num_cull : 8;
+   uint64_t num_indirect_generic : 8;
+   uint64_t num_indirect_patch : 8;
+   uint64_t num_generic_and_patch : 8;
+   uint64_t guest_sent_io_arrays : 1;
+};
+
 struct vrend_shader_info {
    uint64_t invariant_outputs;
+   struct vrend_shader_info_out out;
+
    struct vrend_layout_info generic_outputs_layout[64];
    struct vrend_array *sampler_arrays;
    struct vrend_array *image_arrays;
@@ -93,7 +104,6 @@ struct vrend_shader_info {
    uint32_t images_used_mask;
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
-   uint32_t num_generic_and_patch_outputs;
    uint32_t generic_inputs_emitted_mask;
    uint32_t shadow_samp_mask;
    uint32_t attrib_input_mask;
@@ -108,15 +118,12 @@ struct vrend_shader_info {
    int num_sampler_arrays;
    int num_image_arrays;
 
-   uint8_t num_indirect_generic_outputs;
-   uint8_t num_indirect_patch_outputs;
+
    uint8_t num_indirect_generic_inputs;
    uint8_t num_indirect_patch_inputs;
-   uint8_t num_clip_out;
-   uint8_t num_cull_out;
 
    uint8_t has_pervertex_in : 1;
-   uint8_t guest_sent_io_arrays : 1;
+
    uint8_t ubo_indirect : 1;
    uint8_t tes_point_mode : 1;
 };
@@ -125,9 +132,9 @@ struct vrend_shader_key {
    uint64_t force_invariant_inputs;
 
    struct vrend_fs_shader_info *fs_info;
+   struct vrend_shader_info_out input;
 
    uint32_t coord_replace;
-   uint32_t num_prev_generic_and_patch_outputs;
    uint32_t cbufs_are_a8_bitmask;
    uint32_t cbufs_signed_int_bitmask;
    uint32_t cbufs_unsigned_int_bitmask;
@@ -145,19 +152,14 @@ struct vrend_shader_key {
    uint32_t tcs_present : 1;
    uint32_t tes_present : 1;
    uint32_t flatshade : 1;
-   uint32_t guest_sent_io_arrays : 1;
    uint32_t fs_logicop_enabled : 1;
    uint32_t next_stage_pervertex_in : 1;
    uint32_t fs_logicop_func : 4;
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
-   uint8_t prev_stage_num_clip_out;
-   uint8_t prev_stage_num_cull_out;
    uint8_t num_indirect_generic_outputs;
    uint8_t num_indirect_patch_outputs;
-   uint8_t num_indirect_generic_inputs;
-   uint8_t num_indirect_patch_inputs;
    uint8_t fs_swizzle_output_rgb_to_bgr;
    uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
    struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
