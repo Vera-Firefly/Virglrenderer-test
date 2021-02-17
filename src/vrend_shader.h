@@ -73,6 +73,13 @@ struct vrend_layout_info {
    int usage_mask;
 };
 
+struct vrend_fs_shader_info {
+   int num_interps;
+   int glsl_ver;
+   bool has_sample_input;
+   struct vrend_interp_info interpinfo[PIPE_MAX_SHADER_INPUTS];
+};
+
 struct vrend_shader_info {
    uint32_t samplers_used_mask;
    uint32_t images_used_mask;
@@ -84,7 +91,6 @@ struct vrend_shader_info {
    struct vrend_layout_info generic_outputs_layout[64];
    int num_consts;
    int num_inputs;
-   int num_interps;
    int num_outputs;
    bool ubo_indirect;
    uint8_t num_indirect_generic_outputs;
@@ -93,8 +99,6 @@ struct vrend_shader_info {
    uint8_t num_indirect_patch_inputs;
    uint32_t generic_inputs_emitted_mask;
    int num_ucp;
-   int glsl_ver;
-   bool has_sample_input;
    uint8_t num_clip_out;
    uint8_t num_cull_out;
    uint32_t shadow_samp_mask;
@@ -112,7 +116,8 @@ struct vrend_shader_info {
 
    struct pipe_stream_output_info so_info;
 
-   struct vrend_interp_info interpinfo[PIPE_MAX_SHADER_INPUTS];
+   struct vrend_fs_shader_info fs_info;
+
    char **so_names;
    uint64_t invariant_outputs;
 };

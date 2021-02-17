@@ -6748,7 +6748,7 @@ static int emit_ios(const struct dump_ctx *ctx,
    return glsl_ver_required;
 }
 
-static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
+static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vrend_fs_shader_info *fs_info)
 {
    uint32_t i, index = 0;
 
@@ -6764,10 +6764,10 @@ static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vre
          vrend_printf( "mismatch in number of interps %d %d\n", index, ctx->num_interps);
          return true;
       }
-      sinfo->interpinfo[index].semantic_name = ctx->inputs[i].name;
-      sinfo->interpinfo[index].semantic_index = ctx->inputs[i].sid;
-      sinfo->interpinfo[index].interpolate = ctx->inputs[i].interpolate;
-      sinfo->interpinfo[index].location = ctx->inputs[i].location;
+      fs_info->interpinfo[index].semantic_name = ctx->inputs[i].name;
+      fs_info->interpinfo[index].semantic_index = ctx->inputs[i].sid;
+      fs_info->interpinfo[index].interpolate = ctx->inputs[i].interpolate;
+      fs_info->interpinfo[index].location = ctx->inputs[i].location;
       index++;
    }
    return true;
@@ -6780,7 +6780,7 @@ static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_shader
    if (ctx->prog_type == TGSI_PROCESSOR_VERTEX || ctx->prog_type == TGSI_PROCESSOR_GEOMETRY)
       return true;
 
-   return fill_fragment_interpolants(ctx, sinfo);
+   return fill_fragment_interpolants(ctx, &sinfo->fs_info);
 }
 
 static boolean analyze_instruction(struct tgsi_iterate_context *iter,
@@ -6819,7 +6819,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
 {
    sinfo->num_ucp = ctx->key->clip_plane_enable ? 8 : 0;
    sinfo->has_pervertex_in = ctx->has_pervertex;
-   sinfo->has_sample_input = ctx->has_sample_input;
+   sinfo->fs_info.has_sample_input = ctx->has_sample_input;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
    sinfo->num_clip_out = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
    sinfo->num_cull_out = has_prop ? ctx->num_cull_dist_prop : 0;
@@ -6843,10 +6843,10 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
       sinfo->num_indirect_patch_outputs = ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.sid + 1;
 
    sinfo->num_inputs = ctx->num_inputs;
-   sinfo->num_interps = ctx->num_interps;
+   sinfo->fs_info.num_interps = ctx->num_interps;
    sinfo->num_outputs = ctx->num_outputs;
    sinfo->shadow_samp_mask = ctx->shadow_samp_mask;
-   sinfo->glsl_ver = ctx->glsl_ver_required;
+   sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
    sinfo->gs_out_prim = ctx->gs_out_prim;
    sinfo->tes_prim = ctx->tes_prim_mode;
    sinfo->tes_point_mode = ctx->tes_point_mode;
@@ -6927,7 +6927,7 @@ static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vre
                                             const struct vrend_shader_cfg *cfg,
                                             struct vrend_strarray *prog_strings,
                                             const struct vrend_shader_info *vs_info,
-                                            const struct vrend_shader_info *fs_info,
+                                            const struct vrend_fs_shader_info *fs_info,
                                             const char *oprefix,
                                             bool flatshade);
 
@@ -7105,7 +7105,7 @@ static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vre
                                             const struct vrend_shader_cfg *cfg,
                                             struct vrend_strarray *prog_strings,
                                             const struct vrend_shader_info *vs_info,
-                                            const struct vrend_shader_info *fs_info,
+                                            const struct vrend_fs_shader_info *fs_info,
                                             const char *oprefix, bool flatshade)
 {
    int i;

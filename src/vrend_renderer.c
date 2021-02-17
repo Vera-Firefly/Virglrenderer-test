@@ -3413,7 +3413,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
          struct vrend_shader *fs =
                sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
          key->compiled_fs_uid = fs->uid;
-         key->fs_info = &fs->sel->sinfo;
+         key->fs_info = &fs->sel->sinfo.fs_info;
          next_type = PIPE_SHADER_FRAGMENT;
       }
   }
