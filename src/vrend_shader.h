@@ -81,45 +81,44 @@ struct vrend_fs_shader_info {
 };
 
 struct vrend_shader_info {
+   uint64_t invariant_outputs;
+   struct vrend_layout_info generic_outputs_layout[64];
+   struct vrend_array *sampler_arrays;
+   struct vrend_array *image_arrays;
+   char **so_names;
+   struct vrend_fs_shader_info fs_info;
+   struct pipe_stream_output_info so_info;
+
    uint32_t samplers_used_mask;
    uint32_t images_used_mask;
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
    uint32_t num_generic_and_patch_outputs;
-   bool has_pervertex_in;
-   bool guest_sent_io_arrays;
-   struct vrend_layout_info generic_outputs_layout[64];
+   uint32_t generic_inputs_emitted_mask;
+   uint32_t shadow_samp_mask;
+   uint32_t attrib_input_mask;
+   uint32_t fs_blend_equation_advanced;
+
    int num_consts;
    int num_inputs;
    int num_outputs;
-   bool ubo_indirect;
+   int num_ucp;
+   int gs_out_prim;
+   int tes_prim;
+   int num_sampler_arrays;
+   int num_image_arrays;
+
    uint8_t num_indirect_generic_outputs;
    uint8_t num_indirect_patch_outputs;
    uint8_t num_indirect_generic_inputs;
    uint8_t num_indirect_patch_inputs;
-   uint32_t generic_inputs_emitted_mask;
-   int num_ucp;
    uint8_t num_clip_out;
    uint8_t num_cull_out;
-   uint32_t shadow_samp_mask;
-   int gs_out_prim;
-   int tes_prim;
-   bool tes_point_mode;
-   uint32_t attrib_input_mask;
-   uint32_t fs_blend_equation_advanced;
 
-   struct vrend_array *sampler_arrays;
-   int num_sampler_arrays;
-
-   struct vrend_array *image_arrays;
-   int num_image_arrays;
-
-   struct pipe_stream_output_info so_info;
-
-   struct vrend_fs_shader_info fs_info;
-
-   char **so_names;
-   uint64_t invariant_outputs;
+   uint8_t has_pervertex_in : 1;
+   uint8_t guest_sent_io_arrays : 1;
+   uint8_t ubo_indirect : 1;
+   uint8_t tes_point_mode : 1;
 };
 
 struct vrend_shader_key {

@@ -6830,7 +6830,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
 
    sinfo->ssbo_used_mask = ctx->ssbo_used_mask;
 
-   sinfo->ubo_indirect = ctx->info.dimension_indirect_files & (1 << TGSI_FILE_CONSTANT);
+   sinfo->ubo_indirect = !!(ctx->info.dimension_indirect_files & (1 << TGSI_FILE_CONSTANT));
 
    if (ctx->generic_ios.input_range.used)
       sinfo->num_indirect_generic_inputs = ctx->generic_ios.input_range.io.last - ctx->generic_ios.input_range.io.sid + 1;
