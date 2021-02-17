@@ -6867,13 +6867,13 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->guest_sent_io_arrays = ctx->guest_sent_io_arrays;
    sinfo->num_generic_and_patch_outputs = 0;
    for(unsigned i = 0; i < ctx->num_outputs; i++) {
+      if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC || ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
          sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].name = ctx->outputs[i].name;
          sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].sid = ctx->outputs[i].sid;
          sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].location = ctx->outputs[i].layout_location;
          sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].array_id = ctx->outputs[i].array_id;
          sinfo->generic_outputs_layout[sinfo->num_generic_and_patch_outputs].usage_mask = ctx->outputs[i].usage_mask;
-         if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC || ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
-            sinfo->num_generic_and_patch_outputs++;
+         sinfo->num_generic_and_patch_outputs++;
       }
    }
 
