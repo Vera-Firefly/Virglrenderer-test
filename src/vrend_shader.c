@@ -2897,7 +2897,7 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
                          const char *prefix,
                          const char *arrayname, int offset)
 {
-   char clipdistvec[4][64] = { 0, };
+   char clipdistvec[4][80] = { 0, };
 
    char clip_indirect[32] = "";
 
@@ -2939,9 +2939,9 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
                idx = 0;
       }
       if (gl_in)
-         snprintf(clipdistvec[cc], 64, "%sgl_in%s.%s[%s %d]", prefix, arrayname, cc_name, clip_indirect,  idx);
+         snprintf(clipdistvec[cc], 80, "%sgl_in%s.%s[%s %d]", prefix, arrayname, cc_name, clip_indirect,  idx);
       else
-         snprintf(clipdistvec[cc], 64, "%s%s%s[%s %d]", prefix, arrayname, cc_name, clip_indirect, idx);
+         snprintf(clipdistvec[cc], 80, "%s%s%s[%s %d]", prefix, arrayname, cc_name, clip_indirect, idx);
    }
    strbuf_fmt(result, "%s(vec4(%s,%s,%s,%s))", stypeprefix, clipdistvec[0], clipdistvec[1], clipdistvec[2], clipdistvec[3]);
 }
