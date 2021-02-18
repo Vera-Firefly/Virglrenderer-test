@@ -336,7 +336,7 @@ struct global_renderer_state {
    /* inferred GL caching type */
    uint32_t inferred_gl_caching_type;
 
-   bool features[feat_last];
+   uint64_t features[feat_last / 64 + 1];
 
    uint32_t finishing : 1;
    uint32_t use_gles : 1;
@@ -359,16 +359,30 @@ static struct global_renderer_state vrend_state;
 
 static inline bool has_feature(enum features_id feature_id)
 {
+   int slot = feature_id / 64;
+   uint64_t mask = 1ull << (feature_id & 63);
+   bool retval = vrend_state.features[slot] & mask ? true : false;
    VREND_DEBUG(dbg_feature_use, NULL, "Try using feature %s:%d\n",
                feature_list[feature_id].log_name,
-               vrend_state.features[feature_id]);
-   return vrend_state.features[feature_id];
+               retval);
+   return retval;
 }
+
 
 static inline void set_feature(enum features_id feature_id)
 {
-   vrend_state.features[feature_id] = true;
+   int slot = feature_id / 64;
+   uint64_t mask = 1ull << (feature_id & 63);
+   vrend_state.features[slot] |= mask;
 }
+
+static inline void clear_feature(enum features_id feature_id)
+{
+   int slot = feature_id / 64;
+   uint64_t mask = 1ull << (feature_id & 63);
+   vrend_state.features[slot] &= ~mask;
+}
+
 
 struct vrend_linked_shader_program {
    struct list_head head;
@@ -6182,7 +6196,8 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    init_features(gles ? 0 : gl_ver,
                  gles ? gl_ver : 0);
 
-   vrend_state.features[feat_srgb_write_control] &= vrend_winsys_has_gl_colorspace();
+   if (!vrend_winsys_has_gl_colorspace())
+      clear_feature(feat_srgb_write_control) ;
 
    glGetIntegerv(GL_MAX_DRAW_BUFFERS, (GLint *) &vrend_state.max_draw_buffers);
 
