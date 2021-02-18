@@ -2720,17 +2720,14 @@ void vrend_set_viewport_states(struct vrend_context *ctx,
    }
 }
 
-static void update_int_sign_masks(enum pipe_format fmt, int i,
-                                  uint32_t *signed_mask,
-                                  uint32_t *unsigned_mask)  {
-   if (vrend_state.use_integer &&
-       util_format_is_pure_integer(fmt)) {
-      if (util_format_is_pure_uint(fmt))
-         (*unsigned_mask) |= (1 << i);
-      else
-         (*signed_mask) |= (1 << i);
+#define UPDATE_INT_SIGN_MASK(fmt, i, signed_mask, unsigned_mask) \
+   if (vrend_state.use_integer && \
+       util_format_is_pure_integer(fmt)) { \
+      if (util_format_is_pure_uint(fmt)) \
+         unsigned_mask |= (1 << i); \
+      else \
+         signed_mask |= (1 << i); \
    }
-}
 
 int vrend_create_vertex_elements_state(struct vrend_context *ctx,
                                        uint32_t handle,
@@ -2828,9 +2825,9 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
          struct vrend_vertex_element *ve = &v->elements[i];
 
          if (util_format_is_pure_integer(ve->base.src_format)) {
-            update_int_sign_masks(ve->base.src_format, i,
-                                  &v->signed_int_bitmask,
-                                  &v->unsigned_int_bitmask);
+            UPDATE_INT_SIGN_MASK(ve->base.src_format, i,
+                                 v->signed_int_bitmask,
+                                 v->unsigned_int_bitmask);
             glVertexAttribIFormat(i, ve->nr_chan, ve->type, ve->base.src_offset);
          }
          else
@@ -3318,9 +3315,9 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
             key->cbufs_are_a8_bitmask |= (1 << i);
          if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
             add_alpha_test = false;
-            update_int_sign_masks(sub_ctx->surf[i]->format, i,
-                                  &key->cbufs_signed_int_bitmask,
-                                  &key->cbufs_unsigned_int_bitmask);
+            UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
+                                 key->cbufs_signed_int_bitmask,
+                                 key->cbufs_unsigned_int_bitmask);
          }
          key->surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
       }
