@@ -3336,7 +3336,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
    }
 
-   key->invert_fs_origin = !sub_ctx->inverted_fbo_content;
+   key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
 
    key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY];
    key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
@@ -3382,10 +3382,10 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    int next_type = -1;
 
    if (type == PIPE_SHADER_FRAGMENT) {
-      key->fs_swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
+      key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
-         key->fs_logicop_enabled = sub_ctx->blend_state.logicop_enable;
-         key->fs_logicop_func = sub_ctx->blend_state.logicop_func;
+         key->fs.logicop_enabled = sub_ctx->blend_state.logicop_enable;
+         key->fs.logicop_func = sub_ctx->blend_state.logicop_func;
       }
       int fs_prim_mode = sub_ctx->prim_mode; // inherit draw-call's mode
 
@@ -3399,9 +3399,9 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
             fs_prim_mode = sub_ctx->shaders[PIPE_SHADER_GEOMETRY]->sinfo.gs_out_prim;
             break;
       }
-      key->fs_prim_is_points = (fs_prim_mode == PIPE_PRIM_POINTS);
-      key->fs_coord_replace = sub_ctx->rs_state.point_quad_rasterization
-         && key->fs_prim_is_points
+      key->fs.prim_is_points = (fs_prim_mode == PIPE_PRIM_POINTS);
+      key->fs.coord_replace = sub_ctx->rs_state.point_quad_rasterization
+         && key->fs.prim_is_points
          ? sub_ctx->rs_state.sprite_coord_enable
          : 0x0;
    } else {

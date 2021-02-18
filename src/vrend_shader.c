@@ -533,7 +533,7 @@ static inline bool fs_emit_layout(const struct dump_ctx *ctx)
       if coord_origin is 0 and invert is 1 - emit nothing (lower)
       if coord origin is 1 and invert is 0 - emit nothing (lower)
       if coord_origin is 1 and invert is 1 - emit origin upper left */
-   if (!(ctx->fs_coord_origin ^ ctx->key->invert_fs_origin))
+   if (!(ctx->fs_coord_origin ^ ctx->key->fs.invert_origin))
       return true;
    return false;
 }
@@ -919,10 +919,10 @@ iter_inputs(struct tgsi_iterate_context *iter,
 
 static bool logiop_require_inout(const struct vrend_shader_key *key)
 {
-   if (!key->fs_logicop_enabled)
+   if (!key->fs.logicop_enabled)
       return false;
 
-   switch (key->fs_logicop_func) {
+   switch (key->fs.logicop_func) {
    case PIPE_LOGICOP_CLEAR:
    case PIPE_LOGICOP_SET:
    case PIPE_LOGICOP_COPY:
@@ -1171,7 +1171,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if (ctx->key->fs_coord_replace & (1 << ctx->inputs[i].sid)) {
+            if (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid)) {
                if (ctx->cfg->use_gles)
                   name_prefix = "vec4(gl_PointCoord.x, mix(1.0 - gl_PointCoord.y, gl_PointCoord.y, clamp(winsys_adjust_y, 0.0, 1.0)), 0.0, 1.0)";
                else
@@ -1344,7 +1344,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                name_prefix = "ex";
             break;
          } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
-                    ctx->key->fs_logicop_enabled) {
+                    ctx->key->fs.logicop_enabled) {
             name_prefix = "fsout_tmp";
             break;
          }
@@ -2060,7 +2060,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
       mask[i] = (1 << ctx->key->surface_component_bits[i]) - 1;
       scale[i] = mask[i];
-      switch (ctx->key->fs_logicop_func) {
+      switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_INVERT:
          snprintf(src_fb[i], ARRAY_SIZE(src_fb[i]),
                   "ivec4(%f * fsout_c%d + 0.5)", scale[i], i);
@@ -2091,7 +2091,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    }
 
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
-      switch (ctx->key->fs_logicop_func) {
+      switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_CLEAR:
          snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
                   "%s", "vec4(0)");
@@ -2159,7 +2159,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    }
 
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
-      switch (ctx->key->fs_logicop_func) {
+      switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_NOOP:
          break;
       case PIPE_LOGICOP_COPY:
@@ -2177,7 +2177,7 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
                               struct vrend_glsl_strbufs *glsl_strbufs)
 {
    for (uint i = 0; i < ctx->num_outputs; i++) {
-      if (ctx->key->fs_swizzle_output_rgb_to_bgr & (1 << i)) {
+      if (ctx->key->fs.swizzle_output_rgb_to_bgr & (1 << i)) {
          emit_buff(glsl_strbufs, "fsout_c%d = fsout_c%d.zyxw;\n", i, i);
       }
    }
@@ -2196,10 +2196,10 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
        emit_alpha_test(ctx, glsl_strbufs);
 
 
-    if (ctx->key->fs_logicop_enabled)
+    if (ctx->key->fs.logicop_enabled)
        emit_fragment_logicop(ctx, glsl_strbufs);
 
-    if (ctx->key->fs_swizzle_output_rgb_to_bgr)
+    if (ctx->key->fs.swizzle_output_rgb_to_bgr)
        emit_cbuf_swizzle(ctx, glsl_strbufs);
 
     if (ctx->write_all_cbufs)
@@ -4763,7 +4763,7 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       if (ctx->num_inputs > 0)
          if (evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
                                       get_stage_input_name_prefix(ctx, ctx->prog_type),
-                                      ctx->key->fs_coord_replace)) {
+                                      ctx->key->fs.coord_replace)) {
             require_enhanced_layouts = true;
          }
 
@@ -4779,7 +4779,7 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       rewrite_io_ranged(ctx);
       rewrite_components(ctx->num_inputs, ctx->inputs,
                          get_stage_input_name_prefix(ctx, ctx->prog_type),
-                         ctx->key->fs_coord_replace, true);
+                         ctx->key->fs.coord_replace, true);
 
       rewrite_components(ctx->num_outputs, ctx->outputs,
                          get_stage_output_name_prefix(ctx->prog_type), 0, true);
@@ -6328,7 +6328,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
    uint32_t i;
 
    if (fs_emit_layout(ctx)) {
-      bool upper_left = !(ctx->fs_coord_origin ^ ctx->key->invert_fs_origin);
+      bool upper_left = !(ctx->fs_coord_origin ^ ctx->key->fs.invert_origin);
       char comma = (upper_left && ctx->fs_pixel_center) ? ',' : ' ';
 
       if (!ctx->cfg->use_gles)
@@ -6364,7 +6364,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
       }
 
       if (ctx->cfg->use_gles && !ctx->winsys_adjust_y_emitted &&
-          (ctx->key->fs_coord_replace & (1 << ctx->inputs[i].sid))) {
+          (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid))) {
          *winsys_adjust_y_emitted = true;
          emit_hdr(glsl_strbufs, "uniform float winsys_adjust_y;\n");
       }
@@ -6396,7 +6396,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
 
       for (i = 0; i < (uint32_t)ctx->cfg->max_draw_buffers; i++) {
          if (ctx->cfg->use_gles) {
-            if (ctx->key->fs_logicop_enabled)
+            if (ctx->key->fs.logicop_enabled)
                emit_hdrf(glsl_strbufs, "%s fsout_tmp_c%d;\n", type, i);
 
             if (logiop_require_inout(ctx->key)) {

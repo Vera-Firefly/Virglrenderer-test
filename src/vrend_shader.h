@@ -137,7 +137,15 @@ struct vrend_shader_key {
    struct vrend_shader_info_out input;
    struct vrend_shader_info_in output;
 
-   uint32_t fs_coord_replace;
+   struct {
+      uint32_t swizzle_output_rgb_to_bgr : 8;
+      uint32_t logicop_func : 4;
+      uint32_t logicop_enabled : 1;
+      uint32_t prim_is_points : 1;
+      uint32_t invert_origin : 1;
+      uint32_t coord_replace;
+   } fs;
+
    uint32_t cbufs_are_a8_bitmask;
    uint32_t cbufs_signed_int_bitmask;
    uint32_t cbufs_unsigned_int_bitmask;
@@ -145,8 +153,6 @@ struct vrend_shader_key {
    uint32_t attrib_unsigned_int_bitmask;
    uint32_t compiled_fs_uid;
 
-   uint32_t fs_prim_is_points : 1;
-   uint32_t invert_fs_origin : 1;
    uint32_t pstipple_tex : 1;
    uint32_t add_alpha_test : 1;
    uint32_t color_two_side : 1;
@@ -154,12 +160,10 @@ struct vrend_shader_key {
    uint32_t tcs_present : 1;
    uint32_t tes_present : 1;
    uint32_t flatshade : 1;
-   uint32_t fs_logicop_enabled : 1;
-   uint32_t fs_logicop_func : 4;
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
-   uint8_t fs_swizzle_output_rgb_to_bgr;
+
    uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
    struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
 };
