@@ -3400,7 +3400,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
             break;
       }
       key->fs_prim_is_points = (fs_prim_mode == PIPE_PRIM_POINTS);
-      key->coord_replace = sub_ctx->rs_state.point_quad_rasterization
+      key->fs_coord_replace = sub_ctx->rs_state.point_quad_rasterization
          && key->fs_prim_is_points
          ? sub_ctx->rs_state.sprite_coord_enable
          : 0x0;
@@ -3437,12 +3437,8 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
      break;
    }
 
-   if (next_type != -1 && sub_ctx->shaders[next_type]) {
-      key->next_stage_pervertex_in = sub_ctx->shaders[next_type]->sinfo.has_pervertex_in;
-      key->num_indirect_generic_outputs = sub_ctx->shaders[next_type]->sinfo.num_indirect_generic_inputs;
-      key->num_indirect_patch_outputs = sub_ctx->shaders[next_type]->sinfo.num_indirect_patch_inputs;
-      key->generic_outputs_expected_mask = sub_ctx->shaders[next_type]->sinfo.generic_inputs_emitted_mask;
-   }
+   if (next_type != -1 && sub_ctx->shaders[next_type])
+      key->output = sub_ctx->shaders[next_type]->sinfo.in;
 }
 
 static int vrend_shader_create(struct vrend_context *ctx,

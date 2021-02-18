@@ -1171,7 +1171,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if (ctx->key->coord_replace & (1 << ctx->inputs[i].sid)) {
+            if (ctx->key->fs_coord_replace & (1 << ctx->inputs[i].sid)) {
                if (ctx->cfg->use_gles)
                   name_prefix = "vec4(gl_PointCoord.x, mix(1.0 - gl_PointCoord.y, gl_PointCoord.y, clamp(winsys_adjust_y, 0.0, 1.0)), 0.0, 1.0)";
                else
@@ -4425,8 +4425,8 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
    }
 
    if ((ctx->info.indirect_files & (1 << TGSI_FILE_OUTPUT)) ||
-       ctx->key->num_indirect_generic_outputs ||
-       ctx->key->num_indirect_patch_outputs) {
+       ctx->key->output.num_indirect_generic ||
+       ctx->key->output.num_indirect_patch) {
 
       for (uint i = 0; i < ctx->num_outputs; ++i) {
          if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
@@ -4763,7 +4763,7 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       if (ctx->num_inputs > 0)
          if (evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
                                       get_stage_input_name_prefix(ctx, ctx->prog_type),
-                                      ctx->key->coord_replace)) {
+                                      ctx->key->fs_coord_replace)) {
             require_enhanced_layouts = true;
          }
 
@@ -4779,7 +4779,7 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       rewrite_io_ranged(ctx);
       rewrite_components(ctx->num_inputs, ctx->inputs,
                          get_stage_input_name_prefix(ctx, ctx->prog_type),
-                         ctx->key->coord_replace, true);
+                         ctx->key->fs_coord_replace, true);
 
       rewrite_components(ctx->num_outputs, ctx->outputs,
                          get_stage_output_name_prefix(ctx->prog_type), 0, true);
@@ -6084,10 +6084,12 @@ emit_ios_generic(const struct dump_ctx *ctx,
                 postfix);
 
       if (io->name == TGSI_SEMANTIC_GENERIC) {
-         if (iot == io_in)
+         assert(io->sid < 32);
+         if (iot == io_in) {
             generic_ios->inputs_emitted_mask |= 1 << io->sid;
-         else
+         } else {
             generic_ios->outputs_emitted_mask |= 1 << io->sid;
+         }
       }
 
    } else {
@@ -6293,7 +6295,7 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
       if (ctx->key->clip_plane_enable) {
          emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
       }
-      if ((ctx->key->gs_present || ctx->key->tes_present) && ctx->key->next_stage_pervertex_in) {
+      if ((ctx->key->gs_present || ctx->key->tes_present) && ctx->key->output.use_pervertex) {
          emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n %s%s};\n", clip_buf, cull_buf);
       } else {
          emit_hdrf(glsl_strbufs, "%s%s", clip_buf, cull_buf);
@@ -6362,7 +6364,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
       }
 
       if (ctx->cfg->use_gles && !ctx->winsys_adjust_y_emitted &&
-          (ctx->key->coord_replace & (1 << ctx->inputs[i].sid))) {
+          (ctx->key->fs_coord_replace & (1 << ctx->inputs[i].sid))) {
          *winsys_adjust_y_emitted = true;
          emit_hdr(glsl_strbufs, "uniform float winsys_adjust_y;\n");
       }
@@ -6603,7 +6605,7 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
       *has_pervertex = true;
       emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s} gl_in[];\n", clip_var, cull_var);
    }
-   if (ctx->num_clip_dist && ctx->key->next_stage_pervertex_in) {
+   if (ctx->num_clip_dist && ctx->key->output.use_pervertex) {
       emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n float gl_ClipDistance[%d];\n} gl_out[];\n", ctx->num_clip_dist);
       emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
    }
@@ -6662,7 +6664,7 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
       *has_pervertex = true;
       emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s} gl_in[];\n", clip_var, cull_var);
    }
-   if (ctx->num_clip_dist && ctx->key->next_stage_pervertex_in) {
+   if (ctx->num_clip_dist && ctx->key->output.use_pervertex) {
       emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n float gl_ClipDistance[%d];\n} gl_out[];\n", ctx->num_clip_dist);
       emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
    }
@@ -6818,7 +6820,7 @@ static boolean analyze_instruction(struct tgsi_iterate_context *iter,
 static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
 {
    sinfo->num_ucp = ctx->key->clip_plane_enable ? 8 : 0;
-   sinfo->has_pervertex_in = ctx->has_pervertex;
+   sinfo->in.use_pervertex = ctx->has_pervertex;
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
    sinfo->out.num_clip = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
@@ -6833,9 +6835,9 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->ubo_indirect = !!(ctx->info.dimension_indirect_files & (1 << TGSI_FILE_CONSTANT));
 
    if (ctx->generic_ios.input_range.used)
-      sinfo->num_indirect_generic_inputs = ctx->generic_ios.input_range.io.last - ctx->generic_ios.input_range.io.sid + 1;
+      sinfo->in.num_indirect_generic = ctx->generic_ios.input_range.io.last - ctx->generic_ios.input_range.io.sid + 1;
    if (ctx->patch_ios.input_range.used)
-      sinfo->num_indirect_patch_inputs = ctx->patch_ios.input_range.io.last - ctx->patch_ios.input_range.io.sid + 1;
+      sinfo->in.num_indirect_patch = ctx->patch_ios.input_range.io.last - ctx->patch_ios.input_range.io.sid + 1;
 
    if (ctx->generic_ios.output_range.used)
       sinfo->out.num_indirect_generic = ctx->generic_ios.output_range.io.last - ctx->generic_ios.output_range.io.sid + 1;
@@ -6887,7 +6889,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
       free(sinfo->image_arrays);
    sinfo->image_arrays = ctx->image_arrays;
    sinfo->num_image_arrays = ctx->num_image_arrays;
-   sinfo->generic_inputs_emitted_mask = ctx->generic_ios.inputs_emitted_mask;
+   sinfo->in.generic_emitted_mask = ctx->generic_ios.inputs_emitted_mask;
 
    for (unsigned i = 0; i < ctx->num_outputs; ++i) {
       if (ctx->outputs[i].invariant)
@@ -6972,7 +6974,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.has_sample_input = false;
    ctx.req_local_mem = req_local_mem;
    ctx.guest_sent_io_arrays = key->input.guest_sent_io_arrays;
-   ctx.generic_ios.outputs_expected_mask = key->generic_outputs_expected_mask;
+   ctx.generic_ios.outputs_expected_mask = key->output.generic_emitted_mask;
 
    tgsi_scan_shader(tokens, &ctx.info);
    /* if we are in core profile mode we should use GLSL 1.40 */

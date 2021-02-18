@@ -89,9 +89,18 @@ struct vrend_shader_info_out {
    uint64_t guest_sent_io_arrays : 1;
 };
 
+struct vrend_shader_info_in {
+   uint64_t generic_emitted_mask : 32;
+   uint64_t num_indirect_generic : 8;
+   uint64_t num_indirect_patch : 8;
+   uint64_t use_pervertex : 1;
+};
+
+
 struct vrend_shader_info {
    uint64_t invariant_outputs;
    struct vrend_shader_info_out out;
+   struct vrend_shader_info_in in;
 
    struct vrend_layout_info generic_outputs_layout[64];
    struct vrend_array *sampler_arrays;
@@ -104,7 +113,6 @@ struct vrend_shader_info {
    uint32_t images_used_mask;
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
-   uint32_t generic_inputs_emitted_mask;
    uint32_t shadow_samp_mask;
    uint32_t attrib_input_mask;
    uint32_t fs_blend_equation_advanced;
@@ -118,12 +126,6 @@ struct vrend_shader_info {
    int num_sampler_arrays;
    int num_image_arrays;
 
-
-   uint8_t num_indirect_generic_inputs;
-   uint8_t num_indirect_patch_inputs;
-
-   uint8_t has_pervertex_in : 1;
-
    uint8_t ubo_indirect : 1;
    uint8_t tes_point_mode : 1;
 };
@@ -133,14 +135,14 @@ struct vrend_shader_key {
 
    struct vrend_fs_shader_info *fs_info;
    struct vrend_shader_info_out input;
+   struct vrend_shader_info_in output;
 
-   uint32_t coord_replace;
+   uint32_t fs_coord_replace;
    uint32_t cbufs_are_a8_bitmask;
    uint32_t cbufs_signed_int_bitmask;
    uint32_t cbufs_unsigned_int_bitmask;
    uint32_t attrib_signed_int_bitmask;
    uint32_t attrib_unsigned_int_bitmask;
-   uint32_t generic_outputs_expected_mask;
    uint32_t compiled_fs_uid;
 
    uint32_t fs_prim_is_points : 1;
@@ -153,13 +155,10 @@ struct vrend_shader_key {
    uint32_t tes_present : 1;
    uint32_t flatshade : 1;
    uint32_t fs_logicop_enabled : 1;
-   uint32_t next_stage_pervertex_in : 1;
    uint32_t fs_logicop_func : 4;
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
-   uint8_t num_indirect_generic_outputs;
-   uint8_t num_indirect_patch_outputs;
    uint8_t fs_swizzle_output_rgb_to_bgr;
    uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
    struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
