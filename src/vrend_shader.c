@@ -945,6 +945,15 @@ static enum vec_type get_type(uint32_t signed_int_mask,
       return VEC_FLOAT;
 }
 
+static void get_swizzle_offset_and_num_components(struct vrend_shader_io *io)
+{
+   unsigned mask_temp = io->usage_mask;
+   int start, num_comp;
+   u_bit_scan_consecutive_range(&mask_temp, &start, &num_comp);
+   io->swizzle_offset = start;
+   io->num_components = num_comp;
+}
+
 static boolean
 iter_declaration(struct tgsi_iterate_context *iter,
                  struct tgsi_full_declaration *decl)
@@ -987,7 +996,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->inputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
-      u_bit_scan_consecutive_range(&mask_temp, &ctx->inputs[i].swizzle_offset, &ctx->inputs[i].num_components);
+      get_swizzle_offset_and_num_components(&ctx->inputs[i]);
 
       ctx->inputs[i].glsl_predefined_no_emit = false;
       ctx->inputs[i].glsl_no_index = false;
@@ -1254,7 +1263,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->outputs[i].layout_location = 0;
       ctx->outputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->outputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
-      u_bit_scan_consecutive_range(&mask_temp, &ctx->outputs[i].swizzle_offset, &ctx->outputs[i].num_components);
+      get_swizzle_offset_and_num_components(&ctx->outputs[i]);
       ctx->outputs[i].glsl_predefined_no_emit = false;
       ctx->outputs[i].glsl_no_index = false;
       ctx->outputs[i].override_no_wm = ctx->outputs[i].num_components == 1;
@@ -4633,7 +4642,6 @@ static bool apply_prev_layout(const struct vrend_shader_key *key,
 
             /* Identify by sid and arrays_id  */
             if (io->sid == layout->sid && (io->array_id == layout->array_id)) {
-               unsigned new_mask = io->usage_mask;
 
                /* We have already one IO with the same SID and arrays ID, so we need to duplicate it */
                if (already_found_one) {
@@ -4649,11 +4657,11 @@ static bool apply_prev_layout(const struct vrend_shader_key *key,
                }
 
                if (already_found_one) {
-                  new_mask = io->usage_mask = (uint8_t)layout->usage_mask;
+                  io->usage_mask = (uint8_t)layout->usage_mask;
                   io->layout_location = layout->location;
                   io->array_id = layout->array_id;
 
-                  u_bit_scan_consecutive_range(&new_mask, &io->swizzle_offset, &io->num_components);
+                  get_swizzle_offset_and_num_components(io);
                   require_enhanced_layouts |= io->swizzle_offset > 0;
                   if (io->num_components == 1)
                      io->override_no_wm = true;
@@ -7204,7 +7212,7 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->inputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
-      u_bit_scan_consecutive_range(&mask_temp, &ctx->inputs[i].swizzle_offset, &ctx->inputs[i].num_components);
+      get_swizzle_offset_and_num_components(&ctx->inputs[i]);
 
       ctx->inputs[i].glsl_predefined_no_emit = false;
       ctx->inputs[i].glsl_no_index = false;
