@@ -138,7 +138,10 @@ struct vrend_shader_key {
    struct vrend_shader_info_in output;
 
    struct {
-      uint32_t swizzle_output_rgb_to_bgr : 8;
+      uint8_t swizzle_output_rgb_to_bgr;
+      uint8_t cbufs_are_a8_bitmask;
+      uint8_t cbufs_signed_int_bitmask;
+      uint8_t cbufs_unsigned_int_bitmask;
       uint32_t logicop_func : 4;
       uint32_t logicop_enabled : 1;
       uint32_t prim_is_points : 1;
@@ -146,9 +149,6 @@ struct vrend_shader_key {
       uint32_t coord_replace;
    } fs;
 
-   uint32_t cbufs_are_a8_bitmask;
-   uint32_t cbufs_signed_int_bitmask;
-   uint32_t cbufs_unsigned_int_bitmask;
    uint32_t attrib_signed_int_bitmask;
    uint32_t attrib_unsigned_int_bitmask;
    uint32_t compiled_fs_uid;

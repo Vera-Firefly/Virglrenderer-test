@@ -1328,8 +1328,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
          break;
       case TGSI_SEMANTIC_COLOR:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            ctx->outputs[i].type = get_type(ctx->key->cbufs_signed_int_bitmask,
-                                            ctx->key->cbufs_unsigned_int_bitmask,
+            ctx->outputs[i].type = get_type(ctx->key->fs.cbufs_signed_int_bitmask,
+                                            ctx->key->fs.cbufs_unsigned_int_bitmask,
                                             ctx->outputs[i].sid);
          }
 
@@ -2189,7 +2189,7 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
     if (ctx->key->pstipple_tex)
        emit_pstipple_pass(glsl_strbufs);
 
-    if (ctx->key->cbufs_are_a8_bitmask)
+    if (ctx->key->fs.cbufs_are_a8_bitmask)
        emit_a8_swizzle(glsl_strbufs);
 
     if (ctx->key->add_alpha_test)
@@ -6389,9 +6389,9 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
 
    if (ctx->write_all_cbufs) {
       const char* type = "vec4";
-      if (ctx->key->cbufs_unsigned_int_bitmask)
+      if (ctx->key->fs.cbufs_unsigned_int_bitmask)
          type = "uvec4";
-      else if (ctx->key->cbufs_signed_int_bitmask)
+      else if (ctx->key->fs.cbufs_signed_int_bitmask)
          type = "ivec4";
 
       for (i = 0; i < (uint32_t)ctx->cfg->max_draw_buffers; i++) {

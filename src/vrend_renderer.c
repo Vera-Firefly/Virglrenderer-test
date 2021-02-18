@@ -3312,12 +3312,12 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
          if (!sub_ctx->surf[i])
             continue;
          if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
-            key->cbufs_are_a8_bitmask |= (1 << i);
+            key->fs.cbufs_are_a8_bitmask |= (1 << i);
          if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
             add_alpha_test = false;
             UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
-                                 key->cbufs_signed_int_bitmask,
-                                 key->cbufs_unsigned_int_bitmask);
+                                 key->fs.cbufs_signed_int_bitmask,
+                                 key->fs.cbufs_unsigned_int_bitmask);
          }
          key->surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
       }
@@ -6185,6 +6185,12 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    vrend_state.features[feat_srgb_write_control] &= vrend_winsys_has_gl_colorspace();
 
    glGetIntegerv(GL_MAX_DRAW_BUFFERS, (GLint *) &vrend_state.max_draw_buffers);
+
+   /* Mesa clamps this value to 8 anyway, so just make sure that this side
+    * doesn't exceed the number to be on the save side when using 8-bit masks
+    * for the color buffers */
+   if (vrend_state.max_draw_buffers > 8)
+      vrend_state.max_draw_buffers = 8;
 
    if (!has_feature(feat_arb_robustness) &&
        !has_feature(feat_gles_khr_robustness)) {
