@@ -87,30 +87,31 @@ enum vec_type {
 };
 
 struct vrend_shader_io {
-   unsigned                name;
-   unsigned                gpr;
-   unsigned                done;
-   int                        sid;
-   unsigned                interpolate;
-   int first;
-   int last;
-   int array_id;
-   uint8_t usage_mask;
-   int swizzle_offset;
-   int num_components;
-   int layout_location;
-   unsigned                location;
-   bool                    invariant;
-   bool                    precise;
-   bool glsl_predefined_no_emit;
-   bool glsl_no_index;
-   bool glsl_gl_block;
-   bool override_no_wm;
-   bool is_int;
-   enum vec_type type;
-   bool fbfetch_used;
    char glsl_name[128];
-   unsigned stream;
+
+   unsigned sid : 16;
+   unsigned first : 16;
+   unsigned last : 16;
+   unsigned array_id : 10;
+   unsigned interpolate : 4;
+   unsigned location : 2;
+
+   unsigned name : 8;
+   unsigned stream : 2;
+   unsigned usage_mask : 4;
+   unsigned type : 2;
+   unsigned num_components : 3;
+   unsigned swizzle_offset : 3;
+
+   unsigned layout_location : 1;
+   unsigned invariant : 1;
+   unsigned precise : 1;
+   unsigned glsl_predefined_no_emit : 1;
+   unsigned glsl_no_index : 1;
+   unsigned glsl_gl_block : 1;
+   unsigned override_no_wm : 1;
+   unsigned is_int : 1;
+   unsigned fbfetch_used : 1;
 };
 
 struct vrend_shader_sampler {
