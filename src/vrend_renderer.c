@@ -307,54 +307,52 @@ static const  struct {
 };
 
 struct global_renderer_state {
+   struct vrend_context *ctx0;
+   struct vrend_context *current_ctx;
+   struct vrend_context *current_hw_ctx;
+
+   struct list_head waiting_query_list;
+   struct list_head fence_list;
+   struct list_head fence_wait_list;
+   struct vrend_fence *fence_waiting;
+
    int gl_major_ver;
    int gl_minor_ver;
 
-   struct vrend_context *current_ctx;
-   struct vrend_context *current_hw_ctx;
-   struct list_head waiting_query_list;
+   pipe_mutex fence_mutex;
+   pipe_thread sync_thread;
+   virgl_gl_context sync_context;
 
-   bool finishing;
-   bool use_gles;
-   bool use_core_profile;
-   bool use_external_blob;
-   bool use_integer;
-#ifdef HAVE_EPOXY_EGL_H
-   bool use_egl_fence;
-#endif
+   pipe_condvar fence_cond;
 
-   bool features[feat_last];
+   float tess_factors[6];
+   int eventfd;
 
-   /* these appeared broken on at least one driver */
-   bool use_explicit_locations;
    uint32_t max_draw_buffers;
    uint32_t max_texture_2d_size;
    uint32_t max_texture_3d_size;
    uint32_t max_texture_cube_size;
 
-   /* threaded sync */
-   bool stop_sync_thread;
-   int eventfd;
-
-   pipe_mutex fence_mutex;
-   /* a fence is always on either of the lists, or is pointed to by
-    * fence_waiting
-    */
-   struct list_head fence_list;
-   struct list_head fence_wait_list;
-   struct vrend_fence *fence_waiting;
-   pipe_condvar fence_cond;
-
-   struct vrend_context *ctx0;
-
-   pipe_thread sync_thread;
-   virgl_gl_context sync_context;
-
-   /* Needed on GLES to inject a TCS */
-   float tess_factors[6];
-
    /* inferred GL caching type */
    uint32_t inferred_gl_caching_type;
+
+   bool features[feat_last];
+
+   uint32_t finishing : 1;
+   uint32_t use_gles : 1;
+   uint32_t use_core_profile : 1;
+   uint32_t use_external_blob : 1;
+   uint32_t use_integer : 1;
+   /* these appeared broken on at least one driver */
+   uint32_t use_explicit_locations : 1;
+   /* threaded sync */
+   uint32_t stop_sync_thread : 1;
+   /* Needed on GLES to inject a TCS */
+   uint32_t bgra_srgb_emulation_loaded : 1;
+
+#ifdef HAVE_EPOXY_EGL_H
+   uint32_t use_egl_fence : 1;
+#endif
 };
 
 static struct global_renderer_state vrend_state;
