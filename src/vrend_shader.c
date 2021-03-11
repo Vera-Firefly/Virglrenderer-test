@@ -974,8 +974,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
       if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
          ctx->attrib_input_mask |= (1 << decl->Range.First);
-         ctx->inputs[i].type = get_type(ctx->key->attrib_signed_int_bitmask,
-                                        ctx->key->attrib_unsigned_int_bitmask,
+         ctx->inputs[i].type = get_type(ctx->key->vs.attrib_signed_int_bitmask,
+                                        ctx->key->vs.attrib_unsigned_int_bitmask,
                                         decl->Range.First);
       }
       ctx->inputs[i].name = decl->Semantic.Name;
@@ -2058,7 +2058,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    char full_op[PIPE_MAX_COLOR_BUFS][128 + 8];
 
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
-      mask[i] = (1 << ctx->key->surface_component_bits[i]) - 1;
+      mask[i] = (1 << ctx->key->fs.surface_component_bits[i]) - 1;
       scale[i] = mask[i];
       switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_INVERT:

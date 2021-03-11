@@ -136,51 +136,55 @@ struct vrend_shader_key {
    struct vrend_fs_shader_info *fs_info;
    struct vrend_shader_info_out input;
    struct vrend_shader_info_in output;
+   struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
 
-   struct {
-      uint8_t swizzle_output_rgb_to_bgr;
-      uint8_t cbufs_are_a8_bitmask;
-      uint8_t cbufs_signed_int_bitmask;
-      uint8_t cbufs_unsigned_int_bitmask;
-      uint32_t logicop_func : 4;
-      uint32_t logicop_enabled : 1;
-      uint32_t prim_is_points : 1;
-      uint32_t invert_origin : 1;
-      uint32_t coord_replace;
-   } fs;
+   union {
+      struct {
+         uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
+         uint32_t coord_replace;
+         uint8_t swizzle_output_rgb_to_bgr;
+         uint8_t cbufs_are_a8_bitmask;
+         uint8_t cbufs_signed_int_bitmask;
+         uint8_t cbufs_unsigned_int_bitmask;
+         uint32_t logicop_func : 4;
+         uint32_t logicop_enabled : 1;
+         uint32_t prim_is_points : 1;
+         uint32_t invert_origin : 1;
+      } fs;
 
-   uint32_t attrib_signed_int_bitmask;
-   uint32_t attrib_unsigned_int_bitmask;
+      struct {
+         uint32_t attrib_signed_int_bitmask;
+         uint32_t attrib_unsigned_int_bitmask;
+      } vs;
+   };
+
    uint32_t compiled_fs_uid;
-
-   uint32_t pstipple_tex : 1;
-   uint32_t add_alpha_test : 1;
-   uint32_t color_two_side : 1;
-   uint32_t gs_present : 1;
-   uint32_t tcs_present : 1;
-   uint32_t tes_present : 1;
-   uint32_t flatshade : 1;
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
+   uint8_t pstipple_tex : 1;
+   uint8_t add_alpha_test : 1;
+   uint8_t color_two_side : 1;
+   uint8_t gs_present : 1;
+   uint8_t tcs_present : 1;
+   uint8_t tes_present : 1;
+   uint8_t flatshade : 1;
 
-   uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
-   struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
 };
 
 struct vrend_shader_cfg {
-   int glsl_version;
-   int max_draw_buffers;
-   bool use_gles;
-   bool use_core_profile;
-   bool use_explicit_locations;
-   bool has_arrays_of_arrays;
-   bool has_gpu_shader5;
-   bool has_es31_compat;
-   bool has_conservative_depth;
-   bool use_integer;
-   bool has_dual_src_blend;
-   bool has_fbfetch_coherent;
+   uint32_t glsl_version : 12;
+   uint32_t max_draw_buffers : 4;
+   uint32_t use_gles : 1;
+   uint32_t use_core_profile : 1;
+   uint32_t use_explicit_locations : 1;
+   uint32_t has_arrays_of_arrays : 1;
+   uint32_t has_gpu_shader5 : 1;
+   uint32_t has_es31_compat : 1;
+   uint32_t has_conservative_depth : 1;
+   uint32_t use_integer : 1;
+   uint32_t has_dual_src_blend : 1;
+   uint32_t has_fbfetch_coherent : 1;
 };
 
 struct vrend_context;

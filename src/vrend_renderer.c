@@ -3304,26 +3304,29 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       bool add_alpha_test = true;
 
       // Only use integer info when drawing to avoid stale info.
-      if (vrend_state.use_integer && sub_ctx->drawing) {
-         key->attrib_signed_int_bitmask = sub_ctx->ve->signed_int_bitmask;
-         key->attrib_unsigned_int_bitmask = sub_ctx->ve->unsigned_int_bitmask;
+      if (vrend_state.use_integer && sub_ctx->drawing &&
+          type == PIPE_SHADER_VERTEX) {
+         key->vs.attrib_signed_int_bitmask = sub_ctx->ve->signed_int_bitmask;
+         key->vs.attrib_unsigned_int_bitmask = sub_ctx->ve->unsigned_int_bitmask;
       }
-      for (i = 0; i < sub_ctx->nr_cbufs; i++) {
-         if (!sub_ctx->surf[i])
-            continue;
-         if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
-            key->fs.cbufs_are_a8_bitmask |= (1 << i);
-         if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
+      if (type == PIPE_SHADER_FRAGMENT) {
+         for (i = 0; i < sub_ctx->nr_cbufs; i++) {
+            if (!sub_ctx->surf[i])
+               continue;
+            if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
+               key->fs.cbufs_are_a8_bitmask |= (1 << i);
+            if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
             add_alpha_test = false;
             UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
                                  key->fs.cbufs_signed_int_bitmask,
                                  key->fs.cbufs_unsigned_int_bitmask);
+            }
+            key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
          }
-         key->surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
-      }
-      if (add_alpha_test) {
-         key->add_alpha_test = sub_ctx->dsa_state.alpha.enabled;
-         key->alpha_test = sub_ctx->dsa_state.alpha.func;
+         if (add_alpha_test) {
+            key->add_alpha_test = sub_ctx->dsa_state.alpha.enabled;
+            key->alpha_test = sub_ctx->dsa_state.alpha.func;
+         }
       }
 
       key->pstipple_tex = sub_ctx->rs_state.poly_stipple_enable;
@@ -3332,8 +3335,6 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       key->clip_plane_enable = sub_ctx->rs_state.clip_plane_enable;
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
    }
-
-   key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
 
    key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY];
    key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
@@ -3379,6 +3380,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    int next_type = -1;
 
    if (type == PIPE_SHADER_FRAGMENT) {
+      key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
       key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
          key->fs.logicop_enabled = sub_ctx->blend_state.logicop_enable;
