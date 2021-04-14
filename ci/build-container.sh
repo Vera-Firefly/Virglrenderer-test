@@ -89,7 +89,7 @@ apt-get -y build-dep --no-install-recommends \
 apt-get -y remove valgrind libdrm-dev
 rm -rf /var/lib/apt/lists/*
 
-export KNOWN_GOOD_DRM=libdrm-2.4.104
+export KNOWN_GOOD_DRM=libdrm-2.4.105
 mkdir /drm
 pushd /drm
 git clone --shallow-since="$GIT_DATE" https://gitlab.freedesktop.org/mesa/drm.git . && \
@@ -103,7 +103,7 @@ git clone --shallow-since="$GIT_DATE" https://gitlab.freedesktop.org/mesa/drm.gi
     [ "$?" = "0" ] || exit 1
 popd
 
-export KNOWN_GOOD_MESA=${KNOWN_GOOD_MESA:-30a393f4581079ced1ac05d6b74c7408fbe26f83}
+export KNOWN_GOOD_MESA=${KNOWN_GOOD_MESA:-7db79fa6773bd4168980fad5c8c8785adb34de76}
 echo $KNOWN_GOOD_MESA
 export MESA_REPO=https://gitlab.freedesktop.org/mesa/mesa.git
 echo $MESA_REPO
@@ -114,7 +114,7 @@ git clone --shallow-since="$GIT_DATE" ${MESA_REPO} . && \
     git log --oneline -n 1 && \
     mkdir -p build && \
     meson build/ && \
-    meson configure build/ -Dprefix=/usr/local -Dplatforms=drm,x11,wayland,surfaceless -Ddri-drivers=i965 -Dgallium-drivers=swrast,virgl,radeonsi -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
+    meson configure build/ -Dprefix=/usr/local -Dplatforms=x11,wayland -Ddri-drivers= -Dgallium-drivers=swrast,iris,virgl,radeonsi -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
     ninja -C build/ install >/dev/null && \
     rm -rf /mesa
     [ "$?" = "0" ] || exit 1
