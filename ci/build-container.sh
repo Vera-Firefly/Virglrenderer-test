@@ -9,8 +9,8 @@ export PATH=$PATH:/usr/local/go/bin
 export LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib:/usr/local/lib/x86_64-linux-gnu
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/local/lib/x86_64-linux-gnu/pkgconfig
 export LDFLAGS="-L/usr/local/lib64 -L/usr/local/lib/ -L/usr/local/lib/x86_64-linux-gnu"
-export CC="gcc-8"
-export CXX="g++-8"
+export CC="gcc"
+export CXX="g++"
 export CFLAGS="-g3"
 export CXXFLAGS="-g3"
 export GIT_DATE="2020-02-02"
@@ -22,8 +22,8 @@ echo '#!/bin/sh' > /usr/sbin/policy-rc.d
 echo 'exit 101' >> /usr/sbin/policy-rc.d
 chmod +x /usr/sbin/policy-rc.d
 
-echo deb-src http://deb.debian.org/debian buster main >> /etc/apt/sources.list
-echo deb http://deb.debian.org/debian buster-backports main >> /etc/apt/sources.list
+echo deb-src http://deb.debian.org/debian bullseye main >> /etc/apt/sources.list
+echo deb http://deb.debian.org/debian bullseye-backports main >> /etc/apt/sources.list
 apt-get update
 apt-get -y install ca-certificates
 apt-get -y install --no-install-recommends \
@@ -31,13 +31,13 @@ apt-get -y install --no-install-recommends \
       busybox \
       ccache \
       check \
-      clang-8 \
+      clang \
       cmake \
       dbus \
-      g++-8 \
-      gcc-8 \
+      g++ \
+      gcc \
       gdb \
-      gdc-8 \
+      gdc \
       git \
       golang-go \
       kbd \
@@ -51,17 +51,17 @@ apt-get -y install --no-install-recommends \
       libwayland-dev \
       libwayland-egl-backend-dev \
       linux-image-amd64 \
-      lld-8 \
-      llvm-8-dev \
+      lld \
+      llvm-11-dev \
       mesa-utils \
       meson \
       nasm \
       ninja-build \
       procps \
       psmisc \
-      python-numpy \
-      python-six \
-      python-mako \
+      python3-numpy \
+      python3-six \
+      python3-mako \
       python3-pip \
       python3-setuptools \
       python3-six \

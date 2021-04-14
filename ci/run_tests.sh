@@ -57,7 +57,7 @@ run_setup()
 
    mkdir build
    if [ "x$use_clang_fuzzer" = "x1" ]; then
-      export CC=clang-8
+      export CC=clang
       export FUZZER=-Dfuzzer=true
    fi
 
