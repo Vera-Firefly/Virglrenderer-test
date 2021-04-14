@@ -11,7 +11,6 @@
 #include <time.h>
 
 #include "util/u_math.h"
-
 #include "virgl_context.h"
 
 enum vkr_ring_status_flag {
@@ -71,8 +70,8 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    if (!ring)
       return NULL;
 
-#define ring_attach_shared(member)  \
-      ring->shared.member = (void *)((uint8_t *)shared + layout->member##_offset)
+#define ring_attach_shared(member)                                                       \
+   ring->shared.member = (void *)((uint8_t *)shared + layout->member##_offset)
    ring_attach_shared(head);
    ring_attach_shared(tail);
    ring_attach_shared(status);
@@ -260,8 +259,7 @@ vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
    if (offset > ring->extra_size || sizeof(val) > ring->extra_size - offset)
       return false;
 
-   volatile atomic_uint *dst =
-      (void *)((uint8_t *)ring->shared.extra + offset);
+   volatile atomic_uint *dst = (void *)((uint8_t *)ring->shared.extra + offset);
    atomic_store_explicit(dst, val, memory_order_release);
 
    return true;

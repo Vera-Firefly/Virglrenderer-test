@@ -13,8 +13,8 @@
 
 #include "os/os_misc.h"
 
-#define VKR_RENDERER_THREAD_SYNC               (1u << 0)
-#define VKR_RENDERER_MULTI_PROCESS             (1u << 1)
+#define VKR_RENDERER_THREAD_SYNC (1u << 0)
+#define VKR_RENDERER_MULTI_PROCESS (1u << 1)
 
 struct virgl_context;
 
@@ -63,8 +63,7 @@ vkr_get_capset(UNUSED void *capset)
 }
 
 static inline struct virgl_context *
-vkr_context_create(UNUSED size_t debug_len,
-                   UNUSED const char *debug_name)
+vkr_context_create(UNUSED size_t debug_len, UNUSED const char *debug_name)
 {
    return NULL;
 }

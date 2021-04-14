@@ -17,7 +17,6 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
-
 #include "venus-protocol/vn_protocol_renderer.h"
 #include "virgl_context.h"
 #include "virgl_protocol.h" /* for transfer_mode */
@@ -25,11 +24,12 @@
 #include "virgl_util.h"
 #include "virglrenderer.h"
 #include "virglrenderer_hw.h"
+#include "vrend_debug.h"
+#include "vrend_iov.h"
+
 #include "vkr_cs.h"
 #include "vkr_object.h"
 #include "vkr_ring.h"
-#include "vrend_debug.h"
-#include "vrend_iov.h"
 
 /*
  * TODO what extensions do we need from the host driver?
@@ -45,35 +45,33 @@
  * TODO Most of the functions are generated.  Some of them are then
  * hand-edited.  Find a better/cleaner way to reduce manual works.
  */
-#define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)    \
-   struct vkr_ ## vkr_type *obj = calloc(1, sizeof(*obj));      \
-   if (!obj) {                                                  \
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                  \
-      return;                                                   \
-   }                                                            \
-   obj->base.type = VK_OBJECT_TYPE_ ## vk_obj;                  \
-   obj->base.id = vkr_cs_handle_load_id(                        \
-         (const void **)args->vk_arg, obj->base.type);          \
-                                                                \
-   vn_replace_ ## vk_cmd ## _args_handle(args);                 \
-   args->ret = vk_cmd(args->device, args->pCreateInfo, NULL,    \
-                     &obj->base.handle.vkr_type);               \
-   if (args->ret != VK_SUCCESS) {                               \
-      free(obj);                                                \
-      return;                                                   \
-   }                                                            \
+#define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
+   struct vkr_##vkr_type *obj = calloc(1, sizeof(*obj));                                 \
+   if (!obj) {                                                                           \
+      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                           \
+      return;                                                                            \
+   }                                                                                     \
+   obj->base.type = VK_OBJECT_TYPE_##vk_obj;                                             \
+   obj->base.id = vkr_cs_handle_load_id((const void **)args->vk_arg, obj->base.type);    \
+                                                                                         \
+   vn_replace_##vk_cmd##_args_handle(args);                                              \
+   args->ret =                                                                           \
+      vk_cmd(args->device, args->pCreateInfo, NULL, &obj->base.handle.vkr_type);         \
+   if (args->ret != VK_SUCCESS) {                                                        \
+      free(obj);                                                                         \
+      return;                                                                            \
+   }                                                                                     \
    (void)obj
 
-#define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)   \
-   struct vkr_ ## vkr_type *obj =                               \
-      (struct vkr_ ## vkr_type *)(uintptr_t)args->vk_arg;       \
-   if (!obj || obj->base.type != VK_OBJECT_TYPE_ ## vk_obj) {   \
-      if (obj)                                                  \
-         vkr_cs_decoder_set_fatal(&ctx->decoder);               \
-      return;                                                   \
-   }                                                            \
-                                                                \
-   vn_replace_ ## vk_cmd ## _args_handle(args);                 \
+#define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
+   struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)args->vk_arg;        \
+   if (!obj || obj->base.type != VK_OBJECT_TYPE_##vk_obj) {                              \
+      if (obj)                                                                           \
+         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
+      return;                                                                            \
+   }                                                                                     \
+                                                                                         \
+   vn_replace_##vk_cmd##_args_handle(args);                                              \
    vk_cmd(args->device, args->vk_arg, NULL)
 
 struct vkr_physical_device;
@@ -185,31 +183,31 @@ struct vkr_device_memory {
    struct list_head head;
 };
 
-struct vkr_fence  {
+struct vkr_fence {
    struct vkr_object base;
 };
 
-struct vkr_semaphore  {
+struct vkr_semaphore {
    struct vkr_object base;
 };
 
-struct vkr_buffer  {
+struct vkr_buffer {
    struct vkr_object base;
 };
 
-struct vkr_buffer_view  {
+struct vkr_buffer_view {
    struct vkr_object base;
 };
 
-struct vkr_image  {
+struct vkr_image {
    struct vkr_object base;
 };
 
-struct vkr_image_view  {
+struct vkr_image_view {
    struct vkr_object base;
 };
 
-struct vkr_sampler  {
+struct vkr_sampler {
    struct vkr_object base;
 };
 
@@ -375,8 +373,8 @@ object_array_init(struct object_array *arr,
       }
 
       obj->type = obj_type;
-      obj->id = vkr_cs_handle_load_id(
-            (const void **)((char *)handles + handle_size * i), obj->type);
+      obj->id = vkr_cs_handle_load_id((const void **)((char *)handles + handle_size * i),
+                                      obj->type);
 
       arr->objects[i] = obj;
    }
@@ -385,7 +383,9 @@ object_array_init(struct object_array *arr,
 }
 
 static void
-vkr_dispatch_vkSetReplyCommandStreamMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkSetReplyCommandStreamMESA *args)
+vkr_dispatch_vkSetReplyCommandStreamMESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkSetReplyCommandStreamMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_resource_attachment *att;
@@ -395,29 +395,26 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(struct vn_dispatch_context *dispatch, s
    if (!att)
       return;
 
-   vkr_cs_encoder_set_stream(&ctx->encoder,
-                             att->resource->iov,
-                             att->resource->iov_count,
-                             args->pStream->offset,
-                             args->pStream->size);
+   vkr_cs_encoder_set_stream(&ctx->encoder, att->resource->iov, att->resource->iov_count,
+                             args->pStream->offset, args->pStream->size);
 }
 
 static void
-vkr_dispatch_vkSeekReplyCommandStreamMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkSeekReplyCommandStreamMESA *args)
+vkr_dispatch_vkSeekReplyCommandStreamMESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkSeekReplyCommandStreamMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    vkr_cs_encoder_seek_stream(&ctx->encoder, args->position);
 }
 
 static void *
-copy_command_stream(struct vkr_context *ctx,
-                    const VkCommandStreamDescriptionMESA *stream)
+copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMESA *stream)
 {
    struct vkr_resource_attachment *att;
    struct virgl_resource *res;
 
-   att = util_hash_table_get(ctx->resource_table,
-                             uintptr_to_pointer(stream->resourceId));
+   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(stream->resourceId));
    if (!att)
       return NULL;
    res = att->resource;
@@ -464,7 +461,9 @@ copy_command_stream(struct vkr_context *ctx,
 }
 
 static void
-vkr_dispatch_vkExecuteCommandStreamsMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkExecuteCommandStreamsMESA *args)
+vkr_dispatch_vkExecuteCommandStreamsMESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkExecuteCommandStreamsMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -509,7 +508,7 @@ static struct vkr_ring *
 lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 {
    struct vkr_ring *ring;
-   LIST_FOR_EACH_ENTRY(ring, &ctx->rings, head) {
+   LIST_FOR_EACH_ENTRY (ring, &ctx->rings, head) {
       if (ring->id == ring_id)
          return ring;
    }
@@ -517,7 +516,8 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 }
 
 static void
-vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateRingMESA *args)
+vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCreateRingMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    const VkRingCreateInfoMESA *info = args->pCreateInfo;
@@ -526,8 +526,7 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch, struct vn_co
    size_t size;
    struct vkr_ring *ring;
 
-   att = util_hash_table_get(ctx->resource_table,
-                             uintptr_to_pointer(info->resourceId));
+   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(info->resourceId));
    if (!att) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -549,11 +548,8 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch, struct vn_co
 
    shared += info->offset;
    size = info->size;
-   if (info->headOffset > size ||
-       info->tailOffset > size ||
-       info->statusOffset > size ||
-       info->bufferOffset > size ||
-       info->extraOffset > size) {
+   if (info->headOffset > size || info->tailOffset > size || info->statusOffset > size ||
+       info->bufferOffset > size || info->extraOffset > size) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
@@ -593,7 +589,8 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyRingMESA *args)
+vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkDestroyRingMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
@@ -607,7 +604,8 @@ vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkNotifyRingMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkNotifyRingMESA *args)
+vkr_dispatch_vkNotifyRingMESA(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkNotifyRingMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
@@ -620,7 +618,8 @@ vkr_dispatch_vkNotifyRingMESA(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkWriteRingExtraMESA *args)
+vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkWriteRingExtraMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
@@ -634,14 +633,17 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch, struct v
 }
 
 static void
-vkr_dispatch_vkEnumerateInstanceVersion(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkEnumerateInstanceVersion *args)
+vkr_dispatch_vkEnumerateInstanceVersion(UNUSED struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkEnumerateInstanceVersion *args)
 {
    vn_replace_vkEnumerateInstanceVersion_args_handle(args);
    args->ret = vkEnumerateInstanceVersion(args->pApiVersion);
 }
 
 static void
-vkr_dispatch_vkEnumerateInstanceExtensionProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkEnumerateInstanceExtensionProperties *args)
+vkr_dispatch_vkEnumerateInstanceExtensionProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkEnumerateInstanceExtensionProperties *args)
 {
    VkExtensionProperties private_extensions[] = {
       {
@@ -663,15 +665,15 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(UNUSED struct vn_dispatch_co
       props->specVersion = vn_info_extension_spec_version(props->extensionName);
    }
 
-   const uint32_t count =
-      MIN2(*args->pPropertyCount, ARRAY_SIZE(private_extensions));
+   const uint32_t count = MIN2(*args->pPropertyCount, ARRAY_SIZE(private_extensions));
    memcpy(args->pProperties, private_extensions, sizeof(*args->pProperties) * count);
    *args->pPropertyCount = count;
    args->ret = count == ARRAY_SIZE(private_extensions) ? VK_SUCCESS : VK_INCOMPLETE;
 }
 
 static void
-vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateInstance *args)
+vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCreateInstance *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -716,8 +718,8 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch, struct vn_co
    ((VkInstanceCreateInfo *)args->pCreateInfo)->pApplicationInfo = &app_info;
 
    instance->base.type = VK_OBJECT_TYPE_INSTANCE;
-   instance->base.id = vkr_cs_handle_load_id((const void **)args->pInstance,
-                                             instance->base.type);
+   instance->base.id =
+      vkr_cs_handle_load_id((const void **)args->pInstance, instance->base.type);
    instance->api_version = app_info.apiVersion;
 
    vn_replace_vkCreateInstance_args_handle(args);
@@ -727,10 +729,10 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch, struct vn_co
       return;
    }
 
-   instance->get_memory_fd = (PFN_vkGetMemoryFdKHR)
-      vkGetInstanceProcAddr(instance->base.handle.instance, "vkGetMemoryFdKHR");
-   instance->get_fence_fd = (PFN_vkGetFenceFdKHR)
-      vkGetInstanceProcAddr(instance->base.handle.instance, "vkGetFenceFdKHR");
+   instance->get_memory_fd = (PFN_vkGetMemoryFdKHR)vkGetInstanceProcAddr(
+      instance->base.handle.instance, "vkGetMemoryFdKHR");
+   instance->get_fence_fd = (PFN_vkGetFenceFdKHR)vkGetInstanceProcAddr(
+      instance->base.handle.instance, "vkGetFenceFdKHR");
 
    util_hash_table_set_u64(ctx->object_table, instance->base.id, instance);
 
@@ -738,7 +740,8 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyInstance *args)
+vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkDestroyInstance *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_instance *instance = (struct vkr_instance *)args->instance;
@@ -774,7 +777,8 @@ vkr_instance_enumerate_physical_devices(struct vkr_instance *instance)
       return VK_SUCCESS;
 
    uint32_t count;
-   VkResult result = vkEnumeratePhysicalDevices(instance->base.handle.instance, &count, NULL);
+   VkResult result =
+      vkEnumeratePhysicalDevices(instance->base.handle.instance, &count, NULL);
    if (result != VK_SUCCESS)
       return result;
 
@@ -801,7 +805,8 @@ vkr_instance_enumerate_physical_devices(struct vkr_instance *instance)
 }
 
 static struct vkr_physical_device *
-vkr_instance_lookup_physical_device(struct vkr_instance *instance, VkPhysicalDevice handle)
+vkr_instance_lookup_physical_device(struct vkr_instance *instance,
+                                    VkPhysicalDevice handle)
 {
    for (uint32_t i = 0; i < instance->physical_device_count; i++) {
       /* XXX this assumes VkPhysicalDevice handles are unique */
@@ -879,7 +884,8 @@ vkr_physical_device_init_properties(struct vkr_physical_device *physical_dev)
 }
 
 static void
-vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch, struct vn_command_vkEnumeratePhysicalDevices *args)
+vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkEnumeratePhysicalDevices *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -912,8 +918,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch, st
    for (i = 0; i < count; i++) {
       struct vkr_physical_device *physical_dev = instance->physical_devices[i];
       const vkr_object_id id = vkr_cs_handle_load_id(
-            (const void **)&args->pPhysicalDevices[i],
-            VK_OBJECT_TYPE_PHYSICAL_DEVICE);
+         (const void **)&args->pPhysicalDevices[i], VK_OBJECT_TYPE_PHYSICAL_DEVICE);
 
       if (physical_dev) {
          if (physical_dev->base.id != id) {
@@ -934,8 +939,8 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch, st
       physical_dev->base.handle.physical_device = instance->physical_device_handles[i];
 
       vkr_physical_device_init_properties(physical_dev);
-      physical_dev->api_version = MIN2(physical_dev->properties.apiVersion,
-                                       instance->api_version);
+      physical_dev->api_version =
+         MIN2(physical_dev->properties.apiVersion, instance->api_version);
       vkr_physical_device_init_extensions(physical_dev);
       vkr_physical_device_init_memory_properties(physical_dev);
 
@@ -957,7 +962,9 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch, st
 }
 
 static void
-vkr_dispatch_vkEnumeratePhysicalDeviceGroups(struct vn_dispatch_context *dispatch, struct vn_command_vkEnumeratePhysicalDeviceGroups *args)
+vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkEnumeratePhysicalDeviceGroups *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -982,7 +989,9 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(struct vn_dispatch_context *dispatc
    }
 
    vn_replace_vkEnumeratePhysicalDeviceGroups_args_handle(args);
-   args->ret = vkEnumeratePhysicalDeviceGroups(args->instance, args->pPhysicalDeviceGroupCount, args->pPhysicalDeviceGroupProperties);
+   args->ret =
+      vkEnumeratePhysicalDeviceGroups(args->instance, args->pPhysicalDeviceGroupCount,
+                                      args->pPhysicalDeviceGroupProperties);
    if (args->ret != VK_SUCCESS)
       return;
 
@@ -992,7 +1001,8 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(struct vn_dispatch_context *dispatc
    /* XXX this assumes vkEnumeratePhysicalDevices is called first */
    /* replace VkPhysicalDevice handles by object ids */
    for (uint32_t i = 0; i < *args->pPhysicalDeviceGroupCount; i++) {
-      const VkPhysicalDeviceGroupProperties *props = &args->pPhysicalDeviceGroupProperties[i];
+      const VkPhysicalDeviceGroupProperties *props =
+         &args->pPhysicalDeviceGroupProperties[i];
       VkPhysicalDeviceGroupProperties *out = &orig_props[i];
 
       out->physicalDeviceCount = props->physicalDeviceCount;
@@ -1010,11 +1020,14 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(struct vn_dispatch_context *dispatc
 }
 
 static void
-vkr_dispatch_vkEnumerateDeviceExtensionProperties(struct vn_dispatch_context *dispatch, struct vn_command_vkEnumerateDeviceExtensionProperties *args)
+vkr_dispatch_vkEnumerateDeviceExtensionProperties(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkEnumerateDeviceExtensionProperties *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_physical_device *physical_dev = (struct vkr_physical_device *)args->physicalDevice;
+   struct vkr_physical_device *physical_dev =
+      (struct vkr_physical_device *)args->physicalDevice;
    if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -1039,21 +1052,27 @@ vkr_dispatch_vkEnumerateDeviceExtensionProperties(struct vn_dispatch_context *di
       args->ret = VK_SUCCESS;
    }
 
-   memcpy(args->pProperties, physical_dev->extensions, sizeof(*args->pProperties) * count);
+   memcpy(args->pProperties, physical_dev->extensions,
+          sizeof(*args->pProperties) * count);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceFeatures(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceFeatures *args)
+vkr_dispatch_vkGetPhysicalDeviceFeatures(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceFeatures *args)
 {
    vn_replace_vkGetPhysicalDeviceFeatures_args_handle(args);
    vkGetPhysicalDeviceFeatures(args->physicalDevice, args->pFeatures);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceProperties(struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceProperties(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceProperties *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_physical_device *physical_dev = (struct vkr_physical_device *)args->physicalDevice;
+   struct vkr_physical_device *physical_dev =
+      (struct vkr_physical_device *)args->physicalDevice;
    if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -1063,14 +1082,20 @@ vkr_dispatch_vkGetPhysicalDeviceProperties(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceQueueFamilyProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceQueueFamilyProperties *args)
 {
    vn_replace_vkGetPhysicalDeviceQueueFamilyProperties_args_handle(args);
-   vkGetPhysicalDeviceQueueFamilyProperties(args->physicalDevice, args->pQueueFamilyPropertyCount, args->pQueueFamilyProperties);
+   vkGetPhysicalDeviceQueueFamilyProperties(args->physicalDevice,
+                                            args->pQueueFamilyPropertyCount,
+                                            args->pQueueFamilyProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceMemoryProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceMemoryProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceMemoryProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceMemoryProperties *args)
 {
    /* TODO lie about this */
    vn_replace_vkGetPhysicalDeviceMemoryProperties_args_handle(args);
@@ -1078,38 +1103,54 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties(UNUSED struct vn_dispatch_conte
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceFormatProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceFormatProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceFormatProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceFormatProperties *args)
 {
    vn_replace_vkGetPhysicalDeviceFormatProperties_args_handle(args);
-   vkGetPhysicalDeviceFormatProperties(args->physicalDevice, args->format, args->pFormatProperties);
+   vkGetPhysicalDeviceFormatProperties(args->physicalDevice, args->format,
+                                       args->pFormatProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceImageFormatProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceImageFormatProperties *args)
 {
    vn_replace_vkGetPhysicalDeviceImageFormatProperties_args_handle(args);
-   args->ret = vkGetPhysicalDeviceImageFormatProperties(args->physicalDevice, args->format, args->type, args->tiling, args->usage, args->flags, args->pImageFormatProperties);
+   args->ret = vkGetPhysicalDeviceImageFormatProperties(
+      args->physicalDevice, args->format, args->type, args->tiling, args->usage,
+      args->flags, args->pImageFormatProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties *args)
+vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties *args)
 {
    vn_replace_vkGetPhysicalDeviceSparseImageFormatProperties_args_handle(args);
-   vkGetPhysicalDeviceSparseImageFormatProperties(args->physicalDevice, args->format, args->type, args->samples, args->usage, args->tiling, args->pPropertyCount, args->pProperties);
+   vkGetPhysicalDeviceSparseImageFormatProperties(
+      args->physicalDevice, args->format, args->type, args->samples, args->usage,
+      args->tiling, args->pPropertyCount, args->pProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceFeatures2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceFeatures2 *args)
+vkr_dispatch_vkGetPhysicalDeviceFeatures2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceFeatures2 *args)
 {
    vn_replace_vkGetPhysicalDeviceFeatures2_args_handle(args);
    vkGetPhysicalDeviceFeatures2(args->physicalDevice, args->pFeatures);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceProperties2(struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceProperties2(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceProperties2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_physical_device *physical_dev = (struct vkr_physical_device *)args->physicalDevice;
+   struct vkr_physical_device *physical_dev =
+      (struct vkr_physical_device *)args->physicalDevice;
    if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -1168,14 +1209,20 @@ vkr_dispatch_vkGetPhysicalDeviceProperties2(struct vn_dispatch_context *dispatch
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceQueueFamilyProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceQueueFamilyProperties2 *args)
 {
    vn_replace_vkGetPhysicalDeviceQueueFamilyProperties2_args_handle(args);
-   vkGetPhysicalDeviceQueueFamilyProperties2(args->physicalDevice, args->pQueueFamilyPropertyCount, args->pQueueFamilyProperties);
+   vkGetPhysicalDeviceQueueFamilyProperties2(args->physicalDevice,
+                                             args->pQueueFamilyPropertyCount,
+                                             args->pQueueFamilyProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceMemoryProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceMemoryProperties2 *args)
 {
    /* TODO lie about this */
    vn_replace_vkGetPhysicalDeviceMemoryProperties2_args_handle(args);
@@ -1183,24 +1230,33 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(UNUSED struct vn_dispatch_cont
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceFormatProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceFormatProperties2 *args)
 {
    vn_replace_vkGetPhysicalDeviceFormatProperties2_args_handle(args);
-   vkGetPhysicalDeviceFormatProperties2(args->physicalDevice, args->format, args->pFormatProperties);
+   vkGetPhysicalDeviceFormatProperties2(args->physicalDevice, args->format,
+                                        args->pFormatProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceImageFormatProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceImageFormatProperties2 *args)
 {
    vn_replace_vkGetPhysicalDeviceImageFormatProperties2_args_handle(args);
-   args->ret = vkGetPhysicalDeviceImageFormatProperties2(args->physicalDevice, args->pImageFormatInfo, args->pImageFormatProperties);
+   args->ret = vkGetPhysicalDeviceImageFormatProperties2(
+      args->physicalDevice, args->pImageFormatInfo, args->pImageFormatProperties);
 }
 
 static void
-vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args)
+vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args)
 {
    vn_replace_vkGetPhysicalDeviceSparseImageFormatProperties2_args_handle(args);
-   vkGetPhysicalDeviceSparseImageFormatProperties2(args->physicalDevice, args->pFormatInfo, args->pPropertyCount, args->pProperties);
+   vkGetPhysicalDeviceSparseImageFormatProperties2(
+      args->physicalDevice, args->pFormatInfo, args->pPropertyCount, args->pProperties);
 }
 
 static void
@@ -1216,7 +1272,7 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
    if (queue->has_thread) {
       mtx_lock(&queue->mutex);
 
-      LIST_FOR_EACH_ENTRY_SAFE(sync, tmp, &queue->signaled_syncs, head) {
+      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head) {
          if (sync->head.next == &queue->signaled_syncs ||
              !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
             list_addtail(&sync->head, retired_syncs);
@@ -1229,7 +1285,7 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
 
       mtx_unlock(&queue->mutex);
    } else {
-      LIST_FOR_EACH_ENTRY_SAFE(sync, tmp, &queue->pending_syncs, head) {
+      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head) {
          VkResult result = vkGetFenceStatus(dev->base.handle.device, sync->fence);
          if (result == VK_NOT_READY)
             break;
@@ -1266,8 +1322,8 @@ vkr_queue_thread(void *arg)
 
       mtx_unlock(&queue->mutex);
 
-      VkResult result = vkWaitForFences(dev->base.handle.device, 1, &sync->fence,
-            false, ns_per_sec * 3);
+      VkResult result =
+         vkWaitForFences(dev->base.handle.device, 1, &sync->fence, false, ns_per_sec * 3);
 
       mtx_lock(&queue->mutex);
 
@@ -1283,8 +1339,7 @@ vkr_queue_thread(void *arg)
 }
 
 static void
-vkr_queue_destroy(struct vkr_context *ctx,
-                  struct vkr_queue *queue)
+vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
 {
    struct vkr_queue_sync *sync, *tmp;
 
@@ -1296,13 +1351,13 @@ vkr_queue_destroy(struct vkr_context *ctx,
       cnd_signal(&queue->cond);
       thrd_join(queue->thread, NULL);
 
-      LIST_FOR_EACH_ENTRY_SAFE(sync, tmp, &queue->signaled_syncs, head)
+      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head)
          list_addtail(&sync->head, &queue->device->free_syncs);
    } else {
       assert(LIST_IS_EMPTY(&queue->signaled_syncs));
    }
 
-   LIST_FOR_EACH_ENTRY_SAFE(sync, tmp, &queue->pending_syncs, head)
+   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
       list_addtail(&sync->head, &queue->device->free_syncs);
 
    mtx_destroy(&queue->mutex);
@@ -1325,7 +1380,7 @@ vkr_queue_create(struct vkr_context *ctx,
    struct vkr_queue *queue;
    int ret;
 
-   LIST_FOR_EACH_ENTRY(queue, &dev->queues, head) {
+   LIST_FOR_EACH_ENTRY (queue, &dev->queues, head) {
       if (queue->family == family && queue->index == index)
          return queue;
    }
@@ -1378,11 +1433,13 @@ vkr_queue_create(struct vkr_context *ctx,
 }
 
 static void
-vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateDevice *args)
+vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkCreateDevice *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_physical_device *physical_dev = (struct vkr_physical_device *)args->physicalDevice;
+   struct vkr_physical_device *physical_dev =
+      (struct vkr_physical_device *)args->physicalDevice;
    if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -1426,7 +1483,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch, struct vn_comm
    dev->base.id = vkr_cs_handle_load_id((const void **)args->pDevice, dev->base.type);
 
    vn_replace_vkCreateDevice_args_handle(args);
-   args->ret = vkCreateDevice(args->physicalDevice, args->pCreateInfo, NULL, &dev->base.handle.device);
+   args->ret = vkCreateDevice(args->physicalDevice, args->pCreateInfo, NULL,
+                              &dev->base.handle.device);
    if (args->ret != VK_SUCCESS) {
       free(exts);
       free(dev);
@@ -1439,79 +1497,90 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch, struct vn_comm
 
    VkDevice handle = dev->base.handle.device;
    if (physical_dev->api_version >= VK_API_VERSION_1_2) {
-      dev->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)
-         vkGetDeviceProcAddr(handle, "vkGetSemaphoreCounterValue");
-      dev->WaitSemaphores = (PFN_vkWaitSemaphores)
-         vkGetDeviceProcAddr(handle, "vkWaitSemaphores");
-      dev->SignalSemaphore = (PFN_vkSignalSemaphore)
-         vkGetDeviceProcAddr(handle, "vkSignalSemaphore");
-      dev->GetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)
-         vkGetDeviceProcAddr(handle, "vkGetDeviceMemoryOpaqueCaptureAddress");
-      dev->GetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)
-         vkGetDeviceProcAddr(handle, "vkGetBufferOpaqueCaptureAddress");
-      dev->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)
-         vkGetDeviceProcAddr(handle, "vkGetBufferDeviceAddress");
-      dev->ResetQueryPool = (PFN_vkResetQueryPool)
-         vkGetDeviceProcAddr(handle, "vkResetQueryPool");
-      dev->CreateRenderPass2 = (PFN_vkCreateRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCreateRenderPass2");
-      dev->CmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCmdBeginRenderPass2");
-      dev->CmdNextSubpass2 = (PFN_vkCmdNextSubpass2)
-         vkGetDeviceProcAddr(handle, "vkCmdNextSubpass2");
-      dev->CmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCmdEndRenderPass2");
-      dev->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)
-         vkGetDeviceProcAddr(handle, "vkCmdDrawIndirectCount");
-      dev->CmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)
-         vkGetDeviceProcAddr(handle, "vkCmdDrawIndexedIndirectCount");
+      dev->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)vkGetDeviceProcAddr(
+         handle, "vkGetSemaphoreCounterValue");
+      dev->WaitSemaphores =
+         (PFN_vkWaitSemaphores)vkGetDeviceProcAddr(handle, "vkWaitSemaphores");
+      dev->SignalSemaphore =
+         (PFN_vkSignalSemaphore)vkGetDeviceProcAddr(handle, "vkSignalSemaphore");
+      dev->GetDeviceMemoryOpaqueCaptureAddress =
+         (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)vkGetDeviceProcAddr(
+            handle, "vkGetDeviceMemoryOpaqueCaptureAddress");
+      dev->GetBufferOpaqueCaptureAddress =
+         (PFN_vkGetBufferOpaqueCaptureAddress)vkGetDeviceProcAddr(
+            handle, "vkGetBufferOpaqueCaptureAddress");
+      dev->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)vkGetDeviceProcAddr(
+         handle, "vkGetBufferDeviceAddress");
+      dev->ResetQueryPool =
+         (PFN_vkResetQueryPool)vkGetDeviceProcAddr(handle, "vkResetQueryPool");
+      dev->CreateRenderPass2 =
+         (PFN_vkCreateRenderPass2)vkGetDeviceProcAddr(handle, "vkCreateRenderPass2");
+      dev->CmdBeginRenderPass2 =
+         (PFN_vkCmdBeginRenderPass2)vkGetDeviceProcAddr(handle, "vkCmdBeginRenderPass2");
+      dev->CmdNextSubpass2 =
+         (PFN_vkCmdNextSubpass2)vkGetDeviceProcAddr(handle, "vkCmdNextSubpass2");
+      dev->CmdEndRenderPass2 =
+         (PFN_vkCmdEndRenderPass2)vkGetDeviceProcAddr(handle, "vkCmdEndRenderPass2");
+      dev->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)vkGetDeviceProcAddr(
+         handle, "vkCmdDrawIndirectCount");
+      dev->CmdDrawIndexedIndirectCount =
+         (PFN_vkCmdDrawIndexedIndirectCount)vkGetDeviceProcAddr(
+            handle, "vkCmdDrawIndexedIndirectCount");
    } else {
-      dev->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)
-         vkGetDeviceProcAddr(handle, "vkGetSemaphoreCounterValueKHR");
-      dev->WaitSemaphores = (PFN_vkWaitSemaphores)
-         vkGetDeviceProcAddr(handle, "vkWaitSemaphoresKHR");
-      dev->SignalSemaphore = (PFN_vkSignalSemaphore)
-         vkGetDeviceProcAddr(handle, "vkSignalSemaphoreKHR");
-      dev->GetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)
-         vkGetDeviceProcAddr(handle, "vkGetDeviceMemoryOpaqueCaptureAddressKHR");
-      dev->GetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)
-         vkGetDeviceProcAddr(handle, "vkGetBufferOpaqueCaptureAddressKHR");
-      dev->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)
-         vkGetDeviceProcAddr(handle, "vkGetBufferDeviceAddressKHR");
-      dev->ResetQueryPool = (PFN_vkResetQueryPool)
-         vkGetDeviceProcAddr(handle, "vkResetQueryPoolEXT");
-      dev->CreateRenderPass2 = (PFN_vkCreateRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCreateRenderPass2KHR");
-      dev->CmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCmdBeginRenderPass2KHR");
-      dev->CmdNextSubpass2 = (PFN_vkCmdNextSubpass2)
-         vkGetDeviceProcAddr(handle, "vkCmdNextSubpass2KHR");
-      dev->CmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)
-         vkGetDeviceProcAddr(handle, "vkCmdEndRenderPass2KHR");
-      dev->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)
-         vkGetDeviceProcAddr(handle, "vkCmdDrawIndirectCountKHR");
-      dev->CmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)
-         vkGetDeviceProcAddr(handle, "vkCmdDrawIndexedIndirectCountKHR");
+      dev->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)vkGetDeviceProcAddr(
+         handle, "vkGetSemaphoreCounterValueKHR");
+      dev->WaitSemaphores =
+         (PFN_vkWaitSemaphores)vkGetDeviceProcAddr(handle, "vkWaitSemaphoresKHR");
+      dev->SignalSemaphore =
+         (PFN_vkSignalSemaphore)vkGetDeviceProcAddr(handle, "vkSignalSemaphoreKHR");
+      dev->GetDeviceMemoryOpaqueCaptureAddress =
+         (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)vkGetDeviceProcAddr(
+            handle, "vkGetDeviceMemoryOpaqueCaptureAddressKHR");
+      dev->GetBufferOpaqueCaptureAddress =
+         (PFN_vkGetBufferOpaqueCaptureAddress)vkGetDeviceProcAddr(
+            handle, "vkGetBufferOpaqueCaptureAddressKHR");
+      dev->GetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)vkGetDeviceProcAddr(
+         handle, "vkGetBufferDeviceAddressKHR");
+      dev->ResetQueryPool =
+         (PFN_vkResetQueryPool)vkGetDeviceProcAddr(handle, "vkResetQueryPoolEXT");
+      dev->CreateRenderPass2 =
+         (PFN_vkCreateRenderPass2)vkGetDeviceProcAddr(handle, "vkCreateRenderPass2KHR");
+      dev->CmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)vkGetDeviceProcAddr(
+         handle, "vkCmdBeginRenderPass2KHR");
+      dev->CmdNextSubpass2 =
+         (PFN_vkCmdNextSubpass2)vkGetDeviceProcAddr(handle, "vkCmdNextSubpass2KHR");
+      dev->CmdEndRenderPass2 =
+         (PFN_vkCmdEndRenderPass2)vkGetDeviceProcAddr(handle, "vkCmdEndRenderPass2KHR");
+      dev->CmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)vkGetDeviceProcAddr(
+         handle, "vkCmdDrawIndirectCountKHR");
+      dev->CmdDrawIndexedIndirectCount =
+         (PFN_vkCmdDrawIndexedIndirectCount)vkGetDeviceProcAddr(
+            handle, "vkCmdDrawIndexedIndirectCountKHR");
    }
 
-   dev->cmd_bind_transform_feedback_buffers = (PFN_vkCmdBindTransformFeedbackBuffersEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdBindTransformFeedbackBuffersEXT");
-   dev->cmd_begin_transform_feedback = (PFN_vkCmdBeginTransformFeedbackEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdBeginTransformFeedbackEXT");
-   dev->cmd_end_transform_feedback = (PFN_vkCmdEndTransformFeedbackEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdEndTransformFeedbackEXT");
-   dev->cmd_begin_query_indexed = (PFN_vkCmdBeginQueryIndexedEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdBeginQueryIndexedEXT");
-   dev->cmd_end_query_indexed = (PFN_vkCmdEndQueryIndexedEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdEndQueryIndexedEXT");
-   dev->cmd_draw_indirect_byte_count = (PFN_vkCmdDrawIndirectByteCountEXT)
-      vkGetDeviceProcAddr(handle, "vkCmdDrawIndirectByteCountEXT");
+   dev->cmd_bind_transform_feedback_buffers =
+      (PFN_vkCmdBindTransformFeedbackBuffersEXT)vkGetDeviceProcAddr(
+         handle, "vkCmdBindTransformFeedbackBuffersEXT");
+   dev->cmd_begin_transform_feedback =
+      (PFN_vkCmdBeginTransformFeedbackEXT)vkGetDeviceProcAddr(
+         handle, "vkCmdBeginTransformFeedbackEXT");
+   dev->cmd_end_transform_feedback =
+      (PFN_vkCmdEndTransformFeedbackEXT)vkGetDeviceProcAddr(
+         handle, "vkCmdEndTransformFeedbackEXT");
+   dev->cmd_begin_query_indexed = (PFN_vkCmdBeginQueryIndexedEXT)vkGetDeviceProcAddr(
+      handle, "vkCmdBeginQueryIndexedEXT");
+   dev->cmd_end_query_indexed =
+      (PFN_vkCmdEndQueryIndexedEXT)vkGetDeviceProcAddr(handle, "vkCmdEndQueryIndexedEXT");
+   dev->cmd_draw_indirect_byte_count =
+      (PFN_vkCmdDrawIndirectByteCountEXT)vkGetDeviceProcAddr(
+         handle, "vkCmdDrawIndirectByteCountEXT");
 
-   dev->get_image_drm_format_modifier_properties = (PFN_vkGetImageDrmFormatModifierPropertiesEXT)
-      vkGetDeviceProcAddr(handle, "vkGetImageDrmFormatModifierPropertiesEXT");
+   dev->get_image_drm_format_modifier_properties =
+      (PFN_vkGetImageDrmFormatModifierPropertiesEXT)vkGetDeviceProcAddr(
+         handle, "vkGetImageDrmFormatModifierPropertiesEXT");
 
-   dev->get_memory_fd_properties = (PFN_vkGetMemoryFdPropertiesKHR)
-      vkGetDeviceProcAddr(handle, "vkGetMemoryFdPropertiesKHR");
+   dev->get_memory_fd_properties = (PFN_vkGetMemoryFdPropertiesKHR)vkGetDeviceProcAddr(
+      handle, "vkGetMemoryFdPropertiesKHR");
 
    list_inithead(&dev->queues);
    list_inithead(&dev->free_syncs);
@@ -1520,7 +1589,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch, struct vn_comm
 }
 
 static void
-vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyDevice *args)
+vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkDestroyDevice *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1533,11 +1603,11 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch, struct vn_com
 
    /* TODO cleanup all objects here? */
    struct vkr_queue *queue, *queue_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(queue, queue_tmp, &dev->queues, head)
+   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &dev->queues, head)
       vkr_queue_destroy(ctx, queue);
 
    struct vkr_queue_sync *sync, *sync_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(sync, sync_tmp, &dev->free_syncs, head) {
+   LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &dev->free_syncs, head) {
       vkDestroyFence(dev->base.handle.device, sync->fence, NULL);
       free(sync);
    }
@@ -1549,14 +1619,19 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch, struct vn_com
 }
 
 static void
-vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetDeviceGroupPeerMemoryFeatures *args)
+vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetDeviceGroupPeerMemoryFeatures *args)
 {
    vn_replace_vkGetDeviceGroupPeerMemoryFeatures_args_handle(args);
-   vkGetDeviceGroupPeerMemoryFeatures(args->device, args->heapIndex, args->localDeviceIndex, args->remoteDeviceIndex, args->pPeerMemoryFeatures);
+   vkGetDeviceGroupPeerMemoryFeatures(args->device, args->heapIndex,
+                                      args->localDeviceIndex, args->remoteDeviceIndex,
+                                      args->pPeerMemoryFeatures);
 }
 
 static void
-vkr_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *dispatch, UNUSED struct vn_command_vkDeviceWaitIdle *args)
+vkr_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *dispatch,
+                              UNUSED struct vn_command_vkDeviceWaitIdle *args)
 {
    struct vkr_context *ctx = dispatch->data;
    /* no blocking call */
@@ -1564,7 +1639,8 @@ vkr_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *dispatch, UNUSED struc
 }
 
 static void
-vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch, struct vn_command_vkGetDeviceQueue *args)
+vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkGetDeviceQueue *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1581,15 +1657,16 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch, struct vn_co
    vn_replace_vkGetDeviceQueue_args_handle(args);
    vkGetDeviceQueue(args->device, args->queueFamilyIndex, args->queueIndex, &handle);
 
-   struct vkr_queue *queue = vkr_queue_create(ctx, dev, id, handle,
-         args->queueFamilyIndex, args->queueIndex);
+   struct vkr_queue *queue =
+      vkr_queue_create(ctx, dev, id, handle, args->queueFamilyIndex, args->queueIndex);
    /* TODO create queues with device and deal with failures there */
    if (!queue)
       vrend_printf("failed to create queue\n");
 }
 
 static void
-vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch, struct vn_command_vkGetDeviceQueue2 *args)
+vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkGetDeviceQueue2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1608,25 +1685,29 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch, struct vn_c
 
    /* TODO deal with errors */
    vkr_queue_create(ctx, dev, id, handle, args->pQueueInfo->queueFamilyIndex,
-         args->pQueueInfo->queueIndex);
+                    args->pQueueInfo->queueIndex);
 }
 
 static void
-vkr_dispatch_vkQueueSubmit(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkQueueSubmit *args)
+vkr_dispatch_vkQueueSubmit(UNUSED struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkQueueSubmit *args)
 {
    vn_replace_vkQueueSubmit_args_handle(args);
    args->ret = vkQueueSubmit(args->queue, args->submitCount, args->pSubmits, args->fence);
 }
 
 static void
-vkr_dispatch_vkQueueBindSparse(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkQueueBindSparse *args)
+vkr_dispatch_vkQueueBindSparse(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkQueueBindSparse *args)
 {
    vn_replace_vkQueueBindSparse_args_handle(args);
-   args->ret = vkQueueBindSparse(args->queue, args->bindInfoCount, args->pBindInfo, args->fence);
+   args->ret =
+      vkQueueBindSparse(args->queue, args->bindInfoCount, args->pBindInfo, args->fence);
 }
 
 static void
-vkr_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *dispatch, UNUSED struct vn_command_vkQueueWaitIdle *args)
+vkr_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *dispatch,
+                             UNUSED struct vn_command_vkQueueWaitIdle *args)
 {
    struct vkr_context *ctx = dispatch->data;
    /* no blocking call */
@@ -1634,31 +1715,35 @@ vkr_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *dispatch, UNUSED struct
 }
 
 static bool
-vkr_get_fd_handle_type_from_virgl_fd_type(struct vkr_physical_device *dev, enum virgl_resource_fd_type fd_type, VkExternalMemoryHandleTypeFlagBits *out_handle_type)
+vkr_get_fd_handle_type_from_virgl_fd_type(
+   struct vkr_physical_device *dev,
+   enum virgl_resource_fd_type fd_type,
+   VkExternalMemoryHandleTypeFlagBits *out_handle_type)
 {
-    assert(dev);
-    assert(out_handle_type);
+   assert(dev);
+   assert(out_handle_type);
 
-    switch (fd_type) {
-    case VIRGL_RESOURCE_FD_DMABUF:
-       if (!dev->EXT_external_memory_dma_buf)
-          return false;
-       *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-       break;
-    case VIRGL_RESOURCE_FD_OPAQUE:
-       if (!dev->KHR_external_memory_fd)
-          return false;
-       *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-       break;
-    default:
-       return false;
-    }
+   switch (fd_type) {
+   case VIRGL_RESOURCE_FD_DMABUF:
+      if (!dev->EXT_external_memory_dma_buf)
+         return false;
+      *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+      break;
+   case VIRGL_RESOURCE_FD_OPAQUE:
+      if (!dev->KHR_external_memory_fd)
+         return false;
+      *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+      break;
+   default:
+      return false;
+   }
 
-    return true;
+   return true;
 }
 
 static void
-vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch, struct vn_command_vkAllocateMemory *args)
+vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkAllocateMemory *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1687,23 +1772,26 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch, struct vn_co
    VkBaseInStructure *pprev = (VkBaseInStructure *)args->pAllocateInfo;
    while (pprev->pNext) {
       if (pprev->pNext->sType == VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA) {
-          import_resource_info = (VkImportMemoryResourceInfoMESA *)pprev->pNext;
-          import_fd_info.pNext = pprev->pNext->pNext;
-          pprev->pNext = (const struct VkBaseInStructure *)&import_fd_info;
-          break;
+         import_resource_info = (VkImportMemoryResourceInfoMESA *)pprev->pNext;
+         import_fd_info.pNext = pprev->pNext->pNext;
+         pprev->pNext = (const struct VkBaseInStructure *)&import_fd_info;
+         break;
       }
       pprev = (VkBaseInStructure *)pprev->pNext;
    }
    if (import_resource_info) {
       uint32_t res_id = import_resource_info->resourceId;
-      struct vkr_resource_attachment *att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
+      struct vkr_resource_attachment *att =
+         util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
       if (!att || !att->resource) {
          args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
          return;
       }
 
-      enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &import_fd_info.fd);
-      if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type, &import_fd_info.handleType)) {
+      enum virgl_resource_fd_type fd_type =
+         virgl_resource_export_fd(att->resource, &import_fd_info.fd);
+      if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type,
+                                                     &import_fd_info.handleType)) {
          close(import_fd_info.fd);
          args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
          return;
@@ -1722,7 +1810,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch, struct vn_co
    mem->base.id = vkr_cs_handle_load_id((const void **)args->pMemory, mem->base.type);
 
    vn_replace_vkAllocateMemory_args_handle(args);
-   args->ret = vkAllocateMemory(args->device, args->pAllocateInfo, NULL, &mem->base.handle.device_memory);
+   args->ret = vkAllocateMemory(args->device, args->pAllocateInfo, NULL,
+                                &mem->base.handle.device_memory);
    if (args->ret != VK_SUCCESS) {
       if (import_resource_info)
          close(import_fd_info.fd);
@@ -1730,7 +1819,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch, struct vn_co
       return;
    }
 
-   const VkPhysicalDeviceMemoryProperties *mem_props = &dev->physical_device->memory_properties;
+   const VkPhysicalDeviceMemoryProperties *mem_props =
+      &dev->physical_device->memory_properties;
    const uint32_t mt_index = args->pAllocateInfo->memoryTypeIndex;
    const uint32_t property_flags = mem_props->memoryTypes[mt_index].propertyFlags;
 
@@ -1760,7 +1850,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch, struct vn_command_vkFreeMemory *args)
+vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
+                          struct vn_command_vkFreeMemory *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1780,14 +1871,18 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch, struct vn_comman
 }
 
 static void
-vkr_dispatch_vkGetDeviceMemoryCommitment(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetDeviceMemoryCommitment *args)
+vkr_dispatch_vkGetDeviceMemoryCommitment(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetDeviceMemoryCommitment *args)
 {
    vn_replace_vkGetDeviceMemoryCommitment_args_handle(args);
    vkGetDeviceMemoryCommitment(args->device, args->memory, args->pCommittedMemoryInBytes);
 }
 
 static void
-vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(struct vn_dispatch_context *dispatch, struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args)
+vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -1801,35 +1896,44 @@ vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(struct vn_dispatch_context *d
 }
 
 static void
-vkr_dispatch_vkGetBufferMemoryRequirements(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetBufferMemoryRequirements *args)
+vkr_dispatch_vkGetBufferMemoryRequirements(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetBufferMemoryRequirements *args)
 {
    vn_replace_vkGetBufferMemoryRequirements_args_handle(args);
    vkGetBufferMemoryRequirements(args->device, args->buffer, args->pMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkGetBufferMemoryRequirements2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetBufferMemoryRequirements2 *args)
+vkr_dispatch_vkGetBufferMemoryRequirements2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetBufferMemoryRequirements2 *args)
 {
    vn_replace_vkGetBufferMemoryRequirements2_args_handle(args);
    vkGetBufferMemoryRequirements2(args->device, args->pInfo, args->pMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkBindBufferMemory(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkBindBufferMemory *args)
+vkr_dispatch_vkBindBufferMemory(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkBindBufferMemory *args)
 {
    vn_replace_vkBindBufferMemory_args_handle(args);
-   args->ret = vkBindBufferMemory(args->device, args->buffer, args->memory, args->memoryOffset);
+   args->ret =
+      vkBindBufferMemory(args->device, args->buffer, args->memory, args->memoryOffset);
 }
 
 static void
-vkr_dispatch_vkBindBufferMemory2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkBindBufferMemory2 *args)
+vkr_dispatch_vkBindBufferMemory2(UNUSED struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkBindBufferMemory2 *args)
 {
    vn_replace_vkBindBufferMemory2_args_handle(args);
    args->ret = vkBindBufferMemory2(args->device, args->bindInfoCount, args->pBindInfos);
 }
 
 static void
-vkr_dispatch_vkGetBufferOpaqueCaptureAddress(struct vn_dispatch_context *dispatch, struct vn_command_vkGetBufferOpaqueCaptureAddress *args)
+vkr_dispatch_vkGetBufferOpaqueCaptureAddress(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetBufferOpaqueCaptureAddress *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -1843,7 +1947,8 @@ vkr_dispatch_vkGetBufferOpaqueCaptureAddress(struct vn_dispatch_context *dispatc
 }
 
 static void
-vkr_dispatch_vkGetBufferDeviceAddress(struct vn_dispatch_context *dispatch, struct vn_command_vkGetBufferDeviceAddress *args)
+vkr_dispatch_vkGetBufferDeviceAddress(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkGetBufferDeviceAddress *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -1857,56 +1962,75 @@ vkr_dispatch_vkGetBufferDeviceAddress(struct vn_dispatch_context *dispatch, stru
 }
 
 static void
-vkr_dispatch_vkGetImageMemoryRequirements(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageMemoryRequirements *args)
+vkr_dispatch_vkGetImageMemoryRequirements(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageMemoryRequirements *args)
 {
    vn_replace_vkGetImageMemoryRequirements_args_handle(args);
    vkGetImageMemoryRequirements(args->device, args->image, args->pMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkGetImageMemoryRequirements2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageMemoryRequirements2 *args)
+vkr_dispatch_vkGetImageMemoryRequirements2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageMemoryRequirements2 *args)
 {
    vn_replace_vkGetImageMemoryRequirements2_args_handle(args);
    vkGetImageMemoryRequirements2(args->device, args->pInfo, args->pMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkGetImageSparseMemoryRequirements(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageSparseMemoryRequirements *args)
+vkr_dispatch_vkGetImageSparseMemoryRequirements(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageSparseMemoryRequirements *args)
 {
    vn_replace_vkGetImageSparseMemoryRequirements_args_handle(args);
-   vkGetImageSparseMemoryRequirements(args->device, args->image, args->pSparseMemoryRequirementCount, args->pSparseMemoryRequirements);
+   vkGetImageSparseMemoryRequirements(args->device, args->image,
+                                      args->pSparseMemoryRequirementCount,
+                                      args->pSparseMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkGetImageSparseMemoryRequirements2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageSparseMemoryRequirements2 *args)
+vkr_dispatch_vkGetImageSparseMemoryRequirements2(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageSparseMemoryRequirements2 *args)
 {
    vn_replace_vkGetImageSparseMemoryRequirements2_args_handle(args);
-   vkGetImageSparseMemoryRequirements2(args->device, args->pInfo, args->pSparseMemoryRequirementCount, args->pSparseMemoryRequirements);
+   vkGetImageSparseMemoryRequirements2(args->device, args->pInfo,
+                                       args->pSparseMemoryRequirementCount,
+                                       args->pSparseMemoryRequirements);
 }
 
 static void
-vkr_dispatch_vkBindImageMemory(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkBindImageMemory *args)
+vkr_dispatch_vkBindImageMemory(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkBindImageMemory *args)
 {
    vn_replace_vkBindImageMemory_args_handle(args);
-   args->ret = vkBindImageMemory(args->device, args->image, args->memory, args->memoryOffset);
+   args->ret =
+      vkBindImageMemory(args->device, args->image, args->memory, args->memoryOffset);
 }
 
 static void
-vkr_dispatch_vkBindImageMemory2(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkBindImageMemory2 *args)
+vkr_dispatch_vkBindImageMemory2(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkBindImageMemory2 *args)
 {
    vn_replace_vkBindImageMemory2_args_handle(args);
    args->ret = vkBindImageMemory2(args->device, args->bindInfoCount, args->pBindInfos);
 }
 
 static void
-vkr_dispatch_vkGetImageSubresourceLayout(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageSubresourceLayout *args)
+vkr_dispatch_vkGetImageSubresourceLayout(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageSubresourceLayout *args)
 {
    vn_replace_vkGetImageSubresourceLayout_args_handle(args);
-   vkGetImageSubresourceLayout(args->device, args->image, args->pSubresource, args->pLayout);
+   vkGetImageSubresourceLayout(args->device, args->image, args->pSubresource,
+                               args->pLayout);
 }
 
 static void
-vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateFence *args)
+vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCreateFence *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1916,7 +2040,8 @@ vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch, struct vn_comma
 }
 
 static void
-vkr_dispatch_vkDestroyFence(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyFence *args)
+vkr_dispatch_vkDestroyFence(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkDestroyFence *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1926,21 +2051,24 @@ vkr_dispatch_vkDestroyFence(struct vn_dispatch_context *dispatch, struct vn_comm
 }
 
 static void
-vkr_dispatch_vkResetFences(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkResetFences *args)
+vkr_dispatch_vkResetFences(UNUSED struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkResetFences *args)
 {
    vn_replace_vkResetFences_args_handle(args);
    args->ret = vkResetFences(args->device, args->fenceCount, args->pFences);
 }
 
 static void
-vkr_dispatch_vkGetFenceStatus(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetFenceStatus *args)
+vkr_dispatch_vkGetFenceStatus(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkGetFenceStatus *args)
 {
    vn_replace_vkGetFenceStatus_args_handle(args);
    args->ret = vkGetFenceStatus(args->device, args->fence);
 }
 
 static void
-vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch, struct vn_command_vkWaitForFences *args)
+vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkWaitForFences *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1955,11 +2083,13 @@ vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch, struct vn_com
    }
 
    vn_replace_vkWaitForFences_args_handle(args);
-   args->ret = vkWaitForFences(args->device, args->fenceCount, args->pFences, args->waitAll, args->timeout);
+   args->ret = vkWaitForFences(args->device, args->fenceCount, args->pFences,
+                               args->waitAll, args->timeout);
 }
 
 static void
-vkr_dispatch_vkCreateSemaphore(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateSemaphore *args)
+vkr_dispatch_vkCreateSemaphore(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCreateSemaphore *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1969,7 +2099,8 @@ vkr_dispatch_vkCreateSemaphore(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroySemaphore *args)
+vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkDestroySemaphore *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -1979,7 +2110,8 @@ vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch, struct vn_
 }
 
 static void
-vkr_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_context *dispatch, struct vn_command_vkGetSemaphoreCounterValue *args)
+vkr_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkGetSemaphoreCounterValue *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -1993,7 +2125,8 @@ vkr_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_context *dispatch, st
 }
 
 static void
-vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch, struct vn_command_vkWaitSemaphores *args)
+vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkWaitSemaphores *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -2014,7 +2147,8 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkSignalSemaphore(struct vn_dispatch_context *dispatch, struct vn_command_vkSignalSemaphore *args)
+vkr_dispatch_vkSignalSemaphore(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkSignalSemaphore *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -2028,7 +2162,8 @@ vkr_dispatch_vkSignalSemaphore(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateBuffer *args)
+vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkCreateBuffer *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2054,7 +2189,8 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch, struct vn_comm
 }
 
 static void
-vkr_dispatch_vkDestroyBuffer(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyBuffer *args)
+vkr_dispatch_vkDestroyBuffer(struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkDestroyBuffer *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2064,7 +2200,8 @@ vkr_dispatch_vkDestroyBuffer(struct vn_dispatch_context *dispatch, struct vn_com
 }
 
 static void
-vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateBufferView *args)
+vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCreateBufferView *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2074,7 +2211,8 @@ vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch, struct vn_
 }
 
 static void
-vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyBufferView *args)
+vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkDestroyBufferView *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2084,7 +2222,8 @@ vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateImage *args)
+vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCreateImage *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2110,7 +2249,8 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch, struct vn_comma
 }
 
 static void
-vkr_dispatch_vkDestroyImage(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyImage *args)
+vkr_dispatch_vkDestroyImage(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkDestroyImage *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2120,7 +2260,8 @@ vkr_dispatch_vkDestroyImage(struct vn_dispatch_context *dispatch, struct vn_comm
 }
 
 static void
-vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateImageView *args)
+vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCreateImageView *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2130,7 +2271,8 @@ vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkDestroyImageView(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyImageView *args)
+vkr_dispatch_vkDestroyImageView(struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkDestroyImageView *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2140,7 +2282,8 @@ vkr_dispatch_vkDestroyImageView(struct vn_dispatch_context *dispatch, struct vn_
 }
 
 static void
-vkr_dispatch_vkCreateSampler(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateSampler *args)
+vkr_dispatch_vkCreateSampler(struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCreateSampler *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2150,7 +2293,8 @@ vkr_dispatch_vkCreateSampler(struct vn_dispatch_context *dispatch, struct vn_com
 }
 
 static void
-vkr_dispatch_vkDestroySampler(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroySampler *args)
+vkr_dispatch_vkDestroySampler(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkDestroySampler *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2160,58 +2304,74 @@ vkr_dispatch_vkDestroySampler(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkCreateSamplerYcbcrConversion(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateSamplerYcbcrConversion *args)
+vkr_dispatch_vkCreateSamplerYcbcrConversion(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCreateSamplerYcbcrConversion *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION, vkCreateSamplerYcbcrConversion, pYcbcrConversion);
+   CREATE_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
+                 vkCreateSamplerYcbcrConversion, pYcbcrConversion);
 
    util_hash_table_set_u64(ctx->object_table, conv->base.id, conv);
 }
 
 static void
-vkr_dispatch_vkDestroySamplerYcbcrConversion(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroySamplerYcbcrConversion *args)
+vkr_dispatch_vkDestroySamplerYcbcrConversion(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkDestroySamplerYcbcrConversion *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION, vkDestroySamplerYcbcrConversion, ycbcrConversion);
+   DESTROY_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
+                  vkDestroySamplerYcbcrConversion, ycbcrConversion);
 
    util_hash_table_remove_u64(ctx->object_table, conv->base.id);
 }
 
 static void
-vkr_dispatch_vkGetDescriptorSetLayoutSupport(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetDescriptorSetLayoutSupport *args)
+vkr_dispatch_vkGetDescriptorSetLayoutSupport(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetDescriptorSetLayoutSupport *args)
 {
    vn_replace_vkGetDescriptorSetLayoutSupport_args_handle(args);
    vkGetDescriptorSetLayoutSupport(args->device, args->pCreateInfo, args->pSupport);
 }
 
 static void
-vkr_dispatch_vkCreateDescriptorSetLayout(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateDescriptorSetLayout *args)
+vkr_dispatch_vkCreateDescriptorSetLayout(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCreateDescriptorSetLayout *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT, vkCreateDescriptorSetLayout, pSetLayout);
+   CREATE_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
+                 vkCreateDescriptorSetLayout, pSetLayout);
 
    util_hash_table_set_u64(ctx->object_table, layout->base.id, layout);
 }
 
 static void
-vkr_dispatch_vkDestroyDescriptorSetLayout(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyDescriptorSetLayout *args)
+vkr_dispatch_vkDestroyDescriptorSetLayout(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkDestroyDescriptorSetLayout *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT, vkDestroyDescriptorSetLayout, descriptorSetLayout);
+   DESTROY_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
+                  vkDestroyDescriptorSetLayout, descriptorSetLayout);
 
    util_hash_table_remove_u64(ctx->object_table, layout->base.id);
 }
 
 static void
-vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateDescriptorPool *args)
+vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCreateDescriptorPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkCreateDescriptorPool, pDescriptorPool);
+   CREATE_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkCreateDescriptorPool,
+                 pDescriptorPool);
 
    list_inithead(&pool->descriptor_sets);
 
@@ -2219,25 +2379,29 @@ vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch, struct
 }
 
 static void
-vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyDescriptorPool *args)
+vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkDestroyDescriptorPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkDestroyDescriptorPool, descriptorPool);
+   DESTROY_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkDestroyDescriptorPool,
+                  descriptorPool);
 
    struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(set, tmp, &pool->descriptor_sets, head)
+   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, head)
       util_hash_table_remove_u64(ctx->object_table, set->base.id);
 
    util_hash_table_remove_u64(ctx->object_table, pool->base.id);
 }
 
 static void
-vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch, struct vn_command_vkResetDescriptorPool *args)
+vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkResetDescriptorPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_descriptor_pool *pool = (struct vkr_descriptor_pool *)(uintptr_t)args->descriptorPool;
+   struct vkr_descriptor_pool *pool =
+      (struct vkr_descriptor_pool *)(uintptr_t)args->descriptorPool;
    if (!pool || pool->base.type != VK_OBJECT_TYPE_DESCRIPTOR_POOL) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -2247,35 +2411,36 @@ vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch, struct 
    args->ret = vkResetDescriptorPool(args->device, args->descriptorPool, args->flags);
 
    struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(set, tmp, &pool->descriptor_sets, head)
+   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, head)
       util_hash_table_remove_u64(ctx->object_table, set->base.id);
    list_inithead(&pool->descriptor_sets);
 }
 
 static void
-vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch, struct vn_command_vkAllocateDescriptorSets *args)
+vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkAllocateDescriptorSets *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_descriptor_pool *pool = (struct vkr_descriptor_pool *)(uintptr_t)args->pAllocateInfo->descriptorPool;
+   struct vkr_descriptor_pool *pool =
+      (struct vkr_descriptor_pool *)(uintptr_t)args->pAllocateInfo->descriptorPool;
    if (!pool || pool->base.type != VK_OBJECT_TYPE_DESCRIPTOR_POOL) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
    struct object_array arr;
-   if (!object_array_init(&arr,
-                          args->pAllocateInfo->descriptorSetCount,
+   if (!object_array_init(&arr, args->pAllocateInfo->descriptorSetCount,
                           VK_OBJECT_TYPE_DESCRIPTOR_SET,
-                          sizeof(struct vkr_descriptor_set),
-                          sizeof(VkDescriptorSet),
+                          sizeof(struct vkr_descriptor_set), sizeof(VkDescriptorSet),
                           args->pDescriptorSets)) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
 
    vn_replace_vkAllocateDescriptorSets_args_handle(args);
-   args->ret = vkAllocateDescriptorSets(args->device, args->pAllocateInfo, arr.handle_storage);
+   args->ret =
+      vkAllocateDescriptorSets(args->device, args->pAllocateInfo, arr.handle_storage);
    if (args->ret != VK_SUCCESS) {
       object_array_fini(&arr);
       return;
@@ -2295,14 +2460,16 @@ vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch, stru
 }
 
 static void
-vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch, struct vn_command_vkFreeDescriptorSets *args)
+vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkFreeDescriptorSets *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct list_head free_sets;
 
    list_inithead(&free_sets);
    for (uint32_t i = 0; i < args->descriptorSetCount; i++) {
-      struct vkr_descriptor_set *set = (struct vkr_descriptor_set *)(uintptr_t)args->pDescriptorSets[i];
+      struct vkr_descriptor_set *set =
+         (struct vkr_descriptor_set *)(uintptr_t)args->pDescriptorSets[i];
       if (!set)
          continue;
       if (set->base.type != VK_OBJECT_TYPE_DESCRIPTOR_SET) {
@@ -2315,42 +2482,53 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch, struct v
    }
 
    vn_replace_vkFreeDescriptorSets_args_handle(args);
-   args->ret = vkFreeDescriptorSets(args->device, args->descriptorPool, args->descriptorSetCount, args->pDescriptorSets);
+   args->ret = vkFreeDescriptorSets(args->device, args->descriptorPool,
+                                    args->descriptorSetCount, args->pDescriptorSets);
 
    struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(set, tmp, &free_sets, head)
+   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &free_sets, head)
       util_hash_table_remove_u64(ctx->object_table, set->base.id);
 }
 
 static void
-vkr_dispatch_vkUpdateDescriptorSets(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkUpdateDescriptorSets *args)
+vkr_dispatch_vkUpdateDescriptorSets(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkUpdateDescriptorSets *args)
 {
    vn_replace_vkUpdateDescriptorSets_args_handle(args);
-   vkUpdateDescriptorSets(args->device, args->descriptorWriteCount, args->pDescriptorWrites, args->descriptorCopyCount, args->pDescriptorCopies);
+   vkUpdateDescriptorSets(args->device, args->descriptorWriteCount,
+                          args->pDescriptorWrites, args->descriptorCopyCount,
+                          args->pDescriptorCopies);
 }
 
 static void
-vkr_dispatch_vkCreateDescriptorUpdateTemplate(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateDescriptorUpdateTemplate *args)
+vkr_dispatch_vkCreateDescriptorUpdateTemplate(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCreateDescriptorUpdateTemplate *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE, vkCreateDescriptorUpdateTemplate, pDescriptorUpdateTemplate);
+   CREATE_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
+                 vkCreateDescriptorUpdateTemplate, pDescriptorUpdateTemplate);
 
    util_hash_table_set_u64(ctx->object_table, templ->base.id, templ);
 }
 
 static void
-vkr_dispatch_vkDestroyDescriptorUpdateTemplate(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyDescriptorUpdateTemplate *args)
+vkr_dispatch_vkDestroyDescriptorUpdateTemplate(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkDestroyDescriptorUpdateTemplate *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE, vkDestroyDescriptorUpdateTemplate, descriptorUpdateTemplate);
+   DESTROY_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
+                  vkDestroyDescriptorUpdateTemplate, descriptorUpdateTemplate);
 
    util_hash_table_remove_u64(ctx->object_table, templ->base.id);
 }
 
 static void
-vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateRenderPass *args)
+vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCreateRenderPass *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2360,7 +2538,8 @@ vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch, struct vn_
 }
 
 static void
-vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateRenderPass2 *args)
+vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCreateRenderPass2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -2375,11 +2554,12 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch, struct vn
       return;
    }
    pass->base.type = VK_OBJECT_TYPE_RENDER_PASS;
-   pass->base.id = vkr_cs_handle_load_id((const void **)args->pRenderPass, pass->base.type);
+   pass->base.id =
+      vkr_cs_handle_load_id((const void **)args->pRenderPass, pass->base.type);
 
    vn_replace_vkCreateRenderPass2_args_handle(args);
-   args->ret = dev->CreateRenderPass2(args->device, args->pCreateInfo,
-         NULL, &pass->base.handle.render_pass);
+   args->ret = dev->CreateRenderPass2(args->device, args->pCreateInfo, NULL,
+                                      &pass->base.handle.render_pass);
    if (args->ret != VK_SUCCESS) {
       free(pass);
       return;
@@ -2389,7 +2569,8 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyRenderPass *args)
+vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkDestroyRenderPass *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2399,14 +2580,16 @@ vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkGetRenderAreaGranularity(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetRenderAreaGranularity *args)
+vkr_dispatch_vkGetRenderAreaGranularity(UNUSED struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkGetRenderAreaGranularity *args)
 {
    vn_replace_vkGetRenderAreaGranularity_args_handle(args);
    vkGetRenderAreaGranularity(args->device, args->renderPass, args->pGranularity);
 }
 
 static void
-vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateFramebuffer *args)
+vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCreateFramebuffer *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2416,7 +2599,8 @@ vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyFramebuffer *args)
+vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkDestroyFramebuffer *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2426,7 +2610,8 @@ vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch, struct v
 }
 
 static void
-vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateEvent *args)
+vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCreateEvent *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2436,7 +2621,8 @@ vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch, struct vn_comma
 }
 
 static void
-vkr_dispatch_vkDestroyEvent(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyEvent *args)
+vkr_dispatch_vkDestroyEvent(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkDestroyEvent *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2446,28 +2632,32 @@ vkr_dispatch_vkDestroyEvent(struct vn_dispatch_context *dispatch, struct vn_comm
 }
 
 static void
-vkr_dispatch_vkGetEventStatus(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetEventStatus *args)
+vkr_dispatch_vkGetEventStatus(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkGetEventStatus *args)
 {
    vn_replace_vkGetEventStatus_args_handle(args);
    args->ret = vkGetEventStatus(args->device, args->event);
 }
 
 static void
-vkr_dispatch_vkSetEvent(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkSetEvent *args)
+vkr_dispatch_vkSetEvent(UNUSED struct vn_dispatch_context *dispatch,
+                        struct vn_command_vkSetEvent *args)
 {
    vn_replace_vkSetEvent_args_handle(args);
    args->ret = vkSetEvent(args->device, args->event);
 }
 
 static void
-vkr_dispatch_vkResetEvent(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkResetEvent *args)
+vkr_dispatch_vkResetEvent(UNUSED struct vn_dispatch_context *dispatch,
+                          struct vn_command_vkResetEvent *args)
 {
    vn_replace_vkResetEvent_args_handle(args);
    args->ret = vkResetEvent(args->device, args->event);
 }
 
 static void
-vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateQueryPool *args)
+vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCreateQueryPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2477,7 +2667,8 @@ vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkDestroyQueryPool(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyQueryPool *args)
+vkr_dispatch_vkDestroyQueryPool(struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkDestroyQueryPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2487,14 +2678,18 @@ vkr_dispatch_vkDestroyQueryPool(struct vn_dispatch_context *dispatch, struct vn_
 }
 
 static void
-vkr_dispatch_vkGetQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetQueryPoolResults *args)
+vkr_dispatch_vkGetQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkGetQueryPoolResults *args)
 {
    vn_replace_vkGetQueryPoolResults_args_handle(args);
-   args->ret = vkGetQueryPoolResults(args->device, args->queryPool, args->firstQuery, args->queryCount, args->dataSize, args->pData, args->stride, args->flags);
+   args->ret = vkGetQueryPoolResults(args->device, args->queryPool, args->firstQuery,
+                                     args->queryCount, args->dataSize, args->pData,
+                                     args->stride, args->flags);
 }
 
 static void
-vkr_dispatch_vkResetQueryPool(struct vn_dispatch_context *dispatch, struct vn_command_vkResetQueryPool *args)
+vkr_dispatch_vkResetQueryPool(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkResetQueryPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -2508,7 +2703,8 @@ vkr_dispatch_vkResetQueryPool(struct vn_dispatch_context *dispatch, struct vn_co
 }
 
 static void
-vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateShaderModule *args)
+vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCreateShaderModule *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2518,7 +2714,8 @@ vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch, struct v
 }
 
 static void
-vkr_dispatch_vkDestroyShaderModule(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyShaderModule *args)
+vkr_dispatch_vkDestroyShaderModule(struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkDestroyShaderModule *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2528,77 +2725,89 @@ vkr_dispatch_vkDestroyShaderModule(struct vn_dispatch_context *dispatch, struct 
 }
 
 static void
-vkr_dispatch_vkCreatePipelineLayout(struct vn_dispatch_context *dispatch, struct vn_command_vkCreatePipelineLayout *args)
+vkr_dispatch_vkCreatePipelineLayout(struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCreatePipelineLayout *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkCreatePipelineLayout, pPipelineLayout);
+   CREATE_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkCreatePipelineLayout,
+                 pPipelineLayout);
 
    util_hash_table_set_u64(ctx->object_table, layout->base.id, layout);
 }
 
 static void
-vkr_dispatch_vkDestroyPipelineLayout(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyPipelineLayout *args)
+vkr_dispatch_vkDestroyPipelineLayout(struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkDestroyPipelineLayout *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkDestroyPipelineLayout, pipelineLayout);
+   DESTROY_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkDestroyPipelineLayout,
+                  pipelineLayout);
 
    util_hash_table_remove_u64(ctx->object_table, layout->base.id);
 }
 
 static void
-vkr_dispatch_vkCreatePipelineCache(struct vn_dispatch_context *dispatch, struct vn_command_vkCreatePipelineCache *args)
+vkr_dispatch_vkCreatePipelineCache(struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkCreatePipelineCache *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkCreatePipelineCache, pPipelineCache);
+   CREATE_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkCreatePipelineCache,
+                 pPipelineCache);
 
    util_hash_table_set_u64(ctx->object_table, cache->base.id, cache);
 }
 
 static void
-vkr_dispatch_vkDestroyPipelineCache(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyPipelineCache *args)
+vkr_dispatch_vkDestroyPipelineCache(struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkDestroyPipelineCache *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
-   DESTROY_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkDestroyPipelineCache, pipelineCache);
+   DESTROY_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkDestroyPipelineCache,
+                  pipelineCache);
 
    util_hash_table_remove_u64(ctx->object_table, cache->base.id);
 }
 
 static void
-vkr_dispatch_vkGetPipelineCacheData(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkGetPipelineCacheData *args)
+vkr_dispatch_vkGetPipelineCacheData(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkGetPipelineCacheData *args)
 {
    vn_replace_vkGetPipelineCacheData_args_handle(args);
-   args->ret = vkGetPipelineCacheData(args->device, args->pipelineCache, args->pDataSize, args->pData);
+   args->ret = vkGetPipelineCacheData(args->device, args->pipelineCache, args->pDataSize,
+                                      args->pData);
 }
 
 static void
-vkr_dispatch_vkMergePipelineCaches(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkMergePipelineCaches *args)
+vkr_dispatch_vkMergePipelineCaches(UNUSED struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkMergePipelineCaches *args)
 {
    vn_replace_vkMergePipelineCaches_args_handle(args);
-   args->ret = vkMergePipelineCaches(args->device, args->dstCache, args->srcCacheCount, args->pSrcCaches);
+   args->ret = vkMergePipelineCaches(args->device, args->dstCache, args->srcCacheCount,
+                                     args->pSrcCaches);
 }
 
 static void
-vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateGraphicsPipelines *args)
+vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCreateGraphicsPipelines *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
    struct object_array arr;
-   if (!object_array_init(&arr,
-                          args->createInfoCount,
-                          VK_OBJECT_TYPE_PIPELINE,
-                          sizeof(struct vkr_pipeline),
-                          sizeof(VkPipeline),
+   if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,
+                          sizeof(struct vkr_pipeline), sizeof(VkPipeline),
                           args->pPipelines)) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
 
    vn_replace_vkCreateGraphicsPipelines_args_handle(args);
-   args->ret = vkCreateGraphicsPipelines(args->device, args->pipelineCache, args->createInfoCount, args->pCreateInfos, NULL, arr.handle_storage);
+   args->ret =
+      vkCreateGraphicsPipelines(args->device, args->pipelineCache, args->createInfoCount,
+                                args->pCreateInfos, NULL, arr.handle_storage);
    if (args->ret != VK_SUCCESS) {
       object_array_fini(&arr);
       return;
@@ -2617,23 +2826,23 @@ vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch, str
 }
 
 static void
-vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateComputePipelines *args)
+vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCreateComputePipelines *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
    struct object_array arr;
-   if (!object_array_init(&arr,
-                          args->createInfoCount,
-                          VK_OBJECT_TYPE_PIPELINE,
-                          sizeof(struct vkr_pipeline),
-                          sizeof(VkPipeline),
+   if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,
+                          sizeof(struct vkr_pipeline), sizeof(VkPipeline),
                           args->pPipelines)) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
 
    vn_replace_vkCreateComputePipelines_args_handle(args);
-   args->ret = vkCreateComputePipelines(args->device, args->pipelineCache, args->createInfoCount, args->pCreateInfos, NULL, arr.handle_storage);
+   args->ret =
+      vkCreateComputePipelines(args->device, args->pipelineCache, args->createInfoCount,
+                               args->pCreateInfos, NULL, arr.handle_storage);
    if (args->ret != VK_SUCCESS) {
       object_array_fini(&arr);
       return;
@@ -2652,7 +2861,8 @@ vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch, stru
 }
 
 static void
-vkr_dispatch_vkDestroyPipeline(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyPipeline *args)
+vkr_dispatch_vkDestroyPipeline(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkDestroyPipeline *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2662,7 +2872,8 @@ vkr_dispatch_vkDestroyPipeline(struct vn_dispatch_context *dispatch, struct vn_c
 }
 
 static void
-vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch, struct vn_command_vkCreateCommandPool *args)
+vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCreateCommandPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2674,35 +2885,39 @@ vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch, struct vn_command_vkDestroyCommandPool *args)
+vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkDestroyCommandPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
    DESTROY_OBJECT(pool, command_pool, COMMAND_POOL, vkDestroyCommandPool, commandPool);
 
    struct vkr_command_buffer *cmd, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(cmd, tmp, &pool->command_buffers, head)
+   LIST_FOR_EACH_ENTRY_SAFE (cmd, tmp, &pool->command_buffers, head)
       util_hash_table_remove_u64(ctx->object_table, cmd->base.id);
 
    util_hash_table_remove_u64(ctx->object_table, pool->base.id);
 }
 
 static void
-vkr_dispatch_vkResetCommandPool(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkResetCommandPool *args)
+vkr_dispatch_vkResetCommandPool(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkResetCommandPool *args)
 {
    vn_replace_vkResetCommandPool_args_handle(args);
    args->ret = vkResetCommandPool(args->device, args->commandPool, args->flags);
 }
 
 static void
-vkr_dispatch_vkTrimCommandPool(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkTrimCommandPool *args)
+vkr_dispatch_vkTrimCommandPool(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkTrimCommandPool *args)
 {
    vn_replace_vkTrimCommandPool_args_handle(args);
    vkTrimCommandPool(args->device, args->commandPool, args->flags);
 }
 
 static void
-vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch, struct vn_command_vkAllocateCommandBuffers *args)
+vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkAllocateCommandBuffers *args)
 {
    struct vkr_context *ctx = dispatch->data;
 
@@ -2712,25 +2927,25 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch, stru
       return;
    }
 
-   struct vkr_command_pool *pool = (struct vkr_command_pool *)(uintptr_t)args->pAllocateInfo->commandPool;
+   struct vkr_command_pool *pool =
+      (struct vkr_command_pool *)(uintptr_t)args->pAllocateInfo->commandPool;
    if (!pool || pool->base.type != VK_OBJECT_TYPE_COMMAND_POOL) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
    struct object_array arr;
-   if (!object_array_init(&arr,
-                          args->pAllocateInfo->commandBufferCount,
+   if (!object_array_init(&arr, args->pAllocateInfo->commandBufferCount,
                           VK_OBJECT_TYPE_COMMAND_BUFFER,
-                          sizeof(struct vkr_command_buffer),
-                          sizeof(VkCommandBuffer),
+                          sizeof(struct vkr_command_buffer), sizeof(VkCommandBuffer),
                           args->pCommandBuffers)) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
 
    vn_replace_vkAllocateCommandBuffers_args_handle(args);
-   args->ret = vkAllocateCommandBuffers(args->device, args->pAllocateInfo, arr.handle_storage);
+   args->ret =
+      vkAllocateCommandBuffers(args->device, args->pAllocateInfo, arr.handle_storage);
    if (args->ret != VK_SUCCESS) {
       object_array_fini(&arr);
       return;
@@ -2751,14 +2966,16 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch, stru
 }
 
 static void
-vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch, struct vn_command_vkFreeCommandBuffers *args)
+vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkFreeCommandBuffers *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct list_head free_cmds;
 
    list_inithead(&free_cmds);
    for (uint32_t i = 0; i < args->commandBufferCount; i++) {
-      struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->pCommandBuffers[i];
+      struct vkr_command_buffer *cmd =
+         (struct vkr_command_buffer *)args->pCommandBuffers[i];
       if (!cmd)
          continue;
       if (cmd->base.type != VK_OBJECT_TYPE_COMMAND_BUFFER) {
@@ -2771,358 +2988,452 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch, struct v
    }
 
    vn_replace_vkFreeCommandBuffers_args_handle(args);
-   vkFreeCommandBuffers(args->device, args->commandPool, args->commandBufferCount, args->pCommandBuffers);
+   vkFreeCommandBuffers(args->device, args->commandPool, args->commandBufferCount,
+                        args->pCommandBuffers);
 
    struct vkr_command_buffer *cmd, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(cmd, tmp, &free_cmds, head)
+   LIST_FOR_EACH_ENTRY_SAFE (cmd, tmp, &free_cmds, head)
       util_hash_table_remove_u64(ctx->object_table, cmd->base.id);
 }
 
 static void
-vkr_dispatch_vkResetCommandBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkResetCommandBuffer *args)
+vkr_dispatch_vkResetCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkResetCommandBuffer *args)
 {
    vn_replace_vkResetCommandBuffer_args_handle(args);
    args->ret = vkResetCommandBuffer(args->commandBuffer, args->flags);
 }
 
 static void
-vkr_dispatch_vkBeginCommandBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkBeginCommandBuffer *args)
+vkr_dispatch_vkBeginCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkBeginCommandBuffer *args)
 {
    vn_replace_vkBeginCommandBuffer_args_handle(args);
    args->ret = vkBeginCommandBuffer(args->commandBuffer, args->pBeginInfo);
 }
 
 static void
-vkr_dispatch_vkEndCommandBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkEndCommandBuffer *args)
+vkr_dispatch_vkEndCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkEndCommandBuffer *args)
 {
    vn_replace_vkEndCommandBuffer_args_handle(args);
    args->ret = vkEndCommandBuffer(args->commandBuffer);
 }
 
 static void
-vkr_dispatch_vkCmdBindPipeline(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBindPipeline *args)
+vkr_dispatch_vkCmdBindPipeline(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdBindPipeline *args)
 {
    vn_replace_vkCmdBindPipeline_args_handle(args);
    vkCmdBindPipeline(args->commandBuffer, args->pipelineBindPoint, args->pipeline);
 }
 
 static void
-vkr_dispatch_vkCmdSetViewport(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetViewport *args)
+vkr_dispatch_vkCmdSetViewport(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCmdSetViewport *args)
 {
    vn_replace_vkCmdSetViewport_args_handle(args);
-   vkCmdSetViewport(args->commandBuffer, args->firstViewport, args->viewportCount, args->pViewports);
+   vkCmdSetViewport(args->commandBuffer, args->firstViewport, args->viewportCount,
+                    args->pViewports);
 }
 
 static void
-vkr_dispatch_vkCmdSetScissor(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetScissor *args)
+vkr_dispatch_vkCmdSetScissor(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdSetScissor *args)
 {
    vn_replace_vkCmdSetScissor_args_handle(args);
-   vkCmdSetScissor(args->commandBuffer, args->firstScissor, args->scissorCount, args->pScissors);
+   vkCmdSetScissor(args->commandBuffer, args->firstScissor, args->scissorCount,
+                   args->pScissors);
 }
 
 static void
-vkr_dispatch_vkCmdSetLineWidth(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetLineWidth *args)
+vkr_dispatch_vkCmdSetLineWidth(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdSetLineWidth *args)
 {
    vn_replace_vkCmdSetLineWidth_args_handle(args);
    vkCmdSetLineWidth(args->commandBuffer, args->lineWidth);
 }
 
 static void
-vkr_dispatch_vkCmdSetDepthBias(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetDepthBias *args)
+vkr_dispatch_vkCmdSetDepthBias(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdSetDepthBias *args)
 {
    vn_replace_vkCmdSetDepthBias_args_handle(args);
-   vkCmdSetDepthBias(args->commandBuffer, args->depthBiasConstantFactor, args->depthBiasClamp, args->depthBiasSlopeFactor);
+   vkCmdSetDepthBias(args->commandBuffer, args->depthBiasConstantFactor,
+                     args->depthBiasClamp, args->depthBiasSlopeFactor);
 }
 
 static void
-vkr_dispatch_vkCmdSetBlendConstants(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetBlendConstants *args)
+vkr_dispatch_vkCmdSetBlendConstants(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdSetBlendConstants *args)
 {
    vn_replace_vkCmdSetBlendConstants_args_handle(args);
    vkCmdSetBlendConstants(args->commandBuffer, args->blendConstants);
 }
 
 static void
-vkr_dispatch_vkCmdSetDepthBounds(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetDepthBounds *args)
+vkr_dispatch_vkCmdSetDepthBounds(UNUSED struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCmdSetDepthBounds *args)
 {
    vn_replace_vkCmdSetDepthBounds_args_handle(args);
    vkCmdSetDepthBounds(args->commandBuffer, args->minDepthBounds, args->maxDepthBounds);
 }
 
 static void
-vkr_dispatch_vkCmdSetStencilCompareMask(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetStencilCompareMask *args)
+vkr_dispatch_vkCmdSetStencilCompareMask(UNUSED struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkCmdSetStencilCompareMask *args)
 {
    vn_replace_vkCmdSetStencilCompareMask_args_handle(args);
    vkCmdSetStencilCompareMask(args->commandBuffer, args->faceMask, args->compareMask);
 }
 
 static void
-vkr_dispatch_vkCmdSetStencilWriteMask(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetStencilWriteMask *args)
+vkr_dispatch_vkCmdSetStencilWriteMask(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdSetStencilWriteMask *args)
 {
    vn_replace_vkCmdSetStencilWriteMask_args_handle(args);
    vkCmdSetStencilWriteMask(args->commandBuffer, args->faceMask, args->writeMask);
 }
 
 static void
-vkr_dispatch_vkCmdSetStencilReference(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetStencilReference *args)
+vkr_dispatch_vkCmdSetStencilReference(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdSetStencilReference *args)
 {
    vn_replace_vkCmdSetStencilReference_args_handle(args);
    vkCmdSetStencilReference(args->commandBuffer, args->faceMask, args->reference);
 }
 
 static void
-vkr_dispatch_vkCmdBindDescriptorSets(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBindDescriptorSets *args)
+vkr_dispatch_vkCmdBindDescriptorSets(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdBindDescriptorSets *args)
 {
    vn_replace_vkCmdBindDescriptorSets_args_handle(args);
-   vkCmdBindDescriptorSets(args->commandBuffer, args->pipelineBindPoint, args->layout, args->firstSet, args->descriptorSetCount, args->pDescriptorSets, args->dynamicOffsetCount, args->pDynamicOffsets);
+   vkCmdBindDescriptorSets(args->commandBuffer, args->pipelineBindPoint, args->layout,
+                           args->firstSet, args->descriptorSetCount,
+                           args->pDescriptorSets, args->dynamicOffsetCount,
+                           args->pDynamicOffsets);
 }
 
 static void
-vkr_dispatch_vkCmdBindIndexBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBindIndexBuffer *args)
+vkr_dispatch_vkCmdBindIndexBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCmdBindIndexBuffer *args)
 {
    vn_replace_vkCmdBindIndexBuffer_args_handle(args);
    vkCmdBindIndexBuffer(args->commandBuffer, args->buffer, args->offset, args->indexType);
 }
 
 static void
-vkr_dispatch_vkCmdBindVertexBuffers(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBindVertexBuffers *args)
+vkr_dispatch_vkCmdBindVertexBuffers(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdBindVertexBuffers *args)
 {
    vn_replace_vkCmdBindVertexBuffers_args_handle(args);
-   vkCmdBindVertexBuffers(args->commandBuffer, args->firstBinding, args->bindingCount, args->pBuffers, args->pOffsets);
+   vkCmdBindVertexBuffers(args->commandBuffer, args->firstBinding, args->bindingCount,
+                          args->pBuffers, args->pOffsets);
 }
 
 static void
-vkr_dispatch_vkCmdDraw(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDraw *args)
+vkr_dispatch_vkCmdDraw(UNUSED struct vn_dispatch_context *dispatch,
+                       struct vn_command_vkCmdDraw *args)
 {
    vn_replace_vkCmdDraw_args_handle(args);
-   vkCmdDraw(args->commandBuffer, args->vertexCount, args->instanceCount, args->firstVertex, args->firstInstance);
+   vkCmdDraw(args->commandBuffer, args->vertexCount, args->instanceCount,
+             args->firstVertex, args->firstInstance);
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndexed(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndexed *args)
+vkr_dispatch_vkCmdDrawIndexed(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCmdDrawIndexed *args)
 {
    vn_replace_vkCmdDrawIndexed_args_handle(args);
-   vkCmdDrawIndexed(args->commandBuffer, args->indexCount, args->instanceCount, args->firstIndex, args->vertexOffset, args->firstInstance);
+   vkCmdDrawIndexed(args->commandBuffer, args->indexCount, args->instanceCount,
+                    args->firstIndex, args->vertexOffset, args->firstInstance);
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndirect(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndirect *args)
+vkr_dispatch_vkCmdDrawIndirect(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdDrawIndirect *args)
 {
    vn_replace_vkCmdDrawIndirect_args_handle(args);
-   vkCmdDrawIndirect(args->commandBuffer, args->buffer, args->offset, args->drawCount, args->stride);
+   vkCmdDrawIndirect(args->commandBuffer, args->buffer, args->offset, args->drawCount,
+                     args->stride);
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndexedIndirect(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndexedIndirect *args)
+vkr_dispatch_vkCmdDrawIndexedIndirect(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdDrawIndexedIndirect *args)
 {
    vn_replace_vkCmdDrawIndexedIndirect_args_handle(args);
-   vkCmdDrawIndexedIndirect(args->commandBuffer, args->buffer, args->offset, args->drawCount, args->stride);
+   vkCmdDrawIndexedIndirect(args->commandBuffer, args->buffer, args->offset,
+                            args->drawCount, args->stride);
 }
 
 static void
-vkr_dispatch_vkCmdDispatch(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDispatch *args)
+vkr_dispatch_vkCmdDispatch(UNUSED struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCmdDispatch *args)
 {
    vn_replace_vkCmdDispatch_args_handle(args);
-   vkCmdDispatch(args->commandBuffer, args->groupCountX, args->groupCountY, args->groupCountZ);
+   vkCmdDispatch(args->commandBuffer, args->groupCountX, args->groupCountY,
+                 args->groupCountZ);
 }
 
 static void
-vkr_dispatch_vkCmdDispatchIndirect(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDispatchIndirect *args)
+vkr_dispatch_vkCmdDispatchIndirect(UNUSED struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkCmdDispatchIndirect *args)
 {
    vn_replace_vkCmdDispatchIndirect_args_handle(args);
    vkCmdDispatchIndirect(args->commandBuffer, args->buffer, args->offset);
 }
 
 static void
-vkr_dispatch_vkCmdCopyBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdCopyBuffer *args)
+vkr_dispatch_vkCmdCopyBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdCopyBuffer *args)
 {
    vn_replace_vkCmdCopyBuffer_args_handle(args);
-   vkCmdCopyBuffer(args->commandBuffer, args->srcBuffer, args->dstBuffer, args->regionCount, args->pRegions);
+   vkCmdCopyBuffer(args->commandBuffer, args->srcBuffer, args->dstBuffer,
+                   args->regionCount, args->pRegions);
 }
 
 static void
-vkr_dispatch_vkCmdCopyImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdCopyImage *args)
+vkr_dispatch_vkCmdCopyImage(UNUSED struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkCmdCopyImage *args)
 {
    vn_replace_vkCmdCopyImage_args_handle(args);
-   vkCmdCopyImage(args->commandBuffer, args->srcImage, args->srcImageLayout, args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions);
+   vkCmdCopyImage(args->commandBuffer, args->srcImage, args->srcImageLayout,
+                  args->dstImage, args->dstImageLayout, args->regionCount,
+                  args->pRegions);
 }
 
 static void
-vkr_dispatch_vkCmdBlitImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBlitImage *args)
+vkr_dispatch_vkCmdBlitImage(UNUSED struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkCmdBlitImage *args)
 {
    vn_replace_vkCmdBlitImage_args_handle(args);
-   vkCmdBlitImage(args->commandBuffer, args->srcImage, args->srcImageLayout, args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions, args->filter);
+   vkCmdBlitImage(args->commandBuffer, args->srcImage, args->srcImageLayout,
+                  args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions,
+                  args->filter);
 }
 
 static void
-vkr_dispatch_vkCmdCopyBufferToImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdCopyBufferToImage *args)
+vkr_dispatch_vkCmdCopyBufferToImage(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdCopyBufferToImage *args)
 {
    vn_replace_vkCmdCopyBufferToImage_args_handle(args);
-   vkCmdCopyBufferToImage(args->commandBuffer, args->srcBuffer, args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions);
+   vkCmdCopyBufferToImage(args->commandBuffer, args->srcBuffer, args->dstImage,
+                          args->dstImageLayout, args->regionCount, args->pRegions);
 }
 
 static void
-vkr_dispatch_vkCmdCopyImageToBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdCopyImageToBuffer *args)
+vkr_dispatch_vkCmdCopyImageToBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdCopyImageToBuffer *args)
 {
    vn_replace_vkCmdCopyImageToBuffer_args_handle(args);
-   vkCmdCopyImageToBuffer(args->commandBuffer, args->srcImage, args->srcImageLayout, args->dstBuffer, args->regionCount, args->pRegions);
+   vkCmdCopyImageToBuffer(args->commandBuffer, args->srcImage, args->srcImageLayout,
+                          args->dstBuffer, args->regionCount, args->pRegions);
 }
 
 static void
-vkr_dispatch_vkCmdUpdateBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdUpdateBuffer *args)
+vkr_dispatch_vkCmdUpdateBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdUpdateBuffer *args)
 {
    vn_replace_vkCmdUpdateBuffer_args_handle(args);
-   vkCmdUpdateBuffer(args->commandBuffer, args->dstBuffer, args->dstOffset, args->dataSize, args->pData);
+   vkCmdUpdateBuffer(args->commandBuffer, args->dstBuffer, args->dstOffset,
+                     args->dataSize, args->pData);
 }
 
 static void
-vkr_dispatch_vkCmdFillBuffer(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdFillBuffer *args)
+vkr_dispatch_vkCmdFillBuffer(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdFillBuffer *args)
 {
    vn_replace_vkCmdFillBuffer_args_handle(args);
-   vkCmdFillBuffer(args->commandBuffer, args->dstBuffer, args->dstOffset, args->size, args->data);
+   vkCmdFillBuffer(args->commandBuffer, args->dstBuffer, args->dstOffset, args->size,
+                   args->data);
 }
 
 static void
-vkr_dispatch_vkCmdClearColorImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdClearColorImage *args)
+vkr_dispatch_vkCmdClearColorImage(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCmdClearColorImage *args)
 {
    vn_replace_vkCmdClearColorImage_args_handle(args);
-   vkCmdClearColorImage(args->commandBuffer, args->image, args->imageLayout, args->pColor, args->rangeCount, args->pRanges);
+   vkCmdClearColorImage(args->commandBuffer, args->image, args->imageLayout, args->pColor,
+                        args->rangeCount, args->pRanges);
 }
 
 static void
-vkr_dispatch_vkCmdClearDepthStencilImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdClearDepthStencilImage *args)
+vkr_dispatch_vkCmdClearDepthStencilImage(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdClearDepthStencilImage *args)
 {
    vn_replace_vkCmdClearDepthStencilImage_args_handle(args);
-   vkCmdClearDepthStencilImage(args->commandBuffer, args->image, args->imageLayout, args->pDepthStencil, args->rangeCount, args->pRanges);
+   vkCmdClearDepthStencilImage(args->commandBuffer, args->image, args->imageLayout,
+                               args->pDepthStencil, args->rangeCount, args->pRanges);
 }
 
 static void
-vkr_dispatch_vkCmdClearAttachments(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdClearAttachments *args)
+vkr_dispatch_vkCmdClearAttachments(UNUSED struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkCmdClearAttachments *args)
 {
    vn_replace_vkCmdClearAttachments_args_handle(args);
-   vkCmdClearAttachments(args->commandBuffer, args->attachmentCount, args->pAttachments, args->rectCount, args->pRects);
+   vkCmdClearAttachments(args->commandBuffer, args->attachmentCount, args->pAttachments,
+                         args->rectCount, args->pRects);
 }
 
 static void
-vkr_dispatch_vkCmdResolveImage(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdResolveImage *args)
+vkr_dispatch_vkCmdResolveImage(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdResolveImage *args)
 {
    vn_replace_vkCmdResolveImage_args_handle(args);
-   vkCmdResolveImage(args->commandBuffer, args->srcImage, args->srcImageLayout, args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions);
+   vkCmdResolveImage(args->commandBuffer, args->srcImage, args->srcImageLayout,
+                     args->dstImage, args->dstImageLayout, args->regionCount,
+                     args->pRegions);
 }
 
 static void
-vkr_dispatch_vkCmdSetEvent(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetEvent *args)
+vkr_dispatch_vkCmdSetEvent(UNUSED struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCmdSetEvent *args)
 {
    vn_replace_vkCmdSetEvent_args_handle(args);
    vkCmdSetEvent(args->commandBuffer, args->event, args->stageMask);
 }
 
 static void
-vkr_dispatch_vkCmdResetEvent(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdResetEvent *args)
+vkr_dispatch_vkCmdResetEvent(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdResetEvent *args)
 {
    vn_replace_vkCmdResetEvent_args_handle(args);
    vkCmdResetEvent(args->commandBuffer, args->event, args->stageMask);
 }
 
 static void
-vkr_dispatch_vkCmdWaitEvents(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdWaitEvents *args)
+vkr_dispatch_vkCmdWaitEvents(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdWaitEvents *args)
 {
    vn_replace_vkCmdWaitEvents_args_handle(args);
-   vkCmdWaitEvents(args->commandBuffer, args->eventCount, args->pEvents, args->srcStageMask, args->dstStageMask, args->memoryBarrierCount, args->pMemoryBarriers, args->bufferMemoryBarrierCount, args->pBufferMemoryBarriers, args->imageMemoryBarrierCount, args->pImageMemoryBarriers);
+   vkCmdWaitEvents(args->commandBuffer, args->eventCount, args->pEvents,
+                   args->srcStageMask, args->dstStageMask, args->memoryBarrierCount,
+                   args->pMemoryBarriers, args->bufferMemoryBarrierCount,
+                   args->pBufferMemoryBarriers, args->imageMemoryBarrierCount,
+                   args->pImageMemoryBarriers);
 }
 
 static void
-vkr_dispatch_vkCmdPipelineBarrier(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdPipelineBarrier *args)
+vkr_dispatch_vkCmdPipelineBarrier(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCmdPipelineBarrier *args)
 {
    vn_replace_vkCmdPipelineBarrier_args_handle(args);
-   vkCmdPipelineBarrier(args->commandBuffer, args->srcStageMask, args->dstStageMask, args->dependencyFlags, args->memoryBarrierCount, args->pMemoryBarriers, args->bufferMemoryBarrierCount, args->pBufferMemoryBarriers, args->imageMemoryBarrierCount, args->pImageMemoryBarriers);
+   vkCmdPipelineBarrier(args->commandBuffer, args->srcStageMask, args->dstStageMask,
+                        args->dependencyFlags, args->memoryBarrierCount,
+                        args->pMemoryBarriers, args->bufferMemoryBarrierCount,
+                        args->pBufferMemoryBarriers, args->imageMemoryBarrierCount,
+                        args->pImageMemoryBarriers);
 }
 
 static void
-vkr_dispatch_vkCmdBeginQuery(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBeginQuery *args)
+vkr_dispatch_vkCmdBeginQuery(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdBeginQuery *args)
 {
    vn_replace_vkCmdBeginQuery_args_handle(args);
    vkCmdBeginQuery(args->commandBuffer, args->queryPool, args->query, args->flags);
 }
 
 static void
-vkr_dispatch_vkCmdEndQuery(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdEndQuery *args)
+vkr_dispatch_vkCmdEndQuery(UNUSED struct vn_dispatch_context *dispatch,
+                           struct vn_command_vkCmdEndQuery *args)
 {
    vn_replace_vkCmdEndQuery_args_handle(args);
    vkCmdEndQuery(args->commandBuffer, args->queryPool, args->query);
 }
 
 static void
-vkr_dispatch_vkCmdResetQueryPool(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdResetQueryPool *args)
+vkr_dispatch_vkCmdResetQueryPool(UNUSED struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCmdResetQueryPool *args)
 {
    vn_replace_vkCmdResetQueryPool_args_handle(args);
-   vkCmdResetQueryPool(args->commandBuffer, args->queryPool, args->firstQuery, args->queryCount);
+   vkCmdResetQueryPool(args->commandBuffer, args->queryPool, args->firstQuery,
+                       args->queryCount);
 }
 
 static void
-vkr_dispatch_vkCmdWriteTimestamp(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdWriteTimestamp *args)
+vkr_dispatch_vkCmdWriteTimestamp(UNUSED struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCmdWriteTimestamp *args)
 {
    vn_replace_vkCmdWriteTimestamp_args_handle(args);
-   vkCmdWriteTimestamp(args->commandBuffer, args->pipelineStage, args->queryPool, args->query);
+   vkCmdWriteTimestamp(args->commandBuffer, args->pipelineStage, args->queryPool,
+                       args->query);
 }
 
 static void
-vkr_dispatch_vkCmdCopyQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdCopyQueryPoolResults *args)
+vkr_dispatch_vkCmdCopyQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdCopyQueryPoolResults *args)
 {
    vn_replace_vkCmdCopyQueryPoolResults_args_handle(args);
-   vkCmdCopyQueryPoolResults(args->commandBuffer, args->queryPool, args->firstQuery, args->queryCount, args->dstBuffer, args->dstOffset, args->stride, args->flags);
+   vkCmdCopyQueryPoolResults(args->commandBuffer, args->queryPool, args->firstQuery,
+                             args->queryCount, args->dstBuffer, args->dstOffset,
+                             args->stride, args->flags);
 }
 
 static void
-vkr_dispatch_vkCmdPushConstants(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdPushConstants *args)
+vkr_dispatch_vkCmdPushConstants(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCmdPushConstants *args)
 {
    vn_replace_vkCmdPushConstants_args_handle(args);
-   vkCmdPushConstants(args->commandBuffer, args->layout, args->stageFlags, args->offset, args->size, args->pValues);
+   vkCmdPushConstants(args->commandBuffer, args->layout, args->stageFlags, args->offset,
+                      args->size, args->pValues);
 }
 
 static void
-vkr_dispatch_vkCmdBeginRenderPass(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBeginRenderPass *args)
+vkr_dispatch_vkCmdBeginRenderPass(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCmdBeginRenderPass *args)
 {
    vn_replace_vkCmdBeginRenderPass_args_handle(args);
    vkCmdBeginRenderPass(args->commandBuffer, args->pRenderPassBegin, args->contents);
 }
 
 static void
-vkr_dispatch_vkCmdNextSubpass(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdNextSubpass *args)
+vkr_dispatch_vkCmdNextSubpass(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCmdNextSubpass *args)
 {
    vn_replace_vkCmdNextSubpass_args_handle(args);
    vkCmdNextSubpass(args->commandBuffer, args->contents);
 }
 
 static void
-vkr_dispatch_vkCmdEndRenderPass(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdEndRenderPass *args)
+vkr_dispatch_vkCmdEndRenderPass(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCmdEndRenderPass *args)
 {
    vn_replace_vkCmdEndRenderPass_args_handle(args);
    vkCmdEndRenderPass(args->commandBuffer);
 }
 
 static void
-vkr_dispatch_vkCmdExecuteCommands(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdExecuteCommands *args)
+vkr_dispatch_vkCmdExecuteCommands(UNUSED struct vn_dispatch_context *dispatch,
+                                  struct vn_command_vkCmdExecuteCommands *args)
 {
    vn_replace_vkCmdExecuteCommands_args_handle(args);
-   vkCmdExecuteCommands(args->commandBuffer, args->commandBufferCount, args->pCommandBuffers);
+   vkCmdExecuteCommands(args->commandBuffer, args->commandBufferCount,
+                        args->pCommandBuffers);
 }
 
 static void
-vkr_dispatch_vkCmdSetDeviceMask(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdSetDeviceMask *args)
+vkr_dispatch_vkCmdSetDeviceMask(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCmdSetDeviceMask *args)
 {
    vn_replace_vkCmdSetDeviceMask_args_handle(args);
    vkCmdSetDeviceMask(args->commandBuffer, args->deviceMask);
 }
 
 static void
-vkr_dispatch_vkCmdDispatchBase(UNUSED struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDispatchBase *args)
+vkr_dispatch_vkCmdDispatchBase(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdDispatchBase *args)
 {
    vn_replace_vkCmdDispatchBase_args_handle(args);
-   vkCmdDispatchBase(args->commandBuffer, args->baseGroupX, args->baseGroupY, args->baseGroupZ, args->groupCountX, args->groupCountY, args->groupCountZ);
+   vkCmdDispatchBase(args->commandBuffer, args->baseGroupX, args->baseGroupY,
+                     args->baseGroupZ, args->groupCountX, args->groupCountY,
+                     args->groupCountZ);
 }
 
 static void
-vkr_dispatch_vkCmdBeginRenderPass2(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBeginRenderPass2 *args)
+vkr_dispatch_vkCmdBeginRenderPass2(struct vn_dispatch_context *dispatch,
+                                   struct vn_command_vkCmdBeginRenderPass2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3132,11 +3443,13 @@ vkr_dispatch_vkCmdBeginRenderPass2(struct vn_dispatch_context *dispatch, struct 
    }
 
    vn_replace_vkCmdBeginRenderPass2_args_handle(args);
-   cmd->device->CmdBeginRenderPass2(args->commandBuffer, args->pRenderPassBegin, args->pSubpassBeginInfo);
+   cmd->device->CmdBeginRenderPass2(args->commandBuffer, args->pRenderPassBegin,
+                                    args->pSubpassBeginInfo);
 }
 
 static void
-vkr_dispatch_vkCmdNextSubpass2(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdNextSubpass2 *args)
+vkr_dispatch_vkCmdNextSubpass2(struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdNextSubpass2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3146,11 +3459,13 @@ vkr_dispatch_vkCmdNextSubpass2(struct vn_dispatch_context *dispatch, struct vn_c
    }
 
    vn_replace_vkCmdNextSubpass2_args_handle(args);
-   cmd->device->CmdNextSubpass2(args->commandBuffer, args->pSubpassBeginInfo, args->pSubpassEndInfo);
+   cmd->device->CmdNextSubpass2(args->commandBuffer, args->pSubpassBeginInfo,
+                                args->pSubpassEndInfo);
 }
 
 static void
-vkr_dispatch_vkCmdEndRenderPass2(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdEndRenderPass2 *args)
+vkr_dispatch_vkCmdEndRenderPass2(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkCmdEndRenderPass2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3164,7 +3479,8 @@ vkr_dispatch_vkCmdEndRenderPass2(struct vn_dispatch_context *dispatch, struct vn
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndirectCount(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndirectCount *args)
+vkr_dispatch_vkCmdDrawIndirectCount(struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdDrawIndirectCount *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3174,11 +3490,15 @@ vkr_dispatch_vkCmdDrawIndirectCount(struct vn_dispatch_context *dispatch, struct
    }
 
    vn_replace_vkCmdDrawIndirectCount_args_handle(args);
-   cmd->device->CmdDrawIndirectCount(args->commandBuffer, args->buffer, args->offset, args->countBuffer, args->countBufferOffset, args->maxDrawCount, args->stride);
+   cmd->device->CmdDrawIndirectCount(args->commandBuffer, args->buffer, args->offset,
+                                     args->countBuffer, args->countBufferOffset,
+                                     args->maxDrawCount, args->stride);
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndexedIndirectCount(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndexedIndirectCount *args)
+vkr_dispatch_vkCmdDrawIndexedIndirectCount(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdDrawIndexedIndirectCount *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3188,11 +3508,15 @@ vkr_dispatch_vkCmdDrawIndexedIndirectCount(struct vn_dispatch_context *dispatch,
    }
 
    vn_replace_vkCmdDrawIndexedIndirectCount_args_handle(args);
-   cmd->device->CmdDrawIndexedIndirectCount(args->commandBuffer, args->buffer, args->offset, args->countBuffer, args->countBufferOffset, args->maxDrawCount, args->stride);
+   cmd->device->CmdDrawIndexedIndirectCount(
+      args->commandBuffer, args->buffer, args->offset, args->countBuffer,
+      args->countBufferOffset, args->maxDrawCount, args->stride);
 }
 
 static void
-vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBindTransformFeedbackBuffersEXT *args)
+vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdBindTransformFeedbackBuffersEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3202,11 +3526,15 @@ vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT(struct vn_dispatch_context *di
    }
 
    vn_replace_vkCmdBindTransformFeedbackBuffersEXT_args_handle(args);
-   cmd->device->cmd_bind_transform_feedback_buffers(args->commandBuffer, args->firstBinding, args->bindingCount, args->pBuffers, args->pOffsets, args->pSizes);
+   cmd->device->cmd_bind_transform_feedback_buffers(
+      args->commandBuffer, args->firstBinding, args->bindingCount, args->pBuffers,
+      args->pOffsets, args->pSizes);
 }
 
 static void
-vkr_dispatch_vkCmdBeginTransformFeedbackEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBeginTransformFeedbackEXT *args)
+vkr_dispatch_vkCmdBeginTransformFeedbackEXT(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdBeginTransformFeedbackEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3216,11 +3544,15 @@ vkr_dispatch_vkCmdBeginTransformFeedbackEXT(struct vn_dispatch_context *dispatch
    }
 
    vn_replace_vkCmdBeginTransformFeedbackEXT_args_handle(args);
-   cmd->device->cmd_begin_transform_feedback(args->commandBuffer, args->firstCounterBuffer, args->counterBufferCount, args->pCounterBuffers, args->pCounterBufferOffsets);
+   cmd->device->cmd_begin_transform_feedback(
+      args->commandBuffer, args->firstCounterBuffer, args->counterBufferCount,
+      args->pCounterBuffers, args->pCounterBufferOffsets);
 }
 
 static void
-vkr_dispatch_vkCmdEndTransformFeedbackEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdEndTransformFeedbackEXT *args)
+vkr_dispatch_vkCmdEndTransformFeedbackEXT(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdEndTransformFeedbackEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3230,11 +3562,14 @@ vkr_dispatch_vkCmdEndTransformFeedbackEXT(struct vn_dispatch_context *dispatch, 
    }
 
    vn_replace_vkCmdEndTransformFeedbackEXT_args_handle(args);
-   cmd->device->cmd_end_transform_feedback(args->commandBuffer, args->firstCounterBuffer, args->counterBufferCount, args->pCounterBuffers, args->pCounterBufferOffsets);
+   cmd->device->cmd_end_transform_feedback(
+      args->commandBuffer, args->firstCounterBuffer, args->counterBufferCount,
+      args->pCounterBuffers, args->pCounterBufferOffsets);
 }
 
 static void
-vkr_dispatch_vkCmdBeginQueryIndexedEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdBeginQueryIndexedEXT *args)
+vkr_dispatch_vkCmdBeginQueryIndexedEXT(struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdBeginQueryIndexedEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3244,11 +3579,13 @@ vkr_dispatch_vkCmdBeginQueryIndexedEXT(struct vn_dispatch_context *dispatch, str
    }
 
    vn_replace_vkCmdBeginQueryIndexedEXT_args_handle(args);
-   cmd->device->cmd_begin_query_indexed(args->commandBuffer, args->queryPool, args->query, args->flags, args->index);
+   cmd->device->cmd_begin_query_indexed(args->commandBuffer, args->queryPool, args->query,
+                                        args->flags, args->index);
 }
 
 static void
-vkr_dispatch_vkCmdEndQueryIndexedEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdEndQueryIndexedEXT *args)
+vkr_dispatch_vkCmdEndQueryIndexedEXT(struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdEndQueryIndexedEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3258,11 +3595,14 @@ vkr_dispatch_vkCmdEndQueryIndexedEXT(struct vn_dispatch_context *dispatch, struc
    }
 
    vn_replace_vkCmdEndQueryIndexedEXT_args_handle(args);
-   cmd->device->cmd_end_query_indexed(args->commandBuffer, args->queryPool, args->query, args->index);
+   cmd->device->cmd_end_query_indexed(args->commandBuffer, args->queryPool, args->query,
+                                      args->index);
 }
 
 static void
-vkr_dispatch_vkCmdDrawIndirectByteCountEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkCmdDrawIndirectByteCountEXT *args)
+vkr_dispatch_vkCmdDrawIndirectByteCountEXT(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdDrawIndirectByteCountEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
@@ -3272,11 +3612,15 @@ vkr_dispatch_vkCmdDrawIndirectByteCountEXT(struct vn_dispatch_context *dispatch,
    }
 
    vn_replace_vkCmdDrawIndirectByteCountEXT_args_handle(args);
-   cmd->device->cmd_draw_indirect_byte_count(args->commandBuffer, args->instanceCount, args->firstInstance, args->counterBuffer, args->counterBufferOffset, args->counterOffset, args->vertexStride);
+   cmd->device->cmd_draw_indirect_byte_count(
+      args->commandBuffer, args->instanceCount, args->firstInstance, args->counterBuffer,
+      args->counterBufferOffset, args->counterOffset, args->vertexStride);
 }
 
 static void
-vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(struct vn_dispatch_context *dispatch, struct vn_command_vkGetImageDrmFormatModifierPropertiesEXT *args)
+vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetImageDrmFormatModifierPropertiesEXT *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -3286,11 +3630,14 @@ vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(struct vn_dispatch_context
    }
 
    vn_replace_vkGetImageDrmFormatModifierPropertiesEXT_args_handle(args);
-   args->ret = dev->get_image_drm_format_modifier_properties(args->device, args->image, args->pProperties);
+   args->ret = dev->get_image_drm_format_modifier_properties(args->device, args->image,
+                                                             args->pProperties);
 }
 
 static void
-vkr_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispatch_context *dispatch, struct vn_command_vkGetMemoryResourcePropertiesMESA *args)
+vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetMemoryResourcePropertiesMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
@@ -3299,7 +3646,8 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispatch_context *dispa
       return;
    }
 
-   struct vkr_resource_attachment *att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));
+   struct vkr_resource_attachment *att =
+      util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));
    if (!att || !att->resource) {
       args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
       return;
@@ -3308,7 +3656,8 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispatch_context *dispa
    int fd = -1;
    enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &fd);
    VkExternalMemoryHandleTypeFlagBits handle_type;
-   if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type, &handle_type)) {
+   if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type,
+                                                  &handle_type)) {
       close(fd);
       args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
       return;
@@ -3320,7 +3669,8 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispatch_context *dispa
       .memoryTypeBits = 0,
    };
    vn_replace_vkGetMemoryResourcePropertiesMESA_args_handle(args);
-   args->ret = dev->get_memory_fd_properties(args->device, handle_type, fd, &memory_fd_properties);
+   args->ret =
+      dev->get_memory_fd_properties(args->device, handle_type, fd, &memory_fd_properties);
    args->pMemoryResourceProperties->memoryTypeBits = memory_fd_properties.memoryTypeBits;
    close(fd);
 }
@@ -3342,48 +3692,71 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->encoder = (struct vn_cs_encoder *)&ctx->encoder;
    dispatch->decoder = (struct vn_cs_decoder *)&ctx->decoder;
 
-   dispatch->dispatch_vkSetReplyCommandStreamMESA = vkr_dispatch_vkSetReplyCommandStreamMESA;
-   dispatch->dispatch_vkSeekReplyCommandStreamMESA = vkr_dispatch_vkSeekReplyCommandStreamMESA;
-   dispatch->dispatch_vkExecuteCommandStreamsMESA = vkr_dispatch_vkExecuteCommandStreamsMESA;
+   dispatch->dispatch_vkSetReplyCommandStreamMESA =
+      vkr_dispatch_vkSetReplyCommandStreamMESA;
+   dispatch->dispatch_vkSeekReplyCommandStreamMESA =
+      vkr_dispatch_vkSeekReplyCommandStreamMESA;
+   dispatch->dispatch_vkExecuteCommandStreamsMESA =
+      vkr_dispatch_vkExecuteCommandStreamsMESA;
    dispatch->dispatch_vkCreateRingMESA = vkr_dispatch_vkCreateRingMESA;
    dispatch->dispatch_vkDestroyRingMESA = vkr_dispatch_vkDestroyRingMESA;
    dispatch->dispatch_vkNotifyRingMESA = vkr_dispatch_vkNotifyRingMESA;
    dispatch->dispatch_vkWriteRingExtraMESA = vkr_dispatch_vkWriteRingExtraMESA;
 
-   dispatch->dispatch_vkEnumerateInstanceVersion = vkr_dispatch_vkEnumerateInstanceVersion;
-   dispatch->dispatch_vkEnumerateInstanceExtensionProperties = vkr_dispatch_vkEnumerateInstanceExtensionProperties;
+   dispatch->dispatch_vkEnumerateInstanceVersion =
+      vkr_dispatch_vkEnumerateInstanceVersion;
+   dispatch->dispatch_vkEnumerateInstanceExtensionProperties =
+      vkr_dispatch_vkEnumerateInstanceExtensionProperties;
    /* we don't advertise layers (and should never) */
    dispatch->dispatch_vkEnumerateInstanceLayerProperties = NULL;
    dispatch->dispatch_vkCreateInstance = vkr_dispatch_vkCreateInstance;
    dispatch->dispatch_vkDestroyInstance = vkr_dispatch_vkDestroyInstance;
    dispatch->dispatch_vkGetInstanceProcAddr = NULL;
 
-   dispatch->dispatch_vkEnumeratePhysicalDevices = vkr_dispatch_vkEnumeratePhysicalDevices;
-   dispatch->dispatch_vkEnumeratePhysicalDeviceGroups = vkr_dispatch_vkEnumeratePhysicalDeviceGroups;
-   dispatch->dispatch_vkGetPhysicalDeviceFeatures = vkr_dispatch_vkGetPhysicalDeviceFeatures;
-   dispatch->dispatch_vkGetPhysicalDeviceProperties = vkr_dispatch_vkGetPhysicalDeviceProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceQueueFamilyProperties = vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceMemoryProperties = vkr_dispatch_vkGetPhysicalDeviceMemoryProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceFormatProperties = vkr_dispatch_vkGetPhysicalDeviceFormatProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceImageFormatProperties = vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties = vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties;
-   dispatch->dispatch_vkGetPhysicalDeviceFeatures2 = vkr_dispatch_vkGetPhysicalDeviceFeatures2;
-   dispatch->dispatch_vkGetPhysicalDeviceProperties2 = vkr_dispatch_vkGetPhysicalDeviceProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceQueueFamilyProperties2 = vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceMemoryProperties2 = vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceFormatProperties2 = vkr_dispatch_vkGetPhysicalDeviceFormatProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceImageFormatProperties2 = vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2 = vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2;
+   dispatch->dispatch_vkEnumeratePhysicalDevices =
+      vkr_dispatch_vkEnumeratePhysicalDevices;
+   dispatch->dispatch_vkEnumeratePhysicalDeviceGroups =
+      vkr_dispatch_vkEnumeratePhysicalDeviceGroups;
+   dispatch->dispatch_vkGetPhysicalDeviceFeatures =
+      vkr_dispatch_vkGetPhysicalDeviceFeatures;
+   dispatch->dispatch_vkGetPhysicalDeviceProperties =
+      vkr_dispatch_vkGetPhysicalDeviceProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceQueueFamilyProperties =
+      vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceMemoryProperties =
+      vkr_dispatch_vkGetPhysicalDeviceMemoryProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceFormatProperties =
+      vkr_dispatch_vkGetPhysicalDeviceFormatProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceImageFormatProperties =
+      vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties =
+      vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceFeatures2 =
+      vkr_dispatch_vkGetPhysicalDeviceFeatures2;
+   dispatch->dispatch_vkGetPhysicalDeviceProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceProperties2;
+   dispatch->dispatch_vkGetPhysicalDeviceQueueFamilyProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2;
+   dispatch->dispatch_vkGetPhysicalDeviceMemoryProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2;
+   dispatch->dispatch_vkGetPhysicalDeviceFormatProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceFormatProperties2;
+   dispatch->dispatch_vkGetPhysicalDeviceImageFormatProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2;
+   dispatch->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2 =
+      vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2;
    dispatch->dispatch_vkGetPhysicalDeviceExternalBufferProperties = NULL;
    dispatch->dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties = NULL;
    dispatch->dispatch_vkGetPhysicalDeviceExternalFenceProperties = NULL;
 
-   dispatch->dispatch_vkEnumerateDeviceExtensionProperties = vkr_dispatch_vkEnumerateDeviceExtensionProperties;
+   dispatch->dispatch_vkEnumerateDeviceExtensionProperties =
+      vkr_dispatch_vkEnumerateDeviceExtensionProperties;
    dispatch->dispatch_vkEnumerateDeviceLayerProperties = NULL;
    dispatch->dispatch_vkCreateDevice = vkr_dispatch_vkCreateDevice;
    dispatch->dispatch_vkDestroyDevice = vkr_dispatch_vkDestroyDevice;
    dispatch->dispatch_vkGetDeviceProcAddr = NULL;
-   dispatch->dispatch_vkGetDeviceGroupPeerMemoryFeatures = vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures;
+   dispatch->dispatch_vkGetDeviceGroupPeerMemoryFeatures =
+      vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures;
    dispatch->dispatch_vkDeviceWaitIdle = vkr_dispatch_vkDeviceWaitIdle;
 
    dispatch->dispatch_vkGetDeviceQueue = vkr_dispatch_vkGetDeviceQueue;
@@ -3400,7 +3773,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
 
    dispatch->dispatch_vkCreateSemaphore = vkr_dispatch_vkCreateSemaphore;
    dispatch->dispatch_vkDestroySemaphore = vkr_dispatch_vkDestroySemaphore;
-   dispatch->dispatch_vkGetSemaphoreCounterValue = vkr_dispatch_vkGetSemaphoreCounterValue;
+   dispatch->dispatch_vkGetSemaphoreCounterValue =
+      vkr_dispatch_vkGetSemaphoreCounterValue;
    dispatch->dispatch_vkWaitSemaphores = vkr_dispatch_vkWaitSemaphores;
    dispatch->dispatch_vkSignalSemaphore = vkr_dispatch_vkSignalSemaphore;
 
@@ -3410,16 +3784,21 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkUnmapMemory = NULL;
    dispatch->dispatch_vkFlushMappedMemoryRanges = NULL;
    dispatch->dispatch_vkInvalidateMappedMemoryRanges = NULL;
-   dispatch->dispatch_vkGetDeviceMemoryCommitment = vkr_dispatch_vkGetDeviceMemoryCommitment;
-   dispatch->dispatch_vkGetDeviceMemoryOpaqueCaptureAddress = vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress;
+   dispatch->dispatch_vkGetDeviceMemoryCommitment =
+      vkr_dispatch_vkGetDeviceMemoryCommitment;
+   dispatch->dispatch_vkGetDeviceMemoryOpaqueCaptureAddress =
+      vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress;
 
    dispatch->dispatch_vkCreateBuffer = vkr_dispatch_vkCreateBuffer;
    dispatch->dispatch_vkDestroyBuffer = vkr_dispatch_vkDestroyBuffer;
-   dispatch->dispatch_vkGetBufferMemoryRequirements = vkr_dispatch_vkGetBufferMemoryRequirements;
-   dispatch->dispatch_vkGetBufferMemoryRequirements2 = vkr_dispatch_vkGetBufferMemoryRequirements2;
+   dispatch->dispatch_vkGetBufferMemoryRequirements =
+      vkr_dispatch_vkGetBufferMemoryRequirements;
+   dispatch->dispatch_vkGetBufferMemoryRequirements2 =
+      vkr_dispatch_vkGetBufferMemoryRequirements2;
    dispatch->dispatch_vkBindBufferMemory = vkr_dispatch_vkBindBufferMemory;
    dispatch->dispatch_vkBindBufferMemory2 = vkr_dispatch_vkBindBufferMemory2;
-   dispatch->dispatch_vkGetBufferOpaqueCaptureAddress = vkr_dispatch_vkGetBufferOpaqueCaptureAddress;
+   dispatch->dispatch_vkGetBufferOpaqueCaptureAddress =
+      vkr_dispatch_vkGetBufferOpaqueCaptureAddress;
    dispatch->dispatch_vkGetBufferDeviceAddress = vkr_dispatch_vkGetBufferDeviceAddress;
 
    dispatch->dispatch_vkCreateBufferView = vkr_dispatch_vkCreateBufferView;
@@ -3427,13 +3806,18 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
 
    dispatch->dispatch_vkCreateImage = vkr_dispatch_vkCreateImage;
    dispatch->dispatch_vkDestroyImage = vkr_dispatch_vkDestroyImage;
-   dispatch->dispatch_vkGetImageMemoryRequirements = vkr_dispatch_vkGetImageMemoryRequirements;
-   dispatch->dispatch_vkGetImageMemoryRequirements2 = vkr_dispatch_vkGetImageMemoryRequirements2;
-   dispatch->dispatch_vkGetImageSparseMemoryRequirements = vkr_dispatch_vkGetImageSparseMemoryRequirements;
-   dispatch->dispatch_vkGetImageSparseMemoryRequirements2 = vkr_dispatch_vkGetImageSparseMemoryRequirements2;
+   dispatch->dispatch_vkGetImageMemoryRequirements =
+      vkr_dispatch_vkGetImageMemoryRequirements;
+   dispatch->dispatch_vkGetImageMemoryRequirements2 =
+      vkr_dispatch_vkGetImageMemoryRequirements2;
+   dispatch->dispatch_vkGetImageSparseMemoryRequirements =
+      vkr_dispatch_vkGetImageSparseMemoryRequirements;
+   dispatch->dispatch_vkGetImageSparseMemoryRequirements2 =
+      vkr_dispatch_vkGetImageSparseMemoryRequirements2;
    dispatch->dispatch_vkBindImageMemory = vkr_dispatch_vkBindImageMemory;
    dispatch->dispatch_vkBindImageMemory2 = vkr_dispatch_vkBindImageMemory2;
-   dispatch->dispatch_vkGetImageSubresourceLayout = vkr_dispatch_vkGetImageSubresourceLayout;
+   dispatch->dispatch_vkGetImageSubresourceLayout =
+      vkr_dispatch_vkGetImageSubresourceLayout;
 
    dispatch->dispatch_vkCreateImageView = vkr_dispatch_vkCreateImageView;
    dispatch->dispatch_vkDestroyImageView = vkr_dispatch_vkDestroyImageView;
@@ -3441,12 +3825,17 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCreateSampler = vkr_dispatch_vkCreateSampler;
    dispatch->dispatch_vkDestroySampler = vkr_dispatch_vkDestroySampler;
 
-   dispatch->dispatch_vkCreateSamplerYcbcrConversion = vkr_dispatch_vkCreateSamplerYcbcrConversion;
-   dispatch->dispatch_vkDestroySamplerYcbcrConversion = vkr_dispatch_vkDestroySamplerYcbcrConversion;
+   dispatch->dispatch_vkCreateSamplerYcbcrConversion =
+      vkr_dispatch_vkCreateSamplerYcbcrConversion;
+   dispatch->dispatch_vkDestroySamplerYcbcrConversion =
+      vkr_dispatch_vkDestroySamplerYcbcrConversion;
 
-   dispatch->dispatch_vkGetDescriptorSetLayoutSupport = vkr_dispatch_vkGetDescriptorSetLayoutSupport;
-   dispatch->dispatch_vkCreateDescriptorSetLayout = vkr_dispatch_vkCreateDescriptorSetLayout;
-   dispatch->dispatch_vkDestroyDescriptorSetLayout = vkr_dispatch_vkDestroyDescriptorSetLayout;
+   dispatch->dispatch_vkGetDescriptorSetLayoutSupport =
+      vkr_dispatch_vkGetDescriptorSetLayoutSupport;
+   dispatch->dispatch_vkCreateDescriptorSetLayout =
+      vkr_dispatch_vkCreateDescriptorSetLayout;
+   dispatch->dispatch_vkDestroyDescriptorSetLayout =
+      vkr_dispatch_vkDestroyDescriptorSetLayout;
 
    dispatch->dispatch_vkCreateDescriptorPool = vkr_dispatch_vkCreateDescriptorPool;
    dispatch->dispatch_vkDestroyDescriptorPool = vkr_dispatch_vkDestroyDescriptorPool;
@@ -3456,14 +3845,17 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkFreeDescriptorSets = vkr_dispatch_vkFreeDescriptorSets;
    dispatch->dispatch_vkUpdateDescriptorSets = vkr_dispatch_vkUpdateDescriptorSets;
 
-   dispatch->dispatch_vkCreateDescriptorUpdateTemplate = vkr_dispatch_vkCreateDescriptorUpdateTemplate;
-   dispatch->dispatch_vkDestroyDescriptorUpdateTemplate = vkr_dispatch_vkDestroyDescriptorUpdateTemplate;
+   dispatch->dispatch_vkCreateDescriptorUpdateTemplate =
+      vkr_dispatch_vkCreateDescriptorUpdateTemplate;
+   dispatch->dispatch_vkDestroyDescriptorUpdateTemplate =
+      vkr_dispatch_vkDestroyDescriptorUpdateTemplate;
    dispatch->dispatch_vkUpdateDescriptorSetWithTemplate = NULL;
 
    dispatch->dispatch_vkCreateRenderPass = vkr_dispatch_vkCreateRenderPass;
    dispatch->dispatch_vkCreateRenderPass2 = vkr_dispatch_vkCreateRenderPass2;
    dispatch->dispatch_vkDestroyRenderPass = vkr_dispatch_vkDestroyRenderPass;
-   dispatch->dispatch_vkGetRenderAreaGranularity = vkr_dispatch_vkGetRenderAreaGranularity;
+   dispatch->dispatch_vkGetRenderAreaGranularity =
+      vkr_dispatch_vkGetRenderAreaGranularity;
 
    dispatch->dispatch_vkCreateFramebuffer = vkr_dispatch_vkCreateFramebuffer;
    dispatch->dispatch_vkDestroyFramebuffer = vkr_dispatch_vkDestroyFramebuffer;
@@ -3512,7 +3904,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdSetDepthBias = vkr_dispatch_vkCmdSetDepthBias;
    dispatch->dispatch_vkCmdSetBlendConstants = vkr_dispatch_vkCmdSetBlendConstants;
    dispatch->dispatch_vkCmdSetDepthBounds = vkr_dispatch_vkCmdSetDepthBounds;
-   dispatch->dispatch_vkCmdSetStencilCompareMask = vkr_dispatch_vkCmdSetStencilCompareMask;
+   dispatch->dispatch_vkCmdSetStencilCompareMask =
+      vkr_dispatch_vkCmdSetStencilCompareMask;
    dispatch->dispatch_vkCmdSetStencilWriteMask = vkr_dispatch_vkCmdSetStencilWriteMask;
    dispatch->dispatch_vkCmdSetStencilReference = vkr_dispatch_vkCmdSetStencilReference;
    dispatch->dispatch_vkCmdBindDescriptorSets = vkr_dispatch_vkCmdBindDescriptorSets;
@@ -3532,7 +3925,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdUpdateBuffer = vkr_dispatch_vkCmdUpdateBuffer;
    dispatch->dispatch_vkCmdFillBuffer = vkr_dispatch_vkCmdFillBuffer;
    dispatch->dispatch_vkCmdClearColorImage = vkr_dispatch_vkCmdClearColorImage;
-   dispatch->dispatch_vkCmdClearDepthStencilImage = vkr_dispatch_vkCmdClearDepthStencilImage;
+   dispatch->dispatch_vkCmdClearDepthStencilImage =
+      vkr_dispatch_vkCmdClearDepthStencilImage;
    dispatch->dispatch_vkCmdClearAttachments = vkr_dispatch_vkCmdClearAttachments;
    dispatch->dispatch_vkCmdResolveImage = vkr_dispatch_vkCmdResolveImage;
    dispatch->dispatch_vkCmdSetEvent = vkr_dispatch_vkCmdSetEvent;
@@ -3555,25 +3949,32 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdNextSubpass2 = vkr_dispatch_vkCmdNextSubpass2;
    dispatch->dispatch_vkCmdEndRenderPass2 = vkr_dispatch_vkCmdEndRenderPass2;
    dispatch->dispatch_vkCmdDrawIndirectCount = vkr_dispatch_vkCmdDrawIndirectCount;
-   dispatch->dispatch_vkCmdDrawIndexedIndirectCount = vkr_dispatch_vkCmdDrawIndexedIndirectCount;
+   dispatch->dispatch_vkCmdDrawIndexedIndirectCount =
+      vkr_dispatch_vkCmdDrawIndexedIndirectCount;
 
-   dispatch->dispatch_vkCmdBindTransformFeedbackBuffersEXT = vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT;
-   dispatch->dispatch_vkCmdBeginTransformFeedbackEXT = vkr_dispatch_vkCmdBeginTransformFeedbackEXT;
-   dispatch->dispatch_vkCmdEndTransformFeedbackEXT = vkr_dispatch_vkCmdEndTransformFeedbackEXT;
+   dispatch->dispatch_vkCmdBindTransformFeedbackBuffersEXT =
+      vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT;
+   dispatch->dispatch_vkCmdBeginTransformFeedbackEXT =
+      vkr_dispatch_vkCmdBeginTransformFeedbackEXT;
+   dispatch->dispatch_vkCmdEndTransformFeedbackEXT =
+      vkr_dispatch_vkCmdEndTransformFeedbackEXT;
    dispatch->dispatch_vkCmdBeginQueryIndexedEXT = vkr_dispatch_vkCmdBeginQueryIndexedEXT;
    dispatch->dispatch_vkCmdEndQueryIndexedEXT = vkr_dispatch_vkCmdEndQueryIndexedEXT;
-   dispatch->dispatch_vkCmdDrawIndirectByteCountEXT = vkr_dispatch_vkCmdDrawIndirectByteCountEXT;
+   dispatch->dispatch_vkCmdDrawIndirectByteCountEXT =
+      vkr_dispatch_vkCmdDrawIndirectByteCountEXT;
 
-   dispatch->dispatch_vkGetImageDrmFormatModifierPropertiesEXT = vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT;
+   dispatch->dispatch_vkGetImageDrmFormatModifierPropertiesEXT =
+      vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT;
 
-   dispatch->dispatch_vkGetMemoryResourcePropertiesMESA = vkr_dispatch_vkGetMemoryResourcePropertiesMESA;
+   dispatch->dispatch_vkGetMemoryResourcePropertiesMESA =
+      vkr_dispatch_vkGetMemoryResourcePropertiesMESA;
 }
 
 static int
 vkr_context_submit_fence_locked(struct virgl_context *base,
-                         uint32_t flags,
-                         uint64_t queue_id,
-                         void *fence_cookie)
+                                uint32_t flags,
+                                uint64_t queue_id,
+                                void *fence_cookie)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_queue *queue;
@@ -3656,17 +4057,15 @@ vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
    if (ctx->fence_eventfd >= 0)
       flush_eventfd(ctx->fence_eventfd);
 
-   LIST_FOR_EACH_ENTRY_SAFE(queue, queue_tmp, &ctx->busy_queues, busy_head) {
+   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &ctx->busy_queues, busy_head) {
       struct vkr_device *dev = queue->device;
       struct list_head retired_syncs;
       bool queue_empty;
 
       vkr_queue_retire_syncs(queue, &retired_syncs, &queue_empty);
 
-      LIST_FOR_EACH_ENTRY_SAFE(sync, sync_tmp, &retired_syncs, head) {
-         ctx->base.fence_retire(&ctx->base,
-                                queue->base.id,
-                                sync->fence_cookie);
+      LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
+         ctx->base.fence_retire(&ctx->base, queue->base.id, sync->fence_cookie);
          list_addtail(&sync->head, &dev->free_syncs);
       }
 
@@ -3684,15 +4083,15 @@ vkr_context_retire_fences(struct virgl_context *base)
    mtx_unlock(&ctx->mutex);
 }
 
-static int vkr_context_get_fencing_fd(struct virgl_context *base)
+static int
+vkr_context_get_fencing_fd(struct virgl_context *base)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    return ctx->fence_eventfd;
 }
 
-static int vkr_context_submit_cmd(struct virgl_context *base,
-                                  const void *buffer,
-                                  size_t size)
+static int
+vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t size)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret = 0;
@@ -3717,10 +4116,11 @@ static int vkr_context_submit_cmd(struct virgl_context *base,
    return ret;
 }
 
-static int vkr_context_get_blob_locked(struct virgl_context *base,
-                                uint64_t blob_id,
-                                uint32_t flags,
-                                struct virgl_context_blob *blob)
+static int
+vkr_context_get_blob_locked(struct virgl_context *base,
+                            uint64_t blob_id,
+                            uint32_t flags,
+                            struct virgl_context_blob *blob)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem;
@@ -3740,8 +4140,7 @@ static int vkr_context_get_blob_locked(struct virgl_context *base,
       return EINVAL;
 
    if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      const bool host_visible =
-         mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+      const bool host_visible = mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
       if (!host_visible)
          return EINVAL;
    }
@@ -3775,12 +4174,14 @@ static int vkr_context_get_blob_locked(struct virgl_context *base,
          return EINVAL;
       }
 
-      VkResult result = ctx->instance->get_memory_fd(mem->device,
-            &(VkMemoryGetFdInfoKHR){
-               .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
-               .memory = mem->base.handle.device_memory,
-               .handleType = handle_type,
-            }, &fd);
+      VkResult result = ctx->instance->get_memory_fd(
+         mem->device,
+         &(VkMemoryGetFdInfoKHR){
+            .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
+            .memory = mem->base.handle.device_memory,
+            .handleType = handle_type,
+         },
+         &fd);
       if (result != VK_SUCCESS)
          return EINVAL;
    }
@@ -3791,13 +4192,12 @@ static int vkr_context_get_blob_locked(struct virgl_context *base,
    if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       const bool host_coherent =
          mem->property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-      const bool host_cached =
-         mem->property_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+      const bool host_cached = mem->property_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 
       /* XXX guessed */
       if (host_coherent) {
-         blob->map_info = host_cached ?
-            VIRGL_RENDERER_MAP_CACHE_CACHED : VIRGL_RENDERER_MAP_CACHE_WC;
+         blob->map_info =
+            host_cached ? VIRGL_RENDERER_MAP_CACHE_CACHED : VIRGL_RENDERER_MAP_CACHE_WC;
       } else {
          blob->map_info = VIRGL_RENDERER_MAP_CACHE_WC;
       }
@@ -3810,10 +4210,11 @@ static int vkr_context_get_blob_locked(struct virgl_context *base,
    return 0;
 }
 
-static int vkr_context_get_blob(struct virgl_context *base,
-                                uint64_t blob_id,
-                                uint32_t flags,
-                                struct virgl_context_blob *blob)
+static int
+vkr_context_get_blob(struct virgl_context *base,
+                     uint64_t blob_id,
+                     uint32_t flags,
+                     struct virgl_context_blob *blob)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret;
@@ -3827,9 +4228,10 @@ static int vkr_context_get_blob(struct virgl_context *base,
    return ret;
 }
 
-static void vkr_context_get_blob_done(struct virgl_context *base,
-                                      uint32_t res_id,
-                                      struct virgl_context_blob *blob)
+static void
+vkr_context_get_blob_done(struct virgl_context *base,
+                          uint32_t res_id,
+                          struct virgl_context_blob *blob)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem = blob->renderer_data;
@@ -3842,10 +4244,11 @@ static void vkr_context_get_blob_done(struct virgl_context *base,
    mtx_unlock(&ctx->mutex);
 }
 
-static int vkr_context_transfer_3d_locked(struct virgl_context *base,
-                                   struct virgl_resource *res,
-                                   const struct vrend_transfer_info *info,
-                                   int transfer_mode)
+static int
+vkr_context_transfer_3d_locked(struct virgl_context *base,
+                               struct virgl_resource *res,
+                               const struct vrend_transfer_info *info,
+                               int transfer_mode)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_resource_attachment *att;
@@ -3866,8 +4269,7 @@ static int vkr_context_transfer_3d_locked(struct virgl_context *base,
    if (!iov || !iov_count)
       return 0;
 
-   att = util_hash_table_get(ctx->resource_table,
-                             uintptr_to_pointer(res->res_id));
+   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res->res_id));
    if (!att)
       return EINVAL;
 
@@ -3889,8 +4291,8 @@ static int vkr_context_transfer_3d_locked(struct virgl_context *base,
    };
 
    void *ptr;
-   VkResult result = vkMapMemory(mem->device, range.memory,
-         range.offset, range.size, 0, &ptr);
+   VkResult result =
+      vkMapMemory(mem->device, range.memory, range.offset, range.size, 0, &ptr);
    if (result != VK_SUCCESS)
       return EINVAL;
 
@@ -3907,10 +4309,11 @@ static int vkr_context_transfer_3d_locked(struct virgl_context *base,
    return 0;
 }
 
-static int vkr_context_transfer_3d(struct virgl_context *base,
-                                   struct virgl_resource *res,
-                                   const struct vrend_transfer_info *info,
-                                   int transfer_mode)
+static int
+vkr_context_transfer_3d(struct virgl_context *base,
+                        struct virgl_resource *res,
+                        const struct vrend_transfer_info *info,
+                        int transfer_mode)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret;
@@ -3922,14 +4325,13 @@ static int vkr_context_transfer_3d(struct virgl_context *base,
    return ret;
 }
 
-static void vkr_context_attach_resource_locked(struct virgl_context *base,
-                                        struct virgl_resource *res)
+static void
+vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_resource *res)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_resource_attachment *att;
 
-   att = util_hash_table_get(ctx->resource_table,
-                             uintptr_to_pointer(res->res_id));
+   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res->res_id));
    if (att) {
       assert(att->resource == res);
       return;
@@ -3951,7 +4353,7 @@ static void vkr_context_attach_resource_locked(struct virgl_context *base,
 
    /* associate a memory with the resource, if any */
    struct vkr_device_memory *mem;
-   LIST_FOR_EACH_ENTRY(mem, &ctx->newly_exported_memories, head) {
+   LIST_FOR_EACH_ENTRY (mem, &ctx->newly_exported_memories, head) {
       if (mem->exported_res_id == res->res_id) {
          list_del(&mem->head);
          list_addtail(&mem->head, &att->memories);
@@ -3959,13 +4361,11 @@ static void vkr_context_attach_resource_locked(struct virgl_context *base,
       }
    }
 
-   util_hash_table_set(ctx->resource_table,
-                       uintptr_to_pointer(res->res_id),
-                       att);
+   util_hash_table_set(ctx->resource_table, uintptr_to_pointer(res->res_id), att);
 }
 
-static void vkr_context_attach_resource(struct virgl_context *base,
-                                        struct virgl_resource *res)
+static void
+vkr_context_attach_resource(struct virgl_context *base, struct virgl_resource *res)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    mtx_lock(&ctx->mutex);
@@ -3973,23 +4373,23 @@ static void vkr_context_attach_resource(struct virgl_context *base,
    mtx_unlock(&ctx->mutex);
 }
 
-static void vkr_context_detach_resource(struct virgl_context *base,
-                                        struct virgl_resource *res)
+static void
+vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *res)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    mtx_lock(&ctx->mutex);
-   util_hash_table_remove(ctx->resource_table,
-                          uintptr_to_pointer(res->res_id));
+   util_hash_table_remove(ctx->resource_table, uintptr_to_pointer(res->res_id));
    mtx_unlock(&ctx->mutex);
 }
 
-static void vkr_context_destroy(struct virgl_context *base)
+static void
+vkr_context_destroy(struct virgl_context *base)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    struct vkr_ring *ring, *ring_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE(ring, ring_tmp, &ctx->rings, head) {
+   LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
       vkr_ring_stop(ring);
       vkr_ring_destroy(ring);
    }
@@ -4020,7 +4420,7 @@ vkr_context_init_base(struct vkr_context *ctx)
    ctx->base.submit_cmd = vkr_context_submit_cmd;
 
    ctx->base.get_fencing_fd = vkr_context_get_fencing_fd;
-   ctx->base.retire_fences =vkr_context_retire_fences;
+   ctx->base.retire_fences = vkr_context_retire_fences;
    ctx->base.submit_fence = vkr_context_submit_fence;
 }
 
@@ -4037,7 +4437,7 @@ destroy_func_resource(void *val)
    struct vkr_resource_attachment *att = val;
    struct vkr_device_memory *mem, *tmp;
 
-   LIST_FOR_EACH_ENTRY_SAFE(mem, tmp, &att->memories, head)
+   LIST_FOR_EACH_ENTRY_SAFE (mem, tmp, &att->memories, head)
       list_delinit(&mem->head);
 
    free(att);
@@ -4071,12 +4471,9 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
    list_inithead(&ctx->rings);
 
-   ctx->object_table =
-      util_hash_table_create_u64(destroy_func_object);
+   ctx->object_table = util_hash_table_create_u64(destroy_func_object);
    ctx->resource_table =
-      util_hash_table_create(hash_func_u32,
-                             compare_func,
-                             destroy_func_resource);
+      util_hash_table_create(hash_func_u32, compare_func, destroy_func_resource);
    if (!ctx->object_table || !ctx->resource_table)
       goto fail;
 
@@ -4119,8 +4516,10 @@ vkr_get_capset(void *capset)
       memset(c, 0, sizeof(*c));
       c->wire_format_version = vn_info_wire_format_version();
       c->vk_xml_version = vn_info_vk_xml_version();
-      c->vk_ext_command_serialization_spec_version = vn_info_extension_spec_version("VK_EXT_command_serialization");
-      c->vk_mesa_venus_protocol_spec_version = vn_info_extension_spec_version("VK_MESA_venus_protocol");
+      c->vk_ext_command_serialization_spec_version =
+         vn_info_extension_spec_version("VK_EXT_command_serialization");
+      c->vk_mesa_venus_protocol_spec_version =
+         vn_info_extension_spec_version("VK_MESA_venus_protocol");
    }
 
    return sizeof(*c);

@@ -140,9 +140,7 @@ vkr_cs_decoder_get_fatal(const struct vkr_cs_decoder *dec)
 }
 
 static inline void
-vkr_cs_decoder_set_stream(struct vkr_cs_decoder *dec,
-                          const void *data,
-                          size_t size)
+vkr_cs_decoder_set_stream(struct vkr_cs_decoder *dec, const void *data, size_t size)
 {
    dec->cur = data;
    dec->end = dec->cur + size;
@@ -180,10 +178,7 @@ vkr_cs_decoder_peek_internal(const struct vkr_cs_decoder *dec,
 }
 
 static inline void
-vkr_cs_decoder_read(struct vkr_cs_decoder *dec,
-                    size_t size,
-                    void *val,
-                    size_t val_size)
+vkr_cs_decoder_read(struct vkr_cs_decoder *dec, size_t size, void *val, size_t val_size)
 {
    if (vkr_cs_decoder_peek_internal(dec, size, val, val_size))
       dec->cur += size;
@@ -199,16 +194,14 @@ vkr_cs_decoder_peek(const struct vkr_cs_decoder *dec,
 }
 
 static inline struct vkr_object *
-vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
-                             vkr_object_id id)
+vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec, vkr_object_id id)
 {
    struct vkr_object *obj;
 
    if (!id)
       return NULL;
 
-   obj = util_hash_table_get_u64(
-      (struct util_hash_table_u64 *)dec->object_table, id);
+   obj = util_hash_table_get_u64((struct util_hash_table_u64 *)dec->object_table, id);
    if (!obj)
       vkr_cs_decoder_set_fatal(dec);
 
@@ -278,9 +271,8 @@ vkr_cs_handle_load_id(const void **handle, VkObjectType type)
 static inline void
 vkr_cs_handle_store_id(void **handle, vkr_object_id id, VkObjectType type)
 {
-   vkr_object_id *p = vkr_cs_handle_indirect_id(type)
-                         ? *(vkr_object_id **)handle
-                         : (vkr_object_id *)handle;
+   vkr_object_id *p = vkr_cs_handle_indirect_id(type) ? *(vkr_object_id **)handle
+                                                      : (vkr_object_id *)handle;
    *p = id;
 }
 

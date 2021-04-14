@@ -6,7 +6,6 @@
 #include "vkr_cs.h"
 
 #include "util/u_memory.h"
-
 #include "vrend_iov.h"
 
 void
@@ -88,8 +87,8 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
    const size_t offset = enc->stream.offset + pos;
    int iov_index;
    size_t iov_offset;
-   if (pos > enc->stream.size || !vkr_cs_encoder_translate_stream_offset(
-                                    enc, offset, &iov_index, &iov_offset)) {
+   if (pos > enc->stream.size ||
+       !vkr_cs_encoder_translate_stream_offset(enc, offset, &iov_index, &iov_offset)) {
       vkr_cs_encoder_set_fatal(enc);
       return;
    }
@@ -118,9 +117,7 @@ vkr_cs_encoder_next_iov(struct vkr_cs_encoder *enc)
 }
 
 static uint8_t *
-vkr_cs_encoder_get_ptr(struct vkr_cs_encoder *enc,
-                       size_t size,
-                       size_t *ptr_size)
+vkr_cs_encoder_get_ptr(struct vkr_cs_encoder *enc, size_t size, size_t *ptr_size)
 {
    while (true) {
       uint8_t *ptr = enc->cur;
@@ -330,8 +327,7 @@ vkr_cs_decoder_alloc_temp_internal(struct vkr_cs_decoder *dec, size_t size)
    }
 
    const size_t cur_buf_size =
-      pool->buffer_count ? pool->end - pool->buffers[pool->buffer_count - 1]
-                         : 0;
+      pool->buffer_count ? pool->end - pool->buffers[pool->buffer_count - 1] : 0;
    const size_t buf_size = next_buffer_size(cur_buf_size, 4096, size);
    if (!buf_size)
       return false;
