@@ -163,7 +163,7 @@ popd
 # error: RPC failed; curl 56 GnuTLS recv error (-54): Error in the pull function.
 git config --global http.postBuffer 1048576000
 
-export KNOWN_GOOD_CTS=${KNOWN_GOOD_CTS:-524e5bcfba33d1b8dede4b4ec1ec33d24ccf8d2c}
+export KNOWN_GOOD_CTS=${KNOWN_GOOD_CTS:-ededa67cb12aec0c5e92e3eba40d3f3c7b4d697f}
 mkdir /VK-GL-CTS
 pushd /VK-GL-CTS
 git clone --shallow-since="$GIT_DATE" https://github.com/KhronosGroup/VK-GL-CTS.git . && \
