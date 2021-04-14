@@ -179,7 +179,7 @@ git clone --shallow-since="$GIT_DATE" https://github.com/KhronosGroup/VK-GL-CTS.
     [ "$?" = "0" ] || exit 1
 popd
 
-export KNOWN_GOOD_PIGLIT=${KNOWN_GOOD_PIGLIT:-08a92f4094c927276a20f608d7b3c5de2a72e9e7}
+export KNOWN_GOOD_PIGLIT=${KNOWN_GOOD_PIGLIT:-6a4be9e9946df310d9402f995f371c7deb8c27ba}
 mkdir /piglit
 pushd /piglit
 git clone --shallow-since="$GIT_DATE" https://gitlab.freedesktop.org/mesa/piglit.git . && \
