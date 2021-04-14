@@ -135,7 +135,7 @@ git clone --shallow-since="$GIT_DATE" https://github.com/anholt/libepoxy.git . &
     [ "$?" == "0" ] || exit 1
 popd
 
-export BATTERY_VERSION=0.1.23
+export BATTERY_VERSION=0.1.24
 mkdir /battery
 pushd /battery
 wget "https://github.com/VoltLang/Battery/releases/download/v${BATTERY_VERSION}/battery-${BATTERY_VERSION}-x86_64-linux.tar.gz" && \
