@@ -34,7 +34,7 @@ run_setup()
    export R600_DEBUG=nosb
 
    # If render node, like /dev/dri/renderD128, has not been set
-   # or exists use softpipe instead of HW GPU.
+   # or exists use llvmpipe instead of HW GPU.
    if [[ ! -c $RENDER_DEVICE ]]; then
       export SOFTWARE_ONLY=1
    fi
@@ -138,7 +138,7 @@ run_deqp()
    
    BACKENDS=""
    if [[ -z "$HARDWARE_ONLY" ]]; then
-      BACKENDS="${BACKENDS} --backend vtest-softpipe"
+      BACKENDS="${BACKENDS} --backend vtest-llvmpipe"
    fi
 
    if [[ -z "$SOFTWARE_ONLY" ]]; then
@@ -164,7 +164,7 @@ run_piglit()
 
    BACKENDS=""
    if [[ -z "$HARDWARE_ONLY" ]]; then
-      BACKENDS="${BACKENDS} --backend vtest-softpipe"
+      BACKENDS="${BACKENDS} --backend vtest-llvmpipe"
    fi
    
    if [[ -z "$SOFTWARE_ONLY" ]]; then
