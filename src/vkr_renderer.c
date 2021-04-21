@@ -3903,6 +3903,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2;
    dispatch->dispatch_vkGetPhysicalDeviceExternalBufferProperties =
       vkr_dispatch_vkGetPhysicalDeviceExternalBufferProperties;
+   dispatch->dispatch_vkGetMemoryFdKHR = NULL;
+   dispatch->dispatch_vkGetMemoryFdPropertiesKHR = NULL;
    dispatch->dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties =
       vkr_dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties;
    dispatch->dispatch_vkGetPhysicalDeviceExternalFenceProperties =

@@ -13,6 +13,7 @@
 /*
  * These structs/unions/commands are not included
  *
+ *   VkImportMemoryFdInfoKHR
  *   vkMapMemory
  */
 
@@ -353,6 +354,7 @@ vn_decode_VkMemoryAllocateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkImportMemoryResourceInfoMESA_self_temp(dec, (VkImportMemoryResourceInfoMESA *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR:
     default:
         /* unexpected struct */
         pnext = NULL;
@@ -417,6 +419,7 @@ vn_replace_VkMemoryAllocateInfo_handle(VkMemoryAllocateInfo *val)
         case VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA:
             vn_replace_VkImportMemoryResourceInfoMESA_handle_self((VkImportMemoryResourceInfoMESA *)pnext);
             break;
+        case VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR:
         default:
             /* ignore unknown/unsupported struct */
             break;

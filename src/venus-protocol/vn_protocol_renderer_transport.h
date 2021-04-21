@@ -10,6 +10,13 @@
 
 #include "vn_protocol_renderer_structs.h"
 
+/*
+ * These structs/unions/commands are not included
+ *
+ *   vkGetMemoryFdKHR
+ *   vkGetMemoryFdPropertiesKHR
+ */
+
 /* struct VkCommandStreamDescriptionMESA */
 
 static inline void

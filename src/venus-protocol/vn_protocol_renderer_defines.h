@@ -249,6 +249,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCmdBeginQueryIndexedEXT_EXT = 184,
     VK_COMMAND_TYPE_vkCmdEndQueryIndexedEXT_EXT = 185,
     VK_COMMAND_TYPE_vkCmdDrawIndirectByteCountEXT_EXT = 186,
+    VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT = 193,
+    VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
@@ -1425,6 +1427,23 @@ struct vn_command_vkGetPhysicalDeviceExternalBufferProperties {
     VkExternalBufferProperties* pExternalBufferProperties;
 };
 
+struct vn_command_vkGetMemoryFdKHR {
+    VkDevice device;
+    const VkMemoryGetFdInfoKHR* pGetFdInfo;
+    int* pFd;
+
+    VkResult ret;
+};
+
+struct vn_command_vkGetMemoryFdPropertiesKHR {
+    VkDevice device;
+    VkExternalMemoryHandleTypeFlagBits handleType;
+    int fd;
+    VkMemoryFdPropertiesKHR* pMemoryFdProperties;
+
+    VkResult ret;
+};
+
 struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties {
     VkPhysicalDevice physicalDevice;
     const VkPhysicalDeviceExternalSemaphoreInfo* pExternalSemaphoreInfo;
@@ -1901,6 +1920,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args);
     void (*dispatch_vkTrimCommandPool)(struct vn_dispatch_context *ctx, struct vn_command_vkTrimCommandPool *args);
     void (*dispatch_vkGetPhysicalDeviceExternalBufferProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalBufferProperties *args);
+    void (*dispatch_vkGetMemoryFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdKHR *args);
+    void (*dispatch_vkGetMemoryFdPropertiesKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdPropertiesKHR *args);
     void (*dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties *args);
     void (*dispatch_vkGetPhysicalDeviceExternalFenceProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalFenceProperties *args);
     void (*dispatch_vkEnumeratePhysicalDeviceGroups)(struct vn_dispatch_context *ctx, struct vn_command_vkEnumeratePhysicalDeviceGroups *args);
