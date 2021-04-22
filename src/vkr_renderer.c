@@ -1385,6 +1385,37 @@ vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(
 }
 
 static void
+vkr_dispatch_vkGetPhysicalDeviceExternalBufferProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceExternalBufferProperties *args)
+{
+   vn_replace_vkGetPhysicalDeviceExternalBufferProperties_args_handle(args);
+   vkGetPhysicalDeviceExternalBufferProperties(
+      args->physicalDevice, args->pExternalBufferInfo, args->pExternalBufferProperties);
+}
+
+static void
+vkr_dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties *args)
+{
+   vn_replace_vkGetPhysicalDeviceExternalSemaphoreProperties_args_handle(args);
+   vkGetPhysicalDeviceExternalSemaphoreProperties(args->physicalDevice,
+                                                  args->pExternalSemaphoreInfo,
+                                                  args->pExternalSemaphoreProperties);
+}
+
+static void
+vkr_dispatch_vkGetPhysicalDeviceExternalFenceProperties(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetPhysicalDeviceExternalFenceProperties *args)
+{
+   vn_replace_vkGetPhysicalDeviceExternalFenceProperties_args_handle(args);
+   vkGetPhysicalDeviceExternalFenceProperties(
+      args->physicalDevice, args->pExternalFenceInfo, args->pExternalFenceProperties);
+}
+
+static void
 vkr_queue_retire_syncs(struct vkr_queue *queue,
                        struct list_head *retired_syncs,
                        bool *queue_empty)
@@ -3870,9 +3901,12 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2;
    dispatch->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2 =
       vkr_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2;
-   dispatch->dispatch_vkGetPhysicalDeviceExternalBufferProperties = NULL;
-   dispatch->dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties = NULL;
-   dispatch->dispatch_vkGetPhysicalDeviceExternalFenceProperties = NULL;
+   dispatch->dispatch_vkGetPhysicalDeviceExternalBufferProperties =
+      vkr_dispatch_vkGetPhysicalDeviceExternalBufferProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties =
+      vkr_dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties;
+   dispatch->dispatch_vkGetPhysicalDeviceExternalFenceProperties =
+      vkr_dispatch_vkGetPhysicalDeviceExternalFenceProperties;
 
    dispatch->dispatch_vkEnumerateDeviceExtensionProperties =
       vkr_dispatch_vkEnumerateDeviceExtensionProperties;
