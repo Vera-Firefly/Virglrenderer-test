@@ -410,6 +410,18 @@ object_array_init(struct object_array *arr,
    return arr;
 }
 
+static void *
+vkr_find_pnext(const void *chain, VkStructureType type)
+{
+   VkBaseOutStructure *pnext = (VkBaseOutStructure *)chain;
+   while (pnext) {
+      if (pnext->sType == type)
+         return pnext;
+      pnext = pnext->pNext;
+   }
+   return NULL;
+}
+
 static void
 vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vn_dispatch_context *dispatch,
@@ -1910,13 +1922,21 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    }
 
 #ifdef FORCE_ENABLE_DMABUF
-   const VkExportMemoryAllocateInfo export_info = {
-      .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
-      .pNext = args->pAllocateInfo->pNext,
-      .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-   };
-   if (dev->physical_device->EXT_external_memory_dma_buf)
-      ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &export_info;
+   VkExportMemoryAllocateInfo local_export_info;
+   if (dev->physical_device->EXT_external_memory_dma_buf) {
+      VkExportMemoryAllocateInfo *export_info = vkr_find_pnext(
+         args->pAllocateInfo->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
+      if (export_info) {
+         export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+      } else {
+         local_export_info = (const VkExportMemoryAllocateInfo){
+            .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
+            .pNext = args->pAllocateInfo->pNext,
+            .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+         };
+         ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
+      }
+   }
 #endif
 
    /* translate VkImportMemoryResourceInfoMESA into VkImportMemoryFdInfoKHR */
@@ -2330,13 +2350,21 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
    }
 
 #ifdef FORCE_ENABLE_DMABUF
-   const VkExternalMemoryBufferCreateInfo external_info = {
-      .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO,
-      .pNext = args->pCreateInfo->pNext,
-      .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-   };
-   if (dev->physical_device->EXT_external_memory_dma_buf)
-      ((VkBufferCreateInfo *)args->pCreateInfo)->pNext = &external_info;
+   VkExternalMemoryBufferCreateInfo local_external_info;
+   if (dev->physical_device->EXT_external_memory_dma_buf) {
+      VkExternalMemoryBufferCreateInfo *external_info = vkr_find_pnext(
+         args->pCreateInfo->pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
+      if (external_info) {
+         external_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+      } else {
+         local_external_info = (const VkExternalMemoryBufferCreateInfo){
+            .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO,
+            .pNext = args->pCreateInfo->pNext,
+            .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+         };
+         ((VkBufferCreateInfo *)args->pCreateInfo)->pNext = &local_external_info;
+      }
+   }
 #endif
 
    CREATE_OBJECT(buf, buffer, BUFFER, vkCreateBuffer, pBuffer);
@@ -2390,13 +2418,21 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
    }
 
 #ifdef FORCE_ENABLE_DMABUF
-   const VkExternalMemoryImageCreateInfo external_info = {
-      .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
-      .pNext = args->pCreateInfo->pNext,
-      .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-   };
-   if (dev->physical_device->EXT_external_memory_dma_buf)
-      ((VkImageCreateInfo *)args->pCreateInfo)->pNext = &external_info;
+   VkExternalMemoryImageCreateInfo local_external_info;
+   if (dev->physical_device->EXT_external_memory_dma_buf) {
+      VkExternalMemoryImageCreateInfo *external_info = vkr_find_pnext(
+         args->pCreateInfo->pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO);
+      if (external_info) {
+         external_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+      } else {
+         local_external_info = (const VkExternalMemoryImageCreateInfo){
+            .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
+            .pNext = args->pCreateInfo->pNext,
+            .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+         };
+         ((VkImageCreateInfo *)args->pCreateInfo)->pNext = &local_external_info;
+      }
+   }
 #endif
 
    CREATE_OBJECT(img, image, IMAGE, vkCreateImage, pImage);
