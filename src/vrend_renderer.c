@@ -4850,7 +4850,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
 
    if (info->primitive_restart) {
       if (vrend_state.use_gles) {
-         glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+         glDisable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
       } else if (has_feature(feat_nv_prim_restart)) {
          glDisableClientState(GL_PRIMITIVE_RESTART_NV);
       } else if (has_feature(feat_gl_prim_restart)) {
