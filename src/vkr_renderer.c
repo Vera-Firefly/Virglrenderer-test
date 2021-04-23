@@ -80,8 +80,12 @@ struct vkr_instance {
    struct vkr_object base;
 
    uint32_t api_version;
+   PFN_vkCreateDebugUtilsMessengerEXT create_debug_utils_messenger;
+   PFN_vkDestroyDebugUtilsMessengerEXT destroy_debug_utils_messenger;
    PFN_vkGetMemoryFdKHR get_memory_fd;
    PFN_vkGetFenceFdKHR get_fence_fd;
+
+   VkDebugUtilsMessengerEXT validation_messenger;
 
    uint32_t physical_device_count;
    VkPhysicalDevice *physical_device_handles;
@@ -296,10 +300,20 @@ struct vkr_resource_attachment {
    struct list_head memories;
 };
 
+enum vkr_context_validate_level {
+   /* no validation */
+   VKR_CONTEXT_VALIDATE_NONE,
+   /* force enabling the validation layer */
+   VKR_CONTEXT_VALIDATE_FORCE_ON,
+   /* same as above but also treat validation errors as fatal errors */
+   VKR_CONTEXT_VALIDATE_FORCE_FATAL,
+};
+
 struct vkr_context {
    struct virgl_context base;
 
    char *debug_name;
+   enum vkr_context_validate_level validate_level;
 
    mtx_t mutex;
 
@@ -671,6 +685,29 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(
    args->ret = count == ARRAY_SIZE(private_extensions) ? VK_SUCCESS : VK_INCOMPLETE;
 }
 
+static VkBool32
+vkr_validation_callback(UNUSED VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                        UNUSED VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+                        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+                        void *pUserData)
+{
+   struct vkr_context *ctx = pUserData;
+
+   vrend_printf("%s\n", pCallbackData->pMessage);
+
+   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_FORCE_FATAL)
+      return false;
+
+   vkr_cs_decoder_set_fatal(&ctx->decoder);
+
+   /* The spec says we "should" return false, because the meaning of true is
+    * layer-defined and is reserved for layer development.  And we know that,
+    * for VK_LAYER_KHRONOS_validation, the return value indicates whether the
+    * call should be skipped.  Let's do it for now and seek advices.
+    */
+   return true;
+}
+
 static void
 vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkCreateInstance *args)
@@ -704,6 +741,50 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    }
 
    VkInstanceCreateInfo *create_info = (VkInstanceCreateInfo *)args->pCreateInfo;
+   const char *layer_names[8];
+   const char *ext_names[8];
+   uint32_t layer_count = 0;
+   uint32_t ext_count = 0;
+
+   const VkValidationFeatureDisableEXT validation_feature_disables[] = {
+      VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT
+   };
+   VkValidationFeaturesEXT validation_features;
+   VkDebugUtilsMessengerCreateInfoEXT messenger_create_info;
+   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
+      /* let vkCreateInstance return VK_ERROR_LAYER_NOT_PRESENT or
+       * VK_ERROR_EXTENSION_NOT_PRESENT when the layer or extensions are
+       * missing
+       */
+      layer_names[layer_count++] = "VK_LAYER_KHRONOS_validation";
+      ext_names[ext_count++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+      ext_names[ext_count++] = VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME;
+
+      validation_features = (const VkValidationFeaturesEXT){
+         .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+         .pNext = create_info->pNext,
+         .disabledValidationFeatureCount = ARRAY_SIZE(validation_feature_disables),
+         .pDisabledValidationFeatures = validation_feature_disables,
+      };
+      messenger_create_info = (VkDebugUtilsMessengerCreateInfoEXT){
+         .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+         .pNext = &validation_features,
+         .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+         .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT,
+         .pfnUserCallback = vkr_validation_callback,
+         .pUserData = ctx,
+      };
+
+      create_info->pNext = &messenger_create_info;
+   }
+
+   assert(layer_count <= ARRAY_SIZE(layer_names));
+   create_info->enabledLayerCount = layer_count;
+   create_info->ppEnabledLayerNames = layer_names;
+
+   assert(ext_count <= ARRAY_SIZE(ext_names));
+   create_info->enabledExtensionCount = ext_count;
+   create_info->ppEnabledExtensionNames = ext_names;
 
    /* patch apiVersion */
    VkApplicationInfo app_info = {
@@ -740,6 +821,25 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    instance->get_fence_fd = (PFN_vkGetFenceFdKHR)vkGetInstanceProcAddr(
       instance->base.handle.instance, "vkGetFenceFdKHR");
 
+   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
+      instance->create_debug_utils_messenger =
+         (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            instance->base.handle.instance, "vkCreateDebugUtilsMessengerEXT");
+      instance->destroy_debug_utils_messenger =
+         (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            instance->base.handle.instance, "vkDestroyDebugUtilsMessengerEXT");
+
+      messenger_create_info.pNext = NULL;
+      args->ret = instance->create_debug_utils_messenger(instance->base.handle.instance,
+                                                         &messenger_create_info, NULL,
+                                                         &instance->validation_messenger);
+      if (args->ret != VK_SUCCESS) {
+         vkDestroyInstance(instance->base.handle.instance, NULL);
+         free(instance);
+         return;
+      }
+   }
+
    util_hash_table_set_u64(ctx->object_table, instance->base.id, instance);
 
    ctx->instance = instance;
@@ -755,6 +855,11 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
    if (ctx->instance != instance) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
+   }
+
+   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
+      instance->destroy_debug_utils_messenger(instance->base.handle.instance,
+                                              instance->validation_messenger, NULL);
    }
 
    vn_replace_vkDestroyInstance_args_handle(args);
@@ -4468,6 +4573,8 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
    memcpy(ctx->debug_name, debug_name, debug_len);
    ctx->debug_name[debug_len] = '\0';
+
+   ctx->validate_level = VKR_CONTEXT_VALIDATE_NONE;
 
    if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success) {
       free(ctx->debug_name);
