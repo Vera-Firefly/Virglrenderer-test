@@ -682,6 +682,11 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   if (args->pCreateInfo->enabledLayerCount) {
+      args->ret = VK_ERROR_LAYER_NOT_PRESENT;
+      return;
+   }
+
    if (args->pCreateInfo->enabledExtensionCount) {
       args->ret = VK_ERROR_EXTENSION_NOT_PRESENT;
       return;
