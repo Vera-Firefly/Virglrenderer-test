@@ -687,18 +687,10 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   struct vkr_instance *instance = calloc(1, sizeof(*instance));
-   if (!instance) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
    uint32_t instance_version;
    args->ret = vkEnumerateInstanceVersion(&instance_version);
-   if (args->ret != VK_SUCCESS) {
-      free(instance);
+   if (args->ret != VK_SUCCESS)
       return;
-   }
 
    /* require Vulkan 1.1 */
    if (instance_version < VK_API_VERSION_1_1) {
@@ -706,16 +698,25 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   VkInstanceCreateInfo *create_info = (VkInstanceCreateInfo *)args->pCreateInfo;
+
+   /* patch apiVersion */
    VkApplicationInfo app_info = {
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
       .apiVersion = VK_API_VERSION_1_1,
    };
-   if (args->pCreateInfo->pApplicationInfo) {
-      app_info = *args->pCreateInfo->pApplicationInfo;
+   if (create_info->pApplicationInfo) {
+      app_info = *create_info->pApplicationInfo;
       if (app_info.apiVersion < VK_API_VERSION_1_1)
          app_info.apiVersion = VK_API_VERSION_1_1;
    }
-   ((VkInstanceCreateInfo *)args->pCreateInfo)->pApplicationInfo = &app_info;
+   create_info->pApplicationInfo = &app_info;
+
+   struct vkr_instance *instance = calloc(1, sizeof(*instance));
+   if (!instance) {
+      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+      return;
+   }
 
    instance->base.type = VK_OBJECT_TYPE_INSTANCE;
    instance->base.id =
@@ -723,7 +724,7 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    instance->api_version = app_info.apiVersion;
 
    vn_replace_vkCreateInstance_args_handle(args);
-   args->ret = vkCreateInstance(args->pCreateInfo, NULL, &instance->base.handle.instance);
+   args->ret = vkCreateInstance(create_info, NULL, &instance->base.handle.instance);
    if (args->ret != VK_SUCCESS) {
       free(instance);
       return;
