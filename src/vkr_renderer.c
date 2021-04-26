@@ -11,7 +11,9 @@
 #include <stdlib.h>
 
 #include "c11/threads.h"
+#include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
+#include "util/u_debug.h"
 #include "util/u_double_list.h"
 #include "util/u_hash_table.h"
 #include "util/u_math.h"
@@ -40,6 +42,8 @@
  * vkGetImageMemoryRequirements and confuse the guest.
  */
 #define FORCE_ENABLE_DMABUF
+
+#define VKR_DEBUG(category) (unlikely(vkr_debug_flags & VKR_DEBUG_##category))
 
 /*
  * TODO Most of the functions are generated.  Some of them are then
@@ -332,7 +336,17 @@ struct vkr_context {
    struct vkr_instance *instance;
 };
 
+enum vkr_debug_flags {
+   VKR_DEBUG_VALIDATE = 1 << 0,
+};
+
+static const struct debug_named_value vkr_debug_options[] = {
+   { "validate", VKR_DEBUG_VALIDATE, "Force enabling the validation layer" },
+   DEBUG_NAMED_VALUE_END
+};
+
 static uint32_t vkr_renderer_flags;
+static uint32_t vkr_debug_flags;
 
 struct object_array {
    uint32_t count;
@@ -4574,7 +4588,8 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    memcpy(ctx->debug_name, debug_name, debug_len);
    ctx->debug_name[debug_len] = '\0';
 
-   ctx->validate_level = VKR_CONTEXT_VALIDATE_NONE;
+   ctx->validate_level =
+      VKR_DEBUG(VALIDATE) ? VKR_CONTEXT_VALIDATE_FORCE_ON : VKR_CONTEXT_VALIDATE_NONE;
 
    if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success) {
       free(ctx->debug_name);
@@ -4644,6 +4659,7 @@ vkr_renderer_init(uint32_t flags)
    /* TODO VKR_RENDERER_MULTI_PROCESS hint */
 
    vkr_renderer_flags = flags;
+   vkr_debug_flags = debug_get_flags_option("VKR_DEBUG", vkr_debug_options, 0);
 
    return 0;
 }
@@ -4652,6 +4668,7 @@ void
 vkr_renderer_fini(void)
 {
    vkr_renderer_flags = 0;
+   vkr_debug_flags = 0;
 }
 
 void
