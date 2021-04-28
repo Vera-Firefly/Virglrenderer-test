@@ -202,6 +202,7 @@ enum features_id
    feat_txqs,
    feat_ubo,
    feat_viewport_array,
+   feat_implicit_msaa,
    feat_last,
 };
 
@@ -302,6 +303,7 @@ static const  struct {
    FEAT(txqs, 45, UNAVAIL,  "GL_ARB_shader_texture_image_samples" ),
    FEAT(ubo, 31, 30,  "GL_ARB_uniform_buffer_object" ),
    FEAT(viewport_array, 41, UNAVAIL,  "GL_ARB_viewport_array", "GL_OES_viewport_array"),
+   FEAT(implicit_msaa, UNAVAIL, UNAVAIL,  "GL_EXT_multisampled_render_to_texture"),
 };
 
 struct global_renderer_state {
@@ -451,6 +453,7 @@ struct vrend_surface {
    GLuint res_handle;
    GLuint format;
    GLuint val0, val1;
+   GLuint nr_samples;
    struct vrend_resource *texture;
 };
 
@@ -959,25 +962,27 @@ static void __report_core_warn(const char *fname, struct vrend_context *ctx,
 #define GLES_WARN_DEPTH_CLEAR 14
 #define GLES_WARN_LOGIC_OP 15
 #define GLES_WARN_TIMESTAMP 16
+#define GLES_WARN_IMPLICIT_MSAA_SURFACE 17
 
 MAYBE_UNUSED
 static const char *vrend_gles_warn_strings[] = {
-   [GLES_WARN_NONE]             = "None",
-   [GLES_WARN_STIPPLE]          = "Stipple",
-   [GLES_WARN_POLYGON_MODE]     = "Polygon Mode",
-   [GLES_WARN_DEPTH_RANGE]      = "Depth Range",
-   [GLES_WARN_POINT_SIZE]       = "Point Size",
-   [GLES_WARN_SEAMLESS_CUBE_MAP] = "Seamless Cube Map",
-   [GLES_WARN_LOD_BIAS]         = "Lod Bias",
-   [GLES_WARN_TEXTURE_RECT]     = "Texture Rect",
-   [GLES_WARN_OFFSET_LINE]      = "Offset Line",
-   [GLES_WARN_OFFSET_POINT]     = "Offset Point",
-   [GLES_WARN_FLATSHADE_FIRST]  = "Flatshade First",
-   [GLES_WARN_LINE_SMOOTH]      = "Line Smooth",
-   [GLES_WARN_POLY_SMOOTH]      = "Poly Smooth",
-   [GLES_WARN_DEPTH_CLEAR]      = "Depth Clear",
-   [GLES_WARN_LOGIC_OP]         = "LogicOp",
-   [GLES_WARN_TIMESTAMP]        = "GL_TIMESTAMP",
+   [GLES_WARN_NONE]                  = "None",
+   [GLES_WARN_STIPPLE]               = "Stipple",
+   [GLES_WARN_POLYGON_MODE]          = "Polygon Mode",
+   [GLES_WARN_DEPTH_RANGE]           = "Depth Range",
+   [GLES_WARN_POINT_SIZE]            = "Point Size",
+   [GLES_WARN_SEAMLESS_CUBE_MAP]     = "Seamless Cube Map",
+   [GLES_WARN_LOD_BIAS]              = "Lod Bias",
+   [GLES_WARN_TEXTURE_RECT]          = "Texture Rect",
+   [GLES_WARN_OFFSET_LINE]           = "Offset Line",
+   [GLES_WARN_OFFSET_POINT]          = "Offset Point",
+   [GLES_WARN_FLATSHADE_FIRST]       = "Flatshade First",
+   [GLES_WARN_LINE_SMOOTH]           = "Line Smooth",
+   [GLES_WARN_POLY_SMOOTH]           = "Poly Smooth",
+   [GLES_WARN_DEPTH_CLEAR]           = "Depth Clear",
+   [GLES_WARN_LOGIC_OP]              = "LogicOp",
+   [GLES_WARN_TIMESTAMP]             = "GL_TIMESTAMP",
+   [GLES_WARN_IMPLICIT_MSAA_SURFACE] = "Implicit MSAA Surface",
 };
 
 static void __report_gles_warn(MAYBE_UNUSED const char *fname,
@@ -1849,7 +1854,8 @@ void vrend_sync_make_current(virgl_gl_context gl_cxt) {
 int vrend_create_surface(struct vrend_context *ctx,
                          uint32_t handle,
                          uint32_t res_handle, uint32_t format,
-                         uint32_t val0, uint32_t val1)
+                         uint32_t val0, uint32_t val1,
+                         uint32_t nr_samples)
 {
    struct vrend_surface *surf;
    struct vrend_resource *res;
@@ -1876,6 +1882,7 @@ int vrend_create_surface(struct vrend_context *ctx,
    surf->val0 = val0;
    surf->val1 = val1;
    surf->id = res->id;
+   surf->nr_samples = nr_samples;
 
    if (!has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER) &&
          has_bit(res->storage_bits, VREND_STORAGE_GL_IMMUTABLE)) {
@@ -2305,6 +2312,41 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    return 0;
 }
 
+static void vrend_framebuffer_texture_2d(struct vrend_resource *res,
+                                         GLenum target, GLenum attachment,
+                                         GLenum textarget, uint32_t texture,
+                                         int32_t level, uint32_t samples)
+{
+   assert(textarget == GL_TEXTURE_2D);
+
+   if (samples == 0) {
+      glFramebufferTexture2D(target, attachment, textarget, texture, level);
+   } else if (!has_feature(feat_implicit_msaa)) {
+      /* fallback to non-msaa */
+      report_gles_warn(vrend_state.current_ctx, GLES_WARN_IMPLICIT_MSAA_SURFACE);
+      glFramebufferTexture2D(target, attachment, textarget, texture, level);
+   } else if (attachment == GL_COLOR_ATTACHMENT0){
+      glFramebufferTexture2DMultisampleEXT(target, attachment, textarget,
+                                           texture, level, samples);
+   } else if (attachment == GL_STENCIL_ATTACHMENT || attachment == GL_DEPTH_ATTACHMENT) {
+      GLenum internalformat =
+              attachment == GL_STENCIL_ATTACHMENT ?  GL_STENCIL_INDEX8 : GL_DEPTH_COMPONENT16;
+
+      glGenRenderbuffers(1, &res->rbo_id);
+      glBindRenderbuffer(GL_RENDERBUFFER, res->rbo_id);
+      glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, samples,
+                                          internalformat, res->base.width0,
+                                          res->base.height0);
+      glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment,
+                                GL_RENDERBUFFER, res->rbo_id);
+      glBindRenderbuffer(GL_RENDERBUFFER, 0);
+   } else {
+      /* unsupported attachment for EXT_multisampled_render_to_texture, fallback to non-msaa */
+      report_gles_warn(vrend_state.current_ctx, GLES_WARN_IMPLICIT_MSAA_SURFACE);
+      glFramebufferTexture2D(target, attachment, textarget, texture, level);
+   }
+}
+
 static
 void debug_texture(MAYBE_UNUSED const char *f, const struct vrend_resource *gt)
 {
@@ -2333,9 +2375,8 @@ void debug_texture(MAYBE_UNUSED const char *f, const struct vrend_resource *gt)
 }
 
 void vrend_fb_bind_texture_id(struct vrend_resource *res,
-                              int id,
-                              int idx,
-                              uint32_t level, uint32_t layer)
+                              int id, int idx, uint32_t level,
+                              uint32_t layer, uint32_t samples)
 {
    const struct util_format_description *desc = util_format_description(res->base.format);
    GLenum attachment = GL_COLOR_ATTACHMENT0 + idx;
@@ -2380,8 +2421,9 @@ void vrend_fb_bind_texture_id(struct vrend_resource *res,
          glFramebufferTexture(GL_FRAMEBUFFER, attachment,
                               id, level);
       else
-         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
-                                GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer, id, level);
+         vrend_framebuffer_texture_2d(res, GL_FRAMEBUFFER, attachment,
+                                      GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer,
+                                      id, level, samples);
       break;
    case GL_TEXTURE_1D:
       glFramebufferTexture1D(GL_FRAMEBUFFER, attachment,
@@ -2389,8 +2431,8 @@ void vrend_fb_bind_texture_id(struct vrend_resource *res,
       break;
    case GL_TEXTURE_2D:
    default:
-      glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
-                             res->target, id, level);
+      vrend_framebuffer_texture_2d(res, GL_FRAMEBUFFER, attachment,
+                                   res->target, id, level, samples);
       break;
    }
 
@@ -2413,7 +2455,7 @@ void vrend_fb_bind_texture(struct vrend_resource *res,
                            int idx,
                            uint32_t level, uint32_t layer)
 {
-   vrend_fb_bind_texture_id(res, res->id, idx, level, layer);
+   vrend_fb_bind_texture_id(res, res->id, idx, level, layer, 0);
 }
 
 static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
@@ -2431,7 +2473,8 @@ static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
          return;
 
       vrend_fb_bind_texture_id(surf->texture, surf->id, 0, surf->val0,
-			       first_layer != last_layer ? 0xffffffff : first_layer);
+                               first_layer != last_layer ? 0xffffffff : first_layer,
+                               surf->nr_samples);
    }
 }
 
@@ -2449,7 +2492,8 @@ static void vrend_hw_set_color_surface(struct vrend_sub_context *sub_ctx, int in
       uint32_t last_layer = (sub_ctx->surf[index]->val1 >> 16) & 0xffff;
 
       vrend_fb_bind_texture_id(surf->texture, surf->id, index, surf->val0,
-                               first_layer != last_layer ? 0xffffffff : first_layer);
+                               first_layer != last_layer ? 0xffffffff : first_layer,
+                               surf->nr_samples);
    }
 }
 
@@ -7193,6 +7237,10 @@ void vrend_renderer_resource_destroy(struct vrend_resource *res)
       free(res->ptr);
    }
 
+   if (res->rbo_id) {
+      glDeleteRenderbuffers(1, &res->rbo_id);
+   }
+
    if (has_bit(res->storage_bits, VREND_STORAGE_GL_MEMOBJ)) {
       glDeleteMemoryObjectsEXT(1, &res->memobj);
    }
@@ -9057,7 +9105,7 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       n_layers = info->dst.box.depth;
    for (i = 0; i < n_layers; i++) {
       glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[0]);
-      vrend_fb_bind_texture_id(src_res, blitter_views[0], 0, info->src.level, info->src.box.z + i);
+      vrend_fb_bind_texture_id(src_res, blitter_views[0], 0, info->src.level, info->src.box.z + i, 0);
 
       if (make_intermediate_copy) {
          int level_width = u_minify(src_res->base.width0, info->src.level);
@@ -9075,7 +9123,7 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       }
 
       glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[1]);
-      vrend_fb_bind_texture_id(dst_res, blitter_views[1], 0, info->dst.level, info->dst.box.z + i);
+      vrend_fb_bind_texture_id(dst_res, blitter_views[1], 0, info->dst.level, info->dst.box.z + i, 0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ctx->sub->blit_fb_ids[1]);
 
       if (has_feature(feat_srgb_write_control)) {
@@ -10482,6 +10530,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_khr_debug))
        caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_STRING_MARKER;
+
+   if (has_feature(feat_implicit_msaa))
+       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_IMPLICIT_MSAA;
 
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;

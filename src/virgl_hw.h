@@ -441,6 +441,7 @@ enum virgl_formats {
 #define VIRGL_CAP_V2_MEMINFO              (1 << 3)
 #define VIRGL_CAP_V2_STRING_MARKER        (1 << 4)
 #define VIRGL_CAP_V2_DIFFERENT_GPU        (1 << 5)
+#define VIRGL_CAP_V2_IMPLICIT_MSAA        (1 << 6)
 
 /* virgl bind flags - these are compatible with mesa 10.5 gallium.
  * but are fixed, no other should be passed to virgl either.

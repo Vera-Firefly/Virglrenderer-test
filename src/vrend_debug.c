@@ -94,7 +94,8 @@ static const char *object_type_names[VIRGL_MAX_OBJECTS] = {
    "SAMPLER_STATE",
    "SURFACE",
    "QUERY",
-   "STREAMOUT_TARGET"
+   "STREAMOUT_TARGET",
+   "MSAA_SURFACE"
 };
 
 const char *vrend_get_comand_name(enum virgl_context_cmd cmd)

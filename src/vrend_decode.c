@@ -612,21 +612,34 @@ static int vrend_decode_create_rasterizer(struct vrend_context *ctx, const uint3
    return 0;
 }
 
-static int vrend_decode_create_surface(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)
+static int vrend_decode_create_surface_common(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint32_t sample_count)
 {
    uint32_t res_handle, format, val0, val1;
-   int ret;
-
-   if (length != VIRGL_OBJ_SURFACE_SIZE)
-      return EINVAL;
 
    res_handle = get_buf_entry(buf, VIRGL_OBJ_SURFACE_RES_HANDLE);
    format = get_buf_entry(buf, VIRGL_OBJ_SURFACE_FORMAT);
    /* decide later if these are texture or buffer */
    val0 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_FIRST_ELEMENT);
    val1 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_LAST_ELEMENT);
-   ret = vrend_create_surface(ctx, handle, res_handle, format, val0, val1);
-   return ret;
+
+   return vrend_create_surface(ctx, handle, res_handle, format, val0, val1, sample_count);
+}
+
+static int vrend_decode_create_surface(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)
+{
+   if (length != VIRGL_OBJ_SURFACE_SIZE)
+      return EINVAL;
+
+   return vrend_decode_create_surface_common(ctx, buf, handle, 0);
+}
+
+static int vrend_decode_create_msaa_surface(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)
+{
+   if (length != VIRGL_OBJ_MSAA_SURFACE_SIZE)
+      return EINVAL;
+
+   uint32_t sample_count = get_buf_entry(buf, VIRGL_OBJ_SURFACE_SAMPLE_COUNT);
+   return vrend_decode_create_surface_common(ctx, buf, handle, sample_count);
 }
 
 static int vrend_decode_create_sampler_view(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)
@@ -788,6 +801,9 @@ static int vrend_decode_create_object(struct vrend_context *ctx, const uint32_t 
       break;
    case VIRGL_OBJECT_STREAMOUT_TARGET:
       ret = vrend_decode_create_stream_output_target(ctx, buf, handle, length);
+      break;
+   case VIRGL_OBJECT_MSAA_SURFACE:
+      ret = vrend_decode_create_msaa_surface(ctx, buf, handle, length);
       break;
    default:
       return EINVAL;
