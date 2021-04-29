@@ -1878,7 +1878,7 @@ int vrend_create_surface(struct vrend_context *ctx,
    surf->id = res->id;
 
    if (!has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER) &&
-         vrend_format_can_texture_view(format)) {
+         has_bit(res->storage_bits, VREND_STORAGE_GL_IMMUTABLE)) {
       /* We don't need texture views for buffer objects.
        * Otherwise we only need a texture view if the
        * a) formats differ between the surface and base texture
