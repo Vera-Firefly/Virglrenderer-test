@@ -2614,13 +2614,16 @@ void vrend_set_framebuffer_state_no_attach(UNUSED struct vrend_context *ctx,
                                            uint32_t width, uint32_t height,
                                            uint32_t layers, uint32_t samples)
 {
+   int gl_ver = vrend_state.gl_major_ver * 10 + vrend_state.gl_minor_ver;
+
    if (has_feature(feat_fb_no_attach)) {
       glFramebufferParameteri(GL_FRAMEBUFFER,
                               GL_FRAMEBUFFER_DEFAULT_WIDTH, width);
       glFramebufferParameteri(GL_FRAMEBUFFER,
                               GL_FRAMEBUFFER_DEFAULT_HEIGHT, height);
-      glFramebufferParameteri(GL_FRAMEBUFFER,
-                              GL_FRAMEBUFFER_DEFAULT_LAYERS, layers);
+      if (!(vrend_state.use_gles && gl_ver <= 31))
+         glFramebufferParameteri(GL_FRAMEBUFFER,
+                                 GL_FRAMEBUFFER_DEFAULT_LAYERS, layers);
       glFramebufferParameteri(GL_FRAMEBUFFER,
                               GL_FRAMEBUFFER_DEFAULT_SAMPLES, samples);
    }
