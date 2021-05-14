@@ -432,8 +432,10 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
 
    att = util_hash_table_get(ctx->resource_table,
                              uintptr_to_pointer(args->pStream->resourceId));
-   if (!att)
+   if (!att) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
+   }
 
    vkr_cs_encoder_set_stream(&ctx->encoder, att->resource->iov, att->resource->iov_count,
                              args->pStream->offset, args->pStream->size);
@@ -1959,8 +1961,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       uint32_t res_id = import_resource_info->resourceId;
       struct vkr_resource_attachment *att =
          util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
-      if (!att || !att->resource) {
-         args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+      if (!att) {
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
          return;
       }
 
@@ -3840,8 +3842,8 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 
    struct vkr_resource_attachment *att =
       util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));
-   if (!att || !att->resource) {
-      args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+   if (!att) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
