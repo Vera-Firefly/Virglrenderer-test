@@ -2241,7 +2241,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       else if (view->format != view->texture->base.format)
          needs_view = true;
 
-      if (needs_view && vrend_format_can_texture_view(view->texture->base.format)) {
+      if (needs_view && has_bit(view->texture->storage_bits, VREND_STORAGE_GL_IMMUTABLE)) {
         glGenTextures(1, &view->id);
         GLenum internalformat = tex_conv_table[format].internalformat;
         unsigned base_layer = view->val0 & 0xffff;
