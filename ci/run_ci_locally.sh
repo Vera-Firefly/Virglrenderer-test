@@ -6,7 +6,7 @@
 cd ${VIRGL_PATH}
 
 DOCKER_DRIVER=overlay2
-DOCKER_IMAGE=${DOCKER_IMAGE:-registry.freedesktop.org/virgl/virglrenderer/debian/bullseye:latest}
+DOCKER_IMAGE=${DOCKER_IMAGE:-registry.freedesktop.org/virgl/virglrenderer/debian/bullseye:2021-04-15}
 
 if [[ -z $NUM_THREADS ]] ; then 
     # If not forced use slightly less than half of available threads
