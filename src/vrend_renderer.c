@@ -2317,8 +2317,6 @@ static void vrend_framebuffer_texture_2d(struct vrend_resource *res,
                                          GLenum textarget, uint32_t texture,
                                          int32_t level, uint32_t samples)
 {
-   assert(textarget == GL_TEXTURE_2D);
-
    if (samples == 0) {
       glFramebufferTexture2D(target, attachment, textarget, texture, level);
    } else if (!has_feature(feat_implicit_msaa)) {
