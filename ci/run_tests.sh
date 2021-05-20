@@ -43,7 +43,7 @@ run_setup()
       pushd $LOCAL_MESA
       mkdir -p build  && \
       meson build/ && \
-      meson configure build/ -Dprefix=/usr/local -Dplatforms=drm,x11,wayland,surfaceless -Ddri-drivers=i965 -Dgallium-drivers=swrast,virgl,radeonsi,r600 -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
+      meson configure build/ -Dprefix=/usr/local -Dplatforms=x11,wayland -Ddri-drivers= -Dgallium-drivers=swrast,virgl,radeonsi,iris -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
       ninja -C build/ install -j $NUM_THREADS
       if [ $? -ne 0 ]; then
         meson setup --wipe build/
@@ -55,7 +55,7 @@ run_setup()
    rm -rf ./results/
    mkdir -p ./results/
 
-   mkdir build
+   mkdir -p build
    if [ "x$use_clang_fuzzer" = "x1" ]; then
       export CC=clang
       export FUZZER=-Dfuzzer=true
@@ -65,8 +65,10 @@ run_setup()
        export TRACING=-Dtracing=stderr
    fi
 
+   pwd | grep virglrenderer >/dev/null || pushd /virglrenderer && pushd $(pwd)
    meson build/ -Dprefix=/usr/local -Ddebug=true -Dtests=true --fatal-meson-warnings $FUZZER $TRACING
    ninja -C build -j$NUM_THREADS install
+   popd
 }
 
 run_make_check_meson()
@@ -145,7 +147,7 @@ run_deqp()
       BACKENDS="${BACKENDS} --backend vtest-gpu"
    fi
 
-   pushd ci
+   pwd | grep virglrenderer >/dev/null || pushd /virglrenderer/ci && pushd ci
    ./run_test_suite.sh --deqp ${TEST_SUITE} \
       --host-${OGL_BACKEND} \
       ${BACKENDS}
@@ -171,7 +173,7 @@ run_piglit()
       BACKENDS="${BACKENDS} --backend vtest-gpu"
    fi
 
-   pushd ci
+   pwd | grep virglrenderer >/dev/null || pushd /virglrenderer/ci && pushd ci
    ./run_test_suite.sh --piglit --gles2 --gles3 \
       --host-${OGL_BACKEND} \
       ${BACKENDS}
