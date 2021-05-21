@@ -6047,6 +6047,7 @@ static int thread_sync(UNUSED void *arg)
    virgl_gl_context gl_context = vrend_state.sync_context;
    struct vrend_fence *fence, *stor;
 
+   pipe_thread_setname("vrend-sync");
 
    pipe_mutex_lock(vrend_state.fence_mutex);
    vrend_clicbs->make_current(gl_context);
