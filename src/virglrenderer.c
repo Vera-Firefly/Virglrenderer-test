@@ -681,7 +681,7 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       if (flags & VIRGL_RENDERER_THREAD_SYNC)
          vkr_flags |= VKR_RENDERER_THREAD_SYNC;
 
-      int ret = vkr_renderer_init(vkr_flags);
+      ret = vkr_renderer_init(vkr_flags);
       if (ret)
          goto fail;
       state.vkr_initialized = true;
