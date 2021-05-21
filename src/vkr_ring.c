@@ -15,6 +15,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "virgl_context.h"
+#include "virgl_util.h"
 
 enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
@@ -187,6 +188,8 @@ vkr_ring_thread(void *arg)
       }
 
       if (wait) {
+         TRACE_SCOPE("ring idle");
+
          mtx_lock(&ring->mutex);
          if (ring->started && !ring->pending_notify)
             cnd_wait(&ring->cond, &ring->mutex);
@@ -258,6 +261,10 @@ vkr_ring_notify(struct vkr_ring *ring)
    ring->pending_notify = true;
    cnd_signal(&ring->cond);
    mtx_unlock(&ring->mutex);
+
+   {
+      TRACE_SCOPE("ring notify done");
+   }
 }
 
 bool
@@ -268,6 +275,10 @@ vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
 
    volatile atomic_uint *dst = (void *)((uint8_t *)ring->shared.extra + offset);
    atomic_store_explicit(dst, val, memory_order_release);
+
+   {
+      TRACE_SCOPE("ring extra done");
+   }
 
    return true;
 }
