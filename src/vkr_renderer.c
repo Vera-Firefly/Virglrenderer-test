@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "c11/threads.h"
+#include "os/os_thread.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
@@ -168,6 +169,7 @@ struct vkr_queue {
 
    bool has_thread;
    int eventfd;
+   uint32_t thread_ctx_id;
    thrd_t thread;
    mtx_t mutex;
    cnd_t cond;
@@ -1478,6 +1480,10 @@ vkr_queue_thread(void *arg)
    struct vkr_queue *queue = arg;
    struct vkr_device *dev = queue->device;
    const uint64_t ns_per_sec = 1000000000llu;
+   char thread_name[16];
+
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-queue-%d", queue->thread_ctx_id);
+   pipe_thread_setname(thread_name);
 
    mtx_lock(&queue->mutex);
    while (true) {
@@ -1583,6 +1589,7 @@ vkr_queue_create(struct vkr_context *ctx,
    }
 
    if (ctx->fence_eventfd >= 0) {
+      queue->thread_ctx_id = ctx->base.ctx_id;
       ret = thrd_create(&queue->thread, vkr_queue_thread, queue);
       if (ret != thrd_success) {
          mtx_destroy(&queue->mutex);

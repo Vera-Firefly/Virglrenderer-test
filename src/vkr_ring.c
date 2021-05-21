@@ -6,11 +6,14 @@
 #include "vkr_ring.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+#include "os/os_thread.h"
 #include "util/u_math.h"
+#include "util/u_memory.h"
 #include "virgl_context.h"
 
 enum vkr_ring_status_flag {
@@ -163,10 +166,14 @@ vkr_ring_thread(void *arg)
 {
    struct vkr_ring *ring = arg;
    struct virgl_context *ctx = ring->context;
+   char thread_name[16];
+
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-ring-%d", ctx->ctx_id);
+   pipe_thread_setname(thread_name);
+
    uint64_t last_submit = vkr_ring_now();
    uint32_t relax_iter = 0;
    int ret = 0;
-
    while (ring->started) {
       bool wait = false;
       uint32_t cmd_size;
