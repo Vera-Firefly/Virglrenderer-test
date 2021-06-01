@@ -3858,22 +3858,55 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &fd);
    VkExternalMemoryHandleTypeFlagBits handle_type;
    if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type,
-                                                  &handle_type)) {
+                                                  &handle_type) ||
+       handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) {
       close(fd);
       args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
       return;
    }
 
-   VkMemoryFdPropertiesKHR memory_fd_properties = {
+   VkMemoryFdPropertiesKHR mem_fd_props = {
       .sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR,
       .pNext = NULL,
       .memoryTypeBits = 0,
    };
    vn_replace_vkGetMemoryResourcePropertiesMESA_args_handle(args);
    args->ret =
-      dev->get_memory_fd_properties(args->device, handle_type, fd, &memory_fd_properties);
-   args->pMemoryResourceProperties->memoryTypeBits = memory_fd_properties.memoryTypeBits;
+      dev->get_memory_fd_properties(args->device, handle_type, fd, &mem_fd_props);
+   if (args->ret != VK_SUCCESS) {
+      close(fd);
+      return;
+   }
+
+   args->pMemoryResourceProperties->memoryTypeBits = mem_fd_props.memoryTypeBits;
+
+   VkMemoryResourceAllocationSizeProperties100000MESA *alloc_size_props = vkr_find_pnext(
+      args->pMemoryResourceProperties->pNext,
+      VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
+   if (alloc_size_props)
+      alloc_size_props->allocationSize = lseek(fd, 0, SEEK_END);
+
    close(fd);
+}
+
+static void
+vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
+{
+   const VkVenusExperimentalFeatures100000MESA features = {
+      .memoryResourceAllocationSize = VK_TRUE,
+   };
+
+   vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(args);
+
+   if (!args->pData) {
+      *args->pDataSize = sizeof(features);
+      return;
+   }
+
+   *args->pDataSize = MIN2(*args->pDataSize, sizeof(features));
+   memcpy(args->pData, &features, *args->pDataSize);
 }
 
 static void
@@ -4174,6 +4207,9 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
 
    dispatch->dispatch_vkGetMemoryResourcePropertiesMESA =
       vkr_dispatch_vkGetMemoryResourcePropertiesMESA;
+
+   dispatch->dispatch_vkGetVenusExperimentalFeatureData100000MESA =
+      vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA;
 }
 
 static int
