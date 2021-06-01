@@ -129,12 +129,81 @@ vn_replace_VkRingCreateInfoMESA_handle(VkRingCreateInfoMESA *val)
     } while (pnext);
 }
 
+/* struct VkMemoryResourceAllocationSizeProperties100000MESA chain */
+
+static inline void
+vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA_self(struct vn_cs_encoder *enc, const VkMemoryResourceAllocationSizeProperties100000MESA *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_uint64_t(enc, &val->allocationSize);
+}
+
+static inline void
+vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA(struct vn_cs_encoder *enc, const VkMemoryResourceAllocationSizeProperties100000MESA *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA });
+    vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA_pnext(enc, val->pNext);
+    vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_self_partial_temp(struct vn_cs_decoder *dec, VkMemoryResourceAllocationSizeProperties100000MESA *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->allocationSize */
+}
+
+static inline void
+vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_partial_temp(struct vn_cs_decoder *dec, VkMemoryResourceAllocationSizeProperties100000MESA *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    assert(stype == VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_pnext_partial_temp(dec);
+    vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_self_partial_temp(dec, val);
+}
+
 /* struct VkMemoryResourcePropertiesMESA chain */
 
 static inline void
 vn_encode_VkMemoryResourcePropertiesMESA_pnext(struct vn_cs_encoder *enc, const void *val)
 {
-    /* no known/supported struct */
+    const VkBaseInStructure *pnext = val;
+
+    while (pnext) {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkMemoryResourcePropertiesMESA_pnext(enc, pnext->pNext);
+            vn_encode_VkMemoryResourceAllocationSizeProperties100000MESA_self(enc, (const VkMemoryResourceAllocationSizeProperties100000MESA *)pnext);
+            return;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    }
+
     vn_encode_simple_pointer(enc, NULL);
 }
 
@@ -157,10 +226,30 @@ vn_encode_VkMemoryResourcePropertiesMESA(struct vn_cs_encoder *enc, const VkMemo
 static inline void *
 vn_decode_VkMemoryResourcePropertiesMESA_pnext_partial_temp(struct vn_cs_decoder *dec)
 {
-    /* no known/supported struct */
-    if (vn_decode_simple_pointer(dec))
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkMemoryResourceAllocationSizeProperties100000MESA));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkMemoryResourcePropertiesMESA_pnext_partial_temp(dec);
+            vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_self_partial_temp(dec, (VkMemoryResourceAllocationSizeProperties100000MESA *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
         vn_cs_decoder_set_fatal(dec);
-    return NULL;
+        break;
+    }
+
+    return pnext;
 }
 
 static inline void
@@ -408,6 +497,45 @@ static inline void vn_encode_vkGetMemoryResourcePropertiesMESA_reply(struct vn_c
         vn_encode_VkMemoryResourcePropertiesMESA(enc, args->pMemoryResourceProperties);
 }
 
+static inline void vn_decode_vkGetVenusExperimentalFeatureData100000MESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
+{
+    if (vn_decode_simple_pointer(dec)) {
+        args->pDataSize = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDataSize));
+        if (!args->pDataSize) return;
+        vn_decode_size_t(dec, args->pDataSize);
+    } else {
+        args->pDataSize = NULL;
+    }
+    if (vn_peek_array_size(dec)) {
+        const size_t array_size = vn_decode_array_size(dec, *args->pDataSize);
+        args->pData = vn_cs_decoder_alloc_temp(dec, array_size);
+        if (!args->pData) return;
+    } else {
+        vn_decode_array_size(dec, 0);
+        args->pData = NULL;
+    }
+}
+
+static inline void vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
+{
+    /* skip args->pDataSize */
+    /* skip args->pData */
+}
+
+static inline void vn_encode_vkGetVenusExperimentalFeatureData100000MESA_reply(struct vn_cs_encoder *enc, const struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT});
+
+    if (vn_encode_simple_pointer(enc, args->pDataSize))
+        vn_encode_size_t(enc, args->pDataSize);
+    if (args->pData) {
+        vn_encode_array_size(enc, *args->pDataSize);
+        vn_encode_blob_array(enc, args->pData, *args->pDataSize);
+    } else {
+        vn_encode_array_size(enc, 0);
+    }
+}
+
 static inline void vn_dispatch_vkSetReplyCommandStreamMESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
 {
     struct vn_command_vkSetReplyCommandStreamMESA args;
@@ -581,6 +709,27 @@ static inline void vn_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispa
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkGetMemoryResourcePropertiesMESA_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkGetVenusExperimentalFeatureData100000MESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkGetVenusExperimentalFeatureData100000MESA args;
+
+    if (!ctx->dispatch_vkGetVenusExperimentalFeatureData100000MESA) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkGetVenusExperimentalFeatureData100000MESA_args_temp(ctx->decoder, &args);
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkGetVenusExperimentalFeatureData100000MESA(ctx, &args);
+
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
+       vn_encode_vkGetVenusExperimentalFeatureData100000MESA_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

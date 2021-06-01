@@ -21,6 +21,7 @@
 #define VK_STRUCTURE_TYPE_RING_CREATE_INFO_MESA ((VkStructureType)1000384000)
 #define VK_STRUCTURE_TYPE_MEMORY_RESOURCE_PROPERTIES_MESA ((VkStructureType)1000384001)
 #define VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA ((VkStructureType)1000384002)
+#define VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA ((VkStructureType)1000384003)
 
 typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCreateInstance_EXT = 0,
@@ -260,6 +261,7 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkNotifyRingMESA_EXT = 190,
     VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT = 191,
     VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT = 192,
+    VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT = 195,
 } VkCommandTypeEXT;
 
 typedef enum VkCommandFlagBitsEXT {
@@ -313,6 +315,16 @@ typedef struct VkImportMemoryResourceInfoMESA {
     const void* pNext;
     uint32_t resourceId;
 } VkImportMemoryResourceInfoMESA;
+
+typedef struct VkVenusExperimentalFeatures100000MESA {
+    VkBool32 memoryResourceAllocationSize;
+} VkVenusExperimentalFeatures100000MESA;
+
+typedef struct VkMemoryResourceAllocationSizeProperties100000MESA {
+    VkStructureType sType;
+    void* pNext;
+    uint64_t allocationSize;
+} VkMemoryResourceAllocationSizeProperties100000MESA;
 
 struct vn_command_vkCreateInstance {
     const VkInstanceCreateInfo* pCreateInfo;
@@ -1765,6 +1777,11 @@ struct vn_command_vkGetMemoryResourcePropertiesMESA {
     VkResult ret;
 };
 
+struct vn_command_vkGetVenusExperimentalFeatureData100000MESA {
+    size_t* pDataSize;
+    void* pData;
+};
+
 struct vn_dispatch_context {
     void *data;
     void (*debug_log)(struct vn_dispatch_context *ctx, const char *msg);
@@ -1967,6 +1984,7 @@ struct vn_dispatch_context {
     void (*dispatch_vkNotifyRingMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkNotifyRingMESA *args);
     void (*dispatch_vkWriteRingExtraMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWriteRingExtraMESA *args);
     void (*dispatch_vkGetMemoryResourcePropertiesMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryResourcePropertiesMESA *args);
+    void (*dispatch_vkGetVenusExperimentalFeatureData100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args);
 };
 
 static inline void vn_dispatch_debug_log(struct vn_dispatch_context *ctx, const char *format, ...)
