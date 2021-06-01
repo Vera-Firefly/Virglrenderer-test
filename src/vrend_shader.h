@@ -116,6 +116,8 @@ struct vrend_shader_info {
    uint32_t shadow_samp_mask;
    uint32_t attrib_input_mask;
    uint32_t fs_blend_equation_advanced;
+   uint32_t fog_input_mask;
+   uint32_t fog_output_mask;
 
    int num_consts;
    int num_inputs;
@@ -155,6 +157,7 @@ struct vrend_shader_key {
       struct {
          uint32_t attrib_signed_int_bitmask;
          uint32_t attrib_unsigned_int_bitmask;
+         uint32_t fog_fixup_mask;
       } vs;
    };
 

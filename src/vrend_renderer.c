@@ -3420,11 +3420,21 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
      break;
    }
 
-   if (next_type != -1 && sub_ctx->shaders[next_type])
+   if (next_type != -1 && sub_ctx->shaders[next_type]) {
       key->output = sub_ctx->shaders[next_type]->sinfo.in;
 
-}
+      if (type == PIPE_SHADER_VERTEX && next_type == PIPE_SHADER_FRAGMENT) {
+         if (sub_ctx->shaders[type]) {
+            uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
+            uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
 
+            //We only want to issue the fixup for inputs not fed by the outputs of the
+            //previous stage
+            key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
+         }
+      }
+   }
+}
 
 static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
                                          struct vrend_shader_selector *sel,

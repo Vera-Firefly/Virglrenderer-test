@@ -219,6 +219,9 @@ struct dump_ctx {
    struct vrend_array *sampler_arrays;
    uint32_t num_sampler_arrays;
 
+   uint32_t fog_input_mask;
+   uint32_t fog_output_mask;
+
    int num_consts;
    int num_imm;
    struct immed imm[MAX_IMMEDIATE];
@@ -898,22 +901,39 @@ static int lookup_image_array(const struct dump_ctx *ctx, int index)
 }
 
 static boolean
-iter_inputs(struct tgsi_iterate_context *iter,
-            struct tgsi_full_declaration *decl)
+iter_decls(struct tgsi_iterate_context *iter,
+           struct tgsi_full_declaration *decl)
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
    switch (decl->Declaration.File) {
    case TGSI_FILE_INPUT:
-      for (uint32_t j = 0; j < ctx->num_inputs; j++) {
-         if (ctx->inputs[j].name == decl->Semantic.Name &&
-             ctx->inputs[j].sid == decl->Semantic.Index &&
-             ctx->inputs[j].first == decl->Range.First)
-            return true;
+      /* Tag used semantic fog inputs */
+      if (decl->Semantic.Name == TGSI_SEMANTIC_FOG) {
+         ctx->fog_input_mask |= (1 << decl->Semantic.Index);
       }
-      ctx->inputs[ctx->num_inputs].name = decl->Semantic.Name;
-      ctx->inputs[ctx->num_inputs].first = decl->Range.First;
-      ctx->inputs[ctx->num_inputs].last = decl->Range.Last;
-      ctx->num_inputs++;
+
+      if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT) {
+         for (uint32_t j = 0; j < ctx->num_inputs; j++) {
+            if (ctx->inputs[j].name == decl->Semantic.Name &&
+                ctx->inputs[j].sid == decl->Semantic.Index &&
+                ctx->inputs[j].first == decl->Range.First)
+                  return true;
+         }
+         ctx->inputs[ctx->num_inputs].name = decl->Semantic.Name;
+         ctx->inputs[ctx->num_inputs].first = decl->Range.First;
+         ctx->inputs[ctx->num_inputs].last = decl->Range.Last;
+         ctx->num_inputs++;
+      }
+      break;
+
+   case TGSI_FILE_OUTPUT:
+      if (decl->Semantic.Name == TGSI_SEMANTIC_FOG) {
+         ctx->fog_output_mask |= (1 << decl->Semantic.Index);
+      }
+      break;
+
+   default:
+      break;
    }
    return true;
 }
@@ -2039,6 +2059,40 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
    }
 }
 
+static void emit_fog_fixup_hdr(const struct dump_ctx *ctx,
+                               struct vrend_glsl_strbufs *glsl_strbufs)
+{
+   uint32_t fixup_mask = ctx->key->vs.fog_fixup_mask;
+   int semantic;
+   const char *prefix = get_stage_output_name_prefix(TGSI_PROCESSOR_VERTEX);
+
+   while (fixup_mask) {
+      semantic = ffs(fixup_mask) - 1;
+
+      emit_hdrf(glsl_strbufs, "out vec4 %s_f%d;\n", prefix, semantic);
+      fixup_mask &= (~(1 << semantic));
+   }
+}
+
+static void emit_fog_fixup_write(const struct dump_ctx *ctx,
+                                 struct vrend_glsl_strbufs *glsl_strbufs)
+{
+   uint32_t fixup_mask = ctx->key->vs.fog_fixup_mask;
+   int semantic;
+   const char *prefix = get_stage_output_name_prefix(TGSI_PROCESSOR_VERTEX);
+
+   while (fixup_mask) {
+      semantic = ffs(fixup_mask) - 1;
+
+      /*
+      *  Force unwritten fog outputs to 0,0,0,1
+      */
+      emit_buff(glsl_strbufs, "%s_f%d = vec4(0.0, 0.0, 0.0, 1.0);\n",
+               prefix, semantic);
+      fixup_mask &= (~(1 << semantic));
+   }
+}
+
 #define emit_arit_op2(op) emit_buff(&ctx->glsl_strbufs, "%s = %s(%s((%s %s %s))%s);\n", dsts[0], get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), srcs[0], op, srcs[1], writemask)
 #define emit_op1(op) emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(%s(%s))%s);\n", dsts[0], get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), op, srcs[0], writemask)
 #define emit_compare(op) emit_buff(&ctx->glsl_strbufs, "%s = %s(%s((%s(%s(%s), %s(%s))))%s);\n", dsts[0], get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), op, get_string(sinfo.svec4), srcs[0], get_string(sinfo.svec4), srcs[1], writemask)
@@ -2056,6 +2110,9 @@ static void handle_vertex_proc_exit(const struct dump_ctx *ctx,
 
     if (!ctx->key->gs_present && !ctx->key->tes_present)
        emit_prescale(glsl_strbufs);
+
+    if (ctx->key->vs.fog_fixup_mask)
+       emit_fog_fixup_write(ctx, glsl_strbufs);
 }
 
 static void emit_fragment_logicop(const struct dump_ctx *ctx,
@@ -6323,6 +6380,9 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
       }
    }
 
+   if (ctx->key->vs.fog_fixup_mask)
+      emit_fog_fixup_hdr(ctx, glsl_strbufs);
+
    emit_winsys_correction(glsl_strbufs);
 
    if (ctx->has_clipvertex) {
@@ -6880,6 +6940,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->images_used_mask = ctx->images_used_mask;
    sinfo->num_consts = ctx->num_consts;
    sinfo->ubo_used_mask = ctx->ubo_used_mask;
+   sinfo->fog_input_mask = ctx->fog_input_mask;
+   sinfo->fog_output_mask = ctx->fog_output_mask;
 
    sinfo->ssbo_used_mask = ctx->ssbo_used_mask;
 
@@ -6998,8 +7060,9 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    memset(&ctx, 0, sizeof(struct dump_ctx));
 
    /* First pass to deal with edge cases. */
-   if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT)
-      ctx.iter.iterate_declaration = iter_inputs;
+   if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT ||
+       ctx.prog_type == TGSI_PROCESSOR_VERTEX)
+      ctx.iter.iterate_declaration = iter_decls;
    ctx.iter.iterate_instruction = analyze_instruction;
    bret = tgsi_iterate_shader(tokens, &ctx.iter);
    if (bret == false)
