@@ -1016,10 +1016,6 @@ vkr_physical_device_init_properties(struct vkr_physical_device *physical_dev)
 
    VkPhysicalDeviceProperties *props = &physical_dev->properties;
    props->driverVersion = 0;
-   props->vendorID = 0;
-   props->deviceID = 0;
-   props->deviceType = VK_PHYSICAL_DEVICE_TYPE_OTHER;
-   memset(props->deviceName, 0, sizeof(props->deviceName));
 
    /* TODO lie about props->pipelineCacheUUID and patch cache header */
 }
