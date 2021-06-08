@@ -103,7 +103,7 @@ git clone --shallow-since="$GIT_DATE" https://gitlab.freedesktop.org/mesa/drm.gi
     [ "$?" = "0" ] || exit 1
 popd
 
-export KNOWN_GOOD_MESA=${KNOWN_GOOD_MESA:-7db79fa6773bd4168980fad5c8c8785adb34de76}
+export KNOWN_GOOD_MESA=${KNOWN_GOOD_MESA:-2908aba828c39a322dff8fd3044b42955efebfdb}
 echo $KNOWN_GOOD_MESA
 export MESA_REPO=https://gitlab.freedesktop.org/mesa/mesa.git
 echo $MESA_REPO
@@ -113,8 +113,7 @@ git clone --shallow-since="$GIT_DATE" ${MESA_REPO} . && \
     git checkout ${KNOWN_GOOD_MESA} && \
     git log --oneline -n 1 && \
     mkdir -p build && \
-    meson build/ && \
-    meson configure build/ -Dprefix=/usr/local -Dplatforms=x11,wayland -Ddri-drivers= -Dgallium-drivers=swrast,iris,virgl,radeonsi -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
+    meson build/ -Dprefix=/usr/local -Dplatforms=x11,wayland -Ddri-drivers= -Dgallium-drivers=swrast,iris,virgl,radeonsi -Dbuildtype=debugoptimized -Dllvm=true -Dglx=dri -Dgallium-vdpau=false -Dgallium-va=false -Dvulkan-drivers=[] -Dlibdir=lib && \
     ninja -C build/ install >/dev/null && \
     rm -rf /mesa
     [ "$?" = "0" ] || exit 1
