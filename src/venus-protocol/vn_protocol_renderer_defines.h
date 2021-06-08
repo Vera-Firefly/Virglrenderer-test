@@ -318,6 +318,7 @@ typedef struct VkImportMemoryResourceInfoMESA {
 
 typedef struct VkVenusExperimentalFeatures100000MESA {
     VkBool32 memoryResourceAllocationSize;
+    VkBool32 globalFencing;
 } VkVenusExperimentalFeatures100000MESA;
 
 typedef struct VkMemoryResourceAllocationSizeProperties100000MESA {
