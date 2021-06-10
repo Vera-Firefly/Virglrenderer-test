@@ -586,7 +586,6 @@ void vrend_build_format_list_common(void)
 
   /* compressed */
   add_formats(etc2_formats);
-  add_formats(astc_formats);
   add_formats(rgtc_formats);
   add_formats(dxtn_formats);
   add_formats(dxtn_srgb_formats);
@@ -627,6 +626,7 @@ void vrend_build_format_list_gles(void)
    */
   add_formats(gles_z32_format);
   add_formats(gles_bit10_formats);
+  add_formats(astc_formats);
 }
 
 void vrend_build_emulated_format_list_gles(void)
