@@ -965,7 +965,8 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
 }
 
 static void
-vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev)
+vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev,
+                                    struct vkr_instance *instance)
 {
    VkPhysicalDevice handle = physical_dev->base.handle.physical_device;
 
@@ -1002,6 +1003,23 @@ vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev)
             props->specVersion = spec_ver;
          exts[advertised_count++] = exts[i];
       }
+   }
+
+   if (physical_dev->KHR_external_fence_fd) {
+      const VkPhysicalDeviceExternalFenceInfo fence_info = {
+         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO,
+         .handleType = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
+      };
+      VkExternalFenceProperties fence_props = {
+         .sType = VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES,
+      };
+      PFN_vkGetPhysicalDeviceExternalFenceProperties get_fence_props =
+         (PFN_vkGetPhysicalDeviceExternalFenceProperties)vkGetInstanceProcAddr(
+            instance->base.handle.instance, "vkGetPhysicalDeviceExternalFenceProperties");
+      get_fence_props(handle, &fence_info, &fence_props);
+
+      if (!(fence_props.externalFenceFeatures & VK_EXTERNAL_FENCE_FEATURE_EXPORTABLE_BIT))
+         physical_dev->KHR_external_fence_fd = false;
    }
 
    physical_dev->extensions = exts;
@@ -1078,7 +1096,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
       vkr_physical_device_init_properties(physical_dev);
       physical_dev->api_version =
          MIN2(physical_dev->properties.apiVersion, instance->api_version);
-      vkr_physical_device_init_extensions(physical_dev);
+      vkr_physical_device_init_extensions(physical_dev, instance);
       vkr_physical_device_init_memory_properties(physical_dev);
 
       instance->physical_devices[i] = physical_dev;
@@ -4229,8 +4247,13 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
       if (!sync)
          return -ENOMEM;
 
+      const VkExportFenceCreateInfo export_info = {
+         .sType = VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO,
+         .handleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
+      };
       const struct VkFenceCreateInfo create_info = {
          .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+         .pNext = dev->physical_device->KHR_external_fence_fd ? &export_info : NULL,
       };
       result = vkCreateFence(dev->base.handle.device, &create_info, NULL, &sync->fence);
       if (result != VK_SUCCESS) {
