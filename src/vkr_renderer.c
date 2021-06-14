@@ -4742,8 +4742,15 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    memcpy(ctx->debug_name, debug_name, debug_len);
    ctx->debug_name[debug_len] = '\0';
 
-   ctx->validate_level =
-      VKR_DEBUG(VALIDATE) ? VKR_CONTEXT_VALIDATE_FULL : VKR_CONTEXT_VALIDATE_NONE;
+#ifdef ENABLE_VENUS_VALIDATE
+   ctx->validate_level = VKR_CONTEXT_VALIDATE_ON;
+   ctx->validate_fatal = false; /* TODO set this to true */
+#else
+   ctx->validate_level = VKR_CONTEXT_VALIDATE_NONE;
+   ctx->validate_fatal = false;
+#endif
+   if (VKR_DEBUG(VALIDATE))
+      ctx->validate_level = VKR_CONTEXT_VALIDATE_FULL;
 
    if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success) {
       free(ctx->debug_name);

@@ -203,9 +203,14 @@ if with_glx
 endif
 
 with_venus = get_option('venus-experimental')
+with_venus_validate = get_option('venus-validate')
 if with_venus
    venus_dep = dependency('vulkan')
    conf_data.set('ENABLE_VENUS', 1)
+
+   if with_venus_validate
+      conf_data.set('ENABLE_VENUS_VALIDATE', 1)
+   endif
 endif
 
 if cc.compiles('void __attribute__((hidden)) func() {}')
