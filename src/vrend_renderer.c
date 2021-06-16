@@ -11051,6 +11051,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
       if (!gr)
          return ENOMEM;
 
+      virgl_format = gr->base.format;
       drm_format = 0;
       if (virgl_gbm_convert_format(&virgl_format, &drm_format)) {
          vrend_printf("%s: unsupported format %d\n", __func__, virgl_format);
