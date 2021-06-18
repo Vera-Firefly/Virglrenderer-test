@@ -787,7 +787,9 @@ void vrend_renderer_blit_gl(MAYBE_UNUSED struct vrend_context *ctx,
       float dst_offset = ((info->src.box.depth - 1) -
                           (info->dst.box.depth - 1) * dst2src_scale) * 0.5;
       float src_z = (dst_z + dst_offset) * dst2src_scale;
-      uint32_t layer = (dst_res->target == GL_TEXTURE_CUBE_MAP) ? info->dst.box.z : dst_z;
+      uint32_t layer = (dst_res->target == GL_TEXTURE_CUBE_MAP ||
+                        dst_res->target == GL_TEXTURE_1D_ARRAY ||
+                        dst_res->target == GL_TEXTURE_2D_ARRAY) ? info->dst.box.z : dst_z;
 
       glBindFramebuffer(GL_FRAMEBUFFER, blit_ctx->fb_id);
       vrend_fb_bind_texture_id(dst_res, blit_views[1], 0, info->dst.level, layer, 0);
