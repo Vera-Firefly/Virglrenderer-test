@@ -536,8 +536,8 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
        formats that are supported as destination formats by glReadPixels. */
     if (is_desktop_gl ||
         (status == GL_FRAMEBUFFER_COMPLETE &&
-         ((is_depth && depth_stencil_formats_can_readback(table[i].format)) ||
-          color_format_can_readback(&table[i], gles_ver))))
+         (is_depth ? depth_stencil_formats_can_readback(table[i].format) :
+                     color_format_can_readback(&table[i], gles_ver))))
        flags |= VIRGL_TEXTURE_CAN_READBACK;
 
     glDeleteTextures(1, &tex_id);
