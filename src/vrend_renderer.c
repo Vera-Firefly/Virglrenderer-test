@@ -7560,6 +7560,10 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          need_temp = true;
       }
 
+      if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
+          !vrend_resource_is_emulated_bgra(res))
+          need_temp = true;
+
       if (vrend_state.use_core_profile == true &&
           (res->y_0_top || (res->base.format == VIRGL_FORMAT_Z24X8_UNORM))) {
          need_temp = true;
@@ -7937,6 +7941,10 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
 
    if (num_iovs > 1 || separate_invert)
       need_temp = 1;
+
+   if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
+       !vrend_resource_is_emulated_bgra(res))
+       need_temp = true;
 
    if (need_temp) {
       send_size = util_format_get_nblocks(res->base.format, info->box->width, info->box->height) * info->box->depth * util_format_get_blocksize(res->base.format);
