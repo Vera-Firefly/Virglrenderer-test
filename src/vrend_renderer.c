@@ -8955,6 +8955,21 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       src_y2 = src_res->base.height0 - info->src.box.y;
    }
 
+   /* since upstream mesa change
+    * https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/5034
+    * an imported RGBX texture uses GL_RGB8 as internal format while
+    * in virgl_formats, we use GL_RGBA8 internal format for RGBX texutre.
+    * on GLES host, glBlitFramebuffer doesn't work in such case. */
+   if (vrend_state.use_gles && !use_gl &&
+       info->mask & PIPE_MASK_RGBA &&
+       src_res->base.format == VIRGL_FORMAT_R8G8B8X8_UNORM &&
+       dst_res->base.format == VIRGL_FORMAT_R8G8B8X8_UNORM &&
+       has_bit(src_res->storage_bits, VREND_STORAGE_EGL_IMAGE) !=
+       has_bit(dst_res->storage_bits, VREND_STORAGE_EGL_IMAGE) &&
+       (src_res->base.nr_samples || dst_res->base.nr_samples)) {
+      use_gl = true;
+   }
+
    if (use_gl) {;}
    /* GLES generally doesn't support blitting to a multi-sample FB, and also not
     * from a multi-sample FB where the regions are not exatly the same or the
