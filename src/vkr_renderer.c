@@ -309,8 +309,10 @@ struct vkr_resource_attachment {
 enum vkr_context_validate_level {
    /* no validation */
    VKR_CONTEXT_VALIDATE_NONE,
+   /* force enabling a subset of the validation layer */
+   VKR_CONTEXT_VALIDATE_ON,
    /* force enabling the validation layer */
-   VKR_CONTEXT_VALIDATE_FORCE_ON,
+   VKR_CONTEXT_VALIDATE_FULL,
 };
 
 struct vkr_context {
@@ -775,8 +777,17 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    uint32_t layer_count = 0;
    uint32_t ext_count = 0;
 
-   const VkValidationFeatureDisableEXT validation_feature_disables[] = {
-      VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT
+   /* TODO enable more validation features */
+   const VkValidationFeatureDisableEXT validation_feature_disables_on[] = {
+      VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT,
+      VK_VALIDATION_FEATURE_DISABLE_SHADERS_EXT,
+      VK_VALIDATION_FEATURE_DISABLE_OBJECT_LIFETIMES_EXT,
+      VK_VALIDATION_FEATURE_DISABLE_CORE_CHECKS_EXT,
+      VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT,
+   };
+   /* we are single-threaded */
+   const VkValidationFeatureDisableEXT validation_feature_disables_full[] = {
+      VK_VALIDATION_FEATURE_DISABLE_THREAD_SAFETY_EXT,
    };
    VkValidationFeaturesEXT validation_features;
    VkDebugUtilsMessengerCreateInfoEXT messenger_create_info;
@@ -792,9 +803,17 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       validation_features = (const VkValidationFeaturesEXT){
          .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
          .pNext = create_info->pNext,
-         .disabledValidationFeatureCount = ARRAY_SIZE(validation_feature_disables),
-         .pDisabledValidationFeatures = validation_feature_disables,
       };
+      if (ctx->validate_level == VKR_CONTEXT_VALIDATE_ON) {
+         validation_features.disabledValidationFeatureCount =
+            ARRAY_SIZE(validation_feature_disables_on);
+         validation_features.pDisabledValidationFeatures = validation_feature_disables_on;
+      } else {
+         validation_features.disabledValidationFeatureCount =
+            ARRAY_SIZE(validation_feature_disables_full);
+         validation_features.pDisabledValidationFeatures =
+            validation_feature_disables_full;
+      }
       messenger_create_info = (VkDebugUtilsMessengerCreateInfoEXT){
          .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
          .pNext = &validation_features,
@@ -4724,7 +4743,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    ctx->debug_name[debug_len] = '\0';
 
    ctx->validate_level =
-      VKR_DEBUG(VALIDATE) ? VKR_CONTEXT_VALIDATE_FORCE_ON : VKR_CONTEXT_VALIDATE_NONE;
+      VKR_DEBUG(VALIDATE) ? VKR_CONTEXT_VALIDATE_FULL : VKR_CONTEXT_VALIDATE_NONE;
 
    if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success) {
       free(ctx->debug_name);
