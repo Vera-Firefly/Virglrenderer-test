@@ -311,8 +311,6 @@ enum vkr_context_validate_level {
    VKR_CONTEXT_VALIDATE_NONE,
    /* force enabling the validation layer */
    VKR_CONTEXT_VALIDATE_FORCE_ON,
-   /* same as above but also treat validation errors as fatal errors */
-   VKR_CONTEXT_VALIDATE_FORCE_FATAL,
 };
 
 struct vkr_context {
@@ -320,6 +318,7 @@ struct vkr_context {
 
    char *debug_name;
    enum vkr_context_validate_level validate_level;
+   bool validate_fatal;
 
    mtx_t mutex;
 
@@ -725,7 +724,7 @@ vkr_validation_callback(UNUSED VkDebugUtilsMessageSeverityFlagBitsEXT messageSev
 
    vrend_printf("%s\n", pCallbackData->pMessage);
 
-   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_FORCE_FATAL)
+   if (!ctx->validate_fatal)
       return false;
 
    vkr_cs_decoder_set_fatal(&ctx->decoder);
