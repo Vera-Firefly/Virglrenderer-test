@@ -44,18 +44,10 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size);
 // eglInitialize leaks unless eglTeriminate is called (which only happens
 // with CLEANUP_EACH_INPUT), so suppress leak detection on everything
 // allocated by it.
-
-#if !defined(__has_feature)
-#define __has_feature(x) 0
-#endif
-
-#if __has_feature(address_sanitizer)
 const char* __lsan_default_suppressions(void);
-
 const char* __lsan_default_suppressions() {
    return "leak:eglInitialize\n";
 }
-#endif // __has_feature(address_sanitizer)
 
 #endif // !CLEANUP_EACH_INPUT
 
