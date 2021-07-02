@@ -3801,7 +3801,7 @@ void vrend_clear(struct vrend_context *ctx,
    if (buffers & PIPE_CLEAR_COLOR) {
       if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_format_is_emulated_alpha(sub_ctx->surf[0]->format)) {
          glClearColor(color->f[3], 0.0, 0.0, 0.0);
-      } else if (vrend_resource_is_emulated_bgra(sub_ctx->surf[0]->texture)) {
+      } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_resource_is_emulated_bgra(sub_ctx->surf[0]->texture)) {
          VREND_DEBUG(dbg_bgra, ctx, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
          glClearColor(color->f[2], color->f[1], color->f[0], color->f[3]);
       } else {
