@@ -168,7 +168,6 @@ struct vkr_queue {
    uint32_t family;
    uint32_t index;
 
-   bool has_thread;
    int eventfd;
    thrd_t thread;
    mtx_t mutex;
@@ -1473,7 +1472,7 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
 
    list_inithead(retired_syncs);
 
-   if (queue->has_thread) {
+   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
       mtx_lock(&queue->mutex);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head) {
@@ -1552,7 +1551,7 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
 {
    struct vkr_queue_sync *sync, *tmp;
 
-   if (queue->has_thread) {
+   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
       mtx_lock(&queue->mutex);
       queue->join = true;
       mtx_unlock(&queue->mutex);
@@ -1622,7 +1621,7 @@ vkr_queue_create(struct vkr_context *ctx,
       return NULL;
    }
 
-   if (ctx->fence_eventfd >= 0) {
+   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
       ret = thrd_create(&queue->thread, vkr_queue_thread, queue);
       if (ret != thrd_success) {
          mtx_destroy(&queue->mutex);
@@ -1630,7 +1629,6 @@ vkr_queue_create(struct vkr_context *ctx,
          free(queue);
          return NULL;
       }
-      queue->has_thread = true;
       queue->eventfd = ctx->fence_eventfd;
    }
 
@@ -4294,7 +4292,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    sync->flags = flags;
    sync->fence_cookie = fence_cookie;
 
-   if (queue->has_thread) {
+   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
       mtx_lock(&queue->mutex);
       list_addtail(&sync->head, &queue->pending_syncs);
       mtx_unlock(&queue->mutex);
