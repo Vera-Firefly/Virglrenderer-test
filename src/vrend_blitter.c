@@ -79,9 +79,9 @@ struct vrend_blitter_delta {
     int dy;
 };
 
-struct swizzle_and_type {
-  char *twm;
-  char *ivec;
+struct blit_swizzle_and_type {
+  char *swizzle;
+  char *type;
   bool is_array;
 };
 
@@ -170,35 +170,35 @@ static enum tgsi_return_type tgsi_ret_for_format(enum virgl_formats format)
    return TGSI_RETURN_TYPE_UNORM;
 }
 
-static void get_swizzle(int tgsi_tex_target, unsigned flags,
-                        struct swizzle_and_type *retval)
+static void blit_get_swizzle(int tgsi_tex_target, unsigned flags,
+                             struct blit_swizzle_and_type *retval)
 {
-   retval->twm = "";
-   retval->ivec = "";
+   retval->swizzle = "";
+   retval->type = "";
    retval->is_array = false;
    switch (tgsi_tex_target) {
    case TGSI_TEXTURE_1D:
       if (flags & (BLIT_USE_GLES | BLIT_USE_DEPTH)) {
-         retval->twm = ".xy";
+         retval->swizzle = ".xy";
          break;
       }
       /* fallthrough */
    case TGSI_TEXTURE_BUFFER:
-      retval->twm = ".x";
+      retval->swizzle = ".x";
       break;
    case TGSI_TEXTURE_2D_MSAA:
       if (flags & BLIT_USE_MSAA) {
-         retval->ivec = "ivec2";
+         retval->type = "ivec2";
       }
       /* fallthrough */
    case TGSI_TEXTURE_1D_ARRAY:
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      retval->twm = ".xy";
+      retval->swizzle = ".xy";
       break;
    case TGSI_TEXTURE_2D_ARRAY_MSAA:
       if (flags & BLIT_USE_MSAA) {
-         retval->ivec = "ivec3";
+         retval->type = "ivec3";
          retval->is_array = true;
       }
       /* fallthrough */
@@ -209,19 +209,19 @@ static void get_swizzle(int tgsi_tex_target, unsigned flags,
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
    case TGSI_TEXTURE_2D_ARRAY:
-      retval->twm = ".xyz";
+      retval->swizzle = ".xyz";
       break;
    case TGSI_TEXTURE_SHADOWCUBE:
    case TGSI_TEXTURE_SHADOW2D_ARRAY:
    case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
    case TGSI_TEXTURE_CUBE_ARRAY:
-      retval->twm = "";
+      retval->swizzle = "";
       break;
    default:
       if (flags & BLIT_USE_MSAA) {
          break;
       }
-      retval->twm = ".xy";
+      retval->swizzle = ".xy";
       break;
    }
 }
@@ -233,7 +233,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                       int nr_samples)
 {
    char shader_buf[4096];
-   struct swizzle_and_type retval;
+   struct blit_swizzle_and_type swizzle_and_type;
    unsigned flags = 0;
    char dest_swizzle_snippet[DEST_SWIZZLE_SNIPPET_SIZE] = "texel";
    const char *ext_str = "";
@@ -249,20 +249,20 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
       flags |= BLIT_USE_GLES;
    if (msaa)
       flags |= BLIT_USE_MSAA;
-   get_swizzle(tgsi_tex_target, flags, &retval);
+   blit_get_swizzle(tgsi_tex_target, flags, &swizzle_and_type);
 
    if (swizzle)
       create_dest_swizzle_snippet(swizzle, dest_swizzle_snippet);
 
    if (msaa)
       snprintf(shader_buf, 4096, blit_ctx->use_gles ?
-                                 (retval.is_array ? FS_TEXFETCH_COL_MSAA_ARRAY_GLES
+                                 (swizzle_and_type.is_array ? FS_TEXFETCH_COL_MSAA_ARRAY_GLES
                                                    : FS_TEXFETCH_COL_MSAA_GLES)
                                  : FS_TEXFETCH_COL_MSAA_GL,
          ext_str, vec4_type_for_tgsi_ret(tgsi_ret),
          vrend_shader_samplerreturnconv(tgsi_ret),
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target),
-         nr_samples, retval.ivec, retval.twm, dest_swizzle_snippet);
+         nr_samples, swizzle_and_type.type, swizzle_and_type.swizzle, dest_swizzle_snippet);
    else
       snprintf(shader_buf, 4096, blit_ctx->use_gles ?
                                  (tgsi_tex_target == TGSI_TEXTURE_1D ?
@@ -271,7 +271,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
          ext_str, vec4_type_for_tgsi_ret(tgsi_ret),
          vrend_shader_samplerreturnconv(tgsi_ret),
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target),
-         retval.twm, dest_swizzle_snippet);
+         swizzle_and_type.swizzle, dest_swizzle_snippet);
 
    VREND_DEBUG(dbg_blit, NULL, "-- Blit FS shader MSAA: %d -----------------\n"
                "%s\n---------------------------------------\n", msaa, shader_buf);
@@ -282,22 +282,22 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
 static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi_tex_target, bool msaa)
 {
    char shader_buf[4096];
-   struct swizzle_and_type retval;
+   struct blit_swizzle_and_type swizzle_and_type;
    unsigned flags = BLIT_USE_DEPTH;
 
    if (msaa)
       flags |= BLIT_USE_MSAA;
 
-   get_swizzle(tgsi_tex_target, flags, &retval);
+   blit_get_swizzle(tgsi_tex_target, flags, &swizzle_and_type);
 
    if (msaa)
       snprintf(shader_buf, 4096, blit_ctx->use_gles ?
-                                 (retval.is_array ?  FS_TEXFETCH_DS_MSAA_ARRAY_GLES :  FS_TEXFETCH_DS_MSAA_GLES)
+                                 (swizzle_and_type.is_array ?  FS_TEXFETCH_DS_MSAA_ARRAY_GLES :  FS_TEXFETCH_DS_MSAA_GLES)
                                  : FS_TEXFETCH_DS_MSAA_GL,
-         vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), retval.ivec, retval.twm);
+         vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), swizzle_and_type.type, swizzle_and_type.swizzle);
    else
       snprintf(shader_buf, 4096, blit_ctx->use_gles ? FS_TEXFETCH_DS_GLES : FS_TEXFETCH_DS_GL,
-         vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), retval.twm);
+         vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), swizzle_and_type.swizzle);
 
    return build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
