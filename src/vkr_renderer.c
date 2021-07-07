@@ -1462,6 +1462,50 @@ vkr_dispatch_vkGetPhysicalDeviceExternalFenceProperties(
       args->physicalDevice, args->pExternalFenceInfo, args->pExternalFenceProperties);
 }
 
+static struct vkr_queue_sync *
+vkr_device_alloc_queue_sync(struct vkr_device *dev,
+                            uint32_t fence_flags,
+                            void *fence_cookie)
+{
+   struct vkr_queue_sync *sync;
+
+   if (LIST_IS_EMPTY(&dev->free_syncs)) {
+      sync = malloc(sizeof(*sync));
+      if (!sync)
+         return NULL;
+
+      const VkExportFenceCreateInfo export_info = {
+         .sType = VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO,
+         .handleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
+      };
+      const struct VkFenceCreateInfo create_info = {
+         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+         .pNext = dev->physical_device->KHR_external_fence_fd ? &export_info : NULL,
+      };
+      VkResult result =
+         vkCreateFence(dev->base.handle.device, &create_info, NULL, &sync->fence);
+      if (result != VK_SUCCESS) {
+         free(sync);
+         return NULL;
+      }
+   } else {
+      sync = LIST_ENTRY(struct vkr_queue_sync, dev->free_syncs.next, head);
+      list_del(&sync->head);
+      vkResetFences(dev->base.handle.device, 1, &sync->fence);
+   }
+
+   sync->flags = fence_flags;
+   sync->fence_cookie = fence_cookie;
+
+   return sync;
+}
+
+static void
+vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
+{
+   list_addtail(&sync->head, &dev->free_syncs);
+}
+
 static void
 vkr_queue_retire_syncs(struct vkr_queue *queue,
                        struct list_head *retired_syncs,
@@ -1480,7 +1524,7 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
              !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
             list_addtail(&sync->head, retired_syncs);
          else
-            list_addtail(&sync->head, &dev->free_syncs);
+            vkr_device_free_queue_sync(dev, sync);
       }
       list_inithead(&queue->signaled_syncs);
 
@@ -1498,7 +1542,7 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
              !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
             list_addtail(&sync->head, retired_syncs);
          else
-            list_addtail(&sync->head, &dev->free_syncs);
+            vkr_device_free_queue_sync(dev, sync);
       }
 
       *queue_empty = LIST_IS_EMPTY(&queue->pending_syncs);
@@ -1560,13 +1604,13 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
       thrd_join(queue->thread, NULL);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head)
-         list_addtail(&sync->head, &queue->device->free_syncs);
+         vkr_device_free_queue_sync(queue->device, sync);
    } else {
       assert(LIST_IS_EMPTY(&queue->signaled_syncs));
    }
 
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
-      list_addtail(&sync->head, &queue->device->free_syncs);
+      vkr_device_free_queue_sync(queue->device, sync);
 
    mtx_destroy(&queue->mutex);
    cnd_destroy(&queue->cond);
@@ -4258,39 +4302,15 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
       return -EINVAL;
    struct vkr_device *dev = queue->device;
 
-   struct vkr_queue_sync *sync;
-   if (LIST_IS_EMPTY(&dev->free_syncs)) {
-      sync = malloc(sizeof(*sync));
-      if (!sync)
-         return -ENOMEM;
-
-      const VkExportFenceCreateInfo export_info = {
-         .sType = VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO,
-         .handleTypes = VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT,
-      };
-      const struct VkFenceCreateInfo create_info = {
-         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-         .pNext = dev->physical_device->KHR_external_fence_fd ? &export_info : NULL,
-      };
-      result = vkCreateFence(dev->base.handle.device, &create_info, NULL, &sync->fence);
-      if (result != VK_SUCCESS) {
-         free(sync);
-         return -ENOMEM;
-      }
-   } else {
-      sync = LIST_ENTRY(struct vkr_queue_sync, dev->free_syncs.next, head);
-      list_del(&sync->head);
-      vkResetFences(dev->base.handle.device, 1, &sync->fence);
-   }
+   struct vkr_queue_sync *sync = vkr_device_alloc_queue_sync(dev, flags, fence_cookie);
+   if (!sync)
+      return -ENOMEM;
 
    result = vkQueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
    if (result != VK_SUCCESS) {
-      list_add(&sync->head, &dev->free_syncs);
+      vkr_device_free_queue_sync(dev, sync);
       return -1;
    }
-
-   sync->flags = flags;
-   sync->fence_cookie = fence_cookie;
 
    if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
       mtx_lock(&queue->mutex);
@@ -4344,7 +4364,7 @@ vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
          ctx->base.fence_retire(&ctx->base, queue->base.id, sync->fence_cookie);
-         list_addtail(&sync->head, &dev->free_syncs);
+         vkr_device_free_queue_sync(dev, sync);
       }
 
       if (queue_empty)
