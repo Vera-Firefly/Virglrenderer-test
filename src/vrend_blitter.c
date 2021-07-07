@@ -522,14 +522,6 @@ static void blitter_set_texcoords(struct vrend_blitter_ctx *blit_ctx,
    default:;
    }
 }
-#if 0
-static void set_dsa_keep_depth_stencil(void)
-{
-   glDisable(GL_STENCIL_TEST);
-   glDisable(GL_DEPTH_TEST);
-   glDepthMask(GL_FALSE);
-}
-#endif
 
 static void set_dsa_write_depth_keep_stencil(void)
 {
