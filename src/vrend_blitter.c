@@ -701,8 +701,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    GLuint buffers;
    GLuint prog_id;
    GLuint fs_id;
-   bool has_depth, has_stencil;
-   bool blit_stencil, blit_depth;
+
    int dst_z;
    struct blit_point src0, src1;
    const struct util_format_description *src_desc =
@@ -711,13 +710,9 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
       util_format_description(dst_res->base.format);
    const struct vrend_format_table *orig_src_entry = vrend_get_format_table_entry(info->b.src.format);
 
-   has_depth = util_format_has_depth(src_desc) &&
-      util_format_has_depth(dst_desc);
-   has_stencil = util_format_has_stencil(src_desc) &&
-      util_format_has_stencil(dst_desc);
-
-   blit_depth = has_depth && (info->b.mask & PIPE_MASK_Z);
-   blit_stencil = has_stencil && (info->b.mask & PIPE_MASK_S) & 0;
+   bool blit_depth = util_format_has_depth(src_desc) &&
+         util_format_has_depth(dst_desc) &&
+         (info->b.mask & PIPE_MASK_Z);
 
    vrend_renderer_init_blit_ctx(blit_ctx);
    blitter_set_points(blit_ctx, &info->b, src_res, dst_res, &src0, &src1);
@@ -725,7 +720,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    prog_id = glCreateProgram();
    glAttachShader(prog_id, blit_ctx->vs);
 
-   if (blit_depth || blit_stencil) {
+   if (blit_depth) {
       fs_id = blit_get_frag_tex_writedepth(blit_ctx, src_res->base.target,
                                            src_res->base.nr_samples);
    } else {
