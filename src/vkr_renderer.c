@@ -156,6 +156,7 @@ struct vkr_device {
 
    struct list_head queues;
 
+   mtx_t free_sync_mutex;
    struct list_head free_syncs;
 };
 
@@ -168,6 +169,22 @@ struct vkr_queue {
    uint32_t family;
    uint32_t index;
 
+   /* Submitted fences are added to pending_syncs first.  How submitted fences
+    * are retired depends on VKR_RENDERER_THREAD_SYNC and
+    * VKR_RENDERER_ASYNC_FENCE_CB.
+    *
+    * When VKR_RENDERER_THREAD_SYNC is not set, the main thread calls
+    * vkGetFenceStatus and retires signaled fences in pending_syncs in order.
+    *
+    * When VKR_RENDERER_THREAD_SYNC is set but VKR_RENDERER_ASYNC_FENCE_CB is
+    * not set, the sync thread calls vkWaitForFences and moves signaled fences
+    * from pending_syncs to signaled_syncs in order.  The main thread simply
+    * retires all fences in signaled_syncs.
+    *
+    * When VKR_RENDERER_THREAD_SYNC and VKR_RENDERER_ASYNC_FENCE_CB are both
+    * set, the sync thread calls vkWaitForFences and retires signaled fences
+    * in pending_syncs in order.
+    */
    int eventfd;
    thrd_t thread;
    mtx_t mutex;
@@ -1469,7 +1486,13 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
 {
    struct vkr_queue_sync *sync;
 
+   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+      mtx_lock(&dev->free_sync_mutex);
+
    if (LIST_IS_EMPTY(&dev->free_syncs)) {
+      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+         mtx_unlock(&dev->free_sync_mutex);
+
       sync = malloc(sizeof(*sync));
       if (!sync)
          return NULL;
@@ -1491,6 +1514,10 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    } else {
       sync = LIST_ENTRY(struct vkr_queue_sync, dev->free_syncs.next, head);
       list_del(&sync->head);
+
+      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+         mtx_unlock(&dev->free_sync_mutex);
+
       vkResetFences(dev->base.handle.device, 1, &sync->fence);
    }
 
@@ -1503,7 +1530,13 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
 static void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 {
-   list_addtail(&sync->head, &dev->free_syncs);
+   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
+      mtx_lock(&dev->free_sync_mutex);
+      list_addtail(&sync->head, &dev->free_syncs);
+      mtx_unlock(&dev->free_sync_mutex);
+   } else {
+      list_addtail(&sync->head, &dev->free_syncs);
+   }
 }
 
 static void
@@ -1513,6 +1546,8 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
 {
    struct vkr_device *dev = queue->device;
    struct vkr_queue_sync *sync, *tmp;
+
+   assert(!(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB));
 
    list_inithead(retired_syncs);
 
@@ -1579,8 +1614,15 @@ vkr_queue_thread(void *arg)
 
       mtx_lock(&queue->mutex);
 
-      if (result != VK_TIMEOUT) {
-         list_del(&sync->head);
+      if (result == VK_TIMEOUT)
+         continue;
+
+      list_del(&sync->head);
+
+      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
+         ctx->base.fence_retire(&ctx->base, queue->base.id, sync->fence_cookie);
+         vkr_device_free_queue_sync(queue->device, sync);
+      } else {
          list_addtail(&sync->head, &queue->signaled_syncs);
          write_eventfd(queue->eventfd, 1);
       }
@@ -1835,6 +1877,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
       handle, "vkGetMemoryFdPropertiesKHR");
 
    list_inithead(&dev->queues);
+
+   mtx_init(&dev->free_sync_mutex, mtx_plain);
    list_inithead(&dev->free_syncs);
 
    util_hash_table_set_u64(ctx->object_table, dev->base.id, dev);
@@ -1863,6 +1907,8 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
       vkDestroyFence(dev->base.handle.device, sync->fence, NULL);
       free(sync);
    }
+
+   mtx_destroy(&dev->free_sync_mutex);
 
    vn_replace_vkDestroyDevice_args_handle(args);
    vkDestroyDevice(args->device, NULL);
@@ -4349,6 +4395,8 @@ vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
    struct vkr_queue_sync *sync, *sync_tmp;
    struct vkr_queue *queue, *queue_tmp;
 
+   assert(!(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB));
+
    /* flush first and once because the per-queue sync threads might write to
     * it any time
     */
@@ -4376,6 +4424,10 @@ static void
 vkr_context_retire_fences(struct virgl_context *base)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
+
+   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+      return;
+
    mtx_lock(&ctx->mutex);
    vkr_context_retire_fences_locked(base);
    mtx_unlock(&ctx->mutex);
@@ -4793,7 +4845,8 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    vkr_context_init_base(ctx);
    vkr_context_init_dispatch(ctx);
 
-   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
+   if ((vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) &&
+       !(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)) {
       ctx->fence_eventfd = create_eventfd(0);
       if (ctx->fence_eventfd < 0)
          goto fail;
@@ -4837,6 +4890,10 @@ int
 vkr_renderer_init(uint32_t flags)
 {
    /* TODO VKR_RENDERER_MULTI_PROCESS hint */
+
+   if ((vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) &&
+       !(vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC))
+      return -EINVAL;
 
    vkr_renderer_flags = flags;
    vkr_debug_flags = debug_get_flags_option("VKR_DEBUG", vkr_debug_options, 0);

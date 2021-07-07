@@ -16,6 +16,7 @@
 
 #define VKR_RENDERER_THREAD_SYNC (1u << 0)
 #define VKR_RENDERER_MULTI_PROCESS (1u << 1)
+#define VKR_RENDERER_ASYNC_FENCE_CB (1u << 2)
 
 struct virgl_context;
 
