@@ -69,14 +69,9 @@ struct vrend_blitter_ctx {
 
 static struct vrend_blitter_ctx vrend_blit_ctx;
 
-struct vrend_blitter_point {
+struct blit_point {
     int x;
     int y;
-};
-
-struct vrend_blitter_delta {
-    int dx;
-    int dy;
 };
 
 struct blit_swizzle_and_type {
@@ -570,8 +565,8 @@ static int calc_delta_for_bound(int v, int max)
  * them within the source resource extents */
 static void calc_src_deltas_for_bounds(struct vrend_resource *src_res,
                                        const struct pipe_blit_info *info,
-                                       struct vrend_blitter_delta *src0_delta,
-                                       struct vrend_blitter_delta *src1_delta)
+                                       struct blit_point *src0_delta,
+                                       struct blit_point *src1_delta)
 {
    int max_x = u_minify(src_res->base.width0, info->src.level) - 1;
    int max_y = u_minify(src_res->base.height0, info->src.level) - 1;
@@ -583,42 +578,42 @@ static void calc_src_deltas_for_bounds(struct vrend_resource *src_res,
    int src0_x_excl = info->src.box.width < 0;
    int src0_y_excl = info->src.box.height < 0;
 
-   src0_delta->dx = calc_delta_for_bound(info->src.box.x, max_x + src0_x_excl);
-   src0_delta->dy = calc_delta_for_bound(info->src.box.y, max_y + src0_y_excl);
+   src0_delta->x = calc_delta_for_bound(info->src.box.x, max_x + src0_x_excl);
+   src0_delta->y = calc_delta_for_bound(info->src.box.y, max_y + src0_y_excl);
 
-   src1_delta->dx = calc_delta_for_bound(info->src.box.x + info->src.box.width,
+   src1_delta->x = calc_delta_for_bound(info->src.box.x + info->src.box.width,
                                          max_x + !src0_x_excl);
-   src1_delta->dy = calc_delta_for_bound(info->src.box.y + info->src.box.height,
+   src1_delta->y = calc_delta_for_bound(info->src.box.y + info->src.box.height,
                                          max_y + !src0_y_excl);
 }
 
 /* Calculate dst delta values to adjust the dst points for any changes in the
  * src points */
 static void calc_dst_deltas_from_src(const struct pipe_blit_info *info,
-                                     const struct vrend_blitter_delta *src0_delta,
-                                     const struct vrend_blitter_delta *src1_delta,
-                                     struct vrend_blitter_delta *dst0_delta,
-                                     struct vrend_blitter_delta *dst1_delta)
+                                     const struct blit_point *src0_delta,
+                                     const struct blit_point *src1_delta,
+                                     struct blit_point *dst0_delta,
+                                     struct blit_point *dst1_delta)
 {
    float scale_x = (float)info->dst.box.width / (float)info->src.box.width;
    float scale_y = (float)info->dst.box.height / (float)info->src.box.height;
 
-   dst0_delta->dx = src0_delta->dx * scale_x;
-   dst0_delta->dy = src0_delta->dy * scale_y;
+   dst0_delta->x = src0_delta->x * scale_x;
+   dst0_delta->y = src0_delta->y * scale_y;
 
-   dst1_delta->dx = src1_delta->dx * scale_x;
-   dst1_delta->dy = src1_delta->dy * scale_y;
+   dst1_delta->x = src1_delta->x * scale_x;
+   dst1_delta->y = src1_delta->y * scale_y;
 }
 
 static void blitter_set_points(struct vrend_blitter_ctx *blit_ctx,
                                const struct pipe_blit_info *info,
                                struct vrend_resource *src_res,
                                struct vrend_resource *dst_res,
-                               struct vrend_blitter_point *src0,
-                               struct vrend_blitter_point *src1)
+                               struct blit_point *src0,
+                               struct blit_point *src1)
 {
-   struct vrend_blitter_point dst0, dst1;
-   struct vrend_blitter_delta src0_delta, src1_delta, dst0_delta, dst1_delta;
+   struct blit_point dst0, dst1;
+   struct blit_point src0_delta, src1_delta, dst0_delta, dst1_delta;
 
    blit_ctx->dst_width = u_minify(dst_res->base.width0, info->dst.level);
    blit_ctx->dst_height = u_minify(dst_res->base.height0, info->dst.level);
@@ -627,15 +622,15 @@ static void blitter_set_points(struct vrend_blitter_ctx *blit_ctx,
    calc_src_deltas_for_bounds(src_res, info, &src0_delta, &src1_delta);
    calc_dst_deltas_from_src(info, &src0_delta, &src1_delta, &dst0_delta, &dst1_delta);
 
-   src0->x = info->src.box.x + src0_delta.dx;
-   src0->y = info->src.box.y + src0_delta.dy;
-   src1->x = info->src.box.x + info->src.box.width + src1_delta.dx;
-   src1->y = info->src.box.y + info->src.box.height + src1_delta.dy;
+   src0->x = info->src.box.x + src0_delta.x;
+   src0->y = info->src.box.y + src0_delta.y;
+   src1->x = info->src.box.x + info->src.box.width + src1_delta.x;
+   src1->y = info->src.box.y + info->src.box.height + src1_delta.y;
 
-   dst0.x = info->dst.box.x + dst0_delta.dx;
-   dst0.y = info->dst.box.y + dst0_delta.dy;
-   dst1.x = info->dst.box.x + info->dst.box.width + dst1_delta.dx;
-   dst1.y = info->dst.box.y + info->dst.box.height + dst1_delta.dy;
+   dst0.x = info->dst.box.x + dst0_delta.x;
+   dst0.y = info->dst.box.y + dst0_delta.y;
+   dst1.x = info->dst.box.x + info->dst.box.width + dst1_delta.x;
+   dst1.y = info->dst.box.y + info->dst.box.height + dst1_delta.y;
 
    VREND_DEBUG(dbg_blit, NULL, "Blitter src:[%3d, %3d] - [%3d, %3d] to dst:[%3d, %3d] - [%3d, %3d]\n",
                src0->x, src0->y, src1->x, src1->y,
@@ -711,7 +706,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    bool has_depth, has_stencil;
    bool blit_stencil, blit_depth;
    int dst_z;
-   struct vrend_blitter_point src0, src1;
+   struct blit_point src0, src1;
    const struct util_format_description *src_desc =
       util_format_description(src_res->base.format);
    const struct util_format_description *dst_desc =
