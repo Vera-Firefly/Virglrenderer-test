@@ -698,8 +698,6 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                             const struct vrend_blit_info *info)
 {
    struct vrend_blitter_ctx *blit_ctx = &vrend_blit_ctx;
-   GLuint buffers;
-   GLuint prog_id;
    GLuint fs_id;
 
    int dst_z;
@@ -717,7 +715,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    vrend_renderer_init_blit_ctx(blit_ctx);
    blitter_set_points(blit_ctx, &info->b, src_res, dst_res, &src0, &src1);
 
-   prog_id = glCreateProgram();
+   GLuint prog_id = glCreateProgram();
    glAttachShader(prog_id, blit_ctx->vs);
 
    if (blit_depth) {
@@ -741,7 +739,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    glBindFramebuffer(GL_FRAMEBUFFER, blit_ctx->fb_id);
    vrend_fb_bind_texture_id(dst_res, info->dst_view, 0, info->b.dst.level, info->b.dst.box.z, 0);
 
-   buffers = GL_COLOR_ATTACHMENT0;
+   GLuint buffers = GL_COLOR_ATTACHMENT0;
    glDrawBuffers(1, &buffers);
 
    glBindTexture(src_res->target, info->src_view);
@@ -778,11 +776,8 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                         dst_res->target == GL_TEXTURE_1D_ARRAY ||
                         dst_res->target == GL_TEXTURE_2D_ARRAY) ? info->b.dst.box.z : dst_z;
 
-      glBindFramebuffer(GL_FRAMEBUFFER, blit_ctx->fb_id);
       vrend_fb_bind_texture_id(dst_res, info->dst_view, 0, info->b.dst.level, layer, 0);
 
-      buffers = GL_COLOR_ATTACHMENT0;
-      glDrawBuffers(1, &buffers);
       blitter_set_texcoords(blit_ctx, src_res, info->b.src.level,
                             info->b.src.box.z + src_z, 0,
                             src0.x, src0.y, src1.x, src1.y);
