@@ -320,7 +320,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                     int pipe_tex_target,
                                     unsigned nr_samples,
                                     const struct vrend_format_table *src_entry,
-                                    uint8_t swizzle[static 4])
+                                    const uint8_t swizzle[static 4])
 {
    assert(pipe_tex_target < PIPE_MAX_TEXTURE_TYPES);
 
@@ -702,7 +702,7 @@ static void vrend_set_vertex_param(GLuint prog_id)
 void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                             struct vrend_resource *src_res,
                             struct vrend_resource *dst_res,
-                            struct vrend_blit_info *info)
+                            const struct vrend_blit_info *info)
 {
    struct vrend_blitter_ctx *blit_ctx = &vrend_blit_ctx;
    GLuint buffers;

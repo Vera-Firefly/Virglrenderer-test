@@ -24,6 +24,9 @@
 #ifndef VREND_BLITTER_H
 #define VREND_BLITTER_H
 
+#include "util/os_misc.h"
+#include "util/macros.h"
+
 /* shaders for blitting */
 
 #define HEADER_GL                               \
@@ -126,9 +129,18 @@
    "}\n"
 
 
+struct vrend_context;
+struct vrend_resource;
+struct vrend_blit_info;
 #define FS_TEXFETCH_DS_MSAA_GL HEADER_GL FS_TEXFETCH_DS_MSAA_BODY
 #define FS_TEXFETCH_DS_MSAA_GLES HEADER_GLES FS_TEXFETCH_DS_MSAA_BODY_GLES
 #define FS_TEXFETCH_DS_MSAA_ARRAY_GLES HEADER_GLES_MS_ARRAY FS_TEXFETCH_DS_MSAA_BODY_GLES
 
+/* implement blitting using OpenGL. */
+void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
+                            struct vrend_resource *src_res,
+                            struct vrend_resource *dst_res,
+                            const struct vrend_blit_info *info);
+void vrend_blitter_fini(void);
 
 #endif

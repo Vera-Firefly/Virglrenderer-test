@@ -44,6 +44,7 @@
 #include "vrend_shader.h"
 
 #include "vrend_renderer.h"
+#include "vrend_blitter.h"
 #include "vrend_debug.h"
 #include "vrend_winsys.h"
 #include "vrend_blitter.h"

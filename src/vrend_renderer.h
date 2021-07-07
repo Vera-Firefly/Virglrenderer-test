@@ -488,13 +488,6 @@ bool vrend_format_is_bgra(enum virgl_formats format);
 boolean format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst,
                                   unsigned int flags);
 
-/* blitter interface */
-void vrend_renderer_blit_gl(struct vrend_context *ctx,
-                            struct vrend_resource *src_res,
-                            struct vrend_resource *dst_res,
-                            struct vrend_blit_info *info);
-void vrend_blitter_fini(void);
-
 void vrend_renderer_prepare_reset(void);
 void vrend_renderer_reset(void);
 int vrend_renderer_get_poll_fd(void);
