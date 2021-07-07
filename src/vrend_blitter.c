@@ -41,6 +41,15 @@
 #define BLIT_USE_MSAA      (1 << 1)
 #define BLIT_USE_DEPTH     (1 << 2)
 
+struct vec4 {
+   GLfloat x,y,z,w;
+};
+
+struct blit_coord {
+  struct vec4 pos;
+  struct vec4 tex;
+};
+
 struct vrend_blitter_ctx {
    virgl_gl_context gl_context;
    bool initialised;
@@ -64,7 +73,7 @@ struct vrend_blitter_ctx {
    unsigned dst_height;
 
    GLuint vbo_id;
-   GLfloat vertices[4][2][4];   /**< {pos, color} or {pos, texcoord} */
+   struct blit_coord vertices[4];
 };
 
 static struct vrend_blitter_ctx vrend_blit_ctx;
@@ -388,8 +397,11 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
    blit_ctx->vs = blit_shader_build_and_check(GL_VERTEX_SHADER,
         blit_ctx->use_gles ? VS_PASSTHROUGH_GLES : VS_PASSTHROUGH_GL);
 
-   for (i = 0; i < 4; i++)
-      blit_ctx->vertices[i][0][3] = 1; /*v.w*/
+   for (i = 0; i < 4; i++) {
+      blit_ctx->vertices[i].pos.z = 0;
+      blit_ctx->vertices[i].pos.w = 1;
+   }
+
    glBindVertexArray(blit_ctx->vaoid);
    glBindBuffer(GL_ARRAY_BUFFER, blit_ctx->vbo_id);
 
@@ -398,26 +410,20 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
 }
 
 static void blitter_set_rectangle(struct vrend_blitter_ctx *blit_ctx,
-                                  int x1, int y1, int x2, int y2,
-                                  float depth)
+                                  int x1, int y1, int x2, int y2)
 {
-   int i;
-
    /* set vertex positions */
-   blit_ctx->vertices[0][0][0] = (float)x1 / blit_ctx->dst_width * 2.0f - 1.0f; /*v0.x*/
-   blit_ctx->vertices[0][0][1] = (float)y1 / blit_ctx->dst_height * 2.0f - 1.0f; /*v0.y*/
+   blit_ctx->vertices[0].pos.x = (float)x1 / blit_ctx->dst_width * 2.0f - 1.0f; /*v0.x*/
+   blit_ctx->vertices[0].pos.y = (float)y1 / blit_ctx->dst_height * 2.0f - 1.0f; /*v0.y*/
 
-   blit_ctx->vertices[1][0][0] = (float)x2 / blit_ctx->dst_width * 2.0f - 1.0f; /*v1.x*/
-   blit_ctx->vertices[1][0][1] = (float)y1 / blit_ctx->dst_height * 2.0f - 1.0f; /*v1.y*/
+   blit_ctx->vertices[1].pos.x = (float)x2 / blit_ctx->dst_width * 2.0f - 1.0f; /*v1.x*/
+   blit_ctx->vertices[1].pos.y = (float)y1 / blit_ctx->dst_height * 2.0f - 1.0f; /*v1.y*/
 
-   blit_ctx->vertices[2][0][0] = (float)x2 / blit_ctx->dst_width * 2.0f - 1.0f; /*v2.x*/
-   blit_ctx->vertices[2][0][1] = (float)y2 / blit_ctx->dst_height * 2.0f - 1.0f; /*v2.y*/
+   blit_ctx->vertices[2].pos.x = (float)x2 / blit_ctx->dst_width * 2.0f - 1.0f; /*v2.x*/
+   blit_ctx->vertices[2].pos.y = (float)y2 / blit_ctx->dst_height * 2.0f - 1.0f; /*v2.y*/
 
-   blit_ctx->vertices[3][0][0] = (float)x1 / blit_ctx->dst_width * 2.0f - 1.0f; /*v3.x*/
-   blit_ctx->vertices[3][0][1] = (float)y2 / blit_ctx->dst_height * 2.0f - 1.0f; /*v3.y*/
-
-   for (i = 0; i < 4; i++)
-      blit_ctx->vertices[i][0][2] = depth; /*z*/
+   blit_ctx->vertices[3].pos.x = (float)x1 / blit_ctx->dst_width * 2.0f - 1.0f; /*v3.x*/
+   blit_ctx->vertices[3].pos.y = (float)y2 / blit_ctx->dst_height * 2.0f - 1.0f; /*v3.y*/
 
    glViewport(0, 0, blit_ctx->dst_width, blit_ctx->dst_height);
 }
@@ -477,10 +483,10 @@ static void blitter_set_texcoords(struct vrend_blitter_ctx *blit_ctx,
       util_map_texcoords2d_onto_cubemap((unsigned)layer % 6,
                                         /* pointer, stride in floats */
                                         &face_coord[0][0], 2,
-                                        &blit_ctx->vertices[0][1][0], 8,
+                                        &blit_ctx->vertices[0].tex.x, 8,
                                         FALSE);
    } else {
-      set_texcoords_in_vertices(coord, &blit_ctx->vertices[0][1][0], 8);
+      set_texcoords_in_vertices(coord, &blit_ctx->vertices[0].tex.x, 8);
    }
 
    switch (src_res->base.target) {
@@ -489,28 +495,28 @@ static void blitter_set_texcoords(struct vrend_blitter_ctx *blit_ctx,
       float r = layer / (float)u_minify(src_res->base.depth0,
                                         level);
       for (i = 0; i < 4; i++)
-         blit_ctx->vertices[i][1][2] = r; /*r*/
+         blit_ctx->vertices[i].tex.z = r; /*r*/
    }
    break;
 
    case PIPE_TEXTURE_1D_ARRAY:
       for (i = 0; i < 4; i++)
-         blit_ctx->vertices[i][1][1] = (float) layer; /*t*/
+         blit_ctx->vertices[i].tex.y = (float) layer; /*t*/
       break;
 
    case PIPE_TEXTURE_2D_ARRAY:
       for (i = 0; i < 4; i++) {
-         blit_ctx->vertices[i][1][2] = (float) layer;  /*r*/
-         blit_ctx->vertices[i][1][3] = (float) sample; /*q*/
+         blit_ctx->vertices[i].tex.z = (float) layer;  /*r*/
+         blit_ctx->vertices[i].tex.w = (float) sample; /*q*/
       }
       break;
    case PIPE_TEXTURE_CUBE_ARRAY:
       for (i = 0; i < 4; i++)
-         blit_ctx->vertices[i][1][3] = (float) ((unsigned)layer / 6); /*w*/
+         blit_ctx->vertices[i].tex.w = (float) ((unsigned)layer / 6); /*w*/
       break;
    case PIPE_TEXTURE_2D:
       for (i = 0; i < 4; i++) {
-         blit_ctx->vertices[i][1][3] = (float) sample; /*r*/
+         blit_ctx->vertices[i].tex.w = (float) sample; /*r*/
       }
       break;
    default:;
@@ -636,7 +642,7 @@ static void blitter_set_points(struct vrend_blitter_ctx *blit_ctx,
                src0->x, src0->y, src1->x, src1->y,
                dst0.x, dst0.y, dst1.x, dst1.y);
 
-   blitter_set_rectangle(blit_ctx, dst0.x, dst0.y, dst1.x, dst1.y, 0);
+   blitter_set_rectangle(blit_ctx, dst0.x, dst0.y, dst1.x, dst1.y);
 }
 
 static void vrend_set_tex_param(struct vrend_resource *src_res,
