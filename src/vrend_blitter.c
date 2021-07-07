@@ -80,7 +80,7 @@ struct blit_swizzle_and_type {
   bool is_array;
 };
 
-static GLint build_and_check(GLenum shader_type, const char *buf)
+static GLint blit_shader_build_and_check(GLenum shader_type, const char *buf)
 {
    GLint param;
    GLint id = glCreateShader(shader_type);
@@ -100,7 +100,7 @@ static GLint build_and_check(GLenum shader_type, const char *buf)
    return id;
 }
 
-static bool link_and_check(GLuint prog_id)
+static bool blit_shader_link_and_check(GLuint prog_id)
 {
    GLint lret;
 
@@ -271,7 +271,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    VREND_DEBUG(dbg_blit, NULL, "-- Blit FS shader MSAA: %d -----------------\n"
                "%s\n---------------------------------------\n", msaa, shader_buf);
 
-   return build_and_check(GL_FRAGMENT_SHADER, shader_buf);
+   return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
 
 static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi_tex_target, bool msaa)
@@ -294,7 +294,7 @@ static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi
       snprintf(shader_buf, 4096, blit_ctx->use_gles ? FS_TEXFETCH_DS_GLES : FS_TEXFETCH_DS_GL,
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), swizzle_and_type.swizzle);
 
-   return build_and_check(GL_FRAGMENT_SHADER, shader_buf);
+   return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
 
 static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, int pipe_tex_target, unsigned nr_samples)
@@ -385,7 +385,7 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
    glGenFramebuffers(1, &blit_ctx->fb_id);
 
    glGenBuffers(1, &blit_ctx->vbo_id);
-   blit_ctx->vs = build_and_check(GL_VERTEX_SHADER,
+   blit_ctx->vs = blit_shader_build_and_check(GL_VERTEX_SHADER,
         blit_ctx->use_gles ? VS_PASSTHROUGH_GLES : VS_PASSTHROUGH_GL);
 
    for (i = 0; i < 4; i++)
@@ -740,7 +740,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    }
    glAttachShader(prog_id, fs_id);
 
-   if(!link_and_check(prog_id))
+   if(!blit_shader_link_and_check(prog_id))
       return;
 
    glUseProgram(prog_id);
