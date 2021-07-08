@@ -132,11 +132,13 @@ static void create_dest_swizzle_snippet(const uint8_t swizzle[4],
 {
    static const uint8_t invalid_swizzle = 0xff;
    ssize_t si = 0;
-   uint8_t inverse[4] = {invalid_swizzle, invalid_swizzle, invalid_swizzle,
-                         invalid_swizzle};
+   uint8_t inverse[4] = {invalid_swizzle, invalid_swizzle,
+                         invalid_swizzle, invalid_swizzle};
 
    for (int i = 0; i < 4; ++i) {
-      if (swizzle[i] > 3) continue;
+      if (swizzle[i] > 3)
+         continue;
+
       if (inverse[swizzle[i]] == invalid_swizzle)
          inverse[swizzle[i]] = i;
    }
