@@ -439,6 +439,11 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
          break;
    }
 
+   if (!blit_ctx->gl_context) {
+      vrend_printf("virglrenderer: Unable to create blit context");
+      abort();
+   }
+
    vrend_sync_make_current(blit_ctx->gl_context);
    glGenVertexArrays(1, &blit_ctx->vaoid);
    glGenFramebuffers(1, &blit_ctx->fb_id);
