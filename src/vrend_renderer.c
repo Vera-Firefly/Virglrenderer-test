@@ -9074,6 +9074,33 @@ static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats for
    return view_id;
 }
 
+static bool vrend_blit_needs_redblue_swizzle(struct vrend_resource *src_res,
+                                             struct vrend_resource *dst_res,
+                                             const struct pipe_blit_info *info)
+{
+   /* Virgl's BGR* formats always use GL_RGBA8 internal format so texture views have no format
+    * conversion effects. Swizzling during blits is required instead.
+    * Also, GBM/EGL-backed (i.e. external) BGR* resources are always stored with BGR* internal
+    * format, despite Virgl's use of the GL_RGBA8 internal format, so special care must be taken
+    * when determining the swizzling.
+    */
+   bool needs_redblue_swizzle = false;
+   if (vrend_resource_is_emulated_bgra(src_res) ^ vrend_resource_is_emulated_bgra(dst_res))
+      needs_redblue_swizzle = !needs_redblue_swizzle;
+
+   /* Virgl blits support "views" on source/dest resources, allowing another level of format
+    * conversion on top of the host's GL API. These views need to be reconciled manually when
+    * any BGR* resources are involved, since they are internally stored with RGB* byte-ordering,
+    * and externally stored with BGR* byte-ordering.
+    */
+   if (vrend_format_is_bgra(src_res->base.format) ^ vrend_format_is_bgra(info->src.format))
+      needs_redblue_swizzle = !needs_redblue_swizzle;
+   if (vrend_format_is_bgra(dst_res->base.format) ^ vrend_format_is_bgra(info->dst.format))
+      needs_redblue_swizzle = !needs_redblue_swizzle;
+
+   return needs_redblue_swizzle;
+}
+
 static void vrend_renderer_blit_int(struct vrend_context *ctx,
                                     struct vrend_resource *src_res,
                                     struct vrend_resource *dst_res,
@@ -9205,24 +9232,8 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
     * format, despite Virgl's use of the GL_RGBA8 internal format, so special care must be taken
     * when determining the swizzling.
     */
-   bool needs_redblue_swizzle = false;
-   if (vrend_resource_is_emulated_bgra(src_res) ^ vrend_resource_is_emulated_bgra(dst_res))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
 
-   /* Virgl blits support "views" on source/dest resources, allowing another level of format
-    * conversion on top of the host's GL API. These views need to be reconciled manually when
-    * any BGR* resources are involved, since they are internally stored with RGB* byte-ordering,
-    * and externally stored with BGR* byte-ordering.
-    */
-   if (vrend_format_is_bgra(src_res->base.format) ^ vrend_format_is_bgra(info->src.format))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
-   if (vrend_format_is_bgra(dst_res->base.format) ^ vrend_format_is_bgra(info->dst.format))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
-
-   if (blit_info.needs_swizzle && vrend_get_format_table_entry(dst_res->base.format)->flags & VIRGL_TEXTURE_NEED_SWIZZLE)
-      memcpy(blit_info.swizzle, tex_conv_table[dst_res->base.format].swizzle, sizeof(blit_info.swizzle));
-
-   if (needs_redblue_swizzle) {
+   if (vrend_blit_needs_redblue_swizzle(src_res, dst_res, info)) {
       VREND_DEBUG(dbg_blit, ctx, "Applying red/blue swizzle during blit involving an external BGR* resource\n");
       use_gl = true;
       uint8_t temp = blit_info.swizzle[0];
