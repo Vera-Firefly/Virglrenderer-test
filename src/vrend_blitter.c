@@ -288,7 +288,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target),
          swizzle_and_type.swizzle, dest_swizzle_snippet);
 
-   VREND_DEBUG(dbg_blit, NULL, "-- Blit FS shader MSAA: %d -----------------\n"
+   VREND_DEBUG(dbg_blit, NULL, "-- Blit FS color shader MSAA: %d -----------------\n"
                "%s\n---------------------------------------\n", msaa, shader_buf);
 
    return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
@@ -313,6 +313,9 @@ static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi
    else
       snprintf(shader_buf, 4096, blit_ctx->use_gles ? FS_TEXFETCH_DS_GLES : FS_TEXFETCH_DS_GL,
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target), swizzle_and_type.swizzle);
+
+   VREND_DEBUG(dbg_blit, NULL, "-- Blit FS depth shader MSAA: %d -----------------\n"
+               "%s\n---------------------------------------\n", msaa, shader_buf);
 
    return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
