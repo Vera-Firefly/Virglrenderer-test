@@ -702,11 +702,7 @@ static void vrend_set_vertex_param(GLuint prog_id)
 void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                             struct vrend_resource *src_res,
                             struct vrend_resource *dst_res,
-                            GLenum blit_views[2],
-                            const struct pipe_blit_info *info,
-                            bool has_texture_srgb_decode,
-                            bool has_srgb_write_control,
-                            uint8_t swizzle[static 4])
+                            struct vrend_blit_info *info)
 {
    struct vrend_blitter_ctx *blit_ctx = &vrend_blit_ctx;
    GLuint buffers;
@@ -720,18 +716,18 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
       util_format_description(src_res->base.format);
    const struct util_format_description *dst_desc =
       util_format_description(dst_res->base.format);
-   const struct vrend_format_table *orig_src_entry = vrend_get_format_table_entry(info->src.format);
+   const struct vrend_format_table *orig_src_entry = vrend_get_format_table_entry(info->b.src.format);
 
    has_depth = util_format_has_depth(src_desc) &&
       util_format_has_depth(dst_desc);
    has_stencil = util_format_has_stencil(src_desc) &&
       util_format_has_stencil(dst_desc);
 
-   blit_depth = has_depth && (info->mask & PIPE_MASK_Z);
-   blit_stencil = has_stencil && (info->mask & PIPE_MASK_S) & 0;
+   blit_depth = has_depth && (info->b.mask & PIPE_MASK_Z);
+   blit_stencil = has_stencil && (info->b.mask & PIPE_MASK_S) & 0;
 
    vrend_renderer_init_blit_ctx(blit_ctx);
-   blitter_set_points(blit_ctx, info, src_res, dst_res, &src0, &src1);
+   blitter_set_points(blit_ctx, &info->b, src_res, dst_res, &src0, &src1);
 
    prog_id = glCreateProgram();
    glAttachShader(prog_id, blit_ctx->vs);
@@ -741,11 +737,11 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                                            src_res->base.nr_samples);
    } else {
       VREND_DEBUG(dbg_blit, ctx, "BLIT: applying swizzle during blit: (%d %d %d %d)\n",
-                  swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
+                  info->swizzle[0], info->swizzle[1], info->swizzle[2], info->swizzle[3]);
       fs_id = blit_get_frag_tex_col(blit_ctx, src_res->base.target,
                                     src_res->base.nr_samples,
                                     orig_src_entry,
-                                    swizzle);
+                                    info->swizzle);
    }
    glAttachShader(prog_id, fs_id);
 
@@ -755,25 +751,27 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    glUseProgram(prog_id);
 
    glBindFramebuffer(GL_FRAMEBUFFER, blit_ctx->fb_id);
-   vrend_fb_bind_texture_id(dst_res, blit_views[1], 0, info->dst.level, info->dst.box.z, 0);
+   vrend_fb_bind_texture_id(dst_res, info->dst_view, 0, info->b.dst.level, info->b.dst.box.z, 0);
 
    buffers = GL_COLOR_ATTACHMENT0;
    glDrawBuffers(1, &buffers);
 
-   glBindTexture(src_res->target, blit_views[0]);
-   vrend_set_tex_param(src_res, info, has_texture_srgb_decode);
+   glBindTexture(src_res->target, info->src_view);
+   vrend_set_tex_param(src_res, &info->b, info->has_texture_srgb_decode);
    vrend_set_vertex_param(prog_id);
 
    set_dsa_write_depth_keep_stencil();
 
-   if (info->scissor_enable) {
-      glScissor(info->scissor.minx, info->scissor.miny, info->scissor.maxx - info->scissor.minx, info->scissor.maxy - info->scissor.miny);
+   if (info->b.scissor_enable) {
+      glScissor(info->b.scissor.minx, info->b.scissor.miny,
+                info->b.scissor.maxx - info->b.scissor.minx,
+                info->b.scissor.maxy - info->b.scissor.miny);
       glEnable(GL_SCISSOR_TEST);
    } else
       glDisable(GL_SCISSOR_TEST);
 
-   if (has_srgb_write_control) {
-      if (util_format_is_srgb(info->dst.format) || util_format_is_srgb(info->src.format)) {
+   if (info->has_srgb_write_control) {
+      if (util_format_is_srgb(info->b.dst.format) || util_format_is_srgb(info->b.src.format)) {
          VREND_DEBUG(dbg_blit, ctx, "%s: Enable GL_FRAMEBUFFER_SRGB\n", __func__);
          glEnable(GL_FRAMEBUFFER_SRGB);
       } else {
@@ -782,22 +780,23 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
       }
    }
 
-   for (dst_z = 0; dst_z < info->dst.box.depth; dst_z++) {
-      float dst2src_scale = info->src.box.depth / (float)info->dst.box.depth;
-      float dst_offset = ((info->src.box.depth - 1) -
-                          (info->dst.box.depth - 1) * dst2src_scale) * 0.5;
+   for (dst_z = 0; dst_z < info->b.dst.box.depth; dst_z++) {
+      float dst2src_scale = info->b.src.box.depth / (float)info->b.dst.box.depth;
+      float dst_offset = ((info->b.src.box.depth - 1) -
+                          (info->b.dst.box.depth - 1) * dst2src_scale) * 0.5;
       float src_z = (dst_z + dst_offset) * dst2src_scale;
+
       uint32_t layer = (dst_res->target == GL_TEXTURE_CUBE_MAP ||
                         dst_res->target == GL_TEXTURE_1D_ARRAY ||
-                        dst_res->target == GL_TEXTURE_2D_ARRAY) ? info->dst.box.z : dst_z;
+                        dst_res->target == GL_TEXTURE_2D_ARRAY) ? info->b.dst.box.z : dst_z;
 
       glBindFramebuffer(GL_FRAMEBUFFER, blit_ctx->fb_id);
-      vrend_fb_bind_texture_id(dst_res, blit_views[1], 0, info->dst.level, layer, 0);
+      vrend_fb_bind_texture_id(dst_res, info->dst_view, 0, info->b.dst.level, layer, 0);
 
       buffers = GL_COLOR_ATTACHMENT0;
       glDrawBuffers(1, &buffers);
-      blitter_set_texcoords(blit_ctx, src_res, info->src.level,
-                            info->src.box.z + src_z, 0,
+      blitter_set_texcoords(blit_ctx, src_res, info->b.src.level,
+                            info->b.src.box.z + src_z, 0,
                             src0.x, src0.y, src1.x, src1.y);
 
       glBufferData(GL_ARRAY_BUFFER, sizeof(blit_ctx->vertices), blit_ctx->vertices, GL_STATIC_DRAW);

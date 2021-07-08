@@ -9079,19 +9079,23 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
                                     struct vrend_resource *dst_res,
                                     const struct pipe_blit_info *info)
 {
+   struct vrend_blit_info blit_info = {
+      .b = *info,
+      .src_view = src_res->id,
+      .dst_view = dst_res->id,
+      .needs_swizzle = false,
+      .can_fbo_blit = true,
+      .gl_filter = convert_mag_filter(info->filter),
+      .swizzle = {0, 1, 2, 3},
+   };
+
    GLbitfield glmask = 0;
-   int src_y1, src_y2, dst_y1, dst_y2;
-   GLenum filter;
    int n_layers = 1, i;
    bool use_gl = false;
-   bool needs_swizzle = false;
+
    bool make_intermediate_copy = false;
    GLuint intermediate_fbo = 0;
    struct vrend_resource *intermediate_copy = 0;
-
-   GLuint blitter_views[2] = {src_res->id, dst_res->id};
-
-   filter = convert_mag_filter(info->filter);
 
    /* if we can't make FBO's use the fallback path */
    if (!vrend_format_can_render(src_res->base.format) &&
@@ -9123,25 +9127,25 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
        (info->src.box.width != info->dst.box.width ||
         info->src.box.height != info->dst.box.height)) {
       if (has_feature(feat_ms_scaled_blit))
-         filter = GL_SCALED_RESOLVE_NICEST_EXT;
+         blit_info.gl_filter = GL_SCALED_RESOLVE_NICEST_EXT;
       else
          use_gl = true;
    }
 
    if (!dst_res->y_0_top) {
-      dst_y1 = info->dst.box.y + info->dst.box.height;
-      dst_y2 = info->dst.box.y;
+      blit_info.dst_y1 = info->dst.box.y + info->dst.box.height;
+      blit_info.dst_y2 = info->dst.box.y;
    } else {
-      dst_y1 = dst_res->base.height0 - info->dst.box.y - info->dst.box.height;
-      dst_y2 = dst_res->base.height0 - info->dst.box.y;
+      blit_info.dst_y1 = dst_res->base.height0 - info->dst.box.y - info->dst.box.height;
+      blit_info.dst_y2 = dst_res->base.height0 - info->dst.box.y;
    }
 
    if (!src_res->y_0_top) {
-      src_y1 = info->src.box.y + info->src.box.height;
-      src_y2 = info->src.box.y;
+      blit_info.src_y1 = info->src.box.y + info->src.box.height;
+      blit_info.src_y2 = info->src.box.y;
    } else {
-      src_y1 = src_res->base.height0 - info->src.box.y - info->src.box.height;
-      src_y2 = src_res->base.height0 - info->src.box.y;
+      blit_info.src_y1 = src_res->base.height0 - info->src.box.y - info->src.box.height;
+      blit_info.src_y2 = src_res->base.height0 - info->src.box.y;
    }
 
    /* since upstream mesa change
@@ -9170,13 +9174,15 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
               (src_res->base.nr_samples > 0) &&
               (info->src.box.x != info->dst.box.x ||
                info->src.box.width != info->dst.box.width ||
-               dst_y1 != src_y1 || dst_y2 != src_y2 ||
+               blit_info.dst_y1 != blit_info.src_y1 ||
+               blit_info.dst_y2 != blit_info.src_y2 ||
                info->src.format != info->dst.format))
             )
            ) {
       VREND_DEBUG(dbg_blit, ctx, "Use GL fallback because dst:ms:%d src:ms:%d (%d %d %d %d) -> (%d %d %d %d)\n",
                   dst_res->base.nr_samples, src_res->base.nr_samples, info->src.box.x, info->src.box.x + info->src.box.width,
-                  src_y1, src_y2, info->dst.box.x, info->dst.box.x + info->dst.box.width, dst_y1, dst_y2);
+                  blit_info.src_y1, blit_info.src_y2, info->dst.box.x, info->dst.box.x + info->dst.box.width,
+                  blit_info.dst_y1, blit_info.dst_y2);
       use_gl = true;
    }
    /* for 3D mipmapped blits - hand roll time */
@@ -9184,14 +9190,14 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       use_gl = true;
    else if (vrend_blit_needs_swizzle(info->dst.format, info->src.format)) {
       use_gl = true;
-      needs_swizzle = true;
+      blit_info.needs_swizzle = true;
    }
 
    if ((src_res->base.format != info->src.format) && has_feature(feat_texture_view))
-      blitter_views[0] = vrend_make_view(src_res, info->src.format);
+      blit_info.src_view = vrend_make_view(src_res, info->src.format);
 
    if ((dst_res->base.format != info->dst.format) && has_feature(feat_texture_view))
-      blitter_views[1] = vrend_make_view(dst_res, info->dst.format);
+      blit_info.dst_view = vrend_make_view(dst_res, info->dst.format);
 
    /* Virgl's BGR* formats always use GL_RGBA8 internal format so texture views have no format
     * conversion effects. Swizzling during blits is required instead.
@@ -9213,24 +9219,24 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
    if (vrend_format_is_bgra(dst_res->base.format) ^ vrend_format_is_bgra(info->dst.format))
       needs_redblue_swizzle = !needs_redblue_swizzle;
 
-   uint8_t blit_swizzle[4] = {0, 1, 2, 3};
-   if (needs_swizzle && vrend_get_format_table_entry(dst_res->base.format)->flags & VIRGL_TEXTURE_NEED_SWIZZLE)
-      memcpy(blit_swizzle, tex_conv_table[dst_res->base.format].swizzle, sizeof(blit_swizzle));
+   if (blit_info.needs_swizzle && vrend_get_format_table_entry(dst_res->base.format)->flags & VIRGL_TEXTURE_NEED_SWIZZLE)
+      memcpy(blit_info.swizzle, tex_conv_table[dst_res->base.format].swizzle, sizeof(blit_info.swizzle));
 
    if (needs_redblue_swizzle) {
       VREND_DEBUG(dbg_blit, ctx, "Applying red/blue swizzle during blit involving an external BGR* resource\n");
       use_gl = true;
-      uint8_t temp = blit_swizzle[0];
-      blit_swizzle[0] = blit_swizzle[2];
-      blit_swizzle[2] = temp;
+      uint8_t temp = blit_info.swizzle[0];
+      blit_info.swizzle[0] = blit_info.swizzle[2];
+      blit_info.swizzle[2] = temp;
    }
 
    if (use_gl) {
+      blit_info.has_texture_srgb_decode = has_feature(feat_texture_srgb_decode);
+      blit_info.has_srgb_write_control = has_feature(feat_srgb_write_control);
+
+
       VREND_DEBUG(dbg_blit, ctx, "BLIT_INT: use GL fallback\n");
-      vrend_renderer_blit_gl(ctx, src_res, dst_res, blitter_views, info,
-                             has_feature(feat_texture_srgb_decode),
-                             has_feature(feat_srgb_write_control),
-                             blit_swizzle);
+      vrend_renderer_blit_gl(ctx, src_res, dst_res, &blit_info);
       vrend_sync_make_current(ctx->sub->gl_context);
       goto cleanup;
    }
@@ -9265,9 +9271,9 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
        ((src_res->base.nr_samples > 0) &&
         (src_res->base.nr_samples != dst_res->base.nr_samples)) &&
         ((info->src.box.x != info->dst.box.x) ||
-         (src_y1 != dst_y1) ||
+         (blit_info.src_y1 != blit_info.dst_y1) ||
          (info->src.box.width != info->dst.box.width) ||
-         (src_y2 != dst_y2))) {
+         (blit_info.src_y2 != blit_info.dst_y2))) {
 
       make_intermediate_copy = true;
 
@@ -9315,7 +9321,7 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       n_layers = info->dst.box.depth;
    for (i = 0; i < n_layers; i++) {
       glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[0]);
-      vrend_fb_bind_texture_id(src_res, blitter_views[0], 0, info->src.level, info->src.box.z + i, 0);
+      vrend_fb_bind_texture_id(src_res, blit_info.src_view, 0, info->src.level, info->src.box.z + i, 0);
 
       if (make_intermediate_copy) {
          int level_width = u_minify(src_res->base.width0, info->src.level);
@@ -9329,11 +9335,11 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
          glBindFramebuffer(GL_READ_FRAMEBUFFER, ctx->sub->blit_fb_ids[0]);
          glBlitFramebuffer(0, 0, level_width, level_height,
                            0, 0, level_width, level_height,
-                           glmask, filter);
+                           glmask, blit_info.gl_filter);
       }
 
       glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[1]);
-      vrend_fb_bind_texture_id(dst_res, blitter_views[1], 0, info->dst.level, info->dst.box.z + i, 0);
+      vrend_fb_bind_texture_id(dst_res, blit_info.dst_view, 0, info->dst.level, info->dst.box.z + i, 0);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, ctx->sub->blit_fb_ids[1]);
 
       if (has_feature(feat_srgb_write_control)) {
@@ -9347,14 +9353,14 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       glBindFramebuffer(GL_READ_FRAMEBUFFER, intermediate_fbo);
 
       glBlitFramebuffer(info->src.box.x,
-                        src_y1,
+                        blit_info.src_y1,
                         info->src.box.x + info->src.box.width,
-                        src_y2,
+                        blit_info.src_y2,
                         info->dst.box.x,
-                        dst_y1,
+                        blit_info.dst_y1,
                         info->dst.box.x + info->dst.box.width,
-                        dst_y2,
-                        glmask, filter);
+                        blit_info.dst_y2,
+                        glmask, blit_info.gl_filter);
    }
 
    glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[1]);
@@ -9389,11 +9395,11 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       glDisable(GL_SCISSOR_TEST);
 
 cleanup:
-   if (blitter_views[0] != src_res->id)
-      glDeleteTextures(1, &blitter_views[0]);
+   if (blit_info.src_view != src_res->id)
+      glDeleteTextures(1, &blit_info.src_view);
 
-   if (blitter_views[1] != dst_res->id)
-      glDeleteTextures(1, &blitter_views[1]);
+   if (blit_info.dst_view != dst_res->id)
+      glDeleteTextures(1, &blit_info.dst_view);
 }
 
 void vrend_renderer_blit(struct vrend_context *ctx,

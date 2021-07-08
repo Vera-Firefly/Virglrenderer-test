@@ -445,6 +445,19 @@ struct vrend_renderer_resource_info {
    uint32_t stride;
 };
 
+struct vrend_blit_info {
+   const struct pipe_blit_info b;
+   GLuint src_view;
+   GLuint dst_view;
+   uint8_t swizzle[4];
+   int src_y1, src_y2, dst_y1, dst_y2;
+   GLenum gl_filter;
+   bool needs_swizzle;
+   bool can_fbo_blit;
+   bool has_texture_srgb_decode;
+   bool has_srgb_write_control;
+};
+
 void vrend_renderer_resource_get_info(struct pipe_resource *pres,
                                       struct vrend_renderer_resource_info *info);
 
@@ -479,11 +492,7 @@ boolean format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst
 void vrend_renderer_blit_gl(struct vrend_context *ctx,
                             struct vrend_resource *src_res,
                             struct vrend_resource *dst_res,
-                            GLenum blit_views[2],
-                            const struct pipe_blit_info *info,
-                            bool has_texture_srgb_decode,
-                            bool has_srgb_write_control,
-                            uint8_t swizzle[static 4]);
+                            struct vrend_blit_info *info);
 void vrend_blitter_fini(void);
 
 void vrend_renderer_prepare_reset(void);
