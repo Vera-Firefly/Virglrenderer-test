@@ -9101,6 +9101,60 @@ static bool vrend_blit_needs_redblue_swizzle(struct vrend_resource *src_res,
    return needs_redblue_swizzle;
 }
 
+
+static void vrend_renderer_prepare_blit_extra_info(struct vrend_context *ctx,
+                                                   struct vrend_resource *src_res,
+                                                   struct vrend_resource *dst_res,
+                                                   struct vrend_blit_info *info)
+{
+   info->can_fbo_blit = true;
+
+   info->gl_filter = convert_mag_filter(info->b.filter);
+
+   if (!dst_res->y_0_top) {
+      info->dst_y1 = info->b.dst.box.y + info->b.dst.box.height;
+      info->dst_y2 = info->b.dst.box.y;
+   } else {
+      info->dst_y1 = dst_res->base.height0 - info->b.dst.box.y - info->b.dst.box.height;
+      info->dst_y2 = dst_res->base.height0 - info->b.dst.box.y;
+   }
+
+   if (!src_res->y_0_top) {
+      info->src_y1 = info->b.src.box.y + info->b.src.box.height;
+      info->src_y2 = info->b.src.box.y;
+   } else {
+      info->src_y1 = src_res->base.height0 - info->b.src.box.y - info->b.src.box.height;
+      info->src_y2 = src_res->base.height0 - info->b.src.box.y;
+   }
+
+   if (vrend_blit_needs_swizzle(info->b.dst.format, info->b.src.format)) {
+      info->needs_swizzle = true;
+      info->can_fbo_blit = false;
+   }
+
+   if (info->needs_swizzle && vrend_get_format_table_entry(dst_res->base.format)->flags & VIRGL_TEXTURE_NEED_SWIZZLE)
+      memcpy(info->swizzle, tex_conv_table[dst_res->base.format].swizzle, sizeof(info->swizzle));
+
+   if (vrend_blit_needs_redblue_swizzle(src_res, dst_res, &info->b)) {
+      VREND_DEBUG(dbg_blit, ctx, "Applying red/blue swizzle during blit involving an external BGR* resource\n");
+      uint8_t temp = info->swizzle[0];
+      info->swizzle[0] = info->swizzle[2];
+      info->swizzle[2] = temp;
+   }
+
+   /* for scaled MS blits we either need extensions or hand roll */
+   if (info->b.mask & PIPE_MASK_RGBA &&
+       src_res->base.nr_samples > 0 &&
+       src_res->base.nr_samples != dst_res->base.nr_samples &&
+       (info->b.src.box.width != info->b.dst.box.width ||
+        info->b.src.box.height != info->b.dst.box.height)) {
+      if (has_feature(feat_ms_scaled_blit))
+         info->gl_filter = GL_SCALED_RESOLVE_NICEST_EXT;
+      else
+         info->can_fbo_blit = false;
+   }
+}
+
 static void vrend_renderer_blit_int(struct vrend_context *ctx,
                                     struct vrend_resource *src_res,
                                     struct vrend_resource *dst_res,
@@ -9118,11 +9172,21 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
 
    GLbitfield glmask = 0;
    int n_layers = 1, i;
-   bool use_gl = false;
 
    bool make_intermediate_copy = false;
    GLuint intermediate_fbo = 0;
    struct vrend_resource *intermediate_copy = 0;
+
+   /* We create the texture views in this function instead of doing it in
+    * vrend_renderer_prepare_blit_extra_info because we also delete them here */
+   if ((src_res->base.format != info->src.format) && has_feature(feat_texture_view))
+      blit_info.src_view = vrend_make_view(src_res, info->src.format);
+
+   if ((dst_res->base.format != info->dst.format) && has_feature(feat_texture_view))
+      blit_info.dst_view = vrend_make_view(dst_res, info->dst.format);
+
+   vrend_renderer_prepare_blit_extra_info(ctx, src_res, dst_res, &blit_info);
+   bool use_gl = !blit_info.can_fbo_blit;
 
    /* if we can't make FBO's use the fallback path */
    if (!vrend_format_can_render(src_res->base.format) &&
@@ -9146,34 +9210,6 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       which we use for mipmaps */
    if ((info->mask & (PIPE_MASK_Z | PIPE_MASK_S)) && info->filter == PIPE_TEX_FILTER_LINEAR)
       use_gl = true;
-
-   /* for scaled MS blits we either need extensions or hand roll */
-   if (info->mask & PIPE_MASK_RGBA &&
-       src_res->base.nr_samples > 0 &&
-       src_res->base.nr_samples != dst_res->base.nr_samples &&
-       (info->src.box.width != info->dst.box.width ||
-        info->src.box.height != info->dst.box.height)) {
-      if (has_feature(feat_ms_scaled_blit))
-         blit_info.gl_filter = GL_SCALED_RESOLVE_NICEST_EXT;
-      else
-         use_gl = true;
-   }
-
-   if (!dst_res->y_0_top) {
-      blit_info.dst_y1 = info->dst.box.y + info->dst.box.height;
-      blit_info.dst_y2 = info->dst.box.y;
-   } else {
-      blit_info.dst_y1 = dst_res->base.height0 - info->dst.box.y - info->dst.box.height;
-      blit_info.dst_y2 = dst_res->base.height0 - info->dst.box.y;
-   }
-
-   if (!src_res->y_0_top) {
-      blit_info.src_y1 = info->src.box.y + info->src.box.height;
-      blit_info.src_y2 = info->src.box.y;
-   } else {
-      blit_info.src_y1 = src_res->base.height0 - info->src.box.y - info->src.box.height;
-      blit_info.src_y2 = src_res->base.height0 - info->src.box.y;
-   }
 
    /* since upstream mesa change
     * https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/5034
@@ -9215,36 +9251,10 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
    /* for 3D mipmapped blits - hand roll time */
    else if (info->src.box.depth != info->dst.box.depth)
       use_gl = true;
-   else if (vrend_blit_needs_swizzle(info->dst.format, info->src.format)) {
-      use_gl = true;
-      blit_info.needs_swizzle = true;
-   }
-
-   if ((src_res->base.format != info->src.format) && has_feature(feat_texture_view))
-      blit_info.src_view = vrend_make_view(src_res, info->src.format);
-
-   if ((dst_res->base.format != info->dst.format) && has_feature(feat_texture_view))
-      blit_info.dst_view = vrend_make_view(dst_res, info->dst.format);
-
-   /* Virgl's BGR* formats always use GL_RGBA8 internal format so texture views have no format
-    * conversion effects. Swizzling during blits is required instead.
-    * Also, GBM/EGL-backed (i.e. external) BGR* resources are always stored with BGR* internal
-    * format, despite Virgl's use of the GL_RGBA8 internal format, so special care must be taken
-    * when determining the swizzling.
-    */
-
-   if (vrend_blit_needs_redblue_swizzle(src_res, dst_res, info)) {
-      VREND_DEBUG(dbg_blit, ctx, "Applying red/blue swizzle during blit involving an external BGR* resource\n");
-      use_gl = true;
-      uint8_t temp = blit_info.swizzle[0];
-      blit_info.swizzle[0] = blit_info.swizzle[2];
-      blit_info.swizzle[2] = temp;
-   }
 
    if (use_gl) {
       blit_info.has_texture_srgb_decode = has_feature(feat_texture_srgb_decode);
       blit_info.has_srgb_write_control = has_feature(feat_srgb_write_control);
-
 
       VREND_DEBUG(dbg_blit, ctx, "BLIT_INT: use GL fallback\n");
       vrend_renderer_blit_gl(ctx, src_res, dst_res, &blit_info);
