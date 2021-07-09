@@ -311,10 +311,14 @@ struct global_renderer_state {
    struct vrend_context *current_ctx;
    struct vrend_context *current_hw_ctx;
 
+   /* fence_mutex should be locked before using the query list
+    * if async fence callback are enabled
+    */
    struct list_head waiting_query_list;
    struct list_head fence_list;
    struct list_head fence_wait_list;
    struct vrend_fence *fence_waiting;
+   struct vrend_context *current_sync_thread_ctx;
 
    int gl_major_ver;
    int gl_minor_ver;
@@ -347,6 +351,8 @@ struct global_renderer_state {
    uint32_t use_explicit_locations : 1;
    /* threaded sync */
    uint32_t stop_sync_thread : 1;
+   /* async fence callback */
+   bool use_async_fence_cb : 1;
    /* Needed on GLES to inject a TCS */
    uint32_t bgra_srgb_emulation_loaded : 1;
 
@@ -5897,6 +5903,18 @@ static GLenum tgsitargettogltarget(const enum pipe_texture_target target, int nr
    return PIPE_BUFFER;
 }
 
+static inline void lock_sync(void)
+{
+   if (vrend_state.sync_thread && vrend_state.use_async_fence_cb)
+      pipe_mutex_lock(vrend_state.fence_mutex);
+}
+
+static inline void unlock_sync(void)
+{
+   if (vrend_state.sync_thread && vrend_state.use_async_fence_cb)
+      pipe_mutex_unlock(vrend_state.fence_mutex);
+}
+
 static void vrend_free_sync_thread(void)
 {
    if (!vrend_state.sync_thread)
@@ -5993,11 +6011,15 @@ static bool do_wait(struct vrend_fence *fence, bool can_block)
    return done;
 }
 
+static void vrend_renderer_check_queries_locked(void);
+
 static void wait_sync(struct vrend_fence *fence)
 {
    do_wait(fence, /* can_block */ true);
 
    pipe_mutex_lock(vrend_state.fence_mutex);
+   if (vrend_state.use_async_fence_cb)
+      vrend_renderer_check_queries_locked();
    list_addtail(&fence->fences, &vrend_state.fence_list);
    vrend_state.fence_waiting = NULL;
    pipe_mutex_unlock(vrend_state.fence_mutex);
@@ -6385,7 +6407,12 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
    vrend_set_num_vbo_sub(sub, 0);
    vrend_resource_reference((struct vrend_resource **)&sub->ib.buffer, NULL);
 
+   /* need to lock mutex before destroying queries, we could
+    * be checking these in the sync thread */
+   lock_sync();
    vrend_object_fini_ctx_table(sub->object_hash);
+   unlock_sync();
+
    vrend_clicbs->destroy_gl_context(sub->gl_context);
 
    list_del(&sub->head);
@@ -9349,8 +9376,6 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
    return ENOMEM;
 }
 
-static void vrend_renderer_check_queries(void);
-
 static bool need_fence_retire_signal_locked(struct vrend_fence *fence,
                                             const struct list_head *signaled_list)
 {
@@ -9421,7 +9446,8 @@ void vrend_renderer_check_fences(void)
    if (LIST_IS_EMPTY(&retired_fences))
       return;
 
-   vrend_renderer_check_queries();
+   /* no need to lock when not using a sync thread */
+   vrend_renderer_check_queries_locked();
 
    LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &retired_fences, fences) {
       struct vrend_context *ctx = fence->ctx;
@@ -9465,7 +9491,7 @@ vrend_update_oq_samples_multiplier(struct vrend_context *ctx)
 }
 
 
-static bool vrend_check_query(struct vrend_query *query)
+static bool vrend_check_query_locked(struct vrend_query *query)
 {
    struct virgl_host_query_state state;
    bool ret;
@@ -9496,13 +9522,33 @@ static bool vrend_check_query(struct vrend_query *query)
    return true;
 }
 
-static void vrend_renderer_check_queries(void)
+static bool vrend_hw_switch_query_context(struct vrend_context *ctx)
+{
+   if (vrend_state.use_async_fence_cb) {
+      if (!ctx)
+         return false;
+
+      if (ctx == vrend_state.current_sync_thread_ctx)
+         return true;
+
+      if (ctx->ctx_id != 0 && ctx->in_error)
+         return false;
+
+      vrend_clicbs->make_current(ctx->sub->gl_context);
+      vrend_state.current_sync_thread_ctx = ctx;
+      return true;
+   } else {
+      return vrend_hw_switch_context(ctx, true);
+   }
+}
+
+static void vrend_renderer_check_queries_locked(void)
 {
    struct vrend_query *query, *stor;
 
    LIST_FOR_EACH_ENTRY_SAFE(query, stor, &vrend_state.waiting_query_list, waiting_queries) {
-      if (!vrend_hw_switch_context(query->ctx, true) ||
-	  vrend_check_query(query))
+      if (!vrend_hw_switch_query_context(query->ctx) ||
+	  vrend_check_query_locked(query))
          list_delinit(&query->waiting_queries);
    }
 }
@@ -9673,7 +9719,9 @@ int vrend_begin_query(struct vrend_context *ctx, uint32_t handle)
    if (q->index > 0 && !has_feature(feat_transform_feedback3))
       return EINVAL;
 
+   lock_sync();
    list_delinit(&q->waiting_queries);
+   unlock_sync();
 
    if (q->gltype == GL_TIMESTAMP)
       return 0;
@@ -9724,12 +9772,14 @@ void vrend_get_query_result(struct vrend_context *ctx, uint32_t handle,
    if (!q)
       return;
 
-   ret = vrend_check_query(q);
+   lock_sync();
+   ret = vrend_check_query_locked(q);
    if (ret) {
       list_delinit(&q->waiting_queries);
    } else if (LIST_IS_EMPTY(&q->waiting_queries)) {
       list_addtail(&q->waiting_queries, &vrend_state.waiting_query_list);
    }
+   unlock_sync();
 }
 
 #define COPY_QUERY_RESULT_TO_BUFFER(resid, offset, pvalue, size, multiplier) \
