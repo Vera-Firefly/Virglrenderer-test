@@ -6015,14 +6015,26 @@ static void vrend_renderer_check_queries_locked(void);
 
 static void wait_sync(struct vrend_fence *fence)
 {
+   struct vrend_context *ctx = fence->ctx;
+
    do_wait(fence, /* can_block */ true);
 
    pipe_mutex_lock(vrend_state.fence_mutex);
-   if (vrend_state.use_async_fence_cb)
+   if (vrend_state.use_async_fence_cb) {
       vrend_renderer_check_queries_locked();
-   list_addtail(&fence->fences, &vrend_state.fence_list);
+      /* to be able to call free_fence_locked without locking */
+      list_inithead(&fence->fences);
+   } else {
+      list_addtail(&fence->fences, &vrend_state.fence_list);
+   }
    vrend_state.fence_waiting = NULL;
    pipe_mutex_unlock(vrend_state.fence_mutex);
+
+   if (vrend_state.use_async_fence_cb) {
+      ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
+      free_fence_locked(fence);
+      return;
+   }
 
    if (write_eventfd(vrend_state.eventfd, 1)) {
       perror("failed to write to eventfd\n");
@@ -6079,11 +6091,13 @@ static void vrend_renderer_use_threaded_sync(void)
       return;
    }
 
-   vrend_state.eventfd = create_eventfd(0);
-   if (vrend_state.eventfd == -1) {
-      vrend_printf( "Failed to create eventfd\n");
-      vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
-      return;
+   if (!vrend_state.use_async_fence_cb) {
+      vrend_state.eventfd = create_eventfd(0);
+      if (vrend_state.eventfd == -1) {
+         vrend_printf( "Failed to create eventfd\n");
+         vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
+         return;
+      }
    }
 
    pipe_condvar_init(vrend_state.fence_cond);
@@ -6091,8 +6105,10 @@ static void vrend_renderer_use_threaded_sync(void)
 
    vrend_state.sync_thread = pipe_thread_create(thread_sync, NULL);
    if (!vrend_state.sync_thread) {
-      close(vrend_state.eventfd);
-      vrend_state.eventfd = -1;
+      if (vrend_state.eventfd != -1) {
+         close(vrend_state.eventfd);
+         vrend_state.eventfd = -1;
+      }
       vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
       pipe_condvar_destroy(vrend_state.fence_cond);
       pipe_mutex_destroy(vrend_state.fence_mutex);
@@ -6308,6 +6324,8 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
 
    vrend_state.eventfd = -1;
    if (flags & VREND_USE_THREAD_SYNC) {
+      if (flags & VREND_USE_ASYNC_FENCE_CB)
+         vrend_state.use_async_fence_cb = true;
       vrend_renderer_use_threaded_sync();
    }
    if (flags & VREND_USE_EXTERNAL_BLOB)
@@ -9401,6 +9419,12 @@ void vrend_renderer_check_fences(void)
 {
    struct list_head retired_fences;
    struct vrend_fence *fence, *stor;
+
+   /* No need to check the fence list, fences are retired directly in
+    * the polling thread in that case.
+    */
+   if (vrend_state.use_async_fence_cb)
+      return;
 
    list_inithead(&retired_fences);
 

@@ -122,8 +122,9 @@ struct vrend_if_cbs {
    int (*make_current)(virgl_gl_context ctx);
 };
 
-#define VREND_USE_THREAD_SYNC 1
-#define VREND_USE_EXTERNAL_BLOB 2
+#define VREND_USE_THREAD_SYNC (1 << 0)
+#define VREND_USE_EXTERNAL_BLOB (1 << 1)
+#define VREND_USE_ASYNC_FENCE_CB (1 << 2)
 
 const struct virgl_resource_pipe_callbacks *
 vrend_renderer_get_pipe_callbacks(void);
