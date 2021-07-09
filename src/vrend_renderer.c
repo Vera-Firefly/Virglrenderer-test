@@ -3473,7 +3473,8 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
    key->tes_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_EVAL];
 
-   vrend_sync_shader_io(sub_ctx, sel, key);
+   if (type != PIPE_SHADER_COMPUTE)
+      vrend_sync_shader_io(sub_ctx, sel, key);
 }
 
 static int vrend_shader_create(struct vrend_context *ctx,
