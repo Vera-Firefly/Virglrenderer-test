@@ -3317,55 +3317,14 @@ static inline bool can_emulate_logicop(enum pipe_logicop op)
    }
 }
 
-
-static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
-                                         struct vrend_shader_selector *sel,
-                                         struct vrend_shader_key *key)
+static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
+                                        struct vrend_shader_selector *sel,
+                                        struct vrend_shader_key *key)
 {
    unsigned type = sel->type;
 
-   if (vrend_state.use_core_profile) {
-      int i;
-      bool add_alpha_test = true;
-
-      // Only use integer info when drawing to avoid stale info.
-      if (vrend_state.use_integer && sub_ctx->drawing &&
-          type == PIPE_SHADER_VERTEX) {
-         key->vs.attrib_signed_int_bitmask = sub_ctx->ve->signed_int_bitmask;
-         key->vs.attrib_unsigned_int_bitmask = sub_ctx->ve->unsigned_int_bitmask;
-      }
-      if (type == PIPE_SHADER_FRAGMENT) {
-         for (i = 0; i < sub_ctx->nr_cbufs; i++) {
-            if (!sub_ctx->surf[i])
-               continue;
-            if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
-               key->fs.cbufs_are_a8_bitmask |= (1 << i);
-            if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
-            add_alpha_test = false;
-            UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
-                                 key->fs.cbufs_signed_int_bitmask,
-                                 key->fs.cbufs_unsigned_int_bitmask);
-            }
-            key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
-         }
-         if (add_alpha_test) {
-            key->add_alpha_test = sub_ctx->dsa_state.alpha.enabled;
-            key->alpha_test = sub_ctx->dsa_state.alpha.func;
-         }
-      }
-
-      key->pstipple_tex = sub_ctx->rs_state.poly_stipple_enable;
-      key->color_two_side = sub_ctx->rs_state.light_twoside;
-
-      key->clip_plane_enable = sub_ctx->rs_state.clip_plane_enable;
-      key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
-   }
-
-   key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY];
-   key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
-   key->tes_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_EVAL];
-
-   int prev_type = type != PIPE_SHADER_VERTEX ? PIPE_SHADER_VERTEX : -1;
+   int prev_type = (type != PIPE_SHADER_VERTEX) ?
+            PIPE_SHADER_VERTEX : -1;
 
    /* Gallium sends and binds the shaders in the reverse order, so if an
     * old shader is still bound we should ignore the "previous" (as in
@@ -3463,6 +3422,58 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
 
    if (next_type != -1 && sub_ctx->shaders[next_type])
       key->output = sub_ctx->shaders[next_type]->sinfo.in;
+
+}
+
+
+static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
+                                         struct vrend_shader_selector *sel,
+                                         struct vrend_shader_key *key)
+{
+   unsigned type = sel->type;
+
+   if (vrend_state.use_core_profile) {
+      int i;
+      bool add_alpha_test = true;
+
+      // Only use integer info when drawing to avoid stale info.
+      if (vrend_state.use_integer && sub_ctx->drawing &&
+          type == PIPE_SHADER_VERTEX) {
+         key->vs.attrib_signed_int_bitmask = sub_ctx->ve->signed_int_bitmask;
+         key->vs.attrib_unsigned_int_bitmask = sub_ctx->ve->unsigned_int_bitmask;
+      }
+      if (type == PIPE_SHADER_FRAGMENT) {
+         for (i = 0; i < sub_ctx->nr_cbufs; i++) {
+            if (!sub_ctx->surf[i])
+               continue;
+            if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
+               key->fs.cbufs_are_a8_bitmask |= (1 << i);
+            if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
+            add_alpha_test = false;
+            UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
+                                 key->fs.cbufs_signed_int_bitmask,
+                                 key->fs.cbufs_unsigned_int_bitmask);
+            }
+            key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+         }
+         if (add_alpha_test) {
+            key->add_alpha_test = sub_ctx->dsa_state.alpha.enabled;
+            key->alpha_test = sub_ctx->dsa_state.alpha.func;
+         }
+      }
+
+      key->pstipple_tex = sub_ctx->rs_state.poly_stipple_enable;
+      key->color_two_side = sub_ctx->rs_state.light_twoside;
+
+      key->clip_plane_enable = sub_ctx->rs_state.clip_plane_enable;
+      key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
+   }
+
+   key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY];
+   key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
+   key->tes_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_EVAL];
+
+   vrend_sync_shader_io(sub_ctx, sel, key);
 }
 
 static int vrend_shader_create(struct vrend_context *ctx,
