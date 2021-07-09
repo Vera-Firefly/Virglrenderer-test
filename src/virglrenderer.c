@@ -667,6 +667,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
 
       if (flags & VIRGL_RENDERER_THREAD_SYNC)
          renderer_flags |= VREND_USE_THREAD_SYNC;
+      if (flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
+         renderer_flags |= VREND_USE_ASYNC_FENCE_CB;
       if (flags & VIRGL_RENDERER_USE_EXTERNAL_BLOB)
          renderer_flags |= VREND_USE_EXTERNAL_BLOB;
 
@@ -680,6 +682,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       uint32_t vkr_flags = 0;
       if (flags & VIRGL_RENDERER_THREAD_SYNC)
          vkr_flags |= VKR_RENDERER_THREAD_SYNC;
+      if (flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
+         vkr_flags |= VKR_RENDERER_ASYNC_FENCE_CB;
 
       ret = vkr_renderer_init(vkr_flags);
       if (ret)
