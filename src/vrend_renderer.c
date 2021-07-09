@@ -4342,6 +4342,9 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx, int s
    if (!has_feature(feat_ssbo))
       return;
 
+   if (!sub_ctx->prog->ssbo_used_mask[shader_type])
+      return;
+
    if (!sub_ctx->ssbo_used_mask[shader_type])
       return;
 
