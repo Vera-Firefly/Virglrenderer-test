@@ -3870,6 +3870,16 @@ static void get_source_info_patch(enum vrend_type_qualifier srcstypeprefix,
 
 }
 
+static void get_tesslevel_as_source(struct vrend_strbuf *src_buf, const char *prefix,
+                                    const char *name, const struct tgsi_src_register *reg)
+{
+   strbuf_fmt(src_buf, "%s(vec4(%s[%d], %s[%d], %s[%d], %s[%d]))",
+              prefix,
+              name, reg->SwizzleX,
+              name, reg->SwizzleY,
+              name, reg->SwizzleZ,
+              name, reg->SwizzleW);
+}
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static bool
@@ -3988,6 +3998,9 @@ get_source_info(struct dump_ctx *ctx,
                      load_clipdist_fs(ctx, src_buf, src, j, false, get_string(stypeprefix), ctx->inputs[j].first);
                   else
                      create_swizzled_clipdist(ctx, src_buf, src, j, false, get_string(stypeprefix), prefix, arrayname, ctx->inputs[j].first);
+               }  else if (ctx->inputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
+                           ctx->inputs[j].name == TGSI_SEMANTIC_TESSINNER) {
+                  get_tesslevel_as_source(src_buf, prefix, ctx->inputs[j].glsl_name, &src->Register);
                } else {
                   enum vrend_type_qualifier srcstypeprefix = stypeprefix;
                   if ((stype == TGSI_TYPE_UNSIGNED || stype == TGSI_TYPE_SIGNED) &&
@@ -4056,6 +4069,9 @@ get_source_info(struct dump_ctx *ctx,
                } else if (ctx->outputs[j].name == TGSI_SEMANTIC_PATCH) {
                   struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
                   get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
+                          ctx->outputs[j].name == TGSI_SEMANTIC_TESSINNER) {
+                  get_tesslevel_as_source(src_buf, prefix, ctx->outputs[j].glsl_name, &src->Register);
                } else {
                   strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, ctx->outputs[j].glsl_name, arrayname, ctx->outputs[j].is_int ? "" : swizzle);
                }
