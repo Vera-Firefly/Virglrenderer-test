@@ -449,6 +449,11 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vkr_context *ctx = dispatch->data;
    struct vkr_resource_attachment *att;
 
+   if (!args->pStream) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    att = util_hash_table_get(ctx->resource_table,
                              uintptr_to_pointer(args->pStream->resourceId));
    if (!att) {
@@ -528,6 +533,11 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
 {
    struct vkr_context *ctx = dispatch->data;
 
+   if (!args->streamCount || !args->pStreams) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    /* note that nested vkExecuteCommandStreamsMESA is not allowed */
    if (!vkr_cs_decoder_push_state(&ctx->decoder)) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
@@ -586,6 +596,11 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    uint8_t *shared;
    size_t size;
    struct vkr_ring *ring;
+
+   if (!info) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
 
    att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(info->resourceId));
    if (!att) {
@@ -694,18 +709,27 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkEnumerateInstanceVersion(UNUSED struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkEnumerateInstanceVersion(struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkEnumerateInstanceVersion *args)
 {
+   struct vkr_context *ctx = dispatch->data;
+
+   if (!args->pApiVersion) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    vn_replace_vkEnumerateInstanceVersion_args_handle(args);
    args->ret = vkEnumerateInstanceVersion(args->pApiVersion);
 }
 
 static void
 vkr_dispatch_vkEnumerateInstanceExtensionProperties(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkEnumerateInstanceExtensionProperties *args)
 {
+   struct vkr_context *ctx = dispatch->data;
+
    VkExtensionProperties private_extensions[] = {
       {
          .extensionName = "VK_EXT_command_serialization",
@@ -714,6 +738,11 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(
          .extensionName = "VK_MESA_venus_protocol",
       },
    };
+
+   if (!args->pPropertyCount) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
 
    if (!args->pProperties) {
       *args->pPropertyCount = ARRAY_SIZE(private_extensions);
@@ -762,6 +791,11 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    if (ctx->instance) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   if (!args->pCreateInfo) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
@@ -4012,9 +4046,16 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 
 static void
 vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
 {
+   struct vkr_context *ctx = dispatch->data;
+
+   if (!args->pDataSize) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    const VkVenusExperimentalFeatures100000MESA features = {
       .memoryResourceAllocationSize = VK_TRUE,
    };
