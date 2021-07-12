@@ -226,15 +226,18 @@ vkr_cs_decoder_alloc_temp(struct vkr_cs_decoder *dec, size_t size)
 {
    struct vkr_cs_decoder_temp_pool *pool = &dec->temp_pool;
 
-   /* align to 64-bit */
-   size = align(size, 8);
    if (unlikely(size > (size_t)(pool->end - pool->cur))) {
       if (!vkr_cs_decoder_alloc_temp_internal(dec, size)) {
          vkr_cs_decoder_set_fatal(dec);
          return NULL;
       }
-      assert(size <= (size_t)(pool->end - pool->cur));
    }
+
+   /* align to 64-bit after we know size is at most
+    * VKR_CS_DECODER_TEMP_POOL_MAX_SIZE and cannot overflow
+    */
+   size = (size + 7) & ~7;
+   assert(size <= (size_t)(pool->end - pool->cur));
 
    void *ptr = pool->cur;
    pool->cur += size;
