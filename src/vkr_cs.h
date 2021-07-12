@@ -17,6 +17,8 @@
 
 #include "vkr_object.h"
 
+#define VKR_CS_DECODER_TEMP_POOL_MAX_SIZE (64u * 1024 * 1024)
+
 struct iovec;
 
 struct vkr_cs_encoder {
@@ -50,6 +52,7 @@ struct vkr_cs_decoder_temp_pool {
    uint8_t **buffers;
    uint32_t buffer_count;
    uint32_t buffer_max;
+   size_t total_size;
 
    uint8_t *reset_to;
 
