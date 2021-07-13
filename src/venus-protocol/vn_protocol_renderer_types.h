@@ -722,6 +722,20 @@ vn_decode_VkQueryResultFlagBits(struct vn_cs_decoder *dec, VkQueryResultFlagBits
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+/* enum VkEventCreateFlagBits */
+
+static inline void
+vn_encode_VkEventCreateFlagBits(struct vn_cs_encoder *enc, const VkEventCreateFlagBits *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkEventCreateFlagBits(struct vn_cs_decoder *dec, VkEventCreateFlagBits *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
 /* enum VkCommandPoolCreateFlagBits */
 
 static inline void

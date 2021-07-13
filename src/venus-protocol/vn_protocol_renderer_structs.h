@@ -83,7 +83,24 @@ vn_encode_VkExtensionProperties(struct vn_cs_encoder *enc, const VkExtensionProp
 }
 
 static inline void
+vn_decode_VkExtensionProperties_temp(struct vn_cs_decoder *dec, VkExtensionProperties *val)
+{
+    {
+        const size_t array_size = vn_decode_array_size(dec, VK_MAX_EXTENSION_NAME_SIZE);
+        vn_decode_blob_array(dec, val->extensionName, array_size);
+    }
+    vn_decode_uint32_t(dec, &val->specVersion);
+}
+
+static inline void
 vn_decode_VkExtensionProperties_partial_temp(struct vn_cs_decoder *dec, VkExtensionProperties *val)
+{
+    /* skip val->extensionName */
+    /* skip val->specVersion */
+}
+
+static inline void
+vn_replace_VkExtensionProperties_handle(VkExtensionProperties *val)
 {
     /* skip val->extensionName */
     /* skip val->specVersion */
@@ -458,6 +475,17 @@ vn_replace_VkSamplerYcbcrConversionInfo_handle(VkSamplerYcbcrConversionInfo *val
 }
 
 /* struct VkViewport */
+
+static inline void
+vn_encode_VkViewport(struct vn_cs_encoder *enc, const VkViewport *val)
+{
+    vn_encode_float(enc, &val->x);
+    vn_encode_float(enc, &val->y);
+    vn_encode_float(enc, &val->width);
+    vn_encode_float(enc, &val->height);
+    vn_encode_float(enc, &val->minDepth);
+    vn_encode_float(enc, &val->maxDepth);
+}
 
 static inline void
 vn_decode_VkViewport_temp(struct vn_cs_decoder *dec, VkViewport *val)
