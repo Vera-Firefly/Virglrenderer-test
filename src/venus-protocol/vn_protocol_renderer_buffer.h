@@ -852,6 +852,10 @@ static inline void vn_dispatch_vkGetBufferMemoryRequirements(struct vn_dispatch_
     }
 
     vn_decode_vkGetBufferMemoryRequirements_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetBufferMemoryRequirements(ctx, &args);
@@ -873,6 +877,10 @@ static inline void vn_dispatch_vkBindBufferMemory(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkBindBufferMemory_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkBindBufferMemory(ctx, &args);
@@ -903,6 +911,10 @@ static inline void vn_dispatch_vkCreateBuffer(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkCreateBuffer_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateBuffer(ctx, &args);
@@ -933,6 +945,10 @@ static inline void vn_dispatch_vkDestroyBuffer(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkDestroyBuffer_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyBuffer(ctx, &args);
@@ -954,6 +970,10 @@ static inline void vn_dispatch_vkBindBufferMemory2(struct vn_dispatch_context *c
     }
 
     vn_decode_vkBindBufferMemory2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkBindBufferMemory2(ctx, &args);
@@ -984,6 +1004,10 @@ static inline void vn_dispatch_vkGetBufferMemoryRequirements2(struct vn_dispatch
     }
 
     vn_decode_vkGetBufferMemoryRequirements2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetBufferMemoryRequirements2(ctx, &args);
@@ -1005,6 +1029,10 @@ static inline void vn_dispatch_vkGetBufferOpaqueCaptureAddress(struct vn_dispatc
     }
 
     vn_decode_vkGetBufferOpaqueCaptureAddress_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetBufferOpaqueCaptureAddress(ctx, &args);
@@ -1026,6 +1054,10 @@ static inline void vn_dispatch_vkGetBufferDeviceAddress(struct vn_dispatch_conte
     }
 
     vn_decode_vkGetBufferDeviceAddress_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetBufferDeviceAddress(ctx, &args);

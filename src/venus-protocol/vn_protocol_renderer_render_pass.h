@@ -1333,6 +1333,10 @@ static inline void vn_dispatch_vkCreateRenderPass(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkCreateRenderPass_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateRenderPass(ctx, &args);
@@ -1363,6 +1367,10 @@ static inline void vn_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *c
     }
 
     vn_decode_vkDestroyRenderPass_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyRenderPass(ctx, &args);
@@ -1384,6 +1392,10 @@ static inline void vn_dispatch_vkGetRenderAreaGranularity(struct vn_dispatch_con
     }
 
     vn_decode_vkGetRenderAreaGranularity_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetRenderAreaGranularity(ctx, &args);
@@ -1405,6 +1417,10 @@ static inline void vn_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCreateRenderPass2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateRenderPass2(ctx, &args);

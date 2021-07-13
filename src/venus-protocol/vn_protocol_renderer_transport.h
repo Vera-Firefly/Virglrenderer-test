@@ -693,6 +693,10 @@ static inline void vn_dispatch_vkGetMemoryResourcePropertiesMESA(struct vn_dispa
     }
 
     vn_decode_vkGetMemoryResourcePropertiesMESA_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetMemoryResourcePropertiesMESA(ctx, &args);

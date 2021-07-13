@@ -1460,6 +1460,10 @@ static inline void vn_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_cont
     }
 
     vn_decode_vkCreateGraphicsPipelines_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateGraphicsPipelines(ctx, &args);
@@ -1490,6 +1494,10 @@ static inline void vn_dispatch_vkCreateComputePipelines(struct vn_dispatch_conte
     }
 
     vn_decode_vkCreateComputePipelines_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateComputePipelines(ctx, &args);
@@ -1520,6 +1528,10 @@ static inline void vn_dispatch_vkDestroyPipeline(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkDestroyPipeline_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyPipeline(ctx, &args);

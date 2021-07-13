@@ -326,6 +326,10 @@ static inline void vn_dispatch_vkCreateFence(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCreateFence_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateFence(ctx, &args);
@@ -356,6 +360,10 @@ static inline void vn_dispatch_vkDestroyFence(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkDestroyFence_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyFence(ctx, &args);
@@ -377,6 +385,10 @@ static inline void vn_dispatch_vkResetFences(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkResetFences_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetFences(ctx, &args);
@@ -407,6 +419,10 @@ static inline void vn_dispatch_vkGetFenceStatus(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkGetFenceStatus_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetFenceStatus(ctx, &args);
@@ -437,6 +453,10 @@ static inline void vn_dispatch_vkWaitForFences(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkWaitForFences_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkWaitForFences(ctx, &args);

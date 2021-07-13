@@ -823,6 +823,10 @@ static inline void vn_dispatch_vkAllocateMemory(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkAllocateMemory_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkAllocateMemory(ctx, &args);
@@ -853,6 +857,10 @@ static inline void vn_dispatch_vkFreeMemory(struct vn_dispatch_context *ctx, VkC
     }
 
     vn_decode_vkFreeMemory_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkFreeMemory(ctx, &args);
@@ -874,6 +882,10 @@ static inline void vn_dispatch_vkUnmapMemory(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkUnmapMemory_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkUnmapMemory(ctx, &args);
@@ -895,6 +907,10 @@ static inline void vn_dispatch_vkFlushMappedMemoryRanges(struct vn_dispatch_cont
     }
 
     vn_decode_vkFlushMappedMemoryRanges_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkFlushMappedMemoryRanges(ctx, &args);
@@ -925,6 +941,10 @@ static inline void vn_dispatch_vkInvalidateMappedMemoryRanges(struct vn_dispatch
     }
 
     vn_decode_vkInvalidateMappedMemoryRanges_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkInvalidateMappedMemoryRanges(ctx, &args);
@@ -955,6 +975,10 @@ static inline void vn_dispatch_vkGetDeviceMemoryCommitment(struct vn_dispatch_co
     }
 
     vn_decode_vkGetDeviceMemoryCommitment_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDeviceMemoryCommitment(ctx, &args);
@@ -976,6 +1000,10 @@ static inline void vn_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(struct vn_d
     }
 
     vn_decode_vkGetDeviceMemoryOpaqueCaptureAddress_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(ctx, &args);

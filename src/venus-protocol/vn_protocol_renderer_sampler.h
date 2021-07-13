@@ -268,6 +268,10 @@ static inline void vn_dispatch_vkCreateSampler(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCreateSampler_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateSampler(ctx, &args);
@@ -298,6 +302,10 @@ static inline void vn_dispatch_vkDestroySampler(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkDestroySampler_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroySampler(ctx, &args);

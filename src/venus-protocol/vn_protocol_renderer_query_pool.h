@@ -231,6 +231,10 @@ static inline void vn_dispatch_vkCreateQueryPool(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCreateQueryPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateQueryPool(ctx, &args);
@@ -261,6 +265,10 @@ static inline void vn_dispatch_vkDestroyQueryPool(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkDestroyQueryPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyQueryPool(ctx, &args);
@@ -282,6 +290,10 @@ static inline void vn_dispatch_vkGetQueryPoolResults(struct vn_dispatch_context 
     }
 
     vn_decode_vkGetQueryPoolResults_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetQueryPoolResults(ctx, &args);
@@ -312,6 +324,10 @@ static inline void vn_dispatch_vkResetQueryPool(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkResetQueryPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetQueryPool(ctx, &args);

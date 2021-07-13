@@ -198,6 +198,10 @@ static inline void vn_dispatch_vkCreateDescriptorUpdateTemplate(struct vn_dispat
     }
 
     vn_decode_vkCreateDescriptorUpdateTemplate_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateDescriptorUpdateTemplate(ctx, &args);
@@ -228,6 +232,10 @@ static inline void vn_dispatch_vkDestroyDescriptorUpdateTemplate(struct vn_dispa
     }
 
     vn_decode_vkDestroyDescriptorUpdateTemplate_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyDescriptorUpdateTemplate(ctx, &args);

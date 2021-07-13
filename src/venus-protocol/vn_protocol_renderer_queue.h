@@ -860,6 +860,10 @@ static inline void vn_dispatch_vkQueueSubmit(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkQueueSubmit_args_temp(ctx->decoder, &args);
+    if (!args.queue) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueSubmit(ctx, &args);
@@ -890,6 +894,10 @@ static inline void vn_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkQueueWaitIdle_args_temp(ctx->decoder, &args);
+    if (!args.queue) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueWaitIdle(ctx, &args);
@@ -920,6 +928,10 @@ static inline void vn_dispatch_vkQueueBindSparse(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkQueueBindSparse_args_temp(ctx->decoder, &args);
+    if (!args.queue) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueBindSparse(ctx, &args);

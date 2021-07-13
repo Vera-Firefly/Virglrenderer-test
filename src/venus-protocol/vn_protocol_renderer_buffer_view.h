@@ -156,6 +156,10 @@ static inline void vn_dispatch_vkCreateBufferView(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkCreateBufferView_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateBufferView(ctx, &args);
@@ -186,6 +190,10 @@ static inline void vn_dispatch_vkDestroyBufferView(struct vn_dispatch_context *c
     }
 
     vn_decode_vkDestroyBufferView_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyBufferView(ctx, &args);

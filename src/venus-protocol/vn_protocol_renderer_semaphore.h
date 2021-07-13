@@ -491,6 +491,10 @@ static inline void vn_dispatch_vkCreateSemaphore(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCreateSemaphore_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateSemaphore(ctx, &args);
@@ -521,6 +525,10 @@ static inline void vn_dispatch_vkDestroySemaphore(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkDestroySemaphore_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroySemaphore(ctx, &args);
@@ -542,6 +550,10 @@ static inline void vn_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_con
     }
 
     vn_decode_vkGetSemaphoreCounterValue_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetSemaphoreCounterValue(ctx, &args);
@@ -572,6 +584,10 @@ static inline void vn_dispatch_vkWaitSemaphores(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkWaitSemaphores_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkWaitSemaphores(ctx, &args);
@@ -602,6 +618,10 @@ static inline void vn_dispatch_vkSignalSemaphore(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkSignalSemaphore_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkSignalSemaphore(ctx, &args);

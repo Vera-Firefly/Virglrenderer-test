@@ -248,6 +248,10 @@ static inline void vn_dispatch_vkCreateImageView(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCreateImageView_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateImageView(ctx, &args);
@@ -278,6 +282,10 @@ static inline void vn_dispatch_vkDestroyImageView(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkDestroyImageView_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyImageView(ctx, &args);

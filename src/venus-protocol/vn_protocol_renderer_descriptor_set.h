@@ -535,6 +535,10 @@ static inline void vn_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_conte
     }
 
     vn_decode_vkAllocateDescriptorSets_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkAllocateDescriptorSets(ctx, &args);
@@ -565,6 +569,10 @@ static inline void vn_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *
     }
 
     vn_decode_vkFreeDescriptorSets_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkFreeDescriptorSets(ctx, &args);
@@ -595,6 +603,10 @@ static inline void vn_dispatch_vkUpdateDescriptorSets(struct vn_dispatch_context
     }
 
     vn_decode_vkUpdateDescriptorSets_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkUpdateDescriptorSets(ctx, &args);

@@ -162,6 +162,10 @@ static inline void vn_dispatch_vkCreateSamplerYcbcrConversion(struct vn_dispatch
     }
 
     vn_decode_vkCreateSamplerYcbcrConversion_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateSamplerYcbcrConversion(ctx, &args);
@@ -192,6 +196,10 @@ static inline void vn_dispatch_vkDestroySamplerYcbcrConversion(struct vn_dispatc
     }
 
     vn_decode_vkDestroySamplerYcbcrConversion_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroySamplerYcbcrConversion(ctx, &args);

@@ -422,6 +422,10 @@ static inline void vn_dispatch_vkDestroyInstance(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkDestroyInstance_args_temp(ctx->decoder, &args);
+    if (!args.instance) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyInstance(ctx, &args);

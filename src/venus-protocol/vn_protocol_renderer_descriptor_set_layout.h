@@ -467,6 +467,10 @@ static inline void vn_dispatch_vkCreateDescriptorSetLayout(struct vn_dispatch_co
     }
 
     vn_decode_vkCreateDescriptorSetLayout_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateDescriptorSetLayout(ctx, &args);
@@ -497,6 +501,10 @@ static inline void vn_dispatch_vkDestroyDescriptorSetLayout(struct vn_dispatch_c
     }
 
     vn_decode_vkDestroyDescriptorSetLayout_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyDescriptorSetLayout(ctx, &args);
@@ -518,6 +526,10 @@ static inline void vn_dispatch_vkGetDescriptorSetLayoutSupport(struct vn_dispatc
     }
 
     vn_decode_vkGetDescriptorSetLayoutSupport_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDescriptorSetLayoutSupport(ctx, &args);

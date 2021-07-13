@@ -1445,6 +1445,10 @@ static inline void vn_dispatch_vkGetImageMemoryRequirements(struct vn_dispatch_c
     }
 
     vn_decode_vkGetImageMemoryRequirements_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageMemoryRequirements(ctx, &args);
@@ -1466,6 +1470,10 @@ static inline void vn_dispatch_vkBindImageMemory(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkBindImageMemory_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkBindImageMemory(ctx, &args);
@@ -1496,6 +1504,10 @@ static inline void vn_dispatch_vkGetImageSparseMemoryRequirements(struct vn_disp
     }
 
     vn_decode_vkGetImageSparseMemoryRequirements_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageSparseMemoryRequirements(ctx, &args);
@@ -1517,6 +1529,10 @@ static inline void vn_dispatch_vkCreateImage(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCreateImage_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateImage(ctx, &args);
@@ -1547,6 +1563,10 @@ static inline void vn_dispatch_vkDestroyImage(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkDestroyImage_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyImage(ctx, &args);
@@ -1568,6 +1588,10 @@ static inline void vn_dispatch_vkGetImageSubresourceLayout(struct vn_dispatch_co
     }
 
     vn_decode_vkGetImageSubresourceLayout_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageSubresourceLayout(ctx, &args);
@@ -1589,6 +1613,10 @@ static inline void vn_dispatch_vkBindImageMemory2(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkBindImageMemory2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkBindImageMemory2(ctx, &args);
@@ -1619,6 +1647,10 @@ static inline void vn_dispatch_vkGetImageMemoryRequirements2(struct vn_dispatch_
     }
 
     vn_decode_vkGetImageMemoryRequirements2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageMemoryRequirements2(ctx, &args);
@@ -1640,6 +1672,10 @@ static inline void vn_dispatch_vkGetImageSparseMemoryRequirements2(struct vn_dis
     }
 
     vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageSparseMemoryRequirements2(ctx, &args);
@@ -1661,6 +1697,10 @@ static inline void vn_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(struct v
     }
 
     vn_decode_vkGetImageDrmFormatModifierPropertiesEXT_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetImageDrmFormatModifierPropertiesEXT(ctx, &args);

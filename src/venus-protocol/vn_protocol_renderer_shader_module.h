@@ -160,6 +160,10 @@ static inline void vn_dispatch_vkCreateShaderModule(struct vn_dispatch_context *
     }
 
     vn_decode_vkCreateShaderModule_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateShaderModule(ctx, &args);
@@ -190,6 +194,10 @@ static inline void vn_dispatch_vkDestroyShaderModule(struct vn_dispatch_context 
     }
 
     vn_decode_vkDestroyShaderModule_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyShaderModule(ctx, &args);

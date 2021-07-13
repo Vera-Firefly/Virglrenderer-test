@@ -206,6 +206,10 @@ static inline void vn_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context
     }
 
     vn_decode_vkCreateDescriptorPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateDescriptorPool(ctx, &args);
@@ -236,6 +240,10 @@ static inline void vn_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_contex
     }
 
     vn_decode_vkDestroyDescriptorPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyDescriptorPool(ctx, &args);
@@ -257,6 +265,10 @@ static inline void vn_dispatch_vkResetDescriptorPool(struct vn_dispatch_context 
     }
 
     vn_decode_vkResetDescriptorPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetDescriptorPool(ctx, &args);

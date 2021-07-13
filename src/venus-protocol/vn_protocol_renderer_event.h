@@ -211,6 +211,10 @@ static inline void vn_dispatch_vkCreateEvent(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCreateEvent_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateEvent(ctx, &args);
@@ -241,6 +245,10 @@ static inline void vn_dispatch_vkDestroyEvent(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkDestroyEvent_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyEvent(ctx, &args);
@@ -262,6 +270,10 @@ static inline void vn_dispatch_vkGetEventStatus(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkGetEventStatus_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetEventStatus(ctx, &args);
@@ -292,6 +304,10 @@ static inline void vn_dispatch_vkSetEvent(struct vn_dispatch_context *ctx, VkCom
     }
 
     vn_decode_vkSetEvent_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkSetEvent(ctx, &args);
@@ -322,6 +338,10 @@ static inline void vn_dispatch_vkResetEvent(struct vn_dispatch_context *ctx, VkC
     }
 
     vn_decode_vkResetEvent_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetEvent(ctx, &args);

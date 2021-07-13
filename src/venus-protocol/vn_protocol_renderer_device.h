@@ -8346,6 +8346,10 @@ static inline void vn_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_con
     }
 
     vn_decode_vkEnumeratePhysicalDevices_args_temp(ctx->decoder, &args);
+    if (!args.instance) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkEnumeratePhysicalDevices(ctx, &args);
@@ -8376,6 +8380,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceProperties(struct vn_dispatch_
     }
 
     vn_decode_vkGetPhysicalDeviceProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceProperties(ctx, &args);
@@ -8397,6 +8405,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceQueueFamilyProperties(struct v
     }
 
     vn_decode_vkGetPhysicalDeviceQueueFamilyProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceQueueFamilyProperties(ctx, &args);
@@ -8418,6 +8430,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceMemoryProperties(struct vn_dis
     }
 
     vn_decode_vkGetPhysicalDeviceMemoryProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceMemoryProperties(ctx, &args);
@@ -8439,6 +8455,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceFeatures(struct vn_dispatch_co
     }
 
     vn_decode_vkGetPhysicalDeviceFeatures_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceFeatures(ctx, &args);
@@ -8460,6 +8480,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceFormatProperties(struct vn_dis
     }
 
     vn_decode_vkGetPhysicalDeviceFormatProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceFormatProperties(ctx, &args);
@@ -8481,6 +8505,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceImageFormatProperties(struct v
     }
 
     vn_decode_vkGetPhysicalDeviceImageFormatProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceImageFormatProperties(ctx, &args);
@@ -8511,6 +8539,10 @@ static inline void vn_dispatch_vkCreateDevice(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkCreateDevice_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateDevice(ctx, &args);
@@ -8541,6 +8573,10 @@ static inline void vn_dispatch_vkDestroyDevice(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkDestroyDevice_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyDevice(ctx, &args);
@@ -8562,6 +8598,10 @@ static inline void vn_dispatch_vkEnumerateDeviceLayerProperties(struct vn_dispat
     }
 
     vn_decode_vkEnumerateDeviceLayerProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkEnumerateDeviceLayerProperties(ctx, &args);
@@ -8592,6 +8632,10 @@ static inline void vn_dispatch_vkEnumerateDeviceExtensionProperties(struct vn_di
     }
 
     vn_decode_vkEnumerateDeviceExtensionProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkEnumerateDeviceExtensionProperties(ctx, &args);
@@ -8622,6 +8666,10 @@ static inline void vn_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkGetDeviceQueue_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDeviceQueue(ctx, &args);
@@ -8643,6 +8691,10 @@ static inline void vn_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkDeviceWaitIdle_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDeviceWaitIdle(ctx, &args);
@@ -8673,6 +8725,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties(st
     }
 
     vn_decode_vkGetPhysicalDeviceSparseImageFormatProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties(ctx, &args);
@@ -8694,6 +8750,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceFeatures2(struct vn_dispatch_c
     }
 
     vn_decode_vkGetPhysicalDeviceFeatures2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceFeatures2(ctx, &args);
@@ -8715,6 +8775,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceProperties2(struct vn_dispatch
     }
 
     vn_decode_vkGetPhysicalDeviceProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceProperties2(ctx, &args);
@@ -8736,6 +8800,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceFormatProperties2(struct vn_di
     }
 
     vn_decode_vkGetPhysicalDeviceFormatProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceFormatProperties2(ctx, &args);
@@ -8757,6 +8825,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceImageFormatProperties2(struct 
     }
 
     vn_decode_vkGetPhysicalDeviceImageFormatProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceImageFormatProperties2(ctx, &args);
@@ -8787,6 +8859,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2(struct 
     }
 
     vn_decode_vkGetPhysicalDeviceQueueFamilyProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceQueueFamilyProperties2(ctx, &args);
@@ -8808,6 +8884,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceMemoryProperties2(struct vn_di
     }
 
     vn_decode_vkGetPhysicalDeviceMemoryProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceMemoryProperties2(ctx, &args);
@@ -8829,6 +8909,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(s
     }
 
     vn_decode_vkGetPhysicalDeviceSparseImageFormatProperties2_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2(ctx, &args);
@@ -8850,6 +8934,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceExternalBufferProperties(struc
     }
 
     vn_decode_vkGetPhysicalDeviceExternalBufferProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceExternalBufferProperties(ctx, &args);
@@ -8871,6 +8959,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties(st
     }
 
     vn_decode_vkGetPhysicalDeviceExternalSemaphoreProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties(ctx, &args);
@@ -8892,6 +8984,10 @@ static inline void vn_dispatch_vkGetPhysicalDeviceExternalFenceProperties(struct
     }
 
     vn_decode_vkGetPhysicalDeviceExternalFenceProperties_args_temp(ctx->decoder, &args);
+    if (!args.physicalDevice) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetPhysicalDeviceExternalFenceProperties(ctx, &args);
@@ -8913,6 +9009,10 @@ static inline void vn_dispatch_vkEnumeratePhysicalDeviceGroups(struct vn_dispatc
     }
 
     vn_decode_vkEnumeratePhysicalDeviceGroups_args_temp(ctx->decoder, &args);
+    if (!args.instance) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkEnumeratePhysicalDeviceGroups(ctx, &args);
@@ -8943,6 +9043,10 @@ static inline void vn_dispatch_vkGetDeviceGroupPeerMemoryFeatures(struct vn_disp
     }
 
     vn_decode_vkGetDeviceGroupPeerMemoryFeatures_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDeviceGroupPeerMemoryFeatures(ctx, &args);
@@ -8964,6 +9068,10 @@ static inline void vn_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkGetDeviceQueue2_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetDeviceQueue2(ctx, &args);

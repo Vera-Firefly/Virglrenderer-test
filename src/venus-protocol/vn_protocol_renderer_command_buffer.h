@@ -3358,6 +3358,10 @@ static inline void vn_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_conte
     }
 
     vn_decode_vkAllocateCommandBuffers_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkAllocateCommandBuffers(ctx, &args);
@@ -3388,6 +3392,10 @@ static inline void vn_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *
     }
 
     vn_decode_vkFreeCommandBuffers_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkFreeCommandBuffers(ctx, &args);
@@ -3409,6 +3417,10 @@ static inline void vn_dispatch_vkBeginCommandBuffer(struct vn_dispatch_context *
     }
 
     vn_decode_vkBeginCommandBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkBeginCommandBuffer(ctx, &args);
@@ -3439,6 +3451,10 @@ static inline void vn_dispatch_vkEndCommandBuffer(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkEndCommandBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkEndCommandBuffer(ctx, &args);
@@ -3469,6 +3485,10 @@ static inline void vn_dispatch_vkResetCommandBuffer(struct vn_dispatch_context *
     }
 
     vn_decode_vkResetCommandBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetCommandBuffer(ctx, &args);
@@ -3499,6 +3519,10 @@ static inline void vn_dispatch_vkCmdBindPipeline(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdBindPipeline_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBindPipeline(ctx, &args);
@@ -3520,6 +3544,10 @@ static inline void vn_dispatch_vkCmdSetViewport(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkCmdSetViewport_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetViewport(ctx, &args);
@@ -3541,6 +3569,10 @@ static inline void vn_dispatch_vkCmdSetScissor(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdSetScissor_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetScissor(ctx, &args);
@@ -3562,6 +3594,10 @@ static inline void vn_dispatch_vkCmdSetLineWidth(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdSetLineWidth_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetLineWidth(ctx, &args);
@@ -3583,6 +3619,10 @@ static inline void vn_dispatch_vkCmdSetDepthBias(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdSetDepthBias_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetDepthBias(ctx, &args);
@@ -3604,6 +3644,10 @@ static inline void vn_dispatch_vkCmdSetBlendConstants(struct vn_dispatch_context
     }
 
     vn_decode_vkCmdSetBlendConstants_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetBlendConstants(ctx, &args);
@@ -3625,6 +3669,10 @@ static inline void vn_dispatch_vkCmdSetDepthBounds(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCmdSetDepthBounds_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetDepthBounds(ctx, &args);
@@ -3646,6 +3694,10 @@ static inline void vn_dispatch_vkCmdSetStencilCompareMask(struct vn_dispatch_con
     }
 
     vn_decode_vkCmdSetStencilCompareMask_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetStencilCompareMask(ctx, &args);
@@ -3667,6 +3719,10 @@ static inline void vn_dispatch_vkCmdSetStencilWriteMask(struct vn_dispatch_conte
     }
 
     vn_decode_vkCmdSetStencilWriteMask_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetStencilWriteMask(ctx, &args);
@@ -3688,6 +3744,10 @@ static inline void vn_dispatch_vkCmdSetStencilReference(struct vn_dispatch_conte
     }
 
     vn_decode_vkCmdSetStencilReference_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetStencilReference(ctx, &args);
@@ -3709,6 +3769,10 @@ static inline void vn_dispatch_vkCmdBindDescriptorSets(struct vn_dispatch_contex
     }
 
     vn_decode_vkCmdBindDescriptorSets_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBindDescriptorSets(ctx, &args);
@@ -3730,6 +3794,10 @@ static inline void vn_dispatch_vkCmdBindIndexBuffer(struct vn_dispatch_context *
     }
 
     vn_decode_vkCmdBindIndexBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBindIndexBuffer(ctx, &args);
@@ -3751,6 +3819,10 @@ static inline void vn_dispatch_vkCmdBindVertexBuffers(struct vn_dispatch_context
     }
 
     vn_decode_vkCmdBindVertexBuffers_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBindVertexBuffers(ctx, &args);
@@ -3772,6 +3844,10 @@ static inline void vn_dispatch_vkCmdDraw(struct vn_dispatch_context *ctx, VkComm
     }
 
     vn_decode_vkCmdDraw_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDraw(ctx, &args);
@@ -3793,6 +3869,10 @@ static inline void vn_dispatch_vkCmdDrawIndexed(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkCmdDrawIndexed_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndexed(ctx, &args);
@@ -3814,6 +3894,10 @@ static inline void vn_dispatch_vkCmdDrawIndirect(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdDrawIndirect_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndirect(ctx, &args);
@@ -3835,6 +3919,10 @@ static inline void vn_dispatch_vkCmdDrawIndexedIndirect(struct vn_dispatch_conte
     }
 
     vn_decode_vkCmdDrawIndexedIndirect_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndexedIndirect(ctx, &args);
@@ -3856,6 +3944,10 @@ static inline void vn_dispatch_vkCmdDispatch(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCmdDispatch_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDispatch(ctx, &args);
@@ -3877,6 +3969,10 @@ static inline void vn_dispatch_vkCmdDispatchIndirect(struct vn_dispatch_context 
     }
 
     vn_decode_vkCmdDispatchIndirect_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDispatchIndirect(ctx, &args);
@@ -3898,6 +3994,10 @@ static inline void vn_dispatch_vkCmdCopyBuffer(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdCopyBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdCopyBuffer(ctx, &args);
@@ -3919,6 +4019,10 @@ static inline void vn_dispatch_vkCmdCopyImage(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkCmdCopyImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdCopyImage(ctx, &args);
@@ -3940,6 +4044,10 @@ static inline void vn_dispatch_vkCmdBlitImage(struct vn_dispatch_context *ctx, V
     }
 
     vn_decode_vkCmdBlitImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBlitImage(ctx, &args);
@@ -3961,6 +4069,10 @@ static inline void vn_dispatch_vkCmdCopyBufferToImage(struct vn_dispatch_context
     }
 
     vn_decode_vkCmdCopyBufferToImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdCopyBufferToImage(ctx, &args);
@@ -3982,6 +4094,10 @@ static inline void vn_dispatch_vkCmdCopyImageToBuffer(struct vn_dispatch_context
     }
 
     vn_decode_vkCmdCopyImageToBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdCopyImageToBuffer(ctx, &args);
@@ -4003,6 +4119,10 @@ static inline void vn_dispatch_vkCmdUpdateBuffer(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdUpdateBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdUpdateBuffer(ctx, &args);
@@ -4024,6 +4144,10 @@ static inline void vn_dispatch_vkCmdFillBuffer(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdFillBuffer_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdFillBuffer(ctx, &args);
@@ -4045,6 +4169,10 @@ static inline void vn_dispatch_vkCmdClearColorImage(struct vn_dispatch_context *
     }
 
     vn_decode_vkCmdClearColorImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdClearColorImage(ctx, &args);
@@ -4066,6 +4194,10 @@ static inline void vn_dispatch_vkCmdClearDepthStencilImage(struct vn_dispatch_co
     }
 
     vn_decode_vkCmdClearDepthStencilImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdClearDepthStencilImage(ctx, &args);
@@ -4087,6 +4219,10 @@ static inline void vn_dispatch_vkCmdClearAttachments(struct vn_dispatch_context 
     }
 
     vn_decode_vkCmdClearAttachments_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdClearAttachments(ctx, &args);
@@ -4108,6 +4244,10 @@ static inline void vn_dispatch_vkCmdResolveImage(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdResolveImage_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdResolveImage(ctx, &args);
@@ -4129,6 +4269,10 @@ static inline void vn_dispatch_vkCmdSetEvent(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCmdSetEvent_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetEvent(ctx, &args);
@@ -4150,6 +4294,10 @@ static inline void vn_dispatch_vkCmdResetEvent(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdResetEvent_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdResetEvent(ctx, &args);
@@ -4171,6 +4319,10 @@ static inline void vn_dispatch_vkCmdWaitEvents(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdWaitEvents_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdWaitEvents(ctx, &args);
@@ -4192,6 +4344,10 @@ static inline void vn_dispatch_vkCmdPipelineBarrier(struct vn_dispatch_context *
     }
 
     vn_decode_vkCmdPipelineBarrier_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdPipelineBarrier(ctx, &args);
@@ -4213,6 +4369,10 @@ static inline void vn_dispatch_vkCmdBeginQuery(struct vn_dispatch_context *ctx, 
     }
 
     vn_decode_vkCmdBeginQuery_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBeginQuery(ctx, &args);
@@ -4234,6 +4394,10 @@ static inline void vn_dispatch_vkCmdEndQuery(struct vn_dispatch_context *ctx, Vk
     }
 
     vn_decode_vkCmdEndQuery_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdEndQuery(ctx, &args);
@@ -4255,6 +4419,10 @@ static inline void vn_dispatch_vkCmdResetQueryPool(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCmdResetQueryPool_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdResetQueryPool(ctx, &args);
@@ -4276,6 +4444,10 @@ static inline void vn_dispatch_vkCmdWriteTimestamp(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCmdWriteTimestamp_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdWriteTimestamp(ctx, &args);
@@ -4297,6 +4469,10 @@ static inline void vn_dispatch_vkCmdCopyQueryPoolResults(struct vn_dispatch_cont
     }
 
     vn_decode_vkCmdCopyQueryPoolResults_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdCopyQueryPoolResults(ctx, &args);
@@ -4318,6 +4494,10 @@ static inline void vn_dispatch_vkCmdPushConstants(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkCmdPushConstants_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdPushConstants(ctx, &args);
@@ -4339,6 +4519,10 @@ static inline void vn_dispatch_vkCmdBeginRenderPass(struct vn_dispatch_context *
     }
 
     vn_decode_vkCmdBeginRenderPass_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBeginRenderPass(ctx, &args);
@@ -4360,6 +4544,10 @@ static inline void vn_dispatch_vkCmdNextSubpass(struct vn_dispatch_context *ctx,
     }
 
     vn_decode_vkCmdNextSubpass_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdNextSubpass(ctx, &args);
@@ -4381,6 +4569,10 @@ static inline void vn_dispatch_vkCmdEndRenderPass(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkCmdEndRenderPass_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdEndRenderPass(ctx, &args);
@@ -4402,6 +4594,10 @@ static inline void vn_dispatch_vkCmdExecuteCommands(struct vn_dispatch_context *
     }
 
     vn_decode_vkCmdExecuteCommands_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdExecuteCommands(ctx, &args);
@@ -4423,6 +4619,10 @@ static inline void vn_dispatch_vkCmdSetDeviceMask(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkCmdSetDeviceMask_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdSetDeviceMask(ctx, &args);
@@ -4444,6 +4644,10 @@ static inline void vn_dispatch_vkCmdDispatchBase(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdDispatchBase_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDispatchBase(ctx, &args);
@@ -4465,6 +4669,10 @@ static inline void vn_dispatch_vkCmdBeginRenderPass2(struct vn_dispatch_context 
     }
 
     vn_decode_vkCmdBeginRenderPass2_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBeginRenderPass2(ctx, &args);
@@ -4486,6 +4694,10 @@ static inline void vn_dispatch_vkCmdNextSubpass2(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkCmdNextSubpass2_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdNextSubpass2(ctx, &args);
@@ -4507,6 +4719,10 @@ static inline void vn_dispatch_vkCmdEndRenderPass2(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCmdEndRenderPass2_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdEndRenderPass2(ctx, &args);
@@ -4528,6 +4744,10 @@ static inline void vn_dispatch_vkCmdDrawIndirectCount(struct vn_dispatch_context
     }
 
     vn_decode_vkCmdDrawIndirectCount_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndirectCount(ctx, &args);
@@ -4549,6 +4769,10 @@ static inline void vn_dispatch_vkCmdDrawIndexedIndirectCount(struct vn_dispatch_
     }
 
     vn_decode_vkCmdDrawIndexedIndirectCount_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndexedIndirectCount(ctx, &args);
@@ -4570,6 +4794,10 @@ static inline void vn_dispatch_vkCmdBindTransformFeedbackBuffersEXT(struct vn_di
     }
 
     vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBindTransformFeedbackBuffersEXT(ctx, &args);
@@ -4591,6 +4819,10 @@ static inline void vn_dispatch_vkCmdBeginTransformFeedbackEXT(struct vn_dispatch
     }
 
     vn_decode_vkCmdBeginTransformFeedbackEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBeginTransformFeedbackEXT(ctx, &args);
@@ -4612,6 +4844,10 @@ static inline void vn_dispatch_vkCmdEndTransformFeedbackEXT(struct vn_dispatch_c
     }
 
     vn_decode_vkCmdEndTransformFeedbackEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdEndTransformFeedbackEXT(ctx, &args);
@@ -4633,6 +4869,10 @@ static inline void vn_dispatch_vkCmdBeginQueryIndexedEXT(struct vn_dispatch_cont
     }
 
     vn_decode_vkCmdBeginQueryIndexedEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdBeginQueryIndexedEXT(ctx, &args);
@@ -4654,6 +4894,10 @@ static inline void vn_dispatch_vkCmdEndQueryIndexedEXT(struct vn_dispatch_contex
     }
 
     vn_decode_vkCmdEndQueryIndexedEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdEndQueryIndexedEXT(ctx, &args);
@@ -4675,6 +4919,10 @@ static inline void vn_dispatch_vkCmdDrawIndirectByteCountEXT(struct vn_dispatch_
     }
 
     vn_decode_vkCmdDrawIndirectByteCountEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCmdDrawIndirectByteCountEXT(ctx, &args);

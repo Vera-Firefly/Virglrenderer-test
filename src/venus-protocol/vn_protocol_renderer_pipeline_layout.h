@@ -198,6 +198,10 @@ static inline void vn_dispatch_vkCreatePipelineLayout(struct vn_dispatch_context
     }
 
     vn_decode_vkCreatePipelineLayout_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreatePipelineLayout(ctx, &args);
@@ -228,6 +232,10 @@ static inline void vn_dispatch_vkDestroyPipelineLayout(struct vn_dispatch_contex
     }
 
     vn_decode_vkDestroyPipelineLayout_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyPipelineLayout(ctx, &args);

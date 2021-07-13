@@ -197,6 +197,10 @@ static inline void vn_dispatch_vkCreateCommandPool(struct vn_dispatch_context *c
     }
 
     vn_decode_vkCreateCommandPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateCommandPool(ctx, &args);
@@ -227,6 +231,10 @@ static inline void vn_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *
     }
 
     vn_decode_vkDestroyCommandPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroyCommandPool(ctx, &args);
@@ -248,6 +256,10 @@ static inline void vn_dispatch_vkResetCommandPool(struct vn_dispatch_context *ct
     }
 
     vn_decode_vkResetCommandPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetCommandPool(ctx, &args);
@@ -278,6 +290,10 @@ static inline void vn_dispatch_vkTrimCommandPool(struct vn_dispatch_context *ctx
     }
 
     vn_decode_vkTrimCommandPool_args_temp(ctx->decoder, &args);
+    if (!args.device) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkTrimCommandPool(ctx, &args);
