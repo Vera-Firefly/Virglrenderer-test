@@ -47,7 +47,8 @@ vn_decode_VkFramebufferAttachmentImageInfo_temp(struct vn_cs_decoder *dec, VkFra
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkFramebufferAttachmentImageInfo_pnext_temp(dec);
@@ -119,7 +120,8 @@ vn_decode_VkFramebufferAttachmentsCreateInfo_temp(struct vn_cs_decoder *dec, VkF
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkFramebufferAttachmentsCreateInfo_pnext_temp(dec);
@@ -214,7 +216,8 @@ vn_decode_VkFramebufferCreateInfo_temp(struct vn_cs_decoder *dec, VkFramebufferC
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkFramebufferCreateInfo_pnext_temp(dec);

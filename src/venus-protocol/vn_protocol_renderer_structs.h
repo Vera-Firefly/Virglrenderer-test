@@ -202,7 +202,8 @@ vn_decode_VkSemaphoreTypeCreateInfo_temp(struct vn_cs_decoder *dec, VkSemaphoreT
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSemaphoreTypeCreateInfo_pnext_temp(dec);
@@ -268,7 +269,8 @@ vn_decode_VkImageFormatListCreateInfo_temp(struct vn_cs_decoder *dec, VkImageFor
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageFormatListCreateInfo_pnext_temp(dec);
@@ -325,7 +327,8 @@ vn_decode_VkImageStencilUsageCreateInfo_temp(struct vn_cs_decoder *dec, VkImageS
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageStencilUsageCreateInfo_pnext_temp(dec);
@@ -441,7 +444,8 @@ vn_decode_VkSamplerYcbcrConversionInfo_temp(struct vn_cs_decoder *dec, VkSampler
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSamplerYcbcrConversionInfo_pnext_temp(dec);
@@ -647,7 +651,8 @@ vn_decode_VkMemoryDedicatedRequirements_partial_temp(struct vn_cs_decoder *dec, 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryDedicatedRequirements_pnext_partial_temp(dec);
@@ -736,7 +741,8 @@ vn_decode_VkMemoryRequirements2_partial_temp(struct vn_cs_decoder *dec, VkMemory
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryRequirements2_pnext_partial_temp(dec);

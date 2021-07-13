@@ -35,7 +35,8 @@ vn_decode_VkCommandBufferAllocateInfo_temp(struct vn_cs_decoder *dec, VkCommandB
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkCommandBufferAllocateInfo_pnext_temp(dec);
@@ -126,7 +127,8 @@ vn_decode_VkCommandBufferInheritanceInfo_temp(struct vn_cs_decoder *dec, VkComma
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkCommandBufferInheritanceInfo_pnext_temp(dec);
@@ -210,7 +212,8 @@ vn_decode_VkDeviceGroupCommandBufferBeginInfo_temp(struct vn_cs_decoder *dec, Vk
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceGroupCommandBufferBeginInfo_pnext_temp(dec);
@@ -334,7 +337,8 @@ vn_decode_VkCommandBufferBeginInfo_temp(struct vn_cs_decoder *dec, VkCommandBuff
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkCommandBufferBeginInfo_pnext_temp(dec);
@@ -636,7 +640,8 @@ vn_decode_VkMemoryBarrier_temp(struct vn_cs_decoder *dec, VkMemoryBarrier *val)
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_BARRIER);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_BARRIER)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryBarrier_pnext_temp(dec);
@@ -699,7 +704,8 @@ vn_decode_VkBufferMemoryBarrier_temp(struct vn_cs_decoder *dec, VkBufferMemoryBa
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferMemoryBarrier_pnext_temp(dec);
@@ -768,7 +774,8 @@ vn_decode_VkImageMemoryBarrier_temp(struct vn_cs_decoder *dec, VkImageMemoryBarr
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageMemoryBarrier_pnext_temp(dec);
@@ -842,7 +849,8 @@ vn_decode_VkDeviceGroupRenderPassBeginInfo_temp(struct vn_cs_decoder *dec, VkDev
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_GROUP_RENDER_PASS_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_GROUP_RENDER_PASS_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceGroupRenderPassBeginInfo_pnext_temp(dec);
@@ -913,7 +921,8 @@ vn_decode_VkRenderPassAttachmentBeginInfo_temp(struct vn_cs_decoder *dec, VkRend
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_ATTACHMENT_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassAttachmentBeginInfo_pnext_temp(dec);
@@ -1014,7 +1023,8 @@ vn_decode_VkRenderPassBeginInfo_temp(struct vn_cs_decoder *dec, VkRenderPassBegi
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassBeginInfo_pnext_temp(dec);
@@ -1080,7 +1090,8 @@ vn_decode_VkSubpassBeginInfo_temp(struct vn_cs_decoder *dec, VkSubpassBeginInfo 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SUBPASS_BEGIN_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubpassBeginInfo_pnext_temp(dec);
@@ -1135,7 +1146,8 @@ vn_decode_VkSubpassEndInfo_temp(struct vn_cs_decoder *dec, VkSubpassEndInfo *val
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBPASS_END_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SUBPASS_END_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubpassEndInfo_pnext_temp(dec);

@@ -33,7 +33,8 @@ vn_decode_VkEventCreateInfo_temp(struct vn_cs_decoder *dec, VkEventCreateInfo *v
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EVENT_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EVENT_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkEventCreateInfo_pnext_temp(dec);

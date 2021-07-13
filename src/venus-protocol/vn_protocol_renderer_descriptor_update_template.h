@@ -73,7 +73,8 @@ vn_decode_VkDescriptorUpdateTemplateCreateInfo_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDescriptorUpdateTemplateCreateInfo_pnext_temp(dec);

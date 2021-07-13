@@ -37,7 +37,8 @@ vn_decode_VkBufferViewCreateInfo_temp(struct vn_cs_decoder *dec, VkBufferViewCre
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferViewCreateInfo_pnext_temp(dec);

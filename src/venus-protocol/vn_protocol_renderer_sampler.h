@@ -33,7 +33,8 @@ vn_decode_VkSamplerReductionModeCreateInfo_temp(struct vn_cs_decoder *dec, VkSam
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSamplerReductionModeCreateInfo_pnext_temp(dec);
@@ -132,7 +133,8 @@ vn_decode_VkSamplerCreateInfo_temp(struct vn_cs_decoder *dec, VkSamplerCreateInf
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSamplerCreateInfo_pnext_temp(dec);

@@ -59,7 +59,8 @@ vn_decode_VkApplicationInfo_temp(struct vn_cs_decoder *dec, VkApplicationInfo *v
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_APPLICATION_INFO);
+    if (stype != VK_STRUCTURE_TYPE_APPLICATION_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkApplicationInfo_pnext_temp(dec);
@@ -156,7 +157,8 @@ vn_decode_VkInstanceCreateInfo_temp(struct vn_cs_decoder *dec, VkInstanceCreateI
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkInstanceCreateInfo_pnext_temp(dec);

@@ -43,7 +43,8 @@ vn_decode_VkPipelineCacheCreateInfo_temp(struct vn_cs_decoder *dec, VkPipelineCa
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineCacheCreateInfo_pnext_temp(dec);

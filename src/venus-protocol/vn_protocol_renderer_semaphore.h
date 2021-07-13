@@ -33,7 +33,8 @@ vn_decode_VkExportSemaphoreCreateInfo_temp(struct vn_cs_decoder *dec, VkExportSe
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExportSemaphoreCreateInfo_pnext_temp(dec);
@@ -117,7 +118,8 @@ vn_decode_VkSemaphoreCreateInfo_temp(struct vn_cs_decoder *dec, VkSemaphoreCreat
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSemaphoreCreateInfo_pnext_temp(dec);
@@ -199,7 +201,8 @@ vn_decode_VkSemaphoreWaitInfo_temp(struct vn_cs_decoder *dec, VkSemaphoreWaitInf
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSemaphoreWaitInfo_pnext_temp(dec);
@@ -286,7 +289,8 @@ vn_decode_VkSemaphoreSignalInfo_temp(struct vn_cs_decoder *dec, VkSemaphoreSigna
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSemaphoreSignalInfo_pnext_temp(dec);

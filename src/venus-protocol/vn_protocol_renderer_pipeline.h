@@ -109,7 +109,8 @@ vn_decode_VkPipelineShaderStageCreateInfo_temp(struct vn_cs_decoder *dec, VkPipe
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineShaderStageCreateInfo_pnext_temp(dec);
@@ -230,7 +231,8 @@ vn_decode_VkPipelineVertexInputStateCreateInfo_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineVertexInputStateCreateInfo_pnext_temp(dec);
@@ -298,7 +300,8 @@ vn_decode_VkPipelineInputAssemblyStateCreateInfo_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineInputAssemblyStateCreateInfo_pnext_temp(dec);
@@ -356,7 +359,8 @@ vn_decode_VkPipelineTessellationDomainOriginStateCreateInfo_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_DOMAIN_ORIGIN_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineTessellationDomainOriginStateCreateInfo_pnext_temp(dec);
@@ -433,7 +437,8 @@ vn_decode_VkPipelineTessellationStateCreateInfo_temp(struct vn_cs_decoder *dec, 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineTessellationStateCreateInfo_pnext_temp(dec);
@@ -515,7 +520,8 @@ vn_decode_VkPipelineViewportStateCreateInfo_temp(struct vn_cs_decoder *dec, VkPi
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineViewportStateCreateInfo_pnext_temp(dec);
@@ -582,7 +588,8 @@ vn_decode_VkPipelineRasterizationStateStreamCreateInfoEXT_temp(struct vn_cs_deco
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_STREAM_CREATE_INFO_EXT);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_STREAM_CREATE_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineRasterizationStateStreamCreateInfoEXT_pnext_temp(dec);
@@ -669,7 +676,8 @@ vn_decode_VkPipelineRasterizationStateCreateInfo_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineRasterizationStateCreateInfo_pnext_temp(dec);
@@ -752,7 +760,8 @@ vn_decode_VkPipelineMultisampleStateCreateInfo_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineMultisampleStateCreateInfo_pnext_temp(dec);
@@ -849,7 +858,8 @@ vn_decode_VkPipelineDepthStencilStateCreateInfo_temp(struct vn_cs_decoder *dec, 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineDepthStencilStateCreateInfo_pnext_temp(dec);
@@ -959,7 +969,8 @@ vn_decode_VkPipelineColorBlendStateCreateInfo_temp(struct vn_cs_decoder *dec, Vk
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineColorBlendStateCreateInfo_pnext_temp(dec);
@@ -1033,7 +1044,8 @@ vn_decode_VkPipelineDynamicStateCreateInfo_temp(struct vn_cs_decoder *dec, VkPip
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPipelineDynamicStateCreateInfo_pnext_temp(dec);
@@ -1170,7 +1182,8 @@ vn_decode_VkGraphicsPipelineCreateInfo_temp(struct vn_cs_decoder *dec, VkGraphic
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkGraphicsPipelineCreateInfo_pnext_temp(dec);
@@ -1258,7 +1271,8 @@ vn_decode_VkComputePipelineCreateInfo_temp(struct vn_cs_decoder *dec, VkComputeP
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkComputePipelineCreateInfo_pnext_temp(dec);

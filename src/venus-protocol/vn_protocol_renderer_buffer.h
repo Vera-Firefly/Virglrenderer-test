@@ -33,7 +33,8 @@ vn_decode_VkExternalMemoryBufferCreateInfo_temp(struct vn_cs_decoder *dec, VkExt
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalMemoryBufferCreateInfo_pnext_temp(dec);
@@ -89,7 +90,8 @@ vn_decode_VkBufferOpaqueCaptureAddressCreateInfo_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferOpaqueCaptureAddressCreateInfo_pnext_temp(dec);
@@ -186,7 +188,8 @@ vn_decode_VkBufferCreateInfo_temp(struct vn_cs_decoder *dec, VkBufferCreateInfo 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferCreateInfo_pnext_temp(dec);
@@ -291,7 +294,8 @@ vn_decode_VkBindBufferMemoryDeviceGroupInfo_temp(struct vn_cs_decoder *dec, VkBi
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_DEVICE_GROUP_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_DEVICE_GROUP_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindBufferMemoryDeviceGroupInfo_pnext_temp(dec);
@@ -411,7 +415,8 @@ vn_decode_VkBindBufferMemoryInfo_temp(struct vn_cs_decoder *dec, VkBindBufferMem
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindBufferMemoryInfo_pnext_temp(dec);
@@ -472,7 +477,8 @@ vn_decode_VkBufferMemoryRequirementsInfo2_temp(struct vn_cs_decoder *dec, VkBuff
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferMemoryRequirementsInfo2_pnext_temp(dec);
@@ -551,7 +557,8 @@ vn_decode_VkBufferDeviceAddressInfo_temp(struct vn_cs_decoder *dec, VkBufferDevi
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBufferDeviceAddressInfo_pnext_temp(dec);

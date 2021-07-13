@@ -33,7 +33,8 @@ vn_decode_VkExportFenceCreateInfo_temp(struct vn_cs_decoder *dec, VkExportFenceC
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EXPORT_FENCE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExportFenceCreateInfo_pnext_temp(dec);
@@ -109,7 +110,8 @@ vn_decode_VkFenceCreateInfo_temp(struct vn_cs_decoder *dec, VkFenceCreateInfo *v
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_FENCE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkFenceCreateInfo_pnext_temp(dec);

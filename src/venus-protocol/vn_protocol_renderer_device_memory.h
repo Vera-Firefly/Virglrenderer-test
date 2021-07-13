@@ -40,7 +40,8 @@ vn_decode_VkExportMemoryAllocateInfo_temp(struct vn_cs_decoder *dec, VkExportMem
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExportMemoryAllocateInfo_pnext_temp(dec);
@@ -97,7 +98,8 @@ vn_decode_VkMemoryAllocateFlagsInfo_temp(struct vn_cs_decoder *dec, VkMemoryAllo
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryAllocateFlagsInfo_pnext_temp(dec);
@@ -155,7 +157,8 @@ vn_decode_VkMemoryDedicatedAllocateInfo_temp(struct vn_cs_decoder *dec, VkMemory
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryDedicatedAllocateInfo_pnext_temp(dec);
@@ -212,7 +215,8 @@ vn_decode_VkMemoryOpaqueCaptureAddressAllocateInfo_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryOpaqueCaptureAddressAllocateInfo_pnext_temp(dec);
@@ -268,7 +272,8 @@ vn_decode_VkImportMemoryResourceInfoMESA_temp(struct vn_cs_decoder *dec, VkImpor
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA);
+    if (stype != VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImportMemoryResourceInfoMESA_pnext_temp(dec);
@@ -378,7 +383,8 @@ vn_decode_VkMemoryAllocateInfo_temp(struct vn_cs_decoder *dec, VkMemoryAllocateI
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryAllocateInfo_pnext_temp(dec);
@@ -478,7 +484,8 @@ vn_decode_VkMappedMemoryRange_temp(struct vn_cs_decoder *dec, VkMappedMemoryRang
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE);
+    if (stype != VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMappedMemoryRange_pnext_temp(dec);
@@ -559,7 +566,8 @@ vn_decode_VkDeviceMemoryOpaqueCaptureAddressInfo_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_MEMORY_OPAQUE_CAPTURE_ADDRESS_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_MEMORY_OPAQUE_CAPTURE_ADDRESS_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceMemoryOpaqueCaptureAddressInfo_pnext_temp(dec);

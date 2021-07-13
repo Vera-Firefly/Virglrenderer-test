@@ -85,7 +85,8 @@ vn_decode_VkRingCreateInfoMESA_temp(struct vn_cs_decoder *dec, VkRingCreateInfoM
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RING_CREATE_INFO_MESA);
+    if (stype != VK_STRUCTURE_TYPE_RING_CREATE_INFO_MESA)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRingCreateInfoMESA_pnext_temp(dec);
@@ -175,7 +176,8 @@ vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_partial_temp(struct
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryResourceAllocationSizeProperties100000MESA_pnext_partial_temp(dec);
@@ -264,7 +266,8 @@ vn_decode_VkMemoryResourcePropertiesMESA_partial_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_MEMORY_RESOURCE_PROPERTIES_MESA);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_RESOURCE_PROPERTIES_MESA)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryResourcePropertiesMESA_pnext_partial_temp(dec);

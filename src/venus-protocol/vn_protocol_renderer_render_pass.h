@@ -217,7 +217,8 @@ vn_decode_VkRenderPassMultiviewCreateInfo_temp(struct vn_cs_decoder *dec, VkRend
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassMultiviewCreateInfo_pnext_temp(dec);
@@ -306,7 +307,8 @@ vn_decode_VkRenderPassInputAttachmentAspectCreateInfo_temp(struct vn_cs_decoder 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_INPUT_ATTACHMENT_ASPECT_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassInputAttachmentAspectCreateInfo_pnext_temp(dec);
@@ -427,7 +429,8 @@ vn_decode_VkRenderPassCreateInfo_temp(struct vn_cs_decoder *dec, VkRenderPassCre
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassCreateInfo_pnext_temp(dec);
@@ -505,7 +508,8 @@ vn_decode_VkAttachmentDescriptionStencilLayout_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT);
+    if (stype != VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_STENCIL_LAYOUT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkAttachmentDescriptionStencilLayout_pnext_temp(dec);
@@ -590,7 +594,8 @@ vn_decode_VkAttachmentDescription2_temp(struct vn_cs_decoder *dec, VkAttachmentD
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2);
+    if (stype != VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkAttachmentDescription2_pnext_temp(dec);
@@ -657,7 +662,8 @@ vn_decode_VkAttachmentReferenceStencilLayout_temp(struct vn_cs_decoder *dec, VkA
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_STENCIL_LAYOUT);
+    if (stype != VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_STENCIL_LAYOUT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkAttachmentReferenceStencilLayout_pnext_temp(dec);
@@ -735,7 +741,8 @@ vn_decode_VkAttachmentReference2_temp(struct vn_cs_decoder *dec, VkAttachmentRef
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2);
+    if (stype != VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkAttachmentReference2_pnext_temp(dec);
@@ -804,7 +811,8 @@ vn_decode_VkSubpassDescriptionDepthStencilResolve_temp(struct vn_cs_decoder *dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE);
+    if (stype != VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubpassDescriptionDepthStencilResolve_pnext_temp(dec);
@@ -934,7 +942,8 @@ vn_decode_VkSubpassDescription2_temp(struct vn_cs_decoder *dec, VkSubpassDescrip
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2);
+    if (stype != VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubpassDescription2_pnext_temp(dec);
@@ -1020,7 +1029,8 @@ vn_decode_VkSubpassDependency2_temp(struct vn_cs_decoder *dec, VkSubpassDependen
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2);
+    if (stype != VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubpassDependency2_pnext_temp(dec);
@@ -1126,7 +1136,8 @@ vn_decode_VkRenderPassCreateInfo2_temp(struct vn_cs_decoder *dec, VkRenderPassCr
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkRenderPassCreateInfo2_pnext_temp(dec);

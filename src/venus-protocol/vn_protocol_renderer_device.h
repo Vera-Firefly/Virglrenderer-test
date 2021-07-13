@@ -700,7 +700,8 @@ vn_decode_VkDeviceQueueCreateInfo_temp(struct vn_cs_decoder *dec, VkDeviceQueueC
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceQueueCreateInfo_pnext_temp(dec);
@@ -784,7 +785,8 @@ vn_decode_VkPhysicalDeviceVariablePointersFeatures_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVariablePointersFeatures_pnext_temp(dec);
@@ -813,7 +815,8 @@ vn_decode_VkPhysicalDeviceVariablePointersFeatures_partial_temp(struct vn_cs_dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVariablePointersFeatures_pnext_partial_temp(dec);
@@ -897,7 +900,8 @@ vn_decode_VkPhysicalDeviceMultiviewFeatures_temp(struct vn_cs_decoder *dec, VkPh
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceMultiviewFeatures_pnext_temp(dec);
@@ -927,7 +931,8 @@ vn_decode_VkPhysicalDeviceMultiviewFeatures_partial_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceMultiviewFeatures_pnext_partial_temp(dec);
@@ -1014,7 +1019,8 @@ vn_decode_VkPhysicalDevice16BitStorageFeatures_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDevice16BitStorageFeatures_pnext_temp(dec);
@@ -1045,7 +1051,8 @@ vn_decode_VkPhysicalDevice16BitStorageFeatures_partial_temp(struct vn_cs_decoder
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDevice16BitStorageFeatures_pnext_partial_temp(dec);
@@ -1127,7 +1134,8 @@ vn_decode_VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures_temp(struct vn_cs_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures_pnext_temp(dec);
@@ -1155,7 +1163,8 @@ vn_decode_VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures_partial_temp(struc
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures_pnext_partial_temp(dec);
@@ -1234,7 +1243,8 @@ vn_decode_VkPhysicalDeviceSamplerYcbcrConversionFeatures_temp(struct vn_cs_decod
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSamplerYcbcrConversionFeatures_pnext_temp(dec);
@@ -1262,7 +1272,8 @@ vn_decode_VkPhysicalDeviceSamplerYcbcrConversionFeatures_partial_temp(struct vn_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSamplerYcbcrConversionFeatures_pnext_partial_temp(dec);
@@ -1341,7 +1352,8 @@ vn_decode_VkPhysicalDeviceProtectedMemoryFeatures_temp(struct vn_cs_decoder *dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceProtectedMemoryFeatures_pnext_temp(dec);
@@ -1369,7 +1381,8 @@ vn_decode_VkPhysicalDeviceProtectedMemoryFeatures_partial_temp(struct vn_cs_deco
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceProtectedMemoryFeatures_pnext_partial_temp(dec);
@@ -1448,7 +1461,8 @@ vn_decode_VkPhysicalDeviceShaderDrawParametersFeatures_temp(struct vn_cs_decoder
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderDrawParametersFeatures_pnext_temp(dec);
@@ -1476,7 +1490,8 @@ vn_decode_VkPhysicalDeviceShaderDrawParametersFeatures_partial_temp(struct vn_cs
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderDrawParametersFeatures_pnext_partial_temp(dec);
@@ -1557,7 +1572,8 @@ vn_decode_VkPhysicalDeviceShaderFloat16Int8Features_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderFloat16Int8Features_pnext_temp(dec);
@@ -1586,7 +1602,8 @@ vn_decode_VkPhysicalDeviceShaderFloat16Int8Features_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderFloat16Int8Features_pnext_partial_temp(dec);
@@ -1666,7 +1683,8 @@ vn_decode_VkPhysicalDeviceHostQueryResetFeatures_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceHostQueryResetFeatures_pnext_temp(dec);
@@ -1694,7 +1712,8 @@ vn_decode_VkPhysicalDeviceHostQueryResetFeatures_partial_temp(struct vn_cs_decod
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceHostQueryResetFeatures_pnext_partial_temp(dec);
@@ -1811,7 +1830,8 @@ vn_decode_VkPhysicalDeviceDescriptorIndexingFeatures_temp(struct vn_cs_decoder *
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceDescriptorIndexingFeatures_pnext_temp(dec);
@@ -1858,7 +1878,8 @@ vn_decode_VkPhysicalDeviceDescriptorIndexingFeatures_partial_temp(struct vn_cs_d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceDescriptorIndexingFeatures_pnext_partial_temp(dec);
@@ -1956,7 +1977,8 @@ vn_decode_VkPhysicalDeviceTimelineSemaphoreFeatures_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTimelineSemaphoreFeatures_pnext_temp(dec);
@@ -1984,7 +2006,8 @@ vn_decode_VkPhysicalDeviceTimelineSemaphoreFeatures_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTimelineSemaphoreFeatures_pnext_partial_temp(dec);
@@ -2067,7 +2090,8 @@ vn_decode_VkPhysicalDevice8BitStorageFeatures_temp(struct vn_cs_decoder *dec, Vk
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDevice8BitStorageFeatures_pnext_temp(dec);
@@ -2097,7 +2121,8 @@ vn_decode_VkPhysicalDevice8BitStorageFeatures_partial_temp(struct vn_cs_decoder 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDevice8BitStorageFeatures_pnext_partial_temp(dec);
@@ -2182,7 +2207,8 @@ vn_decode_VkPhysicalDeviceVulkanMemoryModelFeatures_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkanMemoryModelFeatures_pnext_temp(dec);
@@ -2212,7 +2238,8 @@ vn_decode_VkPhysicalDeviceVulkanMemoryModelFeatures_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkanMemoryModelFeatures_pnext_partial_temp(dec);
@@ -2295,7 +2322,8 @@ vn_decode_VkPhysicalDeviceShaderAtomicInt64Features_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderAtomicInt64Features_pnext_temp(dec);
@@ -2324,7 +2352,8 @@ vn_decode_VkPhysicalDeviceShaderAtomicInt64Features_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceShaderAtomicInt64Features_pnext_partial_temp(dec);
@@ -2406,7 +2435,8 @@ vn_decode_VkPhysicalDeviceTransformFeedbackFeaturesEXT_temp(struct vn_cs_decoder
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTransformFeedbackFeaturesEXT_pnext_temp(dec);
@@ -2435,7 +2465,8 @@ vn_decode_VkPhysicalDeviceTransformFeedbackFeaturesEXT_partial_temp(struct vn_cs
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTransformFeedbackFeaturesEXT_pnext_partial_temp(dec);
@@ -2515,7 +2546,8 @@ vn_decode_VkPhysicalDeviceScalarBlockLayoutFeatures_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceScalarBlockLayoutFeatures_pnext_temp(dec);
@@ -2543,7 +2575,8 @@ vn_decode_VkPhysicalDeviceScalarBlockLayoutFeatures_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceScalarBlockLayoutFeatures_pnext_partial_temp(dec);
@@ -2622,7 +2655,8 @@ vn_decode_VkPhysicalDeviceUniformBufferStandardLayoutFeatures_temp(struct vn_cs_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceUniformBufferStandardLayoutFeatures_pnext_temp(dec);
@@ -2650,7 +2684,8 @@ vn_decode_VkPhysicalDeviceUniformBufferStandardLayoutFeatures_partial_temp(struc
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceUniformBufferStandardLayoutFeatures_pnext_partial_temp(dec);
@@ -2733,7 +2768,8 @@ vn_decode_VkPhysicalDeviceBufferDeviceAddressFeatures_temp(struct vn_cs_decoder 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceBufferDeviceAddressFeatures_pnext_temp(dec);
@@ -2763,7 +2799,8 @@ vn_decode_VkPhysicalDeviceBufferDeviceAddressFeatures_partial_temp(struct vn_cs_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceBufferDeviceAddressFeatures_pnext_partial_temp(dec);
@@ -2844,7 +2881,8 @@ vn_decode_VkPhysicalDeviceImagelessFramebufferFeatures_temp(struct vn_cs_decoder
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceImagelessFramebufferFeatures_pnext_temp(dec);
@@ -2872,7 +2910,8 @@ vn_decode_VkPhysicalDeviceImagelessFramebufferFeatures_partial_temp(struct vn_cs
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceImagelessFramebufferFeatures_pnext_partial_temp(dec);
@@ -2951,7 +2990,8 @@ vn_decode_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_temp(struct vn_cs_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_pnext_temp(dec);
@@ -2979,7 +3019,8 @@ vn_decode_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_partial_temp(struc
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_pnext_partial_temp(dec);
@@ -3080,7 +3121,8 @@ vn_decode_VkPhysicalDeviceVulkan11Features_temp(struct vn_cs_decoder *dec, VkPhy
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan11Features_pnext_temp(dec);
@@ -3119,7 +3161,8 @@ vn_decode_VkPhysicalDeviceVulkan11Features_partial_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan11Features_pnext_partial_temp(dec);
@@ -3301,7 +3344,8 @@ vn_decode_VkPhysicalDeviceVulkan12Features_temp(struct vn_cs_decoder *dec, VkPhy
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan12Features_pnext_temp(dec);
@@ -3375,7 +3419,8 @@ vn_decode_VkPhysicalDeviceVulkan12Features_partial_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan12Features_pnext_partial_temp(dec);
@@ -3830,7 +3875,8 @@ vn_decode_VkPhysicalDeviceFeatures2_temp(struct vn_cs_decoder *dec, VkPhysicalDe
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
@@ -4046,7 +4092,8 @@ vn_decode_VkPhysicalDeviceFeatures2_partial_temp(struct vn_cs_decoder *dec, VkPh
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(dec);
@@ -4178,7 +4225,8 @@ vn_decode_VkDeviceGroupDeviceCreateInfo_temp(struct vn_cs_decoder *dec, VkDevice
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceGroupDeviceCreateInfo_pnext_temp(dec);
@@ -4490,7 +4538,8 @@ vn_decode_VkDeviceCreateInfo_temp(struct vn_cs_decoder *dec, VkDeviceCreateInfo 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceCreateInfo_pnext_temp(dec);
@@ -4680,7 +4729,8 @@ vn_decode_VkPhysicalDeviceDriverProperties_partial_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceDriverProperties_pnext_partial_temp(dec);
@@ -4744,7 +4794,8 @@ vn_decode_VkPhysicalDeviceIDProperties_partial_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceIDProperties_pnext_partial_temp(dec);
@@ -4799,7 +4850,8 @@ vn_decode_VkPhysicalDeviceMultiviewProperties_partial_temp(struct vn_cs_decoder 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceMultiviewProperties_pnext_partial_temp(dec);
@@ -4858,7 +4910,8 @@ vn_decode_VkPhysicalDeviceSubgroupProperties_partial_temp(struct vn_cs_decoder *
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSubgroupProperties_pnext_partial_temp(dec);
@@ -4911,7 +4964,8 @@ vn_decode_VkPhysicalDevicePointClippingProperties_partial_temp(struct vn_cs_deco
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDevicePointClippingProperties_pnext_partial_temp(dec);
@@ -4964,7 +5018,8 @@ vn_decode_VkPhysicalDeviceProtectedMemoryProperties_partial_temp(struct vn_cs_de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceProtectedMemoryProperties_pnext_partial_temp(dec);
@@ -5019,7 +5074,8 @@ vn_decode_VkPhysicalDeviceSamplerFilterMinmaxProperties_partial_temp(struct vn_c
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSamplerFilterMinmaxProperties_pnext_partial_temp(dec);
@@ -5074,7 +5130,8 @@ vn_decode_VkPhysicalDeviceMaintenance3Properties_partial_temp(struct vn_cs_decod
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceMaintenance3Properties_pnext_partial_temp(dec);
@@ -5159,7 +5216,8 @@ vn_decode_VkPhysicalDeviceFloatControlsProperties_partial_temp(struct vn_cs_deco
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceFloatControlsProperties_pnext_partial_temp(dec);
@@ -5256,7 +5314,8 @@ vn_decode_VkPhysicalDeviceDescriptorIndexingProperties_partial_temp(struct vn_cs
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceDescriptorIndexingProperties_pnext_partial_temp(dec);
@@ -5309,7 +5368,8 @@ vn_decode_VkPhysicalDeviceTimelineSemaphoreProperties_partial_temp(struct vn_cs_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTimelineSemaphoreProperties_pnext_partial_temp(dec);
@@ -5368,7 +5428,8 @@ vn_decode_VkPhysicalDeviceDepthStencilResolveProperties_partial_temp(struct vn_c
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceDepthStencilResolveProperties_pnext_partial_temp(dec);
@@ -5439,7 +5500,8 @@ vn_decode_VkPhysicalDeviceTransformFeedbackPropertiesEXT_partial_temp(struct vn_
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceTransformFeedbackPropertiesEXT_pnext_partial_temp(dec);
@@ -5523,7 +5585,8 @@ vn_decode_VkPhysicalDeviceVulkan11Properties_partial_temp(struct vn_cs_decoder *
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan11Properties_pnext_partial_temp(dec);
@@ -5680,7 +5743,8 @@ vn_decode_VkPhysicalDeviceVulkan12Properties_partial_temp(struct vn_cs_decoder *
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceVulkan12Properties_pnext_partial_temp(dec);
@@ -5965,7 +6029,8 @@ vn_decode_VkPhysicalDeviceProperties2_partial_temp(struct vn_cs_decoder *dec, Vk
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
@@ -6053,7 +6118,8 @@ vn_decode_VkDrmFormatModifierPropertiesListEXT_partial_temp(struct vn_cs_decoder
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
+    if (stype != VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDrmFormatModifierPropertiesListEXT_pnext_partial_temp(dec);
@@ -6142,7 +6208,8 @@ vn_decode_VkFormatProperties2_partial_temp(struct vn_cs_decoder *dec, VkFormatPr
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkFormatProperties2_pnext_partial_temp(dec);
@@ -6172,7 +6239,8 @@ vn_decode_VkPhysicalDeviceExternalImageFormatInfo_temp(struct vn_cs_decoder *dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceExternalImageFormatInfo_pnext_temp(dec);
@@ -6239,7 +6307,8 @@ vn_decode_VkPhysicalDeviceImageDrmFormatModifierInfoEXT_temp(struct vn_cs_decode
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceImageDrmFormatModifierInfoEXT_pnext_temp(dec);
@@ -6346,7 +6415,8 @@ vn_decode_VkPhysicalDeviceImageFormatInfo2_temp(struct vn_cs_decoder *dec, VkPhy
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceImageFormatInfo2_pnext_temp(dec);
@@ -6459,7 +6529,8 @@ vn_decode_VkExternalImageFormatProperties_partial_temp(struct vn_cs_decoder *dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalImageFormatProperties_pnext_partial_temp(dec);
@@ -6512,7 +6583,8 @@ vn_decode_VkSamplerYcbcrConversionImageFormatProperties_partial_temp(struct vn_c
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSamplerYcbcrConversionImageFormatProperties_pnext_partial_temp(dec);
@@ -6615,7 +6687,8 @@ vn_decode_VkImageFormatProperties2_partial_temp(struct vn_cs_decoder *dec, VkIma
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageFormatProperties2_pnext_partial_temp(dec);
@@ -6668,7 +6741,8 @@ vn_decode_VkQueueFamilyProperties2_partial_temp(struct vn_cs_decoder *dec, VkQue
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkQueueFamilyProperties2_pnext_partial_temp(dec);
@@ -6721,7 +6795,8 @@ vn_decode_VkPhysicalDeviceMemoryProperties2_partial_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceMemoryProperties2_pnext_partial_temp(dec);
@@ -6755,7 +6830,8 @@ vn_decode_VkPhysicalDeviceSparseImageFormatInfo2_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SPARSE_IMAGE_FORMAT_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SPARSE_IMAGE_FORMAT_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceSparseImageFormatInfo2_pnext_temp(dec);
@@ -6838,7 +6914,8 @@ vn_decode_VkSparseImageFormatProperties2_partial_temp(struct vn_cs_decoder *dec,
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2);
+    if (stype != VK_STRUCTURE_TYPE_SPARSE_IMAGE_FORMAT_PROPERTIES_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSparseImageFormatProperties2_pnext_partial_temp(dec);
@@ -6870,7 +6947,8 @@ vn_decode_VkPhysicalDeviceExternalBufferInfo_temp(struct vn_cs_decoder *dec, VkP
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceExternalBufferInfo_pnext_temp(dec);
@@ -6951,7 +7029,8 @@ vn_decode_VkExternalBufferProperties_partial_temp(struct vn_cs_decoder *dec, VkE
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalBufferProperties_pnext_partial_temp(dec);
@@ -7001,7 +7080,8 @@ vn_decode_VkPhysicalDeviceExternalSemaphoreInfo_temp(struct vn_cs_decoder *dec, 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceExternalSemaphoreInfo_pnext_temp(dec);
@@ -7087,7 +7167,8 @@ vn_decode_VkExternalSemaphoreProperties_partial_temp(struct vn_cs_decoder *dec, 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalSemaphoreProperties_pnext_partial_temp(dec);
@@ -7117,7 +7198,8 @@ vn_decode_VkPhysicalDeviceExternalFenceInfo_temp(struct vn_cs_decoder *dec, VkPh
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceExternalFenceInfo_pnext_temp(dec);
@@ -7200,7 +7282,8 @@ vn_decode_VkExternalFenceProperties_partial_temp(struct vn_cs_decoder *dec, VkEx
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_FENCE_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalFenceProperties_pnext_partial_temp(dec);
@@ -7263,7 +7346,8 @@ vn_decode_VkPhysicalDeviceGroupProperties_partial_temp(struct vn_cs_decoder *dec
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkPhysicalDeviceGroupProperties_pnext_partial_temp(dec);
@@ -7295,7 +7379,8 @@ vn_decode_VkDeviceQueueInfo2_temp(struct vn_cs_decoder *dec, VkDeviceQueueInfo2 
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceQueueInfo2_pnext_temp(dec);

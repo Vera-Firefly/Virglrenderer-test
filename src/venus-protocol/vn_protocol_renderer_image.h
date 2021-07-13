@@ -55,7 +55,8 @@ vn_decode_VkExternalMemoryImageCreateInfo_temp(struct vn_cs_decoder *dec, VkExte
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkExternalMemoryImageCreateInfo_pnext_temp(dec);
@@ -120,7 +121,8 @@ vn_decode_VkImageDrmFormatModifierListCreateInfoEXT_temp(struct vn_cs_decoder *d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_LIST_CREATE_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageDrmFormatModifierListCreateInfoEXT_pnext_temp(dec);
@@ -230,7 +232,8 @@ vn_decode_VkImageDrmFormatModifierExplicitCreateInfoEXT_temp(struct vn_cs_decode
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageDrmFormatModifierExplicitCreateInfoEXT_pnext_temp(dec);
@@ -363,7 +366,8 @@ vn_decode_VkImageCreateInfo_temp(struct vn_cs_decoder *dec, VkImageCreateInfo *v
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageCreateInfo_pnext_temp(dec);
@@ -503,7 +507,8 @@ vn_decode_VkBindImageMemoryDeviceGroupInfo_temp(struct vn_cs_decoder *dec, VkBin
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_DEVICE_GROUP_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_DEVICE_GROUP_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindImageMemoryDeviceGroupInfo_pnext_temp(dec);
@@ -588,7 +593,8 @@ vn_decode_VkBindImagePlaneMemoryInfo_temp(struct vn_cs_decoder *dec, VkBindImage
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_IMAGE_PLANE_MEMORY_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_IMAGE_PLANE_MEMORY_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindImagePlaneMemoryInfo_pnext_temp(dec);
@@ -721,7 +727,8 @@ vn_decode_VkBindImageMemoryInfo_temp(struct vn_cs_decoder *dec, VkBindImageMemor
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindImageMemoryInfo_pnext_temp(dec);
@@ -785,7 +792,8 @@ vn_decode_VkImagePlaneMemoryRequirementsInfo_temp(struct vn_cs_decoder *dec, VkI
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_PLANE_MEMORY_REQUIREMENTS_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImagePlaneMemoryRequirementsInfo_pnext_temp(dec);
@@ -861,7 +869,8 @@ vn_decode_VkImageMemoryRequirementsInfo2_temp(struct vn_cs_decoder *dec, VkImage
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageMemoryRequirementsInfo2_pnext_temp(dec);
@@ -920,7 +929,8 @@ vn_decode_VkImageSparseMemoryRequirementsInfo2_temp(struct vn_cs_decoder *dec, V
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_SPARSE_MEMORY_REQUIREMENTS_INFO_2);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_SPARSE_MEMORY_REQUIREMENTS_INFO_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageSparseMemoryRequirementsInfo2_pnext_temp(dec);
@@ -999,7 +1009,8 @@ vn_decode_VkSparseImageMemoryRequirements2_partial_temp(struct vn_cs_decoder *de
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SPARSE_IMAGE_MEMORY_REQUIREMENTS_2);
+    if (stype != VK_STRUCTURE_TYPE_SPARSE_IMAGE_MEMORY_REQUIREMENTS_2)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSparseImageMemoryRequirements2_pnext_partial_temp(dec);
@@ -1052,7 +1063,8 @@ vn_decode_VkImageDrmFormatModifierPropertiesEXT_partial_temp(struct vn_cs_decode
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT);
+    if (stype != VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_PROPERTIES_EXT)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkImageDrmFormatModifierPropertiesEXT_pnext_partial_temp(dec);

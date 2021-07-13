@@ -48,7 +48,8 @@ vn_decode_VkDescriptorSetVariableDescriptorCountAllocateInfo_temp(struct vn_cs_d
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDescriptorSetVariableDescriptorCountAllocateInfo_pnext_temp(dec);
@@ -136,7 +137,8 @@ vn_decode_VkDescriptorSetAllocateInfo_temp(struct vn_cs_decoder *dec, VkDescript
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDescriptorSetAllocateInfo_pnext_temp(dec);
@@ -270,7 +272,8 @@ vn_decode_VkWriteDescriptorSet_temp(struct vn_cs_decoder *dec, VkWriteDescriptor
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET);
+    if (stype != VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkWriteDescriptorSet_pnext_temp(dec);
@@ -348,7 +351,8 @@ vn_decode_VkCopyDescriptorSet_temp(struct vn_cs_decoder *dec, VkCopyDescriptorSe
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET);
+    if (stype != VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkCopyDescriptorSet_pnext_temp(dec);

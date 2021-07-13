@@ -36,7 +36,8 @@ vn_decode_VkQueryPoolCreateInfo_temp(struct vn_cs_decoder *dec, VkQueryPoolCreat
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkQueryPoolCreateInfo_pnext_temp(dec);

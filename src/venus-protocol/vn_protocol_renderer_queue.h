@@ -62,7 +62,8 @@ vn_decode_VkDeviceGroupSubmitInfo_temp(struct vn_cs_decoder *dec, VkDeviceGroupS
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_GROUP_SUBMIT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_GROUP_SUBMIT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceGroupSubmitInfo_pnext_temp(dec);
@@ -123,7 +124,8 @@ vn_decode_VkProtectedSubmitInfo_temp(struct vn_cs_decoder *dec, VkProtectedSubmi
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_PROTECTED_SUBMIT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_PROTECTED_SUBMIT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkProtectedSubmitInfo_pnext_temp(dec);
@@ -198,7 +200,8 @@ vn_decode_VkTimelineSemaphoreSubmitInfo_temp(struct vn_cs_decoder *dec, VkTimeli
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkTimelineSemaphoreSubmitInfo_pnext_temp(dec);
@@ -335,7 +338,8 @@ vn_decode_VkSubmitInfo_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_SUBMIT_INFO);
+    if (stype != VK_STRUCTURE_TYPE_SUBMIT_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkSubmitInfo_pnext_temp(dec);
@@ -552,7 +556,8 @@ vn_decode_VkDeviceGroupBindSparseInfo_temp(struct vn_cs_decoder *dec, VkDeviceGr
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_DEVICE_GROUP_BIND_SPARSE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_DEVICE_GROUP_BIND_SPARSE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkDeviceGroupBindSparseInfo_pnext_temp(dec);
@@ -691,7 +696,8 @@ vn_decode_VkBindSparseInfo_temp(struct vn_cs_decoder *dec, VkBindSparseInfo *val
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    assert(stype == VK_STRUCTURE_TYPE_BIND_SPARSE_INFO);
+    if (stype != VK_STRUCTURE_TYPE_BIND_SPARSE_INFO)
+        vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
     val->pNext = vn_decode_VkBindSparseInfo_pnext_temp(dec);
