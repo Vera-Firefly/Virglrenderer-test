@@ -163,7 +163,7 @@ static inline void vn_decode_vkGetPipelineCacheData_args_temp(struct vn_cs_decod
         args->pDataSize = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        const size_t array_size = vn_decode_array_size(dec, *args->pDataSize);
+        const size_t array_size = vn_decode_array_size(dec, (args->pDataSize ? *args->pDataSize : 0));
         args->pData = vn_cs_decoder_alloc_temp(dec, array_size);
         if (!args->pData) return;
     } else {
@@ -190,8 +190,8 @@ static inline void vn_encode_vkGetPipelineCacheData_reply(struct vn_cs_encoder *
     if (vn_encode_simple_pointer(enc, args->pDataSize))
         vn_encode_size_t(enc, args->pDataSize);
     if (args->pData) {
-        vn_encode_array_size(enc, *args->pDataSize);
-        vn_encode_blob_array(enc, args->pData, *args->pDataSize);
+        vn_encode_array_size(enc, (args->pDataSize ? *args->pDataSize : 0));
+        vn_encode_blob_array(enc, args->pData, (args->pDataSize ? *args->pDataSize : 0));
     } else {
         vn_encode_array_size(enc, 0);
     }

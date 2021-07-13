@@ -297,10 +297,10 @@ static inline void vn_decode_vkEnumerateInstanceLayerProperties_args_temp(struct
         args->pPropertyCount = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * *args->pPropertyCount);
+        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
         if (!args->pProperties) return;
-        vn_decode_array_size(dec, *args->pPropertyCount);
-        for (uint32_t i = 0; i < *args->pPropertyCount; i++)
+        vn_decode_array_size(dec, (args->pPropertyCount ? *args->pPropertyCount : 0));
+        for (uint32_t i = 0; i < (args->pPropertyCount ? *args->pPropertyCount : 0); i++)
             vn_decode_VkLayerProperties_partial_temp(dec, &args->pProperties[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -322,8 +322,8 @@ static inline void vn_encode_vkEnumerateInstanceLayerProperties_reply(struct vn_
     if (vn_encode_simple_pointer(enc, args->pPropertyCount))
         vn_encode_uint32_t(enc, args->pPropertyCount);
     if (args->pProperties) {
-        vn_encode_array_size(enc, *args->pPropertyCount);
-        for (uint32_t i = 0; i < *args->pPropertyCount; i++)
+        vn_encode_array_size(enc, (args->pPropertyCount ? *args->pPropertyCount : 0));
+        for (uint32_t i = 0; i < (args->pPropertyCount ? *args->pPropertyCount : 0); i++)
             vn_encode_VkLayerProperties(enc, &args->pProperties[i]);
     } else {
         vn_encode_array_size(enc, 0);
@@ -349,10 +349,10 @@ static inline void vn_decode_vkEnumerateInstanceExtensionProperties_args_temp(st
         args->pPropertyCount = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * *args->pPropertyCount);
+        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
         if (!args->pProperties) return;
-        vn_decode_array_size(dec, *args->pPropertyCount);
-        for (uint32_t i = 0; i < *args->pPropertyCount; i++)
+        vn_decode_array_size(dec, (args->pPropertyCount ? *args->pPropertyCount : 0));
+        for (uint32_t i = 0; i < (args->pPropertyCount ? *args->pPropertyCount : 0); i++)
             vn_decode_VkExtensionProperties_partial_temp(dec, &args->pProperties[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -376,8 +376,8 @@ static inline void vn_encode_vkEnumerateInstanceExtensionProperties_reply(struct
     if (vn_encode_simple_pointer(enc, args->pPropertyCount))
         vn_encode_uint32_t(enc, args->pPropertyCount);
     if (args->pProperties) {
-        vn_encode_array_size(enc, *args->pPropertyCount);
-        for (uint32_t i = 0; i < *args->pPropertyCount; i++)
+        vn_encode_array_size(enc, (args->pPropertyCount ? *args->pPropertyCount : 0));
+        for (uint32_t i = 0; i < (args->pPropertyCount ? *args->pPropertyCount : 0); i++)
             vn_encode_VkExtensionProperties(enc, &args->pProperties[i]);
     } else {
         vn_encode_array_size(enc, 0);

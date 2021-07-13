@@ -1190,10 +1190,10 @@ static inline void vn_decode_vkAllocateCommandBuffers_args_temp(struct vn_cs_dec
         args->pAllocateInfo = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * args->pAllocateInfo->commandBufferCount);
+        args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
         if (!args->pCommandBuffers) return;
-        vn_decode_array_size(dec, args->pAllocateInfo->commandBufferCount);
-        for (uint32_t i = 0; i < args->pAllocateInfo->commandBufferCount; i++)
+        vn_decode_array_size(dec, (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
+        for (uint32_t i = 0; i < (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0); i++)
             vn_decode_VkCommandBuffer_temp(dec, &args->pCommandBuffers[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1217,8 +1217,8 @@ static inline void vn_encode_vkAllocateCommandBuffers_reply(struct vn_cs_encoder
     /* skip args->device */
     /* skip args->pAllocateInfo */
     if (args->pCommandBuffers) {
-        vn_encode_array_size(enc, args->pAllocateInfo->commandBufferCount);
-        for (uint32_t i = 0; i < args->pAllocateInfo->commandBufferCount; i++)
+        vn_encode_array_size(enc, (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
+        for (uint32_t i = 0; i < (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0); i++)
             vn_encode_VkCommandBuffer(enc, &args->pCommandBuffers[i]);
     } else {
         vn_encode_array_size(enc, 0);

@@ -1140,10 +1140,10 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements_args_temp(struct
         args->pSparseMemoryRequirementCount = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * *args->pSparseMemoryRequirementCount);
+        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
         if (!args->pSparseMemoryRequirements) return;
-        vn_decode_array_size(dec, *args->pSparseMemoryRequirementCount);
-        for (uint32_t i = 0; i < *args->pSparseMemoryRequirementCount; i++)
+        vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
             vn_decode_VkSparseImageMemoryRequirements_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1168,8 +1168,8 @@ static inline void vn_encode_vkGetImageSparseMemoryRequirements_reply(struct vn_
     if (vn_encode_simple_pointer(enc, args->pSparseMemoryRequirementCount))
         vn_encode_uint32_t(enc, args->pSparseMemoryRequirementCount);
     if (args->pSparseMemoryRequirements) {
-        vn_encode_array_size(enc, *args->pSparseMemoryRequirementCount);
-        for (uint32_t i = 0; i < *args->pSparseMemoryRequirementCount; i++)
+        vn_encode_array_size(enc, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
             vn_encode_VkSparseImageMemoryRequirements(enc, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_encode_array_size(enc, 0);
@@ -1379,10 +1379,10 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(struc
         args->pSparseMemoryRequirementCount = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * *args->pSparseMemoryRequirementCount);
+        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
         if (!args->pSparseMemoryRequirements) return;
-        vn_decode_array_size(dec, *args->pSparseMemoryRequirementCount);
-        for (uint32_t i = 0; i < *args->pSparseMemoryRequirementCount; i++)
+        vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
             vn_decode_VkSparseImageMemoryRequirements2_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1408,8 +1408,8 @@ static inline void vn_encode_vkGetImageSparseMemoryRequirements2_reply(struct vn
     if (vn_encode_simple_pointer(enc, args->pSparseMemoryRequirementCount))
         vn_encode_uint32_t(enc, args->pSparseMemoryRequirementCount);
     if (args->pSparseMemoryRequirements) {
-        vn_encode_array_size(enc, *args->pSparseMemoryRequirementCount);
-        for (uint32_t i = 0; i < *args->pSparseMemoryRequirementCount; i++)
+        vn_encode_array_size(enc, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
             vn_encode_VkSparseImageMemoryRequirements2(enc, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_encode_array_size(enc, 0);
