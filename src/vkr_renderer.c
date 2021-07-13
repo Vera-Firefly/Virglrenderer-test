@@ -2582,8 +2582,12 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
    }
 
 #ifdef FORCE_ENABLE_DMABUF
+   /* Do not chain VkExternalMemoryImageCreateInfo with optimal tiling, so that
+    * guest Venus can pass memory requirement cts with dedicated allocation.
+    */
    VkExternalMemoryImageCreateInfo local_external_info;
-   if (dev->physical_device->EXT_external_memory_dma_buf) {
+   if (args->pCreateInfo->tiling != VK_IMAGE_TILING_OPTIMAL &&
+       dev->physical_device->EXT_external_memory_dma_buf) {
       VkExternalMemoryImageCreateInfo *external_info = vkr_find_pnext(
          args->pCreateInfo->pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO);
       if (external_info) {
