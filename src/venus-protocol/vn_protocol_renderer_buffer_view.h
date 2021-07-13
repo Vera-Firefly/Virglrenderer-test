@@ -86,7 +86,7 @@ static inline void vn_decode_vkCreateBufferView_args_temp(struct vn_cs_decoder *
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -125,7 +125,7 @@ static inline void vn_decode_vkDestroyBufferView_args_temp(struct vn_cs_decoder 
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkBufferView_lookup(dec, &args->bufferView);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

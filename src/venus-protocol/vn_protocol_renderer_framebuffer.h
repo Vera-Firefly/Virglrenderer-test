@@ -273,7 +273,7 @@ static inline void vn_decode_vkCreateFramebuffer_args_temp(struct vn_cs_decoder 
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -312,7 +312,7 @@ static inline void vn_decode_vkDestroyFramebuffer_args_temp(struct vn_cs_decoder
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkFramebuffer_lookup(dec, &args->framebuffer);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

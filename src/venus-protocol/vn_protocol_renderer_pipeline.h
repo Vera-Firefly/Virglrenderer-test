@@ -1325,7 +1325,7 @@ static inline void vn_decode_vkCreateGraphicsPipelines_args_temp(struct vn_cs_de
         args->pCreateInfos = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -1389,7 +1389,7 @@ static inline void vn_decode_vkCreateComputePipelines_args_temp(struct vn_cs_dec
         args->pCreateInfos = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -1442,7 +1442,7 @@ static inline void vn_decode_vkDestroyPipeline_args_temp(struct vn_cs_decoder *d
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkPipeline_lookup(dec, &args->pipeline);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

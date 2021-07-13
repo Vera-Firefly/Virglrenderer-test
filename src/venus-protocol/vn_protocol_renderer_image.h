@@ -1187,7 +1187,7 @@ static inline void vn_decode_vkCreateImage_args_temp(struct vn_cs_decoder *dec, 
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -1226,7 +1226,7 @@ static inline void vn_decode_vkDestroyImage_args_temp(struct vn_cs_decoder *dec,
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkImage_lookup(dec, &args->image);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

@@ -363,7 +363,7 @@ static inline void vn_decode_vkCreateDescriptorSetLayout_args_temp(struct vn_cs_
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -402,7 +402,7 @@ static inline void vn_decode_vkDestroyDescriptorSetLayout_args_temp(struct vn_cs
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkDescriptorSetLayout_lookup(dec, &args->descriptorSetLayout);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

@@ -611,7 +611,7 @@ static inline void vn_decode_vkAllocateMemory_args_temp(struct vn_cs_decoder *de
         args->pAllocateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -650,7 +650,7 @@ static inline void vn_decode_vkFreeMemory_args_temp(struct vn_cs_decoder *dec, s
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkDeviceMemory_lookup(dec, &args->memory);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

@@ -199,7 +199,7 @@ static inline void vn_decode_vkCreateSampler_args_temp(struct vn_cs_decoder *dec
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -238,7 +238,7 @@ static inline void vn_decode_vkDestroySampler_args_temp(struct vn_cs_decoder *de
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkSampler_lookup(dec, &args->sampler);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

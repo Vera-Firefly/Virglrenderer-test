@@ -112,7 +112,7 @@ static inline void vn_decode_vkCreateDescriptorPool_args_temp(struct vn_cs_decod
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -151,7 +151,7 @@ static inline void vn_decode_vkDestroyDescriptorPool_args_temp(struct vn_cs_deco
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkDescriptorPool_lookup(dec, &args->descriptorPool);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

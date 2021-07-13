@@ -90,7 +90,7 @@ static inline void vn_decode_vkCreateShaderModule_args_temp(struct vn_cs_decoder
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -129,7 +129,7 @@ static inline void vn_decode_vkDestroyShaderModule_args_temp(struct vn_cs_decode
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkShaderModule_lookup(dec, &args->shaderModule);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

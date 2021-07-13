@@ -128,7 +128,7 @@ static inline void vn_decode_vkCreatePipelineLayout_args_temp(struct vn_cs_decod
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -167,7 +167,7 @@ static inline void vn_decode_vkDestroyPipelineLayout_args_temp(struct vn_cs_deco
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkPipelineLayout_lookup(dec, &args->pipelineLayout);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

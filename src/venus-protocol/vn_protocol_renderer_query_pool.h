@@ -84,7 +84,7 @@ static inline void vn_decode_vkCreateQueryPool_args_temp(struct vn_cs_decoder *d
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -123,7 +123,7 @@ static inline void vn_decode_vkDestroyQueryPool_args_temp(struct vn_cs_decoder *
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkQueryPool_lookup(dec, &args->queryPool);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

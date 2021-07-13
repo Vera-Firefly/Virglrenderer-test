@@ -7671,7 +7671,7 @@ static inline void vn_decode_vkCreateDevice_args_temp(struct vn_cs_decoder *dec,
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -7709,7 +7709,7 @@ static inline void vn_decode_vkDestroyDevice_args_temp(struct vn_cs_decoder *dec
 {
     vn_decode_VkDevice_lookup(dec, &args->device);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

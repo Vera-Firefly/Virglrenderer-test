@@ -92,7 +92,7 @@ static inline void vn_decode_vkCreateSamplerYcbcrConversion_args_temp(struct vn_
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -131,7 +131,7 @@ static inline void vn_decode_vkDestroySamplerYcbcrConversion_args_temp(struct vn
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkSamplerYcbcrConversion_lookup(dec, &args->ycbcrConversion);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

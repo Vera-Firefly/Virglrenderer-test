@@ -207,7 +207,7 @@ static inline void vn_decode_vkCreateInstance_args_temp(struct vn_cs_decoder *de
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -243,7 +243,7 @@ static inline void vn_decode_vkDestroyInstance_args_temp(struct vn_cs_decoder *d
 {
     vn_decode_VkInstance_lookup(dec, &args->instance);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }

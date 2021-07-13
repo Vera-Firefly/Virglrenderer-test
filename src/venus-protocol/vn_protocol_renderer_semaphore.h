@@ -335,7 +335,7 @@ static inline void vn_decode_vkCreateSemaphore_args_temp(struct vn_cs_decoder *d
         args->pCreateInfo = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
@@ -374,7 +374,7 @@ static inline void vn_decode_vkDestroySemaphore_args_temp(struct vn_cs_decoder *
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_VkSemaphore_lookup(dec, &args->semaphore);
     if (vn_decode_simple_pointer(dec)) {
-        assert(false);
+        vn_cs_decoder_set_fatal(dec);
     } else {
         args->pAllocator = NULL;
     }
