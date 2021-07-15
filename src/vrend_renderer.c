@@ -707,6 +707,7 @@ struct vrend_sub_context {
    uint32_t abo_used_mask;
    struct vrend_context_tweaks tweaks;
    uint8_t swizzle_output_rgb_to_bgr;
+   uint8_t convert_linear_to_srgb_on_write;
    int fake_occlusion_query_samples_passed_multiplier;
 
    int prim_mode;
@@ -891,6 +892,14 @@ static bool vrend_resource_is_emulated_bgra(struct vrend_resource *res)
         has_bit(res->storage_bits, VREND_STORAGE_GBM_BUFFER) || res->gbm_bo))
       return true;
    return false;
+}
+
+static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
+{
+   /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
+   return (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE) &&
+           (res->base.format == VIRGL_FORMAT_B8G8R8X8_UNORM ||
+            res->base.format == VIRGL_FORMAT_R8G8B8X8_UNORM));
 }
 
 static bool vrend_blit_needs_swizzle(enum virgl_formats src,
@@ -2537,6 +2546,7 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
             surf = sub_ctx->surf[i];
             if (util_format_is_srgb(surf->format)) {
                use_srgb = true;
+               break;
             }
          }
       }
@@ -2549,6 +2559,7 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
    }
 
    sub_ctx->swizzle_output_rgb_to_bgr = 0;
+   sub_ctx->convert_linear_to_srgb_on_write = 0;
    for (int i = 0; i < sub_ctx->nr_cbufs; i++) {
       if (sub_ctx->surf[i]) {
          struct vrend_surface *surf = sub_ctx->surf[i];
@@ -2556,6 +2567,22 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
             VREND_DEBUG(dbg_bgra, sub_ctx->parent, "swizzling output for 0x%x (surface format is %s; resource format is %s)\n",
                          i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
             sub_ctx->swizzle_output_rgb_to_bgr |= 1 << i;
+         }
+
+         /* [R8G8B8|B8G8R8]X8_UNORM formatted resources imported to mesa as EGL images occupy 24bpp instead of
+          * more common 32bpp (with an ignored alpha channel). GL_RGB8 internal format must be specified when
+          * interacting with these textures in the host driver. Unfortunately, GL_SRGB8 is not guaranteed to
+          * be color-renderable on either GL or GLES, and is typically not supported. Thus, rendering to such
+          * surfaces by using an SRGB texture view will have no colorspace conversion effects.
+          * To work around this, manual colorspace conversion is used instead in the fragment shader and
+          * during glClearColor() setting.
+          */
+         if (vrend_resource_has_24bpp_internal_format(surf->texture) && util_format_is_srgb(surf->format)) {
+            VREND_DEBUG(dbg_tex, sub_ctx->parent,
+                        "manually converting linear->srgb for EGL-backed framebuffer color attachment 0x%x"
+                        " (surface format is %s; resource format is %s)\n",
+                        i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
+            sub_ctx->convert_linear_to_srgb_on_write |= 1 << i;
          }
       }
    }
@@ -3366,6 +3393,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    if (type == PIPE_SHADER_FRAGMENT) {
       key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
       key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
+      key->fs.convert_linear_to_srgb_on_write = sub_ctx->convert_linear_to_srgb_on_write;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
          key->fs.logicop_enabled = sub_ctx->blend_state.logicop_enable;
          key->fs.logicop_func = sub_ctx->blend_state.logicop_func;
@@ -3786,6 +3814,13 @@ void vrend_bind_shader(struct vrend_context *ctx,
    vrend_shader_state_reference(&sub_ctx->shaders[sel->type], sel);
 }
 
+static float
+vrend_color_convert_linear_to_srgb(float color) {
+   return color <= 0.0031308f
+      ? 12.92f * color
+      : 1.055f * powf(color, (1.f / 2.4f)) - 0.055f;
+}
+
 void vrend_clear(struct vrend_context *ctx,
                  unsigned buffers,
                  const union pipe_color_union *color,
@@ -3812,14 +3847,29 @@ void vrend_clear(struct vrend_context *ctx,
 
    glDisable(GL_SCISSOR_TEST);
 
+   float colorf[4];
+   memcpy(colorf, color->f, sizeof(colorf));
+
+   if (sub_ctx->nr_cbufs && sub_ctx->surf[0] &&
+       vrend_resource_has_24bpp_internal_format(sub_ctx->surf[0]->texture) &&
+       util_format_is_srgb(sub_ctx->surf[0]->format)) {
+      VREND_DEBUG(dbg_tex, ctx,
+                  "manually converting glClearColor from linear->srgb colorspace for EGL-backed framebuffer color attachment"
+                  " (surface format is %s; resource format is %s)\n",
+                  util_format_name(sub_ctx->surf[0]->format),
+                  util_format_name(sub_ctx->surf[0]->texture->base.format));
+      for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
+         colorf[i] = vrend_color_convert_linear_to_srgb(colorf[i]);
+   }
+
    if (buffers & PIPE_CLEAR_COLOR) {
       if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_format_is_emulated_alpha(sub_ctx->surf[0]->format)) {
-         glClearColor(color->f[3], 0.0, 0.0, 0.0);
+         glClearColor(colorf[3], 0.0, 0.0, 0.0);
       } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_resource_is_emulated_bgra(sub_ctx->surf[0]->texture)) {
          VREND_DEBUG(dbg_bgra, ctx, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
-         glClearColor(color->f[2], color->f[1], color->f[0], color->f[3]);
+         glClearColor(colorf[2], colorf[1], colorf[0], colorf[3]);
       } else {
-         glClearColor(color->f[0], color->f[1], color->f[2], color->f[3]);
+         glClearColor(colorf[0], colorf[1], colorf[2], colorf[3]);
       }
 
       /* This function implements Gallium's full clear callback (st->pipe->clear) on the host. This
@@ -3869,13 +3919,13 @@ void vrend_clear(struct vrend_context *ctx,
             i = u_bit_scan(&mask);
             if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] && util_format_is_pure_uint(sub_ctx->surf[i] && sub_ctx->surf[i]->format))
                glClearBufferuiv(GL_COLOR,
-                                i, (GLuint *)color);
+                                i, (GLuint *)colorf);
             else if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] && util_format_is_pure_sint(sub_ctx->surf[i] && sub_ctx->surf[i]->format))
                glClearBufferiv(GL_COLOR,
-                                i, (GLint *)color);
+                                i, (GLint *)colorf);
             else
                glClearBufferfv(GL_COLOR,
-                                i, (GLfloat *)color);
+                                i, (GLfloat *)colorf);
          }
       }
       else
@@ -4377,7 +4427,7 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx, int s
       ssbo = &sub_ctx->ssbo[shader_type][i];
       res = (struct vrend_resource *)ssbo->res;
       glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i, res->id,
-                        ssbo->buffer_offset, ssbo->buffer_size);     
+                        ssbo->buffer_offset, ssbo->buffer_size);
    }
 }
 
@@ -4742,7 +4792,8 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       sub_ctx->prim_mode = (int)info->mode;
    }
 
-   if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr)
+   if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
+       sub_ctx->convert_linear_to_srgb_on_write)
       new_program = vrend_select_program(sub_ctx, info);
 
    if (!sub_ctx->prog) {

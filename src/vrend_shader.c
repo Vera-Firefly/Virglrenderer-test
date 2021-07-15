@@ -2250,6 +2250,24 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
    }
 }
 
+static void emit_cbuf_colorspace_convert(const struct dump_ctx *ctx,
+                                         struct vrend_glsl_strbufs *glsl_strbufs)
+{
+   for (uint i = 0; i < ctx->num_outputs; i++) {
+      if (ctx->key->fs.convert_linear_to_srgb_on_write & (1 << i)) {
+         emit_buff(glsl_strbufs,
+                   "{\n"
+                   "   vec3 temp = fsout_c%d.xyz;\n"
+                   "   bvec3 thresh = lessThanEqual(temp, vec3(0.0031308));\n"
+                   "   vec3 a = temp * vec3(12.92);\n"
+                   "   vec3 b = ( vec3(1.055) * pow(temp, vec3(1.0/2.4)) ) - vec3(0.055);\n"
+                   "   fsout_c%d.xyz = mix(b, a, thresh);\n"
+                   "}\n"
+                   , i, i);
+      }
+   }
+}
+
 static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
                                       struct vrend_glsl_strbufs *glsl_strbufs)
 {
@@ -2268,6 +2286,9 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
 
     if (ctx->key->fs.swizzle_output_rgb_to_bgr)
        emit_cbuf_swizzle(ctx, glsl_strbufs);
+
+    if (ctx->key->fs.convert_linear_to_srgb_on_write)
+       emit_cbuf_colorspace_convert(ctx, glsl_strbufs);
 
     if (ctx->write_all_cbufs)
        emit_cbuf_writes(ctx, glsl_strbufs);
