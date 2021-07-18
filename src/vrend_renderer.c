@@ -203,6 +203,7 @@ enum features_id
    feat_ubo,
    feat_viewport_array,
    feat_implicit_msaa,
+   feat_anisotropic_filter,
    feat_last,
 };
 
@@ -304,6 +305,7 @@ static const  struct {
    FEAT(ubo, 31, 30,  "GL_ARB_uniform_buffer_object" ),
    FEAT(viewport_array, 41, UNAVAIL,  "GL_ARB_viewport_array", "GL_OES_viewport_array"),
    FEAT(implicit_msaa, UNAVAIL, UNAVAIL,  "GL_EXT_multisampled_render_to_texture"),
+   FEAT(anisotropic_filter, 46, UNAVAIL,  "GL_EXT_texture_filter_anisotropic", "GL_ARB_texture_filter_anisotropic"),
 };
 
 struct global_renderer_state {
@@ -5921,6 +5923,8 @@ static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
       glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, state->compare_mode ? GL_COMPARE_R_TO_TEXTURE : GL_NONE);
    if (tex->state.compare_func != state->compare_func || set_all)
       glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_NEVER + state->compare_func);
+   if (has_feature(feat_anisotropic_filter) && (tex->state.max_anisotropy != state->max_anisotropy || set_all))
+      glTexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY, state->max_anisotropy);
 
    /*
     * Oh this is a fun one. On GLES 2.0 all cubemap MUST NOT be seamless.
@@ -10708,6 +10712,13 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
+
+   if (has_feature(feat_anisotropic_filter)) {
+      float max_aniso;
+      glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
+      caps->v2.max_anisotropy = MIN2(max_aniso, 16.0);
+   }
+
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
