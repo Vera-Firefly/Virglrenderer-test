@@ -1208,7 +1208,7 @@ static int vrend_decode_set_shader_buffers(struct vrend_context *ctx, const uint
       return 0;
 
    if (start_slot > PIPE_MAX_SHADER_BUFFERS ||
-       start_slot > PIPE_MAX_SHADER_BUFFERS - num_ssbo)
+       num_ssbo > PIPE_MAX_SHADER_BUFFERS - start_slot)
       return EINVAL;
 
    for (uint32_t i = 0; i < num_ssbo; i++) {
