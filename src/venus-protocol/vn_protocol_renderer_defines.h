@@ -2002,4 +2002,18 @@ static inline void vn_dispatch_debug_log(struct vn_dispatch_context *ctx, const 
     va_end(va);
 }
 
+static inline bool vn_dispatch_should_log_result(VkResult result)
+{
+    switch (result) {
+    case VK_ERROR_FORMAT_NOT_SUPPORTED:
+    case VK_ERROR_FRAGMENTED_POOL:
+    case VK_ERROR_OUT_OF_POOL_MEMORY:
+        /* do not log errors that apps normally handle properly */
+        return false;
+    default:
+        /* log all other errors */
+        return result < VK_SUCCESS;
+    }
+}
+
 #endif /* VN_PROTOCOL_RENDERER_DEFINES_H */

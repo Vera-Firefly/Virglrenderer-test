@@ -874,15 +874,10 @@ static inline void vn_dispatch_vkQueueSubmit(struct vn_dispatch_context *ctx, Vk
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueSubmit(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkQueueSubmit returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkQueueSubmit returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkQueueSubmit_reply(ctx->encoder, &args);
@@ -908,15 +903,10 @@ static inline void vn_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *ctx, 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueWaitIdle(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkQueueWaitIdle returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkQueueWaitIdle returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkQueueWaitIdle_reply(ctx->encoder, &args);
@@ -942,15 +932,10 @@ static inline void vn_dispatch_vkQueueBindSparse(struct vn_dispatch_context *ctx
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkQueueBindSparse(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkQueueBindSparse returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkQueueBindSparse returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkQueueBindSparse_reply(ctx->encoder, &args);

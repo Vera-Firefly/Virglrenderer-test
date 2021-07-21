@@ -336,15 +336,10 @@ static inline void vn_dispatch_vkCreateFence(struct vn_dispatch_context *ctx, Vk
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateFence(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkCreateFence returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkCreateFence returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCreateFence_reply(ctx->encoder, &args);
@@ -395,15 +390,10 @@ static inline void vn_dispatch_vkResetFences(struct vn_dispatch_context *ctx, Vk
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetFences(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkResetFences returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkResetFences returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkResetFences_reply(ctx->encoder, &args);
@@ -429,15 +419,10 @@ static inline void vn_dispatch_vkGetFenceStatus(struct vn_dispatch_context *ctx,
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetFenceStatus(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkGetFenceStatus returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkGetFenceStatus returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkGetFenceStatus_reply(ctx->encoder, &args);
@@ -463,15 +448,10 @@ static inline void vn_dispatch_vkWaitForFences(struct vn_dispatch_context *ctx, 
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkWaitForFences(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkWaitForFences returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkWaitForFences returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkWaitForFences_reply(ctx->encoder, &args);

@@ -503,15 +503,10 @@ static inline void vn_dispatch_vkCreateSemaphore(struct vn_dispatch_context *ctx
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateSemaphore(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkCreateSemaphore returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkCreateSemaphore returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCreateSemaphore_reply(ctx->encoder, &args);
@@ -562,15 +557,10 @@ static inline void vn_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_con
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetSemaphoreCounterValue(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkGetSemaphoreCounterValue returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkGetSemaphoreCounterValue returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkGetSemaphoreCounterValue_reply(ctx->encoder, &args);
@@ -596,15 +586,10 @@ static inline void vn_dispatch_vkWaitSemaphores(struct vn_dispatch_context *ctx,
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkWaitSemaphores(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkWaitSemaphores returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkWaitSemaphores returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkWaitSemaphores_reply(ctx->encoder, &args);
@@ -630,15 +615,10 @@ static inline void vn_dispatch_vkSignalSemaphore(struct vn_dispatch_context *ctx
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkSignalSemaphore(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkSignalSemaphore returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkSignalSemaphore returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkSignalSemaphore_reply(ctx->encoder, &args);

@@ -220,15 +220,10 @@ static inline void vn_dispatch_vkCreateEvent(struct vn_dispatch_context *ctx, Vk
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateEvent(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkCreateEvent returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkCreateEvent returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCreateEvent_reply(ctx->encoder, &args);
@@ -279,15 +274,10 @@ static inline void vn_dispatch_vkGetEventStatus(struct vn_dispatch_context *ctx,
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkGetEventStatus(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkGetEventStatus returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkGetEventStatus returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkGetEventStatus_reply(ctx->encoder, &args);
@@ -313,15 +303,10 @@ static inline void vn_dispatch_vkSetEvent(struct vn_dispatch_context *ctx, VkCom
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkSetEvent(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkSetEvent returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkSetEvent returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkSetEvent_reply(ctx->encoder, &args);
@@ -347,15 +332,10 @@ static inline void vn_dispatch_vkResetEvent(struct vn_dispatch_context *ctx, VkC
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkResetEvent(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkResetEvent returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkResetEvent returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkResetEvent_reply(ctx->encoder, &args);

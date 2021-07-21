@@ -171,15 +171,10 @@ static inline void vn_dispatch_vkCreateSamplerYcbcrConversion(struct vn_dispatch
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkCreateSamplerYcbcrConversion(ctx, &args);
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && args.ret < VK_SUCCESS) {
-        switch (args.ret) {
-        case VK_ERROR_FORMAT_NOT_SUPPORTED:
-            break;
-        default:
-            vn_dispatch_debug_log(ctx, "vkCreateSamplerYcbcrConversion returned %d", args.ret);
-            break;
-        }
-    }
+#ifdef DEBUG
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
+        vn_dispatch_debug_log(ctx, "vkCreateSamplerYcbcrConversion returned %d", args.ret);
+#endif
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCreateSamplerYcbcrConversion_reply(ctx->encoder, &args);
