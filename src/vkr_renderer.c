@@ -4493,11 +4493,14 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
 
    mtx_lock(&ctx->mutex);
 
+   /* CS error is considered fatal (destroy the context?) */
+   if (vkr_cs_decoder_get_fatal(&ctx->decoder))
+      return EINVAL;
+
    vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
 
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
-      /* TODO consider the client malicious and disconnect it */
       if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
          ret = EINVAL;
          break;
