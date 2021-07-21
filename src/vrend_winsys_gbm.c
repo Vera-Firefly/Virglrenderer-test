@@ -345,7 +345,7 @@ int virgl_gbm_transfer(struct gbm_bo *bo, uint32_t direction, const struct iovec
    /* XXX remove this and map just the region when single plane and GBM honors the region */
    if (direction == VIRGL_TRANSFER_TO_HOST &&
        !(info->box->x == 0 && info->box->y == 0 &&
-         info->box->width == width && info->box->height == height))
+         info->box->width == (int)width && info->box->height == (int)height))
       map_flags |= GBM_BO_TRANSFER_READ;
 
    void *addr = gbm_bo_map(bo, 0, 0, width, height, map_flags, &host_map_stride0, &map_data);
@@ -440,7 +440,8 @@ uint32_t virgl_gbm_convert_flags(uint32_t virgl_bind_flags)
    if (virgl_bind_flags & VIRGL_BIND_MINIGBM_HW_VIDEO_ENCODER)
       flags |= GBM_BO_USE_HW_VIDEO_ENCODER;
 
-   if ((virgl_bind_flags & VIRGL_BIND_MINIGBM_PROTECTED) == VIRGL_BIND_MINIGBM_PROTECTED) {
+   if ((virgl_bind_flags & VIRGL_BIND_MINIGBM_PROTECTED) ==
+       (uint32_t)VIRGL_BIND_MINIGBM_PROTECTED) {
       flags |= GBM_BO_USE_PROTECTED;
    } else {
       if (virgl_bind_flags & VIRGL_BIND_MINIGBM_SW_READ_OFTEN)
