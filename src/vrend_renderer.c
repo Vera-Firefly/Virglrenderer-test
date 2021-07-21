@@ -11342,6 +11342,10 @@ void vrend_renderer_get_meminfo(struct vrend_context *ctx, uint32_t res_handle)
    struct virgl_memory_info *info;
 
    res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   if (!res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
+      return;
+   }
 
    info = (struct virgl_memory_info *)res->iov->iov_base;
 
