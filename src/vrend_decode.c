@@ -1587,7 +1587,10 @@ static int vrend_decode_send_string_marker(struct vrend_context *ctx, const uint
    }
 
    int32_t len = get_buf_entry(buf, VIRGL_SEND_STRING_MARKER_STRING_SIZE);
-   if (len > buf_len) {
+   if (len < 0) {
+      fprintf(stderr, "String len %d < 0\n", len);
+      return EINVAL;
+   } else if (len > buf_len) {
        fprintf(stderr, "String len %d > buf_len %d\n", len, buf_len);
        return EINVAL;
    }
