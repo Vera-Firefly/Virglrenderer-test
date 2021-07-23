@@ -3527,6 +3527,9 @@ translate_atomic(struct dump_ctx *ctx,
 	 stypeprefix = FLOAT_BITS_TO_UINT;
       }
 
+      if (is_cas)
+         snprintf(cas_str, sizeof(cas_str), ", %s(%s(%s))", get_string(type), get_string(stypeprefix), srcs[3]);
+
       emit_buff(&ctx->glsl_strbufs, "%s = %s(atomic%s(%s[int(floatBitsToInt(%s)) >> 2], %s(%s(%s).x)%s));\n",
                 dst, get_string(dtypeprefix), opname, srcs[0], srcs[1],
                 get_string(type), get_string(stypeprefix), srcs[2], cas_str);
