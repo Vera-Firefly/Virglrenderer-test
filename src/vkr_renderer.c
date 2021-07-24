@@ -79,6 +79,51 @@
    vn_replace_##vk_cmd##_args_handle(args);                                              \
    vk_cmd(args->device, args->vk_arg, NULL)
 
+#define ALLOCATE_OBJECT_ARRAY(obj, vkr_type, vk_type, vk_obj, vk_cmd, arg_count,         \
+                              arg_pool, vkr_pool_type, vk_pool_type)                     \
+   do {                                                                                  \
+      struct vkr_device *dev = (struct vkr_device *)args->device;                        \
+      if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {                             \
+         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      struct vkr_##vkr_pool_type *pool =                                                 \
+         (struct vkr_##vkr_pool_type *)(uintptr_t)args->pAllocateInfo->arg_pool;         \
+      if (!pool || pool->base.type != VK_OBJECT_TYPE_##vk_pool_type) {                   \
+         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      struct object_array arr;                                                           \
+      if (!object_array_init(&arr, args->pAllocateInfo->arg_count,                       \
+                             VK_OBJECT_TYPE_##vk_type, sizeof(struct vkr_##vkr_type),    \
+                             sizeof(Vk##vk_obj), args->p##vk_obj##s)) {                  \
+         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      vn_replace_##vk_cmd##_args_handle(args);                                           \
+      args->ret = vk_cmd(args->device, args->pAllocateInfo, arr.handle_storage);         \
+      if (args->ret != VK_SUCCESS) {                                                     \
+         object_array_fini(&arr);                                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      for (uint32_t i = 0; i < arr.count; i++) {                                         \
+         struct vkr_##vkr_type *obj = arr.objects[i];                                    \
+                                                                                         \
+         obj->base.handle.vkr_type = ((Vk##vk_obj *)arr.handle_storage)[i];              \
+         obj->device = dev;                                                              \
+         list_add(&obj->head, &pool->vkr_type##s);                                       \
+                                                                                         \
+         util_hash_table_set_u64(ctx->object_table, obj->base.id, obj);                  \
+      }                                                                                  \
+                                                                                         \
+      arr.objects_stolen = true;                                                         \
+      object_array_fini(&arr);                                                           \
+   } while (0)
+
 struct vkr_physical_device;
 
 struct vkr_instance {
@@ -253,6 +298,8 @@ struct vkr_descriptor_pool {
 
 struct vkr_descriptor_set {
    struct vkr_object base;
+
+   struct vkr_device *device;
 
    struct list_head head;
 };
@@ -2782,41 +2829,9 @@ vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_descriptor_pool *pool =
-      (struct vkr_descriptor_pool *)(uintptr_t)args->pAllocateInfo->descriptorPool;
-   if (!pool || pool->base.type != VK_OBJECT_TYPE_DESCRIPTOR_POOL) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   struct object_array arr;
-   if (!object_array_init(&arr, args->pAllocateInfo->descriptorSetCount,
-                          VK_OBJECT_TYPE_DESCRIPTOR_SET,
-                          sizeof(struct vkr_descriptor_set), sizeof(VkDescriptorSet),
-                          args->pDescriptorSets)) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
-   vn_replace_vkAllocateDescriptorSets_args_handle(args);
-   args->ret =
-      vkAllocateDescriptorSets(args->device, args->pAllocateInfo, arr.handle_storage);
-   if (args->ret != VK_SUCCESS) {
-      object_array_fini(&arr);
-      return;
-   }
-
-   for (uint32_t i = 0; i < arr.count; i++) {
-      struct vkr_descriptor_set *set = arr.objects[i];
-
-      set->base.handle.descriptor_set = ((VkDescriptorSet *)arr.handle_storage)[i];
-      list_add(&set->head, &pool->descriptor_sets);
-
-      util_hash_table_set_u64(ctx->object_table, set->base.id, set);
-   }
-
-   arr.objects_stolen = true;
-   object_array_fini(&arr);
+   ALLOCATE_OBJECT_ARRAY(set, descriptor_set, DESCRIPTOR_SET, DescriptorSet,
+                         vkAllocateDescriptorSets, descriptorSetCount, descriptorPool,
+                         descriptor_pool, DESCRIPTOR_POOL);
 }
 
 static void
@@ -3281,48 +3296,9 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   struct vkr_command_pool *pool =
-      (struct vkr_command_pool *)(uintptr_t)args->pAllocateInfo->commandPool;
-   if (!pool || pool->base.type != VK_OBJECT_TYPE_COMMAND_POOL) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   struct object_array arr;
-   if (!object_array_init(&arr, args->pAllocateInfo->commandBufferCount,
-                          VK_OBJECT_TYPE_COMMAND_BUFFER,
-                          sizeof(struct vkr_command_buffer), sizeof(VkCommandBuffer),
-                          args->pCommandBuffers)) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
-   vn_replace_vkAllocateCommandBuffers_args_handle(args);
-   args->ret =
-      vkAllocateCommandBuffers(args->device, args->pAllocateInfo, arr.handle_storage);
-   if (args->ret != VK_SUCCESS) {
-      object_array_fini(&arr);
-      return;
-   }
-
-   for (uint32_t i = 0; i < arr.count; i++) {
-      struct vkr_command_buffer *cmd = arr.objects[i];
-
-      cmd->base.handle.command_buffer = ((VkCommandBuffer *)arr.handle_storage)[i];
-      cmd->device = dev;
-      list_add(&cmd->head, &pool->command_buffers);
-
-      util_hash_table_set_u64(ctx->object_table, cmd->base.id, cmd);
-   }
-
-   arr.objects_stolen = true;
-   object_array_fini(&arr);
+   ALLOCATE_OBJECT_ARRAY(cmd, command_buffer, COMMAND_BUFFER, CommandBuffer,
+                         vkAllocateCommandBuffers, commandBufferCount, commandPool,
+                         command_pool, COMMAND_POOL);
 }
 
 static void
