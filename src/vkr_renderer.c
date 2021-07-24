@@ -124,6 +124,32 @@
       object_array_fini(&arr);                                                           \
    } while (0)
 
+#define FREE_OBJECT_ARRAY(obj, vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)  \
+   do {                                                                                  \
+      struct list_head free_list;                                                        \
+                                                                                         \
+      list_inithead(&free_list);                                                         \
+      for (uint32_t i = 0; i < args->arg_count; i++) {                                   \
+         struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)args->arg_obj[i];         \
+         if (!obj)                                                                       \
+            continue;                                                                    \
+         if (obj->base.type != VK_OBJECT_TYPE_##vk_type) {                               \
+            vkr_cs_decoder_set_fatal(&ctx->decoder);                                     \
+            return;                                                                      \
+         }                                                                               \
+                                                                                         \
+         list_del(&obj->head);                                                           \
+         list_addtail(&obj->head, &free_list);                                           \
+      }                                                                                  \
+                                                                                         \
+      vn_replace_##vk_cmd##_args_handle(args);                                           \
+      vk_cmd(args->device, args->arg_pool, args->arg_count, args->arg_obj);              \
+                                                                                         \
+      struct vkr_##vkr_type *obj, *tmp;                                                  \
+      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, &free_list, head)                              \
+         util_hash_table_remove_u64(ctx->object_table, obj->base.id);                    \
+   } while (0)
+
 struct vkr_physical_device;
 
 struct vkr_instance {
@@ -2839,30 +2865,9 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkFreeDescriptorSets *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct list_head free_sets;
 
-   list_inithead(&free_sets);
-   for (uint32_t i = 0; i < args->descriptorSetCount; i++) {
-      struct vkr_descriptor_set *set =
-         (struct vkr_descriptor_set *)(uintptr_t)args->pDescriptorSets[i];
-      if (!set)
-         continue;
-      if (set->base.type != VK_OBJECT_TYPE_DESCRIPTOR_SET) {
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
-         return;
-      }
-
-      list_del(&set->head);
-      list_addtail(&set->head, &free_sets);
-   }
-
-   vn_replace_vkFreeDescriptorSets_args_handle(args);
-   args->ret = vkFreeDescriptorSets(args->device, args->descriptorPool,
-                                    args->descriptorSetCount, args->pDescriptorSets);
-
-   struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &free_sets, head)
-      util_hash_table_remove_u64(ctx->object_table, set->base.id);
+   FREE_OBJECT_ARRAY(set, descriptor_set, DESCRIPTOR_SET, vkFreeDescriptorSets,
+                     pDescriptorSets, descriptorSetCount, descriptorPool);
 }
 
 static void
@@ -3306,30 +3311,9 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkFreeCommandBuffers *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct list_head free_cmds;
 
-   list_inithead(&free_cmds);
-   for (uint32_t i = 0; i < args->commandBufferCount; i++) {
-      struct vkr_command_buffer *cmd =
-         (struct vkr_command_buffer *)args->pCommandBuffers[i];
-      if (!cmd)
-         continue;
-      if (cmd->base.type != VK_OBJECT_TYPE_COMMAND_BUFFER) {
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
-         return;
-      }
-
-      list_del(&cmd->head);
-      list_addtail(&cmd->head, &free_cmds);
-   }
-
-   vn_replace_vkFreeCommandBuffers_args_handle(args);
-   vkFreeCommandBuffers(args->device, args->commandPool, args->commandBufferCount,
-                        args->pCommandBuffers);
-
-   struct vkr_command_buffer *cmd, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (cmd, tmp, &free_cmds, head)
-      util_hash_table_remove_u64(ctx->object_table, cmd->base.id);
+   FREE_OBJECT_ARRAY(cmd, command_buffer, COMMAND_BUFFER, vkFreeCommandBuffers,
+                     pCommandBuffers, commandBufferCount, commandPool);
 }
 
 static void
