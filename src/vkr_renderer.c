@@ -150,6 +150,36 @@
          util_hash_table_remove_u64(ctx->object_table, obj->base.id);                    \
    } while (0)
 
+#define CREATE_PIPELINE_ARRAY(vk_cmd)                                                    \
+   do {                                                                                  \
+      struct object_array arr;                                                           \
+      if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,       \
+                             sizeof(struct vkr_pipeline), sizeof(VkPipeline),            \
+                             args->pPipelines)) {                                        \
+         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      vn_replace_##vk_cmd##_args_handle(args);                                           \
+      args->ret = vk_cmd(args->device, args->pipelineCache, args->createInfoCount,       \
+                         args->pCreateInfos, NULL, arr.handle_storage);                  \
+      if (args->ret != VK_SUCCESS) {                                                     \
+         object_array_fini(&arr);                                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
+      for (uint32_t i = 0; i < arr.count; i++) {                                         \
+         struct vkr_pipeline *pipeline = arr.objects[i];                                 \
+                                                                                         \
+         pipeline->base.handle.pipeline = ((VkPipeline *)arr.handle_storage)[i];         \
+                                                                                         \
+         util_hash_table_set_u64(ctx->object_table, pipeline->base.id, pipeline);        \
+      }                                                                                  \
+                                                                                         \
+      arr.objects_stolen = true;                                                         \
+      object_array_fini(&arr);                                                           \
+   } while (0)
+
 struct vkr_physical_device;
 
 struct vkr_instance {
@@ -3176,33 +3206,7 @@ vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct object_array arr;
-   if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,
-                          sizeof(struct vkr_pipeline), sizeof(VkPipeline),
-                          args->pPipelines)) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
-   vn_replace_vkCreateGraphicsPipelines_args_handle(args);
-   args->ret =
-      vkCreateGraphicsPipelines(args->device, args->pipelineCache, args->createInfoCount,
-                                args->pCreateInfos, NULL, arr.handle_storage);
-   if (args->ret != VK_SUCCESS) {
-      object_array_fini(&arr);
-      return;
-   }
-
-   for (uint32_t i = 0; i < arr.count; i++) {
-      struct vkr_pipeline *pipeline = arr.objects[i];
-
-      pipeline->base.handle.pipeline = ((VkPipeline *)arr.handle_storage)[i];
-
-      util_hash_table_set_u64(ctx->object_table, pipeline->base.id, pipeline);
-   }
-
-   arr.objects_stolen = true;
-   object_array_fini(&arr);
+   CREATE_PIPELINE_ARRAY(vkCreateGraphicsPipelines);
 }
 
 static void
@@ -3211,33 +3215,7 @@ vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct object_array arr;
-   if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,
-                          sizeof(struct vkr_pipeline), sizeof(VkPipeline),
-                          args->pPipelines)) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
-   vn_replace_vkCreateComputePipelines_args_handle(args);
-   args->ret =
-      vkCreateComputePipelines(args->device, args->pipelineCache, args->createInfoCount,
-                               args->pCreateInfos, NULL, arr.handle_storage);
-   if (args->ret != VK_SUCCESS) {
-      object_array_fini(&arr);
-      return;
-   }
-
-   for (uint32_t i = 0; i < arr.count; i++) {
-      struct vkr_pipeline *pipeline = arr.objects[i];
-
-      pipeline->base.handle.pipeline = ((VkPipeline *)arr.handle_storage)[i];
-
-      util_hash_table_set_u64(ctx->object_table, pipeline->base.id, pipeline);
-   }
-
-   arr.objects_stolen = true;
-   object_array_fini(&arr);
+   CREATE_PIPELINE_ARRAY(vkCreateComputePipelines);
 }
 
 static void
