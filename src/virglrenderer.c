@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "pipe/p_state.h"
 #include "util/u_format.h"
@@ -902,6 +903,7 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    }
 
    res->map_info = blob.map_info;
+   res->map_size = args->size;
 
    if (ctx->get_blob_done)
       ctx->get_blob_done(ctx, args->res_handle, &blob);
@@ -909,24 +911,55 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    return 0;
 }
 
-int virgl_renderer_resource_map(uint32_t res_handle, void **map, uint64_t *out_size)
+int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *out_size)
 {
    TRACE_FUNC();
+   int ret = 0;
+   void *map = NULL;
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
-   if (!res || !res->pipe_resource)
+   if (!res || res->mapped)
       return -EINVAL;
 
-   return vrend_renderer_resource_map(res->pipe_resource, map, out_size);
+   if (res->pipe_resource) {
+      ret = vrend_renderer_resource_map(res->pipe_resource, &map, &res->map_size);
+   } else {
+      switch (res->fd_type) {
+      case VIRGL_RESOURCE_FD_DMABUF:
+         map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+         break;
+      case VIRGL_RESOURCE_FD_OPAQUE:
+         /* TODO support mapping opaque FD. Fallthrough for now. */
+      default:
+         break;
+      }
+   }
+
+   if (!map || map == MAP_FAILED)
+      return -EINVAL;
+
+   res->mapped = map;
+   *out_map = map;
+   *out_size = res->map_size;
+   return ret;
 }
 
 int virgl_renderer_resource_unmap(uint32_t res_handle)
 {
    TRACE_FUNC();
+   int ret;
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
-   if (!res || !res->pipe_resource)
+   if (!res || !res->mapped)
       return -EINVAL;
 
-   return vrend_renderer_resource_unmap(res->pipe_resource);
+   if (res->pipe_resource) {
+      ret = vrend_renderer_resource_unmap(res->pipe_resource);
+   } else {
+      ret = munmap(res->mapped, res->map_size);
+   }
+
+   assert(!ret);
+   res->mapped = NULL;
+   return ret;
 }
 
 int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint32_t *map_info)
