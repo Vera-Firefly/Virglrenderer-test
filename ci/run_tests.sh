@@ -14,6 +14,9 @@ run_setup()
       use_trace_stderr=1
    fi
 
+   if [ "x$2" = "xvenus" ]; then
+      use_venus=1
+   fi
 
    # Let .gitlab-ci or local ci runner set
    # desired thread count
@@ -65,8 +68,12 @@ run_setup()
        export TRACING=-Dtracing=stderr
    fi
 
+   if [ "x$use_venus" = "x1" ]; then
+       export VENUS=-Dvenus-experimental=true
+   fi
+
    pwd | grep virglrenderer >/dev/null || pushd /virglrenderer && pushd $(pwd)
-   meson build/ -Dprefix=/usr/local -Ddebug=true -Dtests=true --fatal-meson-warnings $FUZZER $TRACING
+   meson build/ -Dprefix=/usr/local -Ddebug=true -Dtests=true --fatal-meson-warnings $FUZZER $TRACING $VENUS
    ninja -C build -j$NUM_THREADS install
    popd
 }
@@ -107,6 +114,18 @@ run_make_check_trace_stderr()
       RET=$?
       cp ./meson-logs/testlog.txt ../results/make_check_trace_stderr/
       popd
+      return $RET
+   )
+}
+
+run_make_check_venus()
+{
+   run_setup meson venus
+   (
+      mkdir -p ./results/make_check_venus
+      VRENDTEST_USE_EGL_SURFACELESS=1 ninja -Cbuild -j$NUM_THREADS test
+      RET=$?
+      cp ./build/meson-logs/testlog.txt ./results/make_check_venus/
       return $RET
    )
 }
@@ -200,6 +219,10 @@ parse_input()
 
          --make-check-trace-stderr)
          run_make_check_trace_stderr
+         ;;
+
+         --make-check-venus)
+         run_make_check_venus
          ;;
 
          --deqp-gl-gl-tests)

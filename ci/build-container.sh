@@ -48,6 +48,7 @@ apt-get -y install --no-install-recommends \
       libxrandr-dev \
       libxvmc-dev \
       libsm-dev \
+      libvulkan-dev \
       libwayland-dev \
       libwayland-egl-backend-dev \
       linux-image-amd64 \
