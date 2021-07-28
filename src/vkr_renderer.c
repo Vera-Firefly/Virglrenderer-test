@@ -2898,6 +2898,8 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
 
    FREE_OBJECT_ARRAY(set, descriptor_set, DESCRIPTOR_SET, vkFreeDescriptorSets,
                      pDescriptorSets, descriptorSetCount, descriptorPool);
+
+   args->ret = VK_SUCCESS;
 }
 
 static void
