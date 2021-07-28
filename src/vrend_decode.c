@@ -1580,23 +1580,20 @@ static int vrend_decode_get_memory_info(struct vrend_context *ctx, const uint32_
 
 static int vrend_decode_send_string_marker(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
-   int buf_len = sizeof(uint32_t) * (length - 1);
+   uint32_t buf_len = sizeof(uint32_t) * (length - 1);
 
    if (length < VIRGL_SEND_STRING_MARKER_MIN_SIZE) {
       fprintf(stderr, "minimal command length not okay\n");
       return EINVAL;
    }
 
-   int32_t len = get_buf_entry(buf, VIRGL_SEND_STRING_MARKER_STRING_SIZE);
-   if (len < 0) {
-      fprintf(stderr, "String len %d < 0\n", len);
-      return EINVAL;
-   } else if (len > buf_len) {
-       fprintf(stderr, "String len %d > buf_len %d\n", len, buf_len);
+   uint32_t str_len = get_buf_entry(buf, VIRGL_SEND_STRING_MARKER_STRING_SIZE);
+   if (str_len > buf_len) {
+       fprintf(stderr, "String len %u > buf_len %u\n", str_len, buf_len);
        return EINVAL;
    }
 
-   vrend_context_emit_string_marker(ctx, len, get_buf_ptr(buf, VIRGL_SEND_STRING_MARKER_OFFSET));
+   vrend_context_emit_string_marker(ctx, str_len, get_buf_ptr(buf, VIRGL_SEND_STRING_MARKER_OFFSET));
 
    return 0;
 }
