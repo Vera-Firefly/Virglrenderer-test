@@ -1047,15 +1047,23 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_physical_device_destroy(struct vkr_context *ctx,
+                            struct vkr_physical_device *physical_dev)
+{
+   free(physical_dev->extensions);
+
+   util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
+}
+
+static void
 vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
 {
-   /* TODO cleanup all objects instead? */
    for (uint32_t i = 0; i < instance->physical_device_count; i++) {
       struct vkr_physical_device *physical_dev = instance->physical_devices[i];
       if (!physical_dev)
          break;
-      free(physical_dev->extensions);
-      util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
+
+      vkr_physical_device_destroy(ctx, physical_dev);
    }
 
    if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
