@@ -51,6 +51,12 @@
  * hand-edited.  Find a better/cleaner way to reduce manual works.
  */
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
+   struct vkr_device *dev_obj = (struct vkr_device *)args->device;                       \
+   if (!dev_obj || dev_obj->base.type != VK_OBJECT_TYPE_DEVICE) {                        \
+      vkr_cs_decoder_set_fatal(&ctx->decoder);                                           \
+      return;                                                                            \
+   }                                                                                     \
+                                                                                         \
    struct vkr_##vkr_type *obj = calloc(1, sizeof(*obj));                                 \
    if (!obj) {                                                                           \
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                           \
@@ -66,7 +72,8 @@
       free(obj);                                                                         \
       return;                                                                            \
    }                                                                                     \
-   (void)obj
+                                                                                         \
+   list_add(&obj->base.track_head, &dev_obj->objects)
 
 #define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
    struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)args->vk_arg;        \
@@ -77,7 +84,9 @@
    }                                                                                     \
                                                                                          \
    vn_replace_##vk_cmd##_args_handle(args);                                              \
-   vk_cmd(args->device, args->vk_arg, NULL)
+   vk_cmd(args->device, args->vk_arg, NULL);                                             \
+                                                                                         \
+   list_del(&obj->base.track_head)
 
 #define ALLOCATE_OBJECT_ARRAY(obj, vkr_type, vk_type, vk_obj, vk_cmd, arg_count,         \
                               arg_pool, vkr_pool_type, vk_pool_type)                     \
@@ -115,6 +124,8 @@
                                                                                          \
          obj->base.handle.vkr_type = ((Vk##vk_obj *)arr.handle_storage)[i];              \
          obj->device = dev;                                                              \
+                                                                                         \
+         /* pool objects are tracked by the pool other than the device */                \
          list_add(&obj->head, &pool->vkr_type##s);                                       \
                                                                                          \
          util_hash_table_set_u64(ctx->object_table, obj->base.id, obj);                  \
@@ -152,6 +163,12 @@
 
 #define CREATE_PIPELINE_ARRAY(vk_cmd)                                                    \
    do {                                                                                  \
+      struct vkr_device *dev = (struct vkr_device *)args->device;                        \
+      if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {                             \
+         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
+         return;                                                                         \
+      }                                                                                  \
+                                                                                         \
       struct object_array arr;                                                           \
       if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,       \
                              sizeof(struct vkr_pipeline), sizeof(VkPipeline),            \
@@ -172,6 +189,8 @@
          struct vkr_pipeline *pipeline = arr.objects[i];                                 \
                                                                                          \
          pipeline->base.handle.pipeline = ((VkPipeline *)arr.handle_storage)[i];         \
+                                                                                         \
+         list_add(&pipeline->base.track_head, &dev->objects);                            \
                                                                                          \
          util_hash_table_set_u64(ctx->object_table, pipeline->base.id, pipeline);        \
       }                                                                                  \
@@ -261,6 +280,8 @@ struct vkr_device {
 
    mtx_t free_sync_mutex;
    struct list_head free_syncs;
+
+   struct list_head objects;
 };
 
 struct vkr_queue {
@@ -1880,6 +1901,7 @@ vkr_queue_create(struct vkr_context *ctx,
       queue->eventfd = ctx->fence_eventfd;
    }
 
+   /* currently queues are not tracked as device objects */
    list_addtail(&queue->head, &dev->queues);
    list_inithead(&queue->busy_head);
 
@@ -2042,6 +2064,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    mtx_init(&dev->free_sync_mutex, mtx_plain);
    list_inithead(&dev->free_syncs);
+
+   list_inithead(&dev->objects);
 
    list_add(&dev->base.track_head, &physical_dev->devices);
 
@@ -2328,6 +2352,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    mem->valid_fd_types = valid_fd_types;
    list_inithead(&mem->head);
 
+   list_add(&mem->base.track_head, &dev->objects);
+
    util_hash_table_set_u64(ctx->object_table, mem->base.id, mem);
 }
 
@@ -2348,6 +2374,7 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
    vkFreeMemory(args->device, args->memory, NULL);
 
    list_del(&mem->head);
+   list_del(&mem->base.track_head);
 
    util_hash_table_remove_u64(ctx->object_table, mem->base.id);
 }
@@ -3015,6 +3042,8 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
       free(pass);
       return;
    }
+
+   list_add(&pass->base.track_head, &dev->objects);
 
    util_hash_table_set_u64(ctx->object_table, pass->base.id, pass);
 }
