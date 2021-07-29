@@ -4734,7 +4734,9 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
 static void
 vkr_context_destroy(struct virgl_context *base)
 {
-   /* TODO move the entire teardown process to a separate thread */
+   /* TODO Move the entire teardown process to a separate thread so that the main thread
+    * cannot get blocked by the vkDeviceWaitIdle upon device destruction.
+    */
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    struct vkr_ring *ring, *ring_tmp;
