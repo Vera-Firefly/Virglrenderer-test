@@ -207,12 +207,14 @@ struct vkr_physical_device {
    VkExtensionProperties *extensions;
    uint32_t extension_count;
 
-   VkPhysicalDeviceMemoryProperties memory_properties;
-
    bool KHR_external_memory_fd;
    bool EXT_external_memory_dma_buf;
 
    bool KHR_external_fence_fd;
+
+   VkPhysicalDeviceMemoryProperties memory_properties;
+
+   struct list_head devices;
 };
 
 struct vkr_queue_sync {
@@ -1284,6 +1286,8 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
       vkr_physical_device_init_extensions(physical_dev, instance);
       vkr_physical_device_init_memory_properties(physical_dev);
 
+      list_inithead(&physical_dev->devices);
+
       instance->physical_devices[i] = physical_dev;
 
       util_hash_table_set_u64(ctx->object_table, physical_dev->base.id, physical_dev);
@@ -2032,6 +2036,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
    mtx_init(&dev->free_sync_mutex, mtx_plain);
    list_inithead(&dev->free_syncs);
 
+   list_add(&dev->base.track_head, &physical_dev->devices);
+
    util_hash_table_set_u64(ctx->object_table, dev->base.id, dev);
 }
 
@@ -2067,6 +2073,8 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
    mtx_destroy(&dev->free_sync_mutex);
 
    vkDestroyDevice(device, NULL);
+
+   list_del(&dev->base.track_head);
 
    util_hash_table_remove_u64(ctx->object_table, dev->base.id);
 }

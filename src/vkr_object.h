@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "util/u_double_list.h"
 #include "venus-protocol/vulkan.h"
 
 typedef uint64_t vkr_object_id;
@@ -50,6 +51,8 @@ struct vkr_object {
       VkSamplerYcbcrConversion sampler_ycbcr_conversion;
       VkDescriptorUpdateTemplate descriptor_update_template;
    } handle;
+
+   struct list_head track_head;
 };
 
 #endif /* VKR_OBJECT_H */
