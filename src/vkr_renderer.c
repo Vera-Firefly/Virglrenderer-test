@@ -2034,6 +2034,11 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   VkDevice device = dev->base.handle.device;
+   VkResult ret = vkDeviceWaitIdle(device);
+   if (ret != VK_SUCCESS)
+      vrend_printf("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)ret);
+
    /* TODO cleanup all objects here? */
    struct vkr_queue *queue, *queue_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &dev->queues, head)
@@ -2047,8 +2052,7 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
 
    mtx_destroy(&dev->free_sync_mutex);
 
-   vn_replace_vkDestroyDevice_args_handle(args);
-   vkDestroyDevice(args->device, NULL);
+   vkDestroyDevice(device, NULL);
 
    util_hash_table_remove_u64(ctx->object_table, dev->base.id);
 }
