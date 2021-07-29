@@ -1047,6 +1047,31 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
+{
+   /* TODO cleanup all objects instead? */
+   for (uint32_t i = 0; i < instance->physical_device_count; i++) {
+      struct vkr_physical_device *physical_dev = instance->physical_devices[i];
+      if (!physical_dev)
+         break;
+      free(physical_dev->extensions);
+      util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
+   }
+
+   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
+      instance->destroy_debug_utils_messenger(instance->base.handle.instance,
+                                              instance->validation_messenger, NULL);
+   }
+
+   vkDestroyInstance(instance->base.handle.instance, NULL);
+
+   free(instance->physical_device_handles);
+   free(instance->physical_devices);
+
+   util_hash_table_remove_u64(ctx->object_table, instance->base.id);
+}
+
+static void
 vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkDestroyInstance *args)
 {
@@ -1058,26 +1083,7 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
-      instance->destroy_debug_utils_messenger(instance->base.handle.instance,
-                                              instance->validation_messenger, NULL);
-   }
-
-   vn_replace_vkDestroyInstance_args_handle(args);
-   vkDestroyInstance(args->instance, NULL);
-
-   /* TODO cleanup all objects instead? */
-   for (uint32_t i = 0; i < instance->physical_device_count; i++) {
-      struct vkr_physical_device *physical_dev = instance->physical_devices[i];
-      if (!physical_dev)
-         break;
-      free(physical_dev->extensions);
-      util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
-   }
-   free(instance->physical_device_handles);
-   free(instance->physical_devices);
-
-   util_hash_table_remove_u64(ctx->object_table, instance->base.id);
+   vkr_instance_destroy(ctx, instance);
 
    ctx->instance = NULL;
 }
@@ -4728,6 +4734,7 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
 static void
 vkr_context_destroy(struct virgl_context *base)
 {
+   /* TODO move the entire teardown process to a separate thread */
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    struct vkr_ring *ring, *ring_tmp;
@@ -4736,7 +4743,12 @@ vkr_context_destroy(struct virgl_context *base)
       vkr_ring_destroy(ring);
    }
 
-   /* TODO properly destroy all Vulkan objects */
+   if (ctx->instance) {
+      vrend_printf("destroying context with a valid instance");
+
+      vkr_instance_destroy(ctx, ctx->instance);
+   }
+
    util_hash_table_destroy(ctx->resource_table);
    util_hash_table_destroy_u64(ctx->object_table);
 
