@@ -1049,9 +1049,16 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev);
+
+static void
 vkr_physical_device_destroy(struct vkr_context *ctx,
                             struct vkr_physical_device *physical_dev)
 {
+   struct vkr_device *dev, *tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (dev, tmp, &physical_dev->devices, base.track_head)
+      vkr_device_destroy(ctx, dev);
+
    free(physical_dev->extensions);
 
    util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
@@ -2042,18 +2049,8 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
-                             struct vn_command_vkDestroyDevice *args)
+vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      if (dev)
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    VkDevice device = dev->base.handle.device;
    VkResult ret = vkDeviceWaitIdle(device);
    if (ret != VK_SUCCESS)
@@ -2077,6 +2074,22 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
    list_del(&dev->base.track_head);
 
    util_hash_table_remove_u64(ctx->object_table, dev->base.id);
+}
+
+static void
+vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkDestroyDevice *args)
+{
+   struct vkr_context *ctx = dispatch->data;
+
+   struct vkr_device *dev = (struct vkr_device *)args->device;
+   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
+      if (dev)
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   vkr_device_destroy(ctx, dev);
 }
 
 static void
