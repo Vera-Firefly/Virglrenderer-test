@@ -90,6 +90,7 @@ venus_sources = [
    'venus/vkr_descriptor_set.h',
    'venus/vkr_device.h',
    'venus/vkr_device_memory.h',
+   'venus/vkr_image.c',
    'venus/vkr_image.h',
    'venus/vkr_pipeline.c',
    'venus/vkr_pipeline.h',
