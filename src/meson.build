@@ -106,6 +106,8 @@ venus_sources = [
    'venus/vkr_renderer.h',
    'venus/vkr_ring.c',
    'venus/vkr_ring.h',
+   'venus/vkr_transport.c',
+   'venus/vkr_transport.h',
 ]
 
 virgl_depends = [
