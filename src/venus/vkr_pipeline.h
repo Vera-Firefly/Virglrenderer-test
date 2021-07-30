@@ -24,4 +24,16 @@ struct vkr_pipeline {
    struct vkr_object base;
 };
 
+void
+vkr_context_init_shader_module_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_pipeline_layout_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_pipeline_cache_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_pipeline_dispatch(struct vkr_context *ctx);
+
 #endif /* VKR_PIPELINE_H */
