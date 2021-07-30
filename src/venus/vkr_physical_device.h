@@ -30,4 +30,8 @@ struct vkr_physical_device {
 void
 vkr_context_init_physical_device_dispatch(struct vkr_context *ctx);
 
+void
+vkr_physical_device_destroy(struct vkr_context *ctx,
+                            struct vkr_physical_device *physical_dev);
+
 #endif /* VKR_PHYSICAL_DEVICE_H */

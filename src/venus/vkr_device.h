@@ -50,4 +50,7 @@ struct vkr_device {
 void
 vkr_context_init_device_dispatch(struct vkr_context *ctx);
 
+void
+vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev);
+
 #endif /* VKR_DEVICE_H */
