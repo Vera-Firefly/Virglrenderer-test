@@ -10,6 +10,10 @@
 
 #include "vn_protocol_renderer_structs.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /* struct VkExportFenceCreateInfo chain */
 
 static inline void *
@@ -458,5 +462,7 @@ static inline void vn_dispatch_vkWaitForFences(struct vn_dispatch_context *ctx, 
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_FENCE_H */

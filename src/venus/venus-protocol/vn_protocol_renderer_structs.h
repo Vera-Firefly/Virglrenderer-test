@@ -10,6 +10,10 @@
 
 #include "vn_protocol_renderer_handles.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /*
  * These structs/unions/commands are not included
  *
@@ -748,5 +752,7 @@ vn_decode_VkMemoryRequirements2_partial_temp(struct vn_cs_decoder *dec, VkMemory
     val->pNext = vn_decode_VkMemoryRequirements2_pnext_partial_temp(dec);
     vn_decode_VkMemoryRequirements2_self_partial_temp(dec, val);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_STRUCTS_H */

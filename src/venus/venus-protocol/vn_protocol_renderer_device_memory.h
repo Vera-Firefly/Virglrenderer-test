@@ -10,6 +10,10 @@
 
 #include "vn_protocol_renderer_structs.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /*
  * These structs/unions/commands are not included
  *
@@ -1007,5 +1011,7 @@ static inline void vn_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(struct vn_d
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_DEVICE_MEMORY_H */

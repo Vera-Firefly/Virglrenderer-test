@@ -38,6 +38,9 @@ struct vn_cs_decoder;
 
 typedef vkr_object_id vn_object_id;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 static inline void
 vn_cs_encoder_write(struct vn_cs_encoder *enc, size_t size, const void *val, size_t val_size)
 {
@@ -134,5 +137,7 @@ vn_decode(struct vn_cs_decoder *dec, size_t size, void *data, size_t data_size)
    assert(size % 4 == 0);
    vn_cs_decoder_read(dec, size, data, data_size);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_CS_H */

@@ -10,6 +10,10 @@
 
 #include "vn_protocol_renderer_structs.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /* struct VkDescriptorPoolSize */
 
 static inline void
@@ -279,5 +283,7 @@ static inline void vn_dispatch_vkResetDescriptorPool(struct vn_dispatch_context 
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_DESCRIPTOR_POOL_H */

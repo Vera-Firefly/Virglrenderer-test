@@ -10,6 +10,10 @@
 
 #include "vn_protocol_renderer_structs.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpointer-arith"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /* struct VkCommandBufferAllocateInfo chain */
 
 static inline void *
@@ -4925,5 +4929,7 @@ static inline void vn_dispatch_vkCmdDrawIndirectByteCountEXT(struct vn_dispatch_
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
+
+#pragma GCC diagnostic pop
 
 #endif /* VN_PROTOCOL_RENDERER_COMMAND_BUFFER_H */
