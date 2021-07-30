@@ -17,7 +17,7 @@ ForEachMacros:
   - LIST_FOR_EACH_ENTRY_SAFE
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^"config.h"$'
+  - Regex:           '^("config.h"|"vkr_common.h")$'
     Priority:        0
   - Regex:           '^"vkr_'
     Priority:        3

@@ -6,17 +6,7 @@
 #ifndef VKR_RING_H
 #define VKR_RING_H
 
-#include "config.h"
-
-#include <stdatomic.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
-#include "c11/threads.h"
-#include "util/u_double_list.h"
-
-#include "vkr_object.h"
+#include "vkr_common.h"
 
 struct virgl_context;
 

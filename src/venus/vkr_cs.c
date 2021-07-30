@@ -5,7 +5,6 @@
 
 #include "vkr_cs.h"
 
-#include "util/u_memory.h"
 #include "vrend_iov.h"
 
 void

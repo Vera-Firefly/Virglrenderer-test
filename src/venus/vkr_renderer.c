@@ -3,35 +3,22 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "vkr_renderer.h"
+#include "vkr_common.h"
 
-#include <assert.h>
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-#include "c11/threads.h"
-#include "os/os_thread.h"
-#include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "util/u_debug.h"
-#include "util/u_double_list.h"
-#include "util/u_hash_table.h"
-#include "util/u_math.h"
-#include "util/u_memory.h"
-#include "util/u_pointer.h"
 #include "venus-protocol/vn_protocol_renderer.h"
 #include "virgl_context.h"
 #include "virgl_protocol.h" /* for transfer_mode */
 #include "virgl_resource.h"
-#include "virgl_util.h"
 #include "virglrenderer.h"
 #include "virglrenderer_hw.h"
 #include "vrend_debug.h"
 #include "vrend_iov.h"
 
 #include "vkr_cs.h"
-#include "vkr_object.h"
 #include "vkr_ring.h"
 
 /*

@@ -6,16 +6,7 @@
 #ifndef VKR_CS_H
 #define VKR_CS_H
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-
-#include "util/u_hash_table.h"
-#include "util/u_math.h"
-
-#include "vkr_object.h"
+#include "vkr_common.h"
 
 #define VKR_CS_DECODER_TEMP_POOL_MAX_SIZE (64u * 1024 * 1024)
 

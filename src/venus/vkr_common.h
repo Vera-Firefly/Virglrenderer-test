@@ -3,14 +3,35 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef VKR_OBJECT_H
-#define VKR_OBJECT_H
+#ifndef VKR_COMMON_H
+#define VKR_COMMON_H
 
+#include "config.h"
+
+#include <assert.h>
+#include <errno.h>
+#include <stdatomic.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "c11/threads.h"
+#include "os/os_misc.h"
+#include "os/os_thread.h"
+#include "pipe/p_compiler.h"
 #include "util/u_double_list.h"
+#include "util/u_hash_table.h"
+#include "util/u_math.h"
+#include "util/u_memory.h"
+#include "util/u_pointer.h"
 #include "venus-protocol/vulkan.h"
+#include "virgl_util.h"
+#include "virglrenderer.h"
+#include "vrend_debug.h"
+
+#include "vkr_renderer.h"
 
 typedef uint64_t vkr_object_id;
 
@@ -55,4 +76,4 @@ struct vkr_object {
    struct list_head track_head;
 };
 
-#endif /* VKR_OBJECT_H */
+#endif /* VKR_COMMON_H */

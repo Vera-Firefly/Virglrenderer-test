@@ -5,17 +5,10 @@
 
 #include "vkr_ring.h"
 
-#include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
-#include "os/os_thread.h"
-#include "util/u_math.h"
-#include "util/u_memory.h"
 #include "virgl_context.h"
-#include "virgl_util.h"
 
 enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
