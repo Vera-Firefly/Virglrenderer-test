@@ -1,0 +1,25 @@
+/*
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+#ifndef VKR_COMMAND_BUFFER_H
+#define VKR_COMMAND_BUFFER_H
+
+#include "vkr_common.h"
+
+struct vkr_command_pool {
+   struct vkr_object base;
+
+   struct list_head command_buffers;
+};
+
+struct vkr_command_buffer {
+   struct vkr_object base;
+
+   struct vkr_device *device;
+
+   struct list_head head;
+};
+
+#endif /* VKR_COMMAND_BUFFER_H */
