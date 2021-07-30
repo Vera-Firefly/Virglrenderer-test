@@ -5,33 +5,9 @@
 
 #include "vkr_common.h"
 
-#include <stdio.h>
-
-#include "pipe/p_state.h"
 #include "util/u_debug.h"
-#include "venus-protocol/vn_protocol_renderer.h"
-#include "virgl_context.h"
-#include "virgl_protocol.h" /* for transfer_mode */
-#include "virgl_resource.h"
-#include "virglrenderer.h"
+#include "venus-protocol/vn_protocol_renderer_info.h"
 #include "virglrenderer_hw.h"
-#include "vrend_debug.h"
-#include "vrend_iov.h"
-
-#include "vkr_buffer.h"
-#include "vkr_command_buffer.h"
-#include "vkr_context.h"
-#include "vkr_cs.h"
-#include "vkr_descriptor_set.h"
-#include "vkr_device.h"
-#include "vkr_device_memory.h"
-#include "vkr_image.h"
-#include "vkr_pipeline.h"
-#include "vkr_query_pool.h"
-#include "vkr_queue.h"
-#include "vkr_render_pass.h"
-#include "vkr_ring.h"
-#include "vkr_transport.h"
 
 static const struct debug_named_value vkr_debug_options[] = {
    { "validate", VKR_DEBUG_VALIDATE, "Force enabling the validation layer" },
