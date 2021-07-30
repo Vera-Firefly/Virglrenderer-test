@@ -94,6 +94,7 @@ venus_sources = [
    'venus/vkr_query_pool.c',
    'venus/vkr_query_pool.h',
    'venus/vkr_queue.h',
+   'venus/vkr_render_pass.c',
    'venus/vkr_render_pass.h',
    'venus/vkr_renderer.c',
    'venus/vkr_renderer.h',

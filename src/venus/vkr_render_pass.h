@@ -16,4 +16,10 @@ struct vkr_framebuffer {
    struct vkr_object base;
 };
 
+void
+vkr_context_init_render_pass_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_framebuffer_dispatch(struct vkr_context *ctx);
+
 #endif /* VKR_RENDER_PASS_H */

@@ -2598,91 +2598,6 @@ vkr_dispatch_vkDestroyDescriptorUpdateTemplate(
 }
 
 static void
-vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
-                                struct vn_command_vkCreateRenderPass *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(pass, render_pass, RENDER_PASS, vkCreateRenderPass, pRenderPass);
-
-   util_hash_table_set_u64(ctx->object_table, pass->base.id, pass);
-}
-
-static void
-vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
-                                 struct vn_command_vkCreateRenderPass2 *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-   struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   struct vkr_render_pass *pass = calloc(1, sizeof(*pass));
-   if (!pass) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-   pass->base.type = VK_OBJECT_TYPE_RENDER_PASS;
-   pass->base.id =
-      vkr_cs_handle_load_id((const void **)args->pRenderPass, pass->base.type);
-
-   vn_replace_vkCreateRenderPass2_args_handle(args);
-   args->ret = dev->CreateRenderPass2(args->device, args->pCreateInfo, NULL,
-                                      &pass->base.handle.render_pass);
-   if (args->ret != VK_SUCCESS) {
-      free(pass);
-      return;
-   }
-
-   list_add(&pass->base.track_head, &dev->objects);
-
-   util_hash_table_set_u64(ctx->object_table, pass->base.id, pass);
-}
-
-static void
-vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch,
-                                 struct vn_command_vkDestroyRenderPass *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(pass, render_pass, RENDER_PASS, vkDestroyRenderPass, renderPass);
-
-   util_hash_table_remove_u64(ctx->object_table, pass->base.id);
-}
-
-static void
-vkr_dispatch_vkGetRenderAreaGranularity(UNUSED struct vn_dispatch_context *dispatch,
-                                        struct vn_command_vkGetRenderAreaGranularity *args)
-{
-   vn_replace_vkGetRenderAreaGranularity_args_handle(args);
-   vkGetRenderAreaGranularity(args->device, args->renderPass, args->pGranularity);
-}
-
-static void
-vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch,
-                                 struct vn_command_vkCreateFramebuffer *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(fb, framebuffer, FRAMEBUFFER, vkCreateFramebuffer, pFramebuffer);
-
-   util_hash_table_set_u64(ctx->object_table, fb->base.id, fb);
-}
-
-static void
-vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch,
-                                  struct vn_command_vkDestroyFramebuffer *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(fb, framebuffer, FRAMEBUFFER, vkDestroyFramebuffer, framebuffer);
-
-   util_hash_table_remove_u64(ctx->object_table, fb->base.id);
-}
-
-static void
 vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch,
                            struct vn_command_vkCreateEvent *args)
 {
@@ -3007,14 +2922,8 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkDestroyDescriptorUpdateTemplate;
    dispatch->dispatch_vkUpdateDescriptorSetWithTemplate = NULL;
 
-   dispatch->dispatch_vkCreateRenderPass = vkr_dispatch_vkCreateRenderPass;
-   dispatch->dispatch_vkCreateRenderPass2 = vkr_dispatch_vkCreateRenderPass2;
-   dispatch->dispatch_vkDestroyRenderPass = vkr_dispatch_vkDestroyRenderPass;
-   dispatch->dispatch_vkGetRenderAreaGranularity =
-      vkr_dispatch_vkGetRenderAreaGranularity;
-
-   dispatch->dispatch_vkCreateFramebuffer = vkr_dispatch_vkCreateFramebuffer;
-   dispatch->dispatch_vkDestroyFramebuffer = vkr_dispatch_vkDestroyFramebuffer;
+   vkr_context_init_render_pass_dispatch(ctx);
+   vkr_context_init_framebuffer_dispatch(ctx);
 
    dispatch->dispatch_vkCreateEvent = vkr_dispatch_vkCreateEvent;
    dispatch->dispatch_vkDestroyEvent = vkr_dispatch_vkDestroyEvent;
