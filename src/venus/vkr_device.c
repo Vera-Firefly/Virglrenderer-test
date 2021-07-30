@@ -1214,6 +1214,10 @@ vkr_context_init_physical_device_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkEnumeratePhysicalDevices;
    dispatch->dispatch_vkEnumeratePhysicalDeviceGroups =
       vkr_dispatch_vkEnumeratePhysicalDeviceGroups;
+   dispatch->dispatch_vkEnumerateDeviceExtensionProperties =
+      vkr_dispatch_vkEnumerateDeviceExtensionProperties;
+   dispatch->dispatch_vkEnumerateDeviceLayerProperties = NULL;
+
    dispatch->dispatch_vkGetPhysicalDeviceFeatures =
       vkr_dispatch_vkGetPhysicalDeviceFeatures;
    dispatch->dispatch_vkGetPhysicalDeviceProperties =
@@ -1257,9 +1261,6 @@ vkr_context_init_device_dispatch(struct vkr_context *ctx)
 {
    struct vn_dispatch_context *dispatch = &ctx->dispatch;
 
-   dispatch->dispatch_vkEnumerateDeviceExtensionProperties =
-      vkr_dispatch_vkEnumerateDeviceExtensionProperties;
-   dispatch->dispatch_vkEnumerateDeviceLayerProperties = NULL;
    dispatch->dispatch_vkCreateDevice = vkr_dispatch_vkCreateDevice;
    dispatch->dispatch_vkDestroyDevice = vkr_dispatch_vkDestroyDevice;
    dispatch->dispatch_vkGetDeviceProcAddr = NULL;
