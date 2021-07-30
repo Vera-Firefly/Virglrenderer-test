@@ -79,6 +79,7 @@ venus_sources = [
    'venus/venus-protocol/vn_protocol_renderer.h',
    'venus/vkr_buffer.h',
    'venus/vkr_command_buffer.h',
+   'venus/vkr_common.c',
    'venus/vkr_common.h',
    'venus/vkr_context.h',
    'venus/vkr_cs.c',
