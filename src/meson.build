@@ -77,6 +77,7 @@ vrend_winsys_glx_sources = [
 venus_sources = [
    'venus_hw.h',
    'venus/venus-protocol/vn_protocol_renderer.h',
+   'venus/vkr_buffer.c',
    'venus/vkr_buffer.h',
    'venus/vkr_command_buffer.c',
    'venus/vkr_command_buffer.h',
