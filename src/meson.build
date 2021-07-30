@@ -75,15 +75,15 @@ vrend_winsys_glx_sources = [
 ]
 
 venus_sources = [
-   'venus-protocol/vn_protocol_renderer.h',
    'venus_hw.h',
-   'vkr_cs.c',
-   'vkr_cs.h',
-   'vkr_object.h',
-   'vkr_renderer.c',
-   'vkr_renderer.h',
-   'vkr_ring.c',
-   'vkr_ring.h',
+   'venus/venus-protocol/vn_protocol_renderer.h',
+   'venus/vkr_cs.c',
+   'venus/vkr_cs.h',
+   'venus/vkr_object.h',
+   'venus/vkr_renderer.c',
+   'venus/vkr_renderer.h',
+   'venus/vkr_ring.c',
+   'venus/vkr_ring.h',
 ]
 
 virgl_depends = [
@@ -122,14 +122,14 @@ endif
 libvirgl = static_library(
    'virgl',
    virgl_sources,
-   include_directories: [inc_gallium, inc_configuration],
+   include_directories: [inc_gallium, inc_configuration, 'venus'],
    dependencies : virgl_depends,
 )
 
 libvirgl_inc = [
    inc_gallium,
    inc_configuration,
-   include_directories('.')
+   include_directories(['.', 'venus'])
 ]
 
 libvirgl_dep = declare_dependency(
