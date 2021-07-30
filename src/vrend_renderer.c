@@ -1913,10 +1913,8 @@ int vrend_create_surface(struct vrend_context *ctx,
          GLenum target = res->target;
          GLenum internalformat = tex_conv_table[format].internalformat;
 
-         if (res->base.format == VIRGL_FORMAT_B8G8R8X8_UNORM &&
-             has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE)) {
+         if (vrend_resource_has_24bpp_internal_format(res))
             internalformat = GL_RGB8;
-         }
 
          VREND_DEBUG(dbg_tex, ctx, "Create texture view from %s for %s\n",
                      util_format_name(res->base.format),
