@@ -30,4 +30,16 @@ struct vkr_descriptor_update_template {
    struct vkr_object base;
 };
 
+void
+vkr_context_init_descriptor_set_layout_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_descriptor_pool_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_descriptor_set_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_descriptor_update_template_dispatch(struct vkr_context *ctx);
+
 #endif /* VKR_DESCRIPTOR_SET_H */
