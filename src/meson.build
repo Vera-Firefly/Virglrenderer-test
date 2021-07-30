@@ -83,6 +83,7 @@ venus_sources = [
    'venus/vkr_command_buffer.h',
    'venus/vkr_common.c',
    'venus/vkr_common.h',
+   'venus/vkr_context.c',
    'venus/vkr_context.h',
    'venus/vkr_cs.c',
    'venus/vkr_cs.h',
