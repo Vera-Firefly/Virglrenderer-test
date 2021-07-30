@@ -12,4 +12,7 @@ struct vkr_query_pool {
    struct vkr_object base;
 };
 
+void
+vkr_context_init_query_pool_dispatch(struct vkr_context *ctx);
+
 #endif /* VKR_QUERY_POOL_H */
