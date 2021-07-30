@@ -20,4 +20,7 @@ struct vkr_device_memory {
    struct list_head head;
 };
 
+void
+vkr_context_init_device_memory_dispatch(struct vkr_context *ctx);
+
 #endif /* VKR_DEVICE_MEMORY_H */
