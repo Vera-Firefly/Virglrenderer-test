@@ -13,6 +13,7 @@
 
 #include "vkr_context.h"
 #include "vkr_device.h"
+#include "vkr_physical_device.h"
 
 struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,

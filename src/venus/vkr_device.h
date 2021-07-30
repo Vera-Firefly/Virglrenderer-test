@@ -8,43 +8,6 @@
 
 #include "vkr_common.h"
 
-struct vkr_physical_device;
-
-struct vkr_instance {
-   struct vkr_object base;
-
-   uint32_t api_version;
-   PFN_vkCreateDebugUtilsMessengerEXT create_debug_utils_messenger;
-   PFN_vkDestroyDebugUtilsMessengerEXT destroy_debug_utils_messenger;
-   PFN_vkGetMemoryFdKHR get_memory_fd;
-   PFN_vkGetFenceFdKHR get_fence_fd;
-
-   VkDebugUtilsMessengerEXT validation_messenger;
-
-   uint32_t physical_device_count;
-   VkPhysicalDevice *physical_device_handles;
-   struct vkr_physical_device **physical_devices;
-};
-
-struct vkr_physical_device {
-   struct vkr_object base;
-
-   VkPhysicalDeviceProperties properties;
-   uint32_t api_version;
-
-   VkExtensionProperties *extensions;
-   uint32_t extension_count;
-
-   bool KHR_external_memory_fd;
-   bool EXT_external_memory_dma_buf;
-
-   bool KHR_external_fence_fd;
-
-   VkPhysicalDeviceMemoryProperties memory_properties;
-
-   struct list_head devices;
-};
-
 struct vkr_device {
    struct vkr_object base;
 
@@ -85,15 +48,6 @@ struct vkr_device {
 };
 
 void
-vkr_context_init_instance_dispatch(struct vkr_context *ctx);
-
-void
-vkr_context_init_physical_device_dispatch(struct vkr_context *ctx);
-
-void
 vkr_context_init_device_dispatch(struct vkr_context *ctx);
-
-void
-vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance);
 
 #endif /* VKR_DEVICE_H */

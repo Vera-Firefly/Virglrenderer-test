@@ -13,6 +13,8 @@
 #include "vkr_context.h"
 #include "vkr_descriptor_set.h"
 #include "vkr_device_memory.h"
+#include "vkr_instance.h"
+#include "vkr_physical_device.h"
 #include "vkr_queue.h"
 
 static void

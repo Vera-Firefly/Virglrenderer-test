@@ -18,6 +18,8 @@
 #include "vkr_device.h"
 #include "vkr_device_memory.h"
 #include "vkr_image.h"
+#include "vkr_instance.h"
+#include "vkr_physical_device.h"
 #include "vkr_pipeline.h"
 #include "vkr_query_pool.h"
 #include "vkr_queue.h"
