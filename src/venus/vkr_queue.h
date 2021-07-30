@@ -66,4 +66,32 @@ struct vkr_event {
    struct vkr_object base;
 };
 
+void
+vkr_context_init_queue_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_fence_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_semaphore_dispatch(struct vkr_context *ctx);
+
+void
+vkr_context_init_event_dispatch(struct vkr_context *ctx);
+
+struct vkr_queue_sync *
+vkr_device_alloc_queue_sync(struct vkr_device *dev,
+                            uint32_t fence_flags,
+                            void *fence_cookie);
+
+void
+vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync);
+
+void
+vkr_queue_retire_syncs(struct vkr_queue *queue,
+                       struct list_head *retired_syncs,
+                       bool *queue_empty);
+
+void
+vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue);
+
 #endif /* VKR_QUEUE_H */
