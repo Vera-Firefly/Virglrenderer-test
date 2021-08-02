@@ -300,7 +300,7 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
    }
 
    struct vkr_queue *queue, *queue_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &dev->queues, head)
+   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &dev->queues, base.track_head)
       vkr_queue_destroy(ctx, queue);
 
    struct vkr_queue_sync *sync, *sync_tmp;

@@ -51,7 +51,6 @@ struct vkr_queue {
    struct list_head pending_syncs;
    struct list_head signaled_syncs;
 
-   struct list_head head;
    struct list_head busy_head;
 };
 

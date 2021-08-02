@@ -145,8 +145,8 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
    mtx_destroy(&queue->mutex);
    cnd_destroy(&queue->cond);
 
-   list_del(&queue->head);
    list_del(&queue->busy_head);
+   list_del(&queue->base.track_head);
 
    util_hash_table_remove_u64(ctx->object_table, queue->base.id);
 }
@@ -211,7 +211,7 @@ vkr_queue_create(struct vkr_context *ctx,
    struct vkr_queue *queue;
    int ret;
 
-   LIST_FOR_EACH_ENTRY (queue, &dev->queues, head) {
+   LIST_FOR_EACH_ENTRY (queue, &dev->queues, base.track_head) {
       if (queue->flags == flags && queue->family == family && queue->index == index)
          return queue;
    }
@@ -256,9 +256,10 @@ vkr_queue_create(struct vkr_context *ctx,
       queue->eventfd = ctx->fence_eventfd;
    }
 
-   /* currently queues are not tracked as device objects */
-   list_addtail(&queue->head, &dev->queues);
    list_inithead(&queue->busy_head);
+
+   /* queues are not tracked as device objects */
+   list_addtail(&queue->base.track_head, &dev->queues);
 
    util_hash_table_set_u64(ctx->object_table, queue->base.id, queue);
 
