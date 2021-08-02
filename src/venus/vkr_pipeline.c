@@ -107,7 +107,7 @@ vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_PIPELINE_ARRAY(vkCreateGraphicsPipelines);
+   CREATE_PIPELINES(vkCreateGraphicsPipelines);
 }
 
 static void
@@ -116,7 +116,7 @@ vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   CREATE_PIPELINE_ARRAY(vkCreateComputePipelines);
+   CREATE_PIPELINES(vkCreateComputePipelines);
 }
 
 static void

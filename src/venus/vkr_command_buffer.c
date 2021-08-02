@@ -59,7 +59,7 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   ALLOCATE_OBJECT_ARRAY(cmd, command_buffer, COMMAND_BUFFER, CommandBuffer,
+   ALLOCATE_POOL_OBJECTS(cmd, command_buffer, COMMAND_BUFFER, CommandBuffer,
                          vkAllocateCommandBuffers, commandBufferCount, commandPool,
                          command_pool, COMMAND_POOL);
 }
@@ -70,7 +70,7 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   FREE_OBJECT_ARRAY(cmd, command_buffer, COMMAND_BUFFER, vkFreeCommandBuffers,
+   FREE_POOL_OBJECTS(cmd, command_buffer, COMMAND_BUFFER, vkFreeCommandBuffers,
                      pCommandBuffers, commandBufferCount, commandPool);
 }
 
