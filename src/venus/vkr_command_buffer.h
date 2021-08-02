@@ -18,8 +18,6 @@ struct vkr_command_buffer {
    struct vkr_object base;
 
    struct vkr_device *device;
-
-   struct list_head head;
 };
 
 void

@@ -125,7 +125,7 @@
          obj->device = dev;                                                              \
                                                                                          \
          /* pool objects are tracked by the pool other than the device */                \
-         list_add(&obj->head, &pool->vkr_type##s);                                       \
+         list_add(&obj->base.track_head, &pool->vkr_type##s);                            \
                                                                                          \
          util_hash_table_set_u64(ctx->object_table, obj->base.id, obj);                  \
       }                                                                                  \
@@ -148,15 +148,15 @@
             return;                                                                      \
          }                                                                               \
                                                                                          \
-         list_del(&obj->head);                                                           \
-         list_addtail(&obj->head, &free_list);                                           \
+         list_del(&obj->base.track_head);                                                \
+         list_addtail(&obj->base.track_head, &free_list);                                \
       }                                                                                  \
                                                                                          \
       vn_replace_##vk_cmd##_args_handle(args);                                           \
       vk_cmd(args->device, args->arg_pool, args->arg_count, args->arg_obj);              \
                                                                                          \
       struct vkr_##vkr_type *obj, *tmp;                                                  \
-      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, &free_list, head)                              \
+      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, &free_list, base.track_head)                   \
          util_hash_table_remove_u64(ctx->object_table, obj->base.id);                    \
    } while (0)
 

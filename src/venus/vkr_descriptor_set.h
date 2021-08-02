@@ -22,8 +22,6 @@ struct vkr_descriptor_set {
    struct vkr_object base;
 
    struct vkr_device *device;
-
-   struct list_head head;
 };
 
 struct vkr_descriptor_update_template {

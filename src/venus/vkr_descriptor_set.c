@@ -72,7 +72,7 @@ vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
                   descriptorPool);
 
    struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, head)
+   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, base.track_head)
       util_hash_table_remove_u64(ctx->object_table, set->base.id);
 
    util_hash_table_remove_u64(ctx->object_table, pool->base.id);
@@ -95,7 +95,7 @@ vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch,
    args->ret = vkResetDescriptorPool(args->device, args->descriptorPool, args->flags);
 
    struct vkr_descriptor_set *set, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, head)
+   LIST_FOR_EACH_ENTRY_SAFE (set, tmp, &pool->descriptor_sets, base.track_head)
       util_hash_table_remove_u64(ctx->object_table, set->base.id);
    list_inithead(&pool->descriptor_sets);
 }

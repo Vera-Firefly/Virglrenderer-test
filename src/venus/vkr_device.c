@@ -243,7 +243,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 
       struct vkr_descriptor_set *set, *tmp;
       LIST_FOR_EACH_ENTRY_SAFE (
-         set, tmp, &((struct vkr_descriptor_pool *)obj)->descriptor_sets, head)
+         set, tmp, &((struct vkr_descriptor_pool *)obj)->descriptor_sets, base.track_head)
          util_hash_table_remove_u64(ctx->object_table, set->base.id);
 
       break;
@@ -258,8 +258,8 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       vkDestroyCommandPool(device, obj->handle.command_pool, NULL);
 
       struct vkr_command_buffer *buf, *tmp;
-      LIST_FOR_EACH_ENTRY_SAFE (buf, tmp,
-                                &((struct vkr_command_pool *)obj)->command_buffers, head)
+      LIST_FOR_EACH_ENTRY_SAFE (
+         buf, tmp, &((struct vkr_command_pool *)obj)->command_buffers, base.track_head)
          util_hash_table_remove_u64(ctx->object_table, buf->base.id);
 
       break;
