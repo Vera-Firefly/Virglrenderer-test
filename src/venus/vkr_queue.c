@@ -204,6 +204,7 @@ vkr_queue_create(struct vkr_context *ctx,
                  struct vkr_device *dev,
                  vkr_object_id id,
                  VkQueue handle,
+                 VkDeviceQueueCreateFlags flags,
                  uint32_t family,
                  uint32_t index)
 {
@@ -211,7 +212,7 @@ vkr_queue_create(struct vkr_context *ctx,
    int ret;
 
    LIST_FOR_EACH_ENTRY (queue, &dev->queues, head) {
-      if (queue->family == family && queue->index == index)
+      if (queue->flags == flags && queue->family == family && queue->index == index)
          return queue;
    }
 
@@ -225,6 +226,7 @@ vkr_queue_create(struct vkr_context *ctx,
 
    queue->context = ctx;
    queue->device = dev;
+   queue->flags = flags;
    queue->family = family;
    queue->index = index;
 
@@ -282,8 +284,8 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
    vn_replace_vkGetDeviceQueue_args_handle(args);
    vkGetDeviceQueue(args->device, args->queueFamilyIndex, args->queueIndex, &handle);
 
-   struct vkr_queue *queue =
-      vkr_queue_create(ctx, dev, id, handle, args->queueFamilyIndex, args->queueIndex);
+   struct vkr_queue *queue = vkr_queue_create(ctx, dev, id, handle, 0 /* flags */,
+                                              args->queueFamilyIndex, args->queueIndex);
    /* TODO create queues with device and deal with failures there */
    if (!queue)
       vrend_printf("failed to create queue\n");
@@ -309,8 +311,8 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
    vkGetDeviceQueue2(args->device, args->pQueueInfo, &handle);
 
    /* TODO deal with errors */
-   vkr_queue_create(ctx, dev, id, handle, args->pQueueInfo->queueFamilyIndex,
-                    args->pQueueInfo->queueIndex);
+   vkr_queue_create(ctx, dev, id, handle, args->pQueueInfo->flags,
+                    args->pQueueInfo->queueFamilyIndex, args->pQueueInfo->queueIndex);
 }
 
 static void

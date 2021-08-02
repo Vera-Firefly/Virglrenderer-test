@@ -23,6 +23,7 @@ struct vkr_queue {
    struct vkr_context *context;
    struct vkr_device *device;
 
+   VkDeviceQueueCreateFlags flags;
    uint32_t family;
    uint32_t index;
 
