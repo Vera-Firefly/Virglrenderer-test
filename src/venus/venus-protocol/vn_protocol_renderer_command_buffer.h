@@ -1192,6 +1192,7 @@ static inline void vn_decode_vkAllocateCommandBuffers_args_temp(struct vn_cs_dec
         vn_decode_VkCommandBufferAllocateInfo_temp(dec, (VkCommandBufferAllocateInfo *)args->pAllocateInfo);
     } else {
         args->pAllocateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
@@ -1276,6 +1277,7 @@ static inline void vn_decode_vkBeginCommandBuffer_args_temp(struct vn_cs_decoder
         vn_decode_VkCommandBufferBeginInfo_temp(dec, (VkCommandBufferBeginInfo *)args->pBeginInfo);
     } else {
         args->pBeginInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -2248,6 +2250,7 @@ static inline void vn_decode_vkCmdClearDepthStencilImage_args_temp(struct vn_cs_
         vn_decode_VkClearDepthStencilValue_temp(dec, (VkClearDepthStencilValue *)args->pDepthStencil);
     } else {
         args->pDepthStencil = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     vn_decode_uint32_t(dec, &args->rangeCount);
     if (vn_peek_array_size(dec)) {
@@ -2797,6 +2800,7 @@ static inline void vn_decode_vkCmdBeginRenderPass_args_temp(struct vn_cs_decoder
         vn_decode_VkRenderPassBeginInfo_temp(dec, (VkRenderPassBeginInfo *)args->pRenderPassBegin);
     } else {
         args->pRenderPassBegin = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     vn_decode_VkSubpassContents(dec, &args->contents);
 }
@@ -2954,6 +2958,7 @@ static inline void vn_decode_vkCmdBeginRenderPass2_args_temp(struct vn_cs_decode
         vn_decode_VkRenderPassBeginInfo_temp(dec, (VkRenderPassBeginInfo *)args->pRenderPassBegin);
     } else {
         args->pRenderPassBegin = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pSubpassBeginInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSubpassBeginInfo));
@@ -2961,6 +2966,7 @@ static inline void vn_decode_vkCmdBeginRenderPass2_args_temp(struct vn_cs_decode
         vn_decode_VkSubpassBeginInfo_temp(dec, (VkSubpassBeginInfo *)args->pSubpassBeginInfo);
     } else {
         args->pSubpassBeginInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -2991,6 +2997,7 @@ static inline void vn_decode_vkCmdNextSubpass2_args_temp(struct vn_cs_decoder *d
         vn_decode_VkSubpassBeginInfo_temp(dec, (VkSubpassBeginInfo *)args->pSubpassBeginInfo);
     } else {
         args->pSubpassBeginInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pSubpassEndInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSubpassEndInfo));
@@ -2998,6 +3005,7 @@ static inline void vn_decode_vkCmdNextSubpass2_args_temp(struct vn_cs_decoder *d
         vn_decode_VkSubpassEndInfo_temp(dec, (VkSubpassEndInfo *)args->pSubpassEndInfo);
     } else {
         args->pSubpassEndInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -3028,6 +3036,7 @@ static inline void vn_decode_vkCmdEndRenderPass2_args_temp(struct vn_cs_decoder 
         vn_decode_VkSubpassEndInfo_temp(dec, (VkSubpassEndInfo *)args->pSubpassEndInfo);
     } else {
         args->pSubpassEndInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

@@ -613,6 +613,7 @@ static inline void vn_decode_vkAllocateMemory_args_temp(struct vn_cs_decoder *de
         vn_decode_VkMemoryAllocateInfo_temp(dec, (VkMemoryAllocateInfo *)args->pAllocateInfo);
     } else {
         args->pAllocateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -625,6 +626,7 @@ static inline void vn_decode_vkAllocateMemory_args_temp(struct vn_cs_decoder *de
         vn_decode_VkDeviceMemory(dec, args->pMemory);
     } else {
         args->pMemory = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -777,6 +779,7 @@ static inline void vn_decode_vkGetDeviceMemoryCommitment_args_temp(struct vn_cs_
         if (!args->pCommittedMemoryInBytes) return;
     } else {
         args->pCommittedMemoryInBytes = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -806,6 +809,7 @@ static inline void vn_decode_vkGetDeviceMemoryOpaqueCaptureAddress_args_temp(str
         vn_decode_VkDeviceMemoryOpaqueCaptureAddressInfo_temp(dec, (VkDeviceMemoryOpaqueCaptureAddressInfo *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

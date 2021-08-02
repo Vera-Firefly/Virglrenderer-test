@@ -92,6 +92,7 @@ static inline void vn_decode_vkCreatePipelineCache_args_temp(struct vn_cs_decode
         vn_decode_VkPipelineCacheCreateInfo_temp(dec, (VkPipelineCacheCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -104,6 +105,7 @@ static inline void vn_decode_vkCreatePipelineCache_args_temp(struct vn_cs_decode
         vn_decode_VkPipelineCache(dec, args->pPipelineCache);
     } else {
         args->pPipelineCache = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -165,6 +167,7 @@ static inline void vn_decode_vkGetPipelineCacheData_args_temp(struct vn_cs_decod
         vn_decode_size_t(dec, args->pDataSize);
     } else {
         args->pDataSize = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, (args->pDataSize ? *args->pDataSize : 0));

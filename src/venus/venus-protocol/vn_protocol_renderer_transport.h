@@ -286,6 +286,7 @@ static inline void vn_decode_vkSetReplyCommandStreamMESA_args_temp(struct vn_cs_
         vn_decode_VkCommandStreamDescriptionMESA_temp(dec, (VkCommandStreamDescriptionMESA *)args->pStream);
     } else {
         args->pStream = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -392,6 +393,7 @@ static inline void vn_decode_vkCreateRingMESA_args_temp(struct vn_cs_decoder *de
         vn_decode_VkRingCreateInfoMESA_temp(dec, (VkRingCreateInfoMESA *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -483,6 +485,7 @@ static inline void vn_decode_vkGetMemoryResourcePropertiesMESA_args_temp(struct 
         vn_decode_VkMemoryResourcePropertiesMESA_partial_temp(dec, args->pMemoryResourceProperties);
     } else {
         args->pMemoryResourceProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -512,6 +515,7 @@ static inline void vn_decode_vkGetVenusExperimentalFeatureData100000MESA_args_te
         vn_decode_size_t(dec, args->pDataSize);
     } else {
         args->pDataSize = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, (args->pDataSize ? *args->pDataSize : 0));

@@ -94,6 +94,7 @@ static inline void vn_decode_vkCreateSamplerYcbcrConversion_args_temp(struct vn_
         vn_decode_VkSamplerYcbcrConversionCreateInfo_temp(dec, (VkSamplerYcbcrConversionCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -106,6 +107,7 @@ static inline void vn_decode_vkCreateSamplerYcbcrConversion_args_temp(struct vn_
         vn_decode_VkSamplerYcbcrConversion(dec, args->pYcbcrConversion);
     } else {
         args->pYcbcrConversion = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

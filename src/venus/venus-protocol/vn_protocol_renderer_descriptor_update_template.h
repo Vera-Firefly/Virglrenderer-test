@@ -130,6 +130,7 @@ static inline void vn_decode_vkCreateDescriptorUpdateTemplate_args_temp(struct v
         vn_decode_VkDescriptorUpdateTemplateCreateInfo_temp(dec, (VkDescriptorUpdateTemplateCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -142,6 +143,7 @@ static inline void vn_decode_vkCreateDescriptorUpdateTemplate_args_temp(struct v
         vn_decode_VkDescriptorUpdateTemplate(dec, args->pDescriptorUpdateTemplate);
     } else {
         args->pDescriptorUpdateTemplate = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

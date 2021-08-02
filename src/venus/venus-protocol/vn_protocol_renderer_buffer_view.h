@@ -88,6 +88,7 @@ static inline void vn_decode_vkCreateBufferView_args_temp(struct vn_cs_decoder *
         vn_decode_VkBufferViewCreateInfo_temp(dec, (VkBufferViewCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -100,6 +101,7 @@ static inline void vn_decode_vkCreateBufferView_args_temp(struct vn_cs_decoder *
         vn_decode_VkBufferView(dec, args->pView);
     } else {
         args->pView = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

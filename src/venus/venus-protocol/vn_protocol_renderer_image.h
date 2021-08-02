@@ -1085,6 +1085,7 @@ static inline void vn_decode_vkGetImageMemoryRequirements_args_temp(struct vn_cs
         vn_decode_VkMemoryRequirements_partial_temp(dec, args->pMemoryRequirements);
     } else {
         args->pMemoryRequirements = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1142,6 +1143,7 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements_args_temp(struct
         vn_decode_uint32_t(dec, args->pSparseMemoryRequirementCount);
     } else {
         args->pSparseMemoryRequirementCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
@@ -1189,6 +1191,7 @@ static inline void vn_decode_vkCreateImage_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkImageCreateInfo_temp(dec, (VkImageCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -1201,6 +1204,7 @@ static inline void vn_decode_vkCreateImage_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkImage(dec, args->pImage);
     } else {
         args->pImage = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1262,6 +1266,7 @@ static inline void vn_decode_vkGetImageSubresourceLayout_args_temp(struct vn_cs_
         vn_decode_VkImageSubresource_temp(dec, (VkImageSubresource *)args->pSubresource);
     } else {
         args->pSubresource = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pLayout = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pLayout));
@@ -1269,6 +1274,7 @@ static inline void vn_decode_vkGetImageSubresourceLayout_args_temp(struct vn_cs_
         vn_decode_VkSubresourceLayout_partial_temp(dec, args->pLayout);
     } else {
         args->pLayout = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1337,6 +1343,7 @@ static inline void vn_decode_vkGetImageMemoryRequirements2_args_temp(struct vn_c
         vn_decode_VkImageMemoryRequirementsInfo2_temp(dec, (VkImageMemoryRequirementsInfo2 *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryRequirements));
@@ -1344,6 +1351,7 @@ static inline void vn_decode_vkGetImageMemoryRequirements2_args_temp(struct vn_c
         vn_decode_VkMemoryRequirements2_partial_temp(dec, args->pMemoryRequirements);
     } else {
         args->pMemoryRequirements = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1374,6 +1382,7 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(struc
         vn_decode_VkImageSparseMemoryRequirementsInfo2_temp(dec, (VkImageSparseMemoryRequirementsInfo2 *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pSparseMemoryRequirementCount = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirementCount));
@@ -1381,6 +1390,7 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(struc
         vn_decode_uint32_t(dec, args->pSparseMemoryRequirementCount);
     } else {
         args->pSparseMemoryRequirementCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
@@ -1430,6 +1440,7 @@ static inline void vn_decode_vkGetImageDrmFormatModifierPropertiesEXT_args_temp(
         vn_decode_VkImageDrmFormatModifierPropertiesEXT_partial_temp(dec, args->pProperties);
     } else {
         args->pProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

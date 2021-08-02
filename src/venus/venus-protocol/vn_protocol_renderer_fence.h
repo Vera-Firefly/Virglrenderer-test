@@ -160,6 +160,7 @@ static inline void vn_decode_vkCreateFence_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkFenceCreateInfo_temp(dec, (VkFenceCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -172,6 +173,7 @@ static inline void vn_decode_vkCreateFence_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkFence(dec, args->pFence);
     } else {
         args->pFence = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

@@ -1145,6 +1145,7 @@ vn_decode_VkGraphicsPipelineCreateInfo_self_temp(struct vn_cs_decoder *dec, VkGr
         vn_decode_VkPipelineRasterizationStateCreateInfo_temp(dec, (VkPipelineRasterizationStateCreateInfo *)val->pRasterizationState);
     } else {
         val->pRasterizationState = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         val->pMultisampleState = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pMultisampleState));

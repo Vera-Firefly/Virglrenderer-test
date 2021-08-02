@@ -404,6 +404,7 @@ static inline void vn_decode_vkAllocateDescriptorSets_args_temp(struct vn_cs_dec
         vn_decode_VkDescriptorSetAllocateInfo_temp(dec, (VkDescriptorSetAllocateInfo *)args->pAllocateInfo);
     } else {
         args->pAllocateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pDescriptorSets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorSets) * (args->pAllocateInfo ? args->pAllocateInfo->descriptorSetCount : 0));

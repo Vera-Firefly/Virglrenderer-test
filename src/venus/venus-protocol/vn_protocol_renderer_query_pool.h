@@ -86,6 +86,7 @@ static inline void vn_decode_vkCreateQueryPool_args_temp(struct vn_cs_decoder *d
         vn_decode_VkQueryPoolCreateInfo_temp(dec, (VkQueryPoolCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -98,6 +99,7 @@ static inline void vn_decode_vkCreateQueryPool_args_temp(struct vn_cs_decoder *d
         vn_decode_VkQueryPool(dec, args->pQueryPool);
     } else {
         args->pQueryPool = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

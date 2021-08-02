@@ -275,6 +275,7 @@ static inline void vn_decode_vkCreateFramebuffer_args_temp(struct vn_cs_decoder 
         vn_decode_VkFramebufferCreateInfo_temp(dec, (VkFramebufferCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -287,6 +288,7 @@ static inline void vn_decode_vkCreateFramebuffer_args_temp(struct vn_cs_decoder 
         vn_decode_VkFramebuffer(dec, args->pFramebuffer);
     } else {
         args->pFramebuffer = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

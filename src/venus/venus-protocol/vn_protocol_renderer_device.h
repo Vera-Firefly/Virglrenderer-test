@@ -7428,6 +7428,7 @@ static inline void vn_decode_vkEnumeratePhysicalDevices_args_temp(struct vn_cs_d
         vn_decode_uint32_t(dec, args->pPhysicalDeviceCount);
     } else {
         args->pPhysicalDeviceCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pPhysicalDevices = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pPhysicalDevices) * (args->pPhysicalDeviceCount ? *args->pPhysicalDeviceCount : 0));
@@ -7474,6 +7475,7 @@ static inline void vn_decode_vkGetPhysicalDeviceProperties_args_temp(struct vn_c
         vn_decode_VkPhysicalDeviceProperties_partial_temp(dec, args->pProperties);
     } else {
         args->pProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7501,6 +7503,7 @@ static inline void vn_decode_vkGetPhysicalDeviceQueueFamilyProperties_args_temp(
         vn_decode_uint32_t(dec, args->pQueueFamilyPropertyCount);
     } else {
         args->pQueueFamilyPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pQueueFamilyProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pQueueFamilyProperties) * (args->pQueueFamilyPropertyCount ? *args->pQueueFamilyPropertyCount : 0));
@@ -7546,6 +7549,7 @@ static inline void vn_decode_vkGetPhysicalDeviceMemoryProperties_args_temp(struc
         vn_decode_VkPhysicalDeviceMemoryProperties_partial_temp(dec, args->pMemoryProperties);
     } else {
         args->pMemoryProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7573,6 +7577,7 @@ static inline void vn_decode_vkGetPhysicalDeviceFeatures_args_temp(struct vn_cs_
         vn_decode_VkPhysicalDeviceFeatures_partial_temp(dec, args->pFeatures);
     } else {
         args->pFeatures = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7601,6 +7606,7 @@ static inline void vn_decode_vkGetPhysicalDeviceFormatProperties_args_temp(struc
         vn_decode_VkFormatProperties_partial_temp(dec, args->pFormatProperties);
     } else {
         args->pFormatProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7635,6 +7641,7 @@ static inline void vn_decode_vkGetPhysicalDeviceImageFormatProperties_args_temp(
         vn_decode_VkImageFormatProperties_partial_temp(dec, args->pImageFormatProperties);
     } else {
         args->pImageFormatProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7673,6 +7680,7 @@ static inline void vn_decode_vkCreateDevice_args_temp(struct vn_cs_decoder *dec,
         vn_decode_VkDeviceCreateInfo_temp(dec, (VkDeviceCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -7685,6 +7693,7 @@ static inline void vn_decode_vkCreateDevice_args_temp(struct vn_cs_decoder *dec,
         vn_decode_VkDevice_temp(dec, args->pDevice);
     } else {
         args->pDevice = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7742,6 +7751,7 @@ static inline void vn_decode_vkEnumerateDeviceLayerProperties_args_temp(struct v
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
@@ -7797,6 +7807,7 @@ static inline void vn_decode_vkEnumerateDeviceExtensionProperties_args_temp(stru
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
@@ -7847,6 +7858,7 @@ static inline void vn_decode_vkGetDeviceQueue_args_temp(struct vn_cs_decoder *de
         vn_decode_VkQueue_temp(dec, args->pQueue);
     } else {
         args->pQueue = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7901,6 +7913,7 @@ static inline void vn_decode_vkGetPhysicalDeviceSparseImageFormatProperties_args
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
@@ -7956,6 +7969,7 @@ static inline void vn_decode_vkGetPhysicalDeviceFeatures2_args_temp(struct vn_cs
         vn_decode_VkPhysicalDeviceFeatures2_partial_temp(dec, args->pFeatures);
     } else {
         args->pFeatures = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -7983,6 +7997,7 @@ static inline void vn_decode_vkGetPhysicalDeviceProperties2_args_temp(struct vn_
         vn_decode_VkPhysicalDeviceProperties2_partial_temp(dec, args->pProperties);
     } else {
         args->pProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8011,6 +8026,7 @@ static inline void vn_decode_vkGetPhysicalDeviceFormatProperties2_args_temp(stru
         vn_decode_VkFormatProperties2_partial_temp(dec, args->pFormatProperties);
     } else {
         args->pFormatProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8040,6 +8056,7 @@ static inline void vn_decode_vkGetPhysicalDeviceImageFormatProperties2_args_temp
         vn_decode_VkPhysicalDeviceImageFormatInfo2_temp(dec, (VkPhysicalDeviceImageFormatInfo2 *)args->pImageFormatInfo);
     } else {
         args->pImageFormatInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pImageFormatProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pImageFormatProperties));
@@ -8047,6 +8064,7 @@ static inline void vn_decode_vkGetPhysicalDeviceImageFormatProperties2_args_temp
         vn_decode_VkImageFormatProperties2_partial_temp(dec, args->pImageFormatProperties);
     } else {
         args->pImageFormatProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8078,6 +8096,7 @@ static inline void vn_decode_vkGetPhysicalDeviceQueueFamilyProperties2_args_temp
         vn_decode_uint32_t(dec, args->pQueueFamilyPropertyCount);
     } else {
         args->pQueueFamilyPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pQueueFamilyProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pQueueFamilyProperties) * (args->pQueueFamilyPropertyCount ? *args->pQueueFamilyPropertyCount : 0));
@@ -8123,6 +8142,7 @@ static inline void vn_decode_vkGetPhysicalDeviceMemoryProperties2_args_temp(stru
         vn_decode_VkPhysicalDeviceMemoryProperties2_partial_temp(dec, args->pMemoryProperties);
     } else {
         args->pMemoryProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8150,6 +8170,7 @@ static inline void vn_decode_vkGetPhysicalDeviceSparseImageFormatProperties2_arg
         vn_decode_VkPhysicalDeviceSparseImageFormatInfo2_temp(dec, (VkPhysicalDeviceSparseImageFormatInfo2 *)args->pFormatInfo);
     } else {
         args->pFormatInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pPropertyCount = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pPropertyCount));
@@ -8157,6 +8178,7 @@ static inline void vn_decode_vkGetPhysicalDeviceSparseImageFormatProperties2_arg
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
@@ -8205,6 +8227,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalBufferProperties_args_te
         vn_decode_VkPhysicalDeviceExternalBufferInfo_temp(dec, (VkPhysicalDeviceExternalBufferInfo *)args->pExternalBufferInfo);
     } else {
         args->pExternalBufferInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pExternalBufferProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pExternalBufferProperties));
@@ -8212,6 +8235,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalBufferProperties_args_te
         vn_decode_VkExternalBufferProperties_partial_temp(dec, args->pExternalBufferProperties);
     } else {
         args->pExternalBufferProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8242,6 +8266,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalSemaphoreProperties_args
         vn_decode_VkPhysicalDeviceExternalSemaphoreInfo_temp(dec, (VkPhysicalDeviceExternalSemaphoreInfo *)args->pExternalSemaphoreInfo);
     } else {
         args->pExternalSemaphoreInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pExternalSemaphoreProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pExternalSemaphoreProperties));
@@ -8249,6 +8274,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalSemaphoreProperties_args
         vn_decode_VkExternalSemaphoreProperties_partial_temp(dec, args->pExternalSemaphoreProperties);
     } else {
         args->pExternalSemaphoreProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8279,6 +8305,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalFenceProperties_args_tem
         vn_decode_VkPhysicalDeviceExternalFenceInfo_temp(dec, (VkPhysicalDeviceExternalFenceInfo *)args->pExternalFenceInfo);
     } else {
         args->pExternalFenceInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pExternalFenceProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pExternalFenceProperties));
@@ -8286,6 +8313,7 @@ static inline void vn_decode_vkGetPhysicalDeviceExternalFenceProperties_args_tem
         vn_decode_VkExternalFenceProperties_partial_temp(dec, args->pExternalFenceProperties);
     } else {
         args->pExternalFenceProperties = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8316,6 +8344,7 @@ static inline void vn_decode_vkEnumeratePhysicalDeviceGroups_args_temp(struct vn
         vn_decode_uint32_t(dec, args->pPhysicalDeviceGroupCount);
     } else {
         args->pPhysicalDeviceGroupCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pPhysicalDeviceGroupProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pPhysicalDeviceGroupProperties) * (args->pPhysicalDeviceGroupCount ? *args->pPhysicalDeviceGroupCount : 0));
@@ -8364,6 +8393,7 @@ static inline void vn_decode_vkGetDeviceGroupPeerMemoryFeatures_args_temp(struct
         if (!args->pPeerMemoryFeatures) return;
     } else {
         args->pPeerMemoryFeatures = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -8397,6 +8427,7 @@ static inline void vn_decode_vkGetDeviceQueue2_args_temp(struct vn_cs_decoder *d
         vn_decode_VkDeviceQueueInfo2_temp(dec, (VkDeviceQueueInfo2 *)args->pQueueInfo);
     } else {
         args->pQueueInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pQueue = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pQueue));
@@ -8404,6 +8435,7 @@ static inline void vn_decode_vkGetDeviceQueue2_args_temp(struct vn_cs_decoder *d
         vn_decode_VkQueue_temp(dec, args->pQueue);
     } else {
         args->pQueue = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

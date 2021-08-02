@@ -605,6 +605,7 @@ static inline void vn_decode_vkGetBufferMemoryRequirements_args_temp(struct vn_c
         vn_decode_VkMemoryRequirements_partial_temp(dec, args->pMemoryRequirements);
     } else {
         args->pMemoryRequirements = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -661,6 +662,7 @@ static inline void vn_decode_vkCreateBuffer_args_temp(struct vn_cs_decoder *dec,
         vn_decode_VkBufferCreateInfo_temp(dec, (VkBufferCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -673,6 +675,7 @@ static inline void vn_decode_vkCreateBuffer_args_temp(struct vn_cs_decoder *dec,
         vn_decode_VkBuffer(dec, args->pBuffer);
     } else {
         args->pBuffer = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -769,6 +772,7 @@ static inline void vn_decode_vkGetBufferMemoryRequirements2_args_temp(struct vn_
         vn_decode_VkBufferMemoryRequirementsInfo2_temp(dec, (VkBufferMemoryRequirementsInfo2 *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryRequirements));
@@ -776,6 +780,7 @@ static inline void vn_decode_vkGetBufferMemoryRequirements2_args_temp(struct vn_
         vn_decode_VkMemoryRequirements2_partial_temp(dec, args->pMemoryRequirements);
     } else {
         args->pMemoryRequirements = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -806,6 +811,7 @@ static inline void vn_decode_vkGetBufferOpaqueCaptureAddress_args_temp(struct vn
         vn_decode_VkBufferDeviceAddressInfo_temp(dec, (VkBufferDeviceAddressInfo *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -834,6 +840,7 @@ static inline void vn_decode_vkGetBufferDeviceAddress_args_temp(struct vn_cs_dec
         vn_decode_VkBufferDeviceAddressInfo_temp(dec, (VkBufferDeviceAddressInfo *)args->pInfo);
     } else {
         args->pInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

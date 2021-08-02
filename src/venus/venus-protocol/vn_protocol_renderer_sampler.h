@@ -201,6 +201,7 @@ static inline void vn_decode_vkCreateSampler_args_temp(struct vn_cs_decoder *dec
         vn_decode_VkSamplerCreateInfo_temp(dec, (VkSamplerCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -213,6 +214,7 @@ static inline void vn_decode_vkCreateSampler_args_temp(struct vn_cs_decoder *dec
         vn_decode_VkSampler(dec, args->pSampler);
     } else {
         args->pSampler = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

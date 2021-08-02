@@ -337,6 +337,7 @@ static inline void vn_decode_vkCreateSemaphore_args_temp(struct vn_cs_decoder *d
         vn_decode_VkSemaphoreCreateInfo_temp(dec, (VkSemaphoreCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -349,6 +350,7 @@ static inline void vn_decode_vkCreateSemaphore_args_temp(struct vn_cs_decoder *d
         vn_decode_VkSemaphore(dec, args->pSemaphore);
     } else {
         args->pSemaphore = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -409,6 +411,7 @@ static inline void vn_decode_vkGetSemaphoreCounterValue_args_temp(struct vn_cs_d
         if (!args->pValue) return;
     } else {
         args->pValue = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -439,6 +442,7 @@ static inline void vn_decode_vkWaitSemaphores_args_temp(struct vn_cs_decoder *de
         vn_decode_VkSemaphoreWaitInfo_temp(dec, (VkSemaphoreWaitInfo *)args->pWaitInfo);
     } else {
         args->pWaitInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     vn_decode_uint64_t(dec, &args->timeout);
 }
@@ -470,6 +474,7 @@ static inline void vn_decode_vkSignalSemaphore_args_temp(struct vn_cs_decoder *d
         vn_decode_VkSemaphoreSignalInfo_temp(dec, (VkSemaphoreSignalInfo *)args->pSignalInfo);
     } else {
         args->pSignalInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

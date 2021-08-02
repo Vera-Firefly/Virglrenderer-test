@@ -209,6 +209,7 @@ static inline void vn_decode_vkCreateInstance_args_temp(struct vn_cs_decoder *de
         vn_decode_VkInstanceCreateInfo_temp(dec, (VkInstanceCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -221,6 +222,7 @@ static inline void vn_decode_vkCreateInstance_args_temp(struct vn_cs_decoder *de
         vn_decode_VkInstance_temp(dec, args->pInstance);
     } else {
         args->pInstance = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -274,6 +276,7 @@ static inline void vn_decode_vkEnumerateInstanceVersion_args_temp(struct vn_cs_d
         if (!args->pApiVersion) return;
     } else {
         args->pApiVersion = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -299,6 +302,7 @@ static inline void vn_decode_vkEnumerateInstanceLayerProperties_args_temp(struct
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));
@@ -351,6 +355,7 @@ static inline void vn_decode_vkEnumerateInstanceExtensionProperties_args_temp(st
         vn_decode_uint32_t(dec, args->pPropertyCount);
     } else {
         args->pPropertyCount = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
         args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * (args->pPropertyCount ? *args->pPropertyCount : 0));

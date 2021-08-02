@@ -365,6 +365,7 @@ static inline void vn_decode_vkCreateDescriptorSetLayout_args_temp(struct vn_cs_
         vn_decode_VkDescriptorSetLayoutCreateInfo_temp(dec, (VkDescriptorSetLayoutCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -377,6 +378,7 @@ static inline void vn_decode_vkCreateDescriptorSetLayout_args_temp(struct vn_cs_
         vn_decode_VkDescriptorSetLayout(dec, args->pSetLayout);
     } else {
         args->pSetLayout = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -437,6 +439,7 @@ static inline void vn_decode_vkGetDescriptorSetLayoutSupport_args_temp(struct vn
         vn_decode_VkDescriptorSetLayoutCreateInfo_temp(dec, (VkDescriptorSetLayoutCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         args->pSupport = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSupport));
@@ -444,6 +447,7 @@ static inline void vn_decode_vkGetDescriptorSetLayoutSupport_args_temp(struct vn
         vn_decode_VkDescriptorSetLayoutSupport_partial_temp(dec, args->pSupport);
     } else {
         args->pSupport = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

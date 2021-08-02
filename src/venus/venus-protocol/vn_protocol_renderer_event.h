@@ -80,6 +80,7 @@ static inline void vn_decode_vkCreateEvent_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkEventCreateInfo_temp(dec, (VkEventCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -92,6 +93,7 @@ static inline void vn_decode_vkCreateEvent_args_temp(struct vn_cs_decoder *dec, 
         vn_decode_VkEvent(dec, args->pEvent);
     } else {
         args->pEvent = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

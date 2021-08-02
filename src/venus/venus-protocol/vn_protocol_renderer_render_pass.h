@@ -1200,6 +1200,7 @@ static inline void vn_decode_vkCreateRenderPass_args_temp(struct vn_cs_decoder *
         vn_decode_VkRenderPassCreateInfo_temp(dec, (VkRenderPassCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -1212,6 +1213,7 @@ static inline void vn_decode_vkCreateRenderPass_args_temp(struct vn_cs_decoder *
         vn_decode_VkRenderPass(dec, args->pRenderPass);
     } else {
         args->pRenderPass = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1273,6 +1275,7 @@ static inline void vn_decode_vkGetRenderAreaGranularity_args_temp(struct vn_cs_d
         vn_decode_VkExtent2D_partial_temp(dec, args->pGranularity);
     } else {
         args->pGranularity = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
@@ -1302,6 +1305,7 @@ static inline void vn_decode_vkCreateRenderPass2_args_temp(struct vn_cs_decoder 
         vn_decode_VkRenderPassCreateInfo2_temp(dec, (VkRenderPassCreateInfo2 *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -1314,6 +1318,7 @@ static inline void vn_decode_vkCreateRenderPass2_args_temp(struct vn_cs_decoder 
         vn_decode_VkRenderPass(dec, args->pRenderPass);
     } else {
         args->pRenderPass = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

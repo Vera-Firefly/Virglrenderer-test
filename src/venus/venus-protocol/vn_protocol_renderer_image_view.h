@@ -181,6 +181,7 @@ static inline void vn_decode_vkCreateImageView_args_temp(struct vn_cs_decoder *d
         vn_decode_VkImageViewCreateInfo_temp(dec, (VkImageViewCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -193,6 +194,7 @@ static inline void vn_decode_vkCreateImageView_args_temp(struct vn_cs_decoder *d
         vn_decode_VkImageView(dec, args->pView);
     } else {
         args->pView = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

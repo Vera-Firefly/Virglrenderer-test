@@ -114,6 +114,7 @@ static inline void vn_decode_vkCreateDescriptorPool_args_temp(struct vn_cs_decod
         vn_decode_VkDescriptorPoolCreateInfo_temp(dec, (VkDescriptorPoolCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -126,6 +127,7 @@ static inline void vn_decode_vkCreateDescriptorPool_args_temp(struct vn_cs_decod
         vn_decode_VkDescriptorPool(dec, args->pDescriptorPool);
     } else {
         args->pDescriptorPool = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 

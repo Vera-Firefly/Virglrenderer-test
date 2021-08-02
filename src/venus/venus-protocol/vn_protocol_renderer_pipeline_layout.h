@@ -130,6 +130,7 @@ static inline void vn_decode_vkCreatePipelineLayout_args_temp(struct vn_cs_decod
         vn_decode_VkPipelineLayoutCreateInfo_temp(dec, (VkPipelineLayoutCreateInfo *)args->pCreateInfo);
     } else {
         args->pCreateInfo = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
     if (vn_decode_simple_pointer(dec)) {
         vn_cs_decoder_set_fatal(dec);
@@ -142,6 +143,7 @@ static inline void vn_decode_vkCreatePipelineLayout_args_temp(struct vn_cs_decod
         vn_decode_VkPipelineLayout(dec, args->pPipelineLayout);
     } else {
         args->pPipelineLayout = NULL;
+        vn_cs_decoder_set_fatal(dec);
     }
 }
 
