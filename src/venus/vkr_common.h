@@ -134,6 +134,13 @@
       object_array_fini(&arr);                                                           \
    } while (0)
 
+#define RELEASE_TRACKED_OBJECTS(track_list)                                              \
+   do {                                                                                  \
+      struct vkr_object *obj, *tmp;                                                      \
+      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, track_list, track_head)                        \
+         util_hash_table_remove_u64(ctx->object_table, obj->id);                         \
+   } while (0)
+
 #define FREE_OBJECT_ARRAY(obj, vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)  \
    do {                                                                                  \
       struct list_head free_list;                                                        \
@@ -155,9 +162,7 @@
       vn_replace_##vk_cmd##_args_handle(args);                                           \
       vk_cmd(args->device, args->arg_pool, args->arg_count, args->arg_obj);              \
                                                                                          \
-      struct vkr_##vkr_type *obj, *tmp;                                                  \
-      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, &free_list, base.track_head)                   \
-         util_hash_table_remove_u64(ctx->object_table, obj->base.id);                    \
+      RELEASE_TRACKED_OBJECTS(&free_list);                                               \
    } while (0)
 
 #define CREATE_PIPELINE_ARRAY(vk_cmd)                                                    \
