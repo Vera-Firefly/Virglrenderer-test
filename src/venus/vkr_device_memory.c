@@ -150,7 +150,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    mem->device = args->device;
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
-   list_inithead(&mem->head);
+   list_inithead(&mem->exported_head);
 
    list_add(&mem->base.track_head, &dev->objects);
 
@@ -173,7 +173,7 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
    vn_replace_vkFreeMemory_args_handle(args);
    vkFreeMemory(args->device, args->memory, NULL);
 
-   list_del(&mem->head);
+   list_del(&mem->exported_head);
    list_del(&mem->base.track_head);
 
    util_hash_table_remove_u64(ctx->object_table, mem->base.id);

@@ -342,7 +342,7 @@ vkr_context_get_blob_done(struct virgl_context *base,
 
    mem->exported = true;
    mem->exported_res_id = res_id;
-   list_add(&mem->head, &ctx->newly_exported_memories);
+   list_add(&mem->exported_head, &ctx->newly_exported_memories);
 
    /* XXX locked in vkr_context_get_blob */
    mtx_unlock(&ctx->mutex);
@@ -386,7 +386,7 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
    }
 
    struct vkr_device_memory *mem =
-      LIST_ENTRY(struct vkr_device_memory, att->memories.next, head);
+      LIST_ENTRY(struct vkr_device_memory, att->memories.next, exported_head);
    const VkMappedMemoryRange range = {
       .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
       .memory = mem->base.handle.device_memory,
@@ -457,10 +457,10 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
 
    /* associate a memory with the resource, if any */
    struct vkr_device_memory *mem;
-   LIST_FOR_EACH_ENTRY (mem, &ctx->newly_exported_memories, head) {
+   LIST_FOR_EACH_ENTRY (mem, &ctx->newly_exported_memories, exported_head) {
       if (mem->exported_res_id == res->res_id) {
-         list_del(&mem->head);
-         list_addtail(&mem->head, &att->memories);
+         list_del(&mem->exported_head);
+         list_addtail(&mem->exported_head, &att->memories);
          break;
       }
    }
@@ -549,8 +549,8 @@ destroy_func_resource(void *val)
    struct vkr_resource_attachment *att = val;
    struct vkr_device_memory *mem, *tmp;
 
-   LIST_FOR_EACH_ENTRY_SAFE (mem, tmp, &att->memories, head)
-      list_delinit(&mem->head);
+   LIST_FOR_EACH_ENTRY_SAFE (mem, tmp, &att->memories, exported_head)
+      list_delinit(&mem->exported_head);
 
    free(att);
 }

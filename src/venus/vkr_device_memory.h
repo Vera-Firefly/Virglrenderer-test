@@ -17,7 +17,7 @@ struct vkr_device_memory {
 
    bool exported;
    uint32_t exported_res_id;
-   struct list_head head;
+   struct list_head exported_head;
 };
 
 void
