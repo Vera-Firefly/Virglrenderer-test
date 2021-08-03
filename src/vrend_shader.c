@@ -2348,7 +2348,7 @@ static void emit_txq(struct dump_ctx *ctx,
    case TGSI_TEXTURE_2D_ARRAY_MSAA:
       break;
    default:
-      snprintf(bias, 128, ", int(%s.w)", srcs[0]);
+      snprintf(bias, 128, ", int(%s.x)", srcs[0]);
    }
 
    /* need to emit a textureQueryLevels */
