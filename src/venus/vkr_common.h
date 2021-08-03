@@ -50,8 +50,8 @@
  * hand-edited.  Find a better/cleaner way to reduce manual works.
  */
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
-   struct vkr_device *dev_obj = (struct vkr_device *)args->device;                       \
-   if (!dev_obj || dev_obj->base.type != VK_OBJECT_TYPE_DEVICE) {                        \
+   struct vkr_device *_dev = (struct vkr_device *)args->device;                          \
+   if (!_dev || _dev->base.type != VK_OBJECT_TYPE_DEVICE) {                              \
       vkr_cs_decoder_set_fatal(&ctx->decoder);                                           \
       return;                                                                            \
    }                                                                                     \
@@ -72,7 +72,7 @@
       return;                                                                            \
    }                                                                                     \
                                                                                          \
-   list_add(&obj->base.track_head, &dev_obj->objects)
+   list_add(&obj->base.track_head, &_dev->objects)
 
 #define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
    struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)args->vk_arg;        \
