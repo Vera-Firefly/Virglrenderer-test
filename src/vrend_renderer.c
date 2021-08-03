@@ -429,6 +429,8 @@ struct vrend_linked_shader_program {
    int32_t tex_levels_uniform_id[PIPE_SHADER_TYPES];
 
    struct vrend_sub_context *ref_context;
+
+   uint32_t gles_use_query_texturelevel_mask;
 };
 
 struct vrend_shader {
@@ -4643,6 +4645,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
    vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
    sub_ctx->drawing = false;
 
+   uint8_t gles_emulate_query_texture_levels_mask = 0;
 
    for (uint i = 0; i < PIPE_SHADER_TYPES; i++) {
       struct vrend_shader_selector *sel = shaders[i];
@@ -4659,6 +4662,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
             return -1;
          }
       }
+      if (vrend_state.use_gles && sel->sinfo.gles_use_tex_query_level)
+         gles_emulate_query_texture_levels_mask |= 1 << i;
    }
 
    if (!shaders[PIPE_SHADER_VERTEX]->current ||
@@ -4695,6 +4700,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
                                    tes_id ? sub_ctx->shaders[PIPE_SHADER_TESS_EVAL]->current : NULL);
          if (!prog)
             return false;
+         prog->gles_use_query_texturelevel_mask = gles_emulate_query_texture_levels_mask;
       }
 
       sub_ctx->last_shader_idx = sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] ? PIPE_SHADER_TESS_EVAL : (sub_ctx->shaders[PIPE_SHADER_GEOMETRY] ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
@@ -4807,9 +4813,14 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
        * different prefix arrays */
       for (unsigned i = PIPE_SHADER_VERTEX; i < PIPE_SHADER_COMPUTE; ++i) {
-         char loc_name[32];
-         snprintf(loc_name, 32, "%s_texlod[0]", pipe_shader_to_prefix(i));
-         sub_ctx->prog->tex_levels_uniform_id[i] = glGetUniformLocation(sub_ctx->prog->id, loc_name);
+         if (sub_ctx->prog->gles_use_query_texturelevel_mask & (1 << i)) {
+            char loc_name[32];
+            snprintf(loc_name, 32, "%s_texlod[0]", pipe_shader_to_prefix(i));
+            sub_ctx->prog->tex_levels_uniform_id[i] = glGetUniformLocation(sub_ctx->prog->id, loc_name);
+         } else {
+            sub_ctx->prog->tex_levels_uniform_id[i] = -1;
+         }
+
       }
    }
 
