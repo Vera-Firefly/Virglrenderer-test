@@ -6913,7 +6913,7 @@ static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vre
    return true;
 }
 
-static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
+static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_variable_shader_info *sinfo)
 {
    if (!ctx->num_interps)
       return true;
@@ -6955,11 +6955,17 @@ static boolean analyze_instruction(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
+static void fill_var_sinfo(const struct dump_ctx *ctx, struct vrend_variable_shader_info *sinfo)
 {
    sinfo->num_ucp = ctx->key->clip_plane_enable ? 8 : 0;
-   sinfo->in.use_pervertex = ctx->has_pervertex;
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
+   sinfo->fs_info.num_interps = ctx->num_interps;
+   sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
+}
+
+static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
+{
+   sinfo->in.use_pervertex = ctx->has_pervertex;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
    sinfo->out.num_clip = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
    sinfo->out.num_cull = has_prop ? ctx->num_cull_dist_prop : 0;
@@ -6985,10 +6991,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
       sinfo->out.num_indirect_patch = ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.sid + 1;
 
    sinfo->num_inputs = ctx->num_inputs;
-   sinfo->fs_info.num_interps = ctx->num_interps;
    sinfo->num_outputs = ctx->num_outputs;
    sinfo->shadow_samp_mask = ctx->shadow_samp_mask;
-   sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
    sinfo->gs_out_prim = ctx->gs_out_prim;
    sinfo->tes_prim = ctx->tes_prim_mode;
    sinfo->tes_point_mode = ctx->tes_point_mode;
@@ -7080,6 +7084,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
                           uint32_t req_local_mem,
                           const struct vrend_shader_key *key,
                           struct vrend_shader_info *sinfo,
+                          struct vrend_variable_shader_info *var_sinfo,
                           struct vrend_strarray *shader)
 {
    struct dump_ctx ctx;
@@ -7163,13 +7168,15 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    if (strbuf_get_error(&ctx.glsl_strbufs.glsl_hdr))
       goto fail;
 
-   bret = fill_interpolants(&ctx, sinfo);
+   bret = fill_interpolants(&ctx, var_sinfo);
    if (bret == false)
       goto fail;
 
    free(ctx.temp_ranges);
 
    fill_sinfo(&ctx, sinfo);
+   fill_var_sinfo(&ctx, var_sinfo);
+
    set_strbuffers(rctx, &ctx.glsl_strbufs, shader);
 
    if (ctx.prog_type == TGSI_PROCESSOR_GEOMETRY) {

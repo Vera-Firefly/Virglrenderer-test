@@ -106,7 +106,6 @@ struct vrend_shader_info {
    struct vrend_array *sampler_arrays;
    struct vrend_array *image_arrays;
    char **so_names;
-   struct vrend_fs_shader_info fs_info;
    struct pipe_stream_output_info so_info;
 
    uint32_t samplers_used_mask;
@@ -122,7 +121,6 @@ struct vrend_shader_info {
    int num_consts;
    int num_inputs;
    int num_outputs;
-   int num_ucp;
    int gs_out_prim;
    int tes_prim;
    int num_sampler_arrays;
@@ -131,6 +129,11 @@ struct vrend_shader_info {
    uint8_t ubo_indirect : 1;
    uint8_t tes_point_mode : 1;
    uint8_t gles_use_tex_query_level : 1;
+};
+
+struct vrend_variable_shader_info {
+   struct vrend_fs_shader_info fs_info;
+   int num_ucp;
 };
 
 struct vrend_shader_key {
@@ -204,6 +207,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
                           uint32_t req_local_mem,
                           const struct vrend_shader_key *key,
                           struct vrend_shader_info *sinfo,
+                          struct vrend_variable_shader_info *var_sinfo,
                           struct vrend_strarray *shader);
 
 const char *vrend_shader_samplertypeconv(bool use_gles, int sampler_type);

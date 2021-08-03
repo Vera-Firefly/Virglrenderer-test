@@ -437,6 +437,8 @@ struct vrend_shader {
    struct vrend_shader *next_variant;
    struct vrend_shader_selector *sel;
 
+   struct vrend_variable_shader_info var_sinfo;
+
    struct vrend_strarray glsl_strings;
    GLuint id;
    uint32_t uid;
@@ -1748,8 +1750,8 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          sprog->attrib_locs = NULL;
    }
 
-   if (vs->sel->sinfo.num_ucp) {
-      for (i = 0; i < vs->sel->sinfo.num_ucp; i++) {
+   if (vs->var_sinfo.num_ucp) {
+      for (i = 0; i < vs->var_sinfo.num_ucp; i++) {
          snprintf(name, 32, "clipp[%d]", i);
          sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
       }
@@ -3422,7 +3424,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          struct vrend_shader *fs =
                sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
          key->compiled_fs_uid = fs->uid;
-         key->fs_info = &fs->sel->sinfo.fs_info;
+         key->fs_info = &fs->var_sinfo.fs_info;
          next_type = PIPE_SHADER_FRAGMENT;
       }
   }
@@ -3527,7 +3529,8 @@ static int vrend_shader_create(struct vrend_context *ctx,
 
    if (shader->sel->tokens) {
       bool ret = vrend_convert_shader(ctx, &ctx->shader_cfg, shader->sel->tokens,
-                                      shader->sel->req_local_mem, key, &shader->sel->sinfo, &shader->glsl_strings);
+                                      shader->sel->req_local_mem, key, &shader->sel->sinfo,
+                                      &shader->var_sinfo, &shader->glsl_strings);
       if (!ret) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SHADER, shader->sel->type);
          return -1;
