@@ -103,7 +103,7 @@ vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   ALLOCATE_POOL_OBJECTS(set, descriptor_set, DESCRIPTOR_SET, DescriptorSet,
+   ALLOCATE_POOL_OBJECTS(descriptor_set, DESCRIPTOR_SET, DescriptorSet,
                          vkAllocateDescriptorSets, descriptorSetCount, descriptorPool,
                          descriptor_pool, DESCRIPTOR_POOL);
 }
@@ -114,7 +114,7 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   FREE_POOL_OBJECTS(set, descriptor_set, DESCRIPTOR_SET, vkFreeDescriptorSets,
+   FREE_POOL_OBJECTS(descriptor_set, DESCRIPTOR_SET, vkFreeDescriptorSets,
                      pDescriptorSets, descriptorSetCount, descriptorPool);
 
    args->ret = VK_SUCCESS;

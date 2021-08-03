@@ -87,8 +87,8 @@
                                                                                          \
    list_del(&obj->base.track_head)
 
-#define ALLOCATE_POOL_OBJECTS(obj, vkr_type, vk_type, vk_obj, vk_cmd, arg_count,         \
-                              arg_pool, vkr_pool_type, vk_pool_type)                     \
+#define ALLOCATE_POOL_OBJECTS(vkr_type, vk_type, vk_obj, vk_cmd, arg_count, arg_pool,    \
+                              vkr_pool_type, vk_pool_type)                               \
    do {                                                                                  \
       struct vkr_device *dev = (struct vkr_device *)args->device;                        \
       if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {                             \
@@ -141,7 +141,7 @@
          util_hash_table_remove_u64(ctx->object_table, obj->id);                         \
    } while (0)
 
-#define FREE_POOL_OBJECTS(obj, vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)  \
+#define FREE_POOL_OBJECTS(vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)       \
    do {                                                                                  \
       struct list_head free_list;                                                        \
                                                                                          \
