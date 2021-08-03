@@ -32,8 +32,7 @@ vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(pool, command_pool, COMMAND_POOL, vkDestroyCommandPool, commandPool);
 
-   RELEASE_TRACKED_OBJECTS(&pool->command_buffers);
-
+   vkr_context_remove_objects(ctx, &pool->command_buffers);
    util_hash_table_remove_u64(ctx->object_table, pool->base.id);
 }
 

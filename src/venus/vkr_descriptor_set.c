@@ -71,8 +71,7 @@ vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
    DESTROY_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkDestroyDescriptorPool,
                   descriptorPool);
 
-   RELEASE_TRACKED_OBJECTS(&pool->descriptor_sets);
-
+   vkr_context_remove_objects(ctx, &pool->descriptor_sets);
    util_hash_table_remove_u64(ctx->object_table, pool->base.id);
 }
 
@@ -92,8 +91,7 @@ vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch,
    vn_replace_vkResetDescriptorPool_args_handle(args);
    args->ret = vkResetDescriptorPool(args->device, args->descriptorPool, args->flags);
 
-   RELEASE_TRACKED_OBJECTS(&pool->descriptor_sets);
-
+   vkr_context_remove_objects(ctx, &pool->descriptor_sets);
    list_inithead(&pool->descriptor_sets);
 }
 

@@ -48,6 +48,8 @@
 /*
  * TODO Most of the functions are generated.  Some of them are then
  * hand-edited.  Find a better/cleaner way to reduce manual works.
+ *
+ * These macros may shadow your variables.  Use with care.
  */
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
    struct vkr_device *_dev = (struct vkr_device *)args->device;                          \
@@ -134,13 +136,6 @@
       object_array_fini(&arr);                                                           \
    } while (0)
 
-#define RELEASE_TRACKED_OBJECTS(track_list)                                              \
-   do {                                                                                  \
-      struct vkr_object *obj, *tmp;                                                      \
-      LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, track_list, track_head)                        \
-         util_hash_table_remove_u64(ctx->object_table, obj->id);                         \
-   } while (0)
-
 #define FREE_POOL_OBJECTS(vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)       \
    do {                                                                                  \
       struct list_head free_list;                                                        \
@@ -162,7 +157,7 @@
       vn_replace_##vk_cmd##_args_handle(args);                                           \
       vk_cmd(args->device, args->arg_pool, args->arg_count, args->arg_obj);              \
                                                                                          \
-      RELEASE_TRACKED_OBJECTS(&free_list);                                               \
+      vkr_context_remove_objects(ctx, &free_list);                                       \
    } while (0)
 
 #define CREATE_PIPELINES(vk_cmd)                                                         \

@@ -63,4 +63,13 @@ struct vkr_context {
    struct vkr_instance *instance;
 };
 
+static inline void
+vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
+{
+   struct vkr_object *obj, *tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, objects, track_head)
+      util_hash_table_remove_u64(ctx->object_table, obj->id);
+   /* objects should be reinitialized if to be reused */
+}
+
 #endif /* VKR_CONTEXT_H */

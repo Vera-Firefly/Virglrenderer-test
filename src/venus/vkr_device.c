@@ -241,7 +241,8 @@ vkr_device_object_destroy(struct vkr_context *ctx,
        */
       vkDestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
 
-      RELEASE_TRACKED_OBJECTS(&((struct vkr_descriptor_pool *)obj)->descriptor_sets);
+      struct vkr_descriptor_pool *pool = (struct vkr_descriptor_pool *)obj;
+      vkr_context_remove_objects(ctx, &pool->descriptor_sets);
       break;
    }
    case VK_OBJECT_TYPE_FRAMEBUFFER:
@@ -253,7 +254,8 @@ vkr_device_object_destroy(struct vkr_context *ctx,
        */
       vkDestroyCommandPool(device, obj->handle.command_pool, NULL);
 
-      RELEASE_TRACKED_OBJECTS(&((struct vkr_command_pool *)obj)->command_buffers);
+      struct vkr_command_pool *pool = (struct vkr_command_pool *)obj;
+      vkr_context_remove_objects(ctx, &pool->command_buffers);
       break;
    }
    case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
