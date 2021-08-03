@@ -15,70 +15,10 @@
 #include "vkr_queue.h"
 
 static void
-vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
-                            struct vn_command_vkCreateDevice *args)
+vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   struct vkr_physical_device *physical_dev =
-      (struct vkr_physical_device *)args->physicalDevice;
-   if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   /* append extensions for our own use */
-   const char **exts = NULL;
-   uint32_t ext_count = args->pCreateInfo->enabledExtensionCount;
-   ext_count += physical_dev->KHR_external_memory_fd;
-   ext_count += physical_dev->EXT_external_memory_dma_buf;
-   ext_count += physical_dev->KHR_external_fence_fd;
-   if (ext_count > args->pCreateInfo->enabledExtensionCount) {
-      exts = malloc(sizeof(*exts) * ext_count);
-      if (!exts) {
-         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-         return;
-      }
-      for (uint32_t i = 0; i < args->pCreateInfo->enabledExtensionCount; i++)
-         exts[i] = args->pCreateInfo->ppEnabledExtensionNames[i];
-
-      ext_count = args->pCreateInfo->enabledExtensionCount;
-      if (physical_dev->KHR_external_memory_fd)
-         exts[ext_count++] = "VK_KHR_external_memory_fd";
-      if (physical_dev->EXT_external_memory_dma_buf)
-         exts[ext_count++] = "VK_EXT_external_memory_dma_buf";
-      if (physical_dev->KHR_external_fence_fd)
-         exts[ext_count++] = "VK_KHR_external_fence_fd";
-
-      ((VkDeviceCreateInfo *)args->pCreateInfo)->ppEnabledExtensionNames = exts;
-      ((VkDeviceCreateInfo *)args->pCreateInfo)->enabledExtensionCount = ext_count;
-   }
-
-   struct vkr_device *dev = calloc(1, sizeof(*dev));
-   if (!dev) {
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      free(exts);
-      return;
-   }
-
-   dev->base.type = VK_OBJECT_TYPE_DEVICE;
-   dev->base.id = vkr_cs_handle_load_id((const void **)args->pDevice, dev->base.type);
-
-   vn_replace_vkCreateDevice_args_handle(args);
-   args->ret = vkCreateDevice(args->physicalDevice, args->pCreateInfo, NULL,
-                              &dev->base.handle.device);
-   if (args->ret != VK_SUCCESS) {
-      free(exts);
-      free(dev);
-      return;
-   }
-
-   free(exts);
-
-   dev->physical_device = physical_dev;
-
    VkDevice handle = dev->base.handle.device;
-   if (physical_dev->api_version >= VK_API_VERSION_1_2) {
+   if (api_version >= VK_API_VERSION_1_2) {
       dev->GetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)vkGetDeviceProcAddr(
          handle, "vkGetSemaphoreCounterValue");
       dev->WaitSemaphores =
@@ -163,6 +103,72 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    dev->get_memory_fd_properties = (PFN_vkGetMemoryFdPropertiesKHR)vkGetDeviceProcAddr(
       handle, "vkGetMemoryFdPropertiesKHR");
+}
+
+static void
+vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkCreateDevice *args)
+{
+   struct vkr_context *ctx = dispatch->data;
+
+   struct vkr_physical_device *physical_dev =
+      (struct vkr_physical_device *)args->physicalDevice;
+   if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   /* append extensions for our own use */
+   const char **exts = NULL;
+   uint32_t ext_count = args->pCreateInfo->enabledExtensionCount;
+   ext_count += physical_dev->KHR_external_memory_fd;
+   ext_count += physical_dev->EXT_external_memory_dma_buf;
+   ext_count += physical_dev->KHR_external_fence_fd;
+   if (ext_count > args->pCreateInfo->enabledExtensionCount) {
+      exts = malloc(sizeof(*exts) * ext_count);
+      if (!exts) {
+         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+         return;
+      }
+      for (uint32_t i = 0; i < args->pCreateInfo->enabledExtensionCount; i++)
+         exts[i] = args->pCreateInfo->ppEnabledExtensionNames[i];
+
+      ext_count = args->pCreateInfo->enabledExtensionCount;
+      if (physical_dev->KHR_external_memory_fd)
+         exts[ext_count++] = "VK_KHR_external_memory_fd";
+      if (physical_dev->EXT_external_memory_dma_buf)
+         exts[ext_count++] = "VK_EXT_external_memory_dma_buf";
+      if (physical_dev->KHR_external_fence_fd)
+         exts[ext_count++] = "VK_KHR_external_fence_fd";
+
+      ((VkDeviceCreateInfo *)args->pCreateInfo)->ppEnabledExtensionNames = exts;
+      ((VkDeviceCreateInfo *)args->pCreateInfo)->enabledExtensionCount = ext_count;
+   }
+
+   struct vkr_device *dev = calloc(1, sizeof(*dev));
+   if (!dev) {
+      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+      free(exts);
+      return;
+   }
+
+   dev->base.type = VK_OBJECT_TYPE_DEVICE;
+   dev->base.id = vkr_cs_handle_load_id((const void **)args->pDevice, dev->base.type);
+
+   vn_replace_vkCreateDevice_args_handle(args);
+   args->ret = vkCreateDevice(args->physicalDevice, args->pCreateInfo, NULL,
+                              &dev->base.handle.device);
+   if (args->ret != VK_SUCCESS) {
+      free(exts);
+      free(dev);
+      return;
+   }
+
+   free(exts);
+
+   dev->physical_device = physical_dev;
+
+   vkr_device_init_entry_points(dev, physical_dev->api_version);
 
    list_inithead(&dev->queues);
 
