@@ -91,6 +91,14 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
                        struct list_head *retired_syncs,
                        bool *queue_empty);
 
+struct vkr_queue *
+vkr_queue_create(struct vkr_context *ctx,
+                 struct vkr_device *dev,
+                 VkDeviceQueueCreateFlags flags,
+                 uint32_t family,
+                 uint32_t index,
+                 VkQueue handle);
+
 void
 vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue);
 

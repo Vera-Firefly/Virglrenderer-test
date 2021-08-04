@@ -148,7 +148,10 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
    list_del(&queue->busy_head);
    list_del(&queue->base.track_head);
 
-   util_hash_table_remove_u64(ctx->object_table, queue->base.id);
+   if (queue->base.id)
+      util_hash_table_remove_u64(ctx->object_table, queue->base.id);
+   else
+      free(queue);
 }
 
 static int
@@ -199,29 +202,23 @@ vkr_queue_thread(void *arg)
    return 0;
 }
 
-static struct vkr_queue *
+struct vkr_queue *
 vkr_queue_create(struct vkr_context *ctx,
                  struct vkr_device *dev,
-                 vkr_object_id id,
-                 VkQueue handle,
                  VkDeviceQueueCreateFlags flags,
                  uint32_t family,
-                 uint32_t index)
+                 uint32_t index,
+                 VkQueue handle)
 {
    struct vkr_queue *queue;
    int ret;
-
-   LIST_FOR_EACH_ENTRY (queue, &dev->queues, base.track_head) {
-      if (queue->flags == flags && queue->family == family && queue->index == index)
-         return queue;
-   }
 
    queue = calloc(1, sizeof(*queue));
    if (!queue)
       return NULL;
 
    queue->base.type = VK_OBJECT_TYPE_QUEUE;
-   queue->base.id = id;
+   /* queue->base.id is not assigned until vkr_queue_assign_object_id */
    queue->base.handle.queue = handle;
 
    queue->context = ctx;
@@ -257,13 +254,41 @@ vkr_queue_create(struct vkr_context *ctx,
    }
 
    list_inithead(&queue->busy_head);
-
-   /* queues are not tracked as device objects */
-   list_addtail(&queue->base.track_head, &dev->queues);
-
-   util_hash_table_set_u64(ctx->object_table, queue->base.id, queue);
+   list_inithead(&queue->base.track_head);
 
    return queue;
+}
+
+static void
+vkr_queue_assign_object_id(struct vkr_context *ctx,
+                           struct vkr_queue *queue,
+                           vkr_object_id id)
+{
+   if (queue->base.id) {
+      if (queue->base.id != id)
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   queue->base.id = id;
+
+   util_hash_table_set_u64(ctx->object_table, queue->base.id, queue);
+}
+
+static struct vkr_queue *
+vkr_device_lookup_queue(struct vkr_device *dev,
+                        VkDeviceQueueCreateFlags flags,
+                        uint32_t family,
+                        uint32_t index)
+{
+   struct vkr_queue *queue;
+
+   LIST_FOR_EACH_ENTRY (queue, &dev->queues, base.track_head) {
+      if (queue->flags == flags && queue->family == family && queue->index == index)
+         return queue;
+   }
+
+   return NULL;
 }
 
 static void
@@ -278,18 +303,16 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   struct vkr_queue *queue = vkr_device_lookup_queue(
+      dev, 0 /* flags */, args->queueFamilyIndex, args->queueIndex);
+   if (!queue) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    const vkr_object_id id =
       vkr_cs_handle_load_id((const void **)args->pQueue, VK_OBJECT_TYPE_QUEUE);
-
-   VkQueue handle;
-   vn_replace_vkGetDeviceQueue_args_handle(args);
-   vkGetDeviceQueue(args->device, args->queueFamilyIndex, args->queueIndex, &handle);
-
-   struct vkr_queue *queue = vkr_queue_create(ctx, dev, id, handle, 0 /* flags */,
-                                              args->queueFamilyIndex, args->queueIndex);
-   /* TODO create queues with device and deal with failures there */
-   if (!queue)
-      vrend_printf("failed to create queue\n");
+   vkr_queue_assign_object_id(ctx, queue, id);
 }
 
 static void
@@ -304,16 +327,17 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   struct vkr_queue *queue = vkr_device_lookup_queue(dev, args->pQueueInfo->flags,
+                                                     args->pQueueInfo->queueFamilyIndex,
+                                                     args->pQueueInfo->queueIndex);
+   if (!queue) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    const vkr_object_id id =
       vkr_cs_handle_load_id((const void **)args->pQueue, VK_OBJECT_TYPE_QUEUE);
-
-   VkQueue handle;
-   vn_replace_vkGetDeviceQueue2_args_handle(args);
-   vkGetDeviceQueue2(args->device, args->pQueueInfo, &handle);
-
-   /* TODO deal with errors */
-   vkr_queue_create(ctx, dev, id, handle, args->pQueueInfo->flags,
-                    args->pQueueInfo->queueFamilyIndex, args->pQueueInfo->queueIndex);
+   vkr_queue_assign_object_id(ctx, queue, id);
 }
 
 static void

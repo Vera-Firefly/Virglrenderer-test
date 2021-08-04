@@ -14,6 +14,44 @@
 #include "vkr_physical_device.h"
 #include "vkr_queue.h"
 
+static VkResult
+vkr_device_create_queues(struct vkr_context *ctx,
+                         struct vkr_device *dev,
+                         uint32_t create_info_count,
+                         const VkDeviceQueueCreateInfo *create_infos)
+{
+   list_inithead(&dev->queues);
+
+   for (uint32_t i = 0; i < create_info_count; i++) {
+      for (uint32_t j = 0; j < create_infos[i].queueCount; j++) {
+         const VkDeviceQueueInfo2 info = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2,
+            .pNext = NULL,
+            .flags = create_infos[i].flags,
+            .queueFamilyIndex = create_infos[i].queueFamilyIndex,
+            .queueIndex = j,
+         };
+         VkQueue handle = VK_NULL_HANDLE;
+         vkGetDeviceQueue2(dev->base.handle.device, &info, &handle);
+
+         struct vkr_queue *queue = vkr_queue_create(
+            ctx, dev, info.flags, info.queueFamilyIndex, info.queueIndex, handle);
+         if (!queue) {
+            struct vkr_queue *entry, *tmp;
+            LIST_FOR_EACH_ENTRY_SAFE (entry, tmp, &dev->queues, base.track_head)
+               vkr_queue_destroy(ctx, entry);
+
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+         }
+
+         /* queues are not tracked as device objects */
+         list_add(&queue->base.track_head, &dev->queues);
+      }
+   }
+
+   return VK_SUCCESS;
+}
+
 static void
 vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
 {
@@ -168,9 +206,15 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    dev->physical_device = physical_dev;
 
-   vkr_device_init_entry_points(dev, physical_dev->api_version);
+   args->ret = vkr_device_create_queues(ctx, dev, args->pCreateInfo->queueCreateInfoCount,
+                                        args->pCreateInfo->pQueueCreateInfos);
+   if (args->ret != VK_SUCCESS) {
+      vkDestroyDevice(dev->base.handle.device, NULL);
+      free(dev);
+      return;
+   }
 
-   list_inithead(&dev->queues);
+   vkr_device_init_entry_points(dev, physical_dev->api_version);
 
    mtx_init(&dev->free_sync_mutex, mtx_plain);
    list_inithead(&dev->free_syncs);
