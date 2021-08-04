@@ -60,11 +60,11 @@ static inline void
 vn_encode_VkLayerProperties(struct vn_cs_encoder *enc, const VkLayerProperties *val)
 {
     vn_encode_array_size(enc, VK_MAX_EXTENSION_NAME_SIZE);
-    vn_encode_blob_array(enc, val->layerName, VK_MAX_EXTENSION_NAME_SIZE);
+    vn_encode_char_array(enc, val->layerName, VK_MAX_EXTENSION_NAME_SIZE);
     vn_encode_uint32_t(enc, &val->specVersion);
     vn_encode_uint32_t(enc, &val->implementationVersion);
     vn_encode_array_size(enc, VK_MAX_DESCRIPTION_SIZE);
-    vn_encode_blob_array(enc, val->description, VK_MAX_DESCRIPTION_SIZE);
+    vn_encode_char_array(enc, val->description, VK_MAX_DESCRIPTION_SIZE);
 }
 
 static inline void
@@ -82,7 +82,7 @@ static inline void
 vn_encode_VkExtensionProperties(struct vn_cs_encoder *enc, const VkExtensionProperties *val)
 {
     vn_encode_array_size(enc, VK_MAX_EXTENSION_NAME_SIZE);
-    vn_encode_blob_array(enc, val->extensionName, VK_MAX_EXTENSION_NAME_SIZE);
+    vn_encode_char_array(enc, val->extensionName, VK_MAX_EXTENSION_NAME_SIZE);
     vn_encode_uint32_t(enc, &val->specVersion);
 }
 
@@ -91,7 +91,7 @@ vn_decode_VkExtensionProperties_temp(struct vn_cs_decoder *dec, VkExtensionPrope
 {
     {
         const size_t array_size = vn_decode_array_size(dec, VK_MAX_EXTENSION_NAME_SIZE);
-        vn_decode_blob_array(dec, val->extensionName, array_size);
+        vn_decode_char_array(dec, val->extensionName, array_size);
     }
     vn_decode_uint32_t(dec, &val->specVersion);
 }

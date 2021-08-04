@@ -49,10 +49,10 @@ vn_decode_VkDescriptorPoolCreateInfo_self_temp(struct vn_cs_decoder *dec, VkDesc
     vn_decode_uint32_t(dec, &val->maxSets);
     vn_decode_uint32_t(dec, &val->poolSizeCount);
     if (vn_peek_array_size(dec)) {
-        val->pPoolSizes = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPoolSizes) * val->poolSizeCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->poolSizeCount);
+        val->pPoolSizes = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPoolSizes) * iter_count);
         if (!val->pPoolSizes) return;
-        vn_decode_array_size(dec, val->poolSizeCount);
-        for (uint32_t i = 0; i < val->poolSizeCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorPoolSize_temp(dec, &((VkDescriptorPoolSize *)val->pPoolSizes)[i]);
     } else {
         vn_decode_array_size(dec, 0);

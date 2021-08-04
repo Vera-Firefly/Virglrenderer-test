@@ -732,10 +732,10 @@ static inline void vn_decode_vkBindBufferMemory2_args_temp(struct vn_cs_decoder 
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_uint32_t(dec, &args->bindInfoCount);
     if (vn_peek_array_size(dec)) {
-        args->pBindInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfos) * args->bindInfoCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->bindInfoCount);
+        args->pBindInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfos) * iter_count);
         if (!args->pBindInfos) return;
-        vn_decode_array_size(dec, args->bindInfoCount);
-        for (uint32_t i = 0; i < args->bindInfoCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindBufferMemoryInfo_temp(dec, &((VkBindBufferMemoryInfo *)args->pBindInfos)[i]);
     } else {
         vn_decode_array_size(dec, 0);

@@ -108,10 +108,10 @@ vn_decode_VkFramebufferAttachmentsCreateInfo_self_temp(struct vn_cs_decoder *dec
     /* skip val->{sType,pNext} */
     vn_decode_uint32_t(dec, &val->attachmentImageInfoCount);
     if (vn_peek_array_size(dec)) {
-        val->pAttachmentImageInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachmentImageInfos) * val->attachmentImageInfoCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentImageInfoCount);
+        val->pAttachmentImageInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachmentImageInfos) * iter_count);
         if (!val->pAttachmentImageInfos) return;
-        vn_decode_array_size(dec, val->attachmentImageInfoCount);
-        for (uint32_t i = 0; i < val->attachmentImageInfoCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFramebufferAttachmentImageInfo_temp(dec, &((VkFramebufferAttachmentImageInfo *)val->pAttachmentImageInfos)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -201,10 +201,10 @@ vn_decode_VkFramebufferCreateInfo_self_temp(struct vn_cs_decoder *dec, VkFramebu
     vn_decode_VkRenderPass_lookup(dec, &val->renderPass);
     vn_decode_uint32_t(dec, &val->attachmentCount);
     if (vn_peek_array_size(dec)) {
-        val->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachments) * val->attachmentCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentCount);
+        val->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachments) * iter_count);
         if (!val->pAttachments) return;
-        vn_decode_array_size(dec, val->attachmentCount);
-        for (uint32_t i = 0; i < val->attachmentCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageView_lookup(dec, &((VkImageView *)val->pAttachments)[i]);
     } else {
         vn_decode_array_size(dec, 0);

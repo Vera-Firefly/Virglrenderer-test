@@ -220,10 +220,10 @@ vn_decode_VkImageDrmFormatModifierExplicitCreateInfoEXT_self_temp(struct vn_cs_d
     vn_decode_uint64_t(dec, &val->drmFormatModifier);
     vn_decode_uint32_t(dec, &val->drmFormatModifierPlaneCount);
     if (vn_peek_array_size(dec)) {
-        val->pPlaneLayouts = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPlaneLayouts) * val->drmFormatModifierPlaneCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->drmFormatModifierPlaneCount);
+        val->pPlaneLayouts = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPlaneLayouts) * iter_count);
         if (!val->pPlaneLayouts) return;
-        vn_decode_array_size(dec, val->drmFormatModifierPlaneCount);
-        for (uint32_t i = 0; i < val->drmFormatModifierPlaneCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubresourceLayout_temp(dec, &((VkSubresourceLayout *)val->pPlaneLayouts)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -495,10 +495,10 @@ vn_decode_VkBindImageMemoryDeviceGroupInfo_self_temp(struct vn_cs_decoder *dec, 
     }
     vn_decode_uint32_t(dec, &val->splitInstanceBindRegionCount);
     if (vn_peek_array_size(dec)) {
-        val->pSplitInstanceBindRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSplitInstanceBindRegions) * val->splitInstanceBindRegionCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->splitInstanceBindRegionCount);
+        val->pSplitInstanceBindRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSplitInstanceBindRegions) * iter_count);
         if (!val->pSplitInstanceBindRegions) return;
-        vn_decode_array_size(dec, val->splitInstanceBindRegionCount);
-        for (uint32_t i = 0; i < val->splitInstanceBindRegionCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)val->pSplitInstanceBindRegions)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1146,10 +1146,10 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements_args_temp(struct
         vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
-        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        const uint32_t iter_count = vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * iter_count);
         if (!args->pSparseMemoryRequirements) return;
-        vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
-        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryRequirements_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1303,10 +1303,10 @@ static inline void vn_decode_vkBindImageMemory2_args_temp(struct vn_cs_decoder *
     vn_decode_VkDevice_lookup(dec, &args->device);
     vn_decode_uint32_t(dec, &args->bindInfoCount);
     if (vn_peek_array_size(dec)) {
-        args->pBindInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfos) * args->bindInfoCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->bindInfoCount);
+        args->pBindInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfos) * iter_count);
         if (!args->pBindInfos) return;
-        vn_decode_array_size(dec, args->bindInfoCount);
-        for (uint32_t i = 0; i < args->bindInfoCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindImageMemoryInfo_temp(dec, &((VkBindImageMemoryInfo *)args->pBindInfos)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -1393,10 +1393,10 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(struc
         vn_cs_decoder_set_fatal(dec);
     }
     if (vn_peek_array_size(dec)) {
-        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        const uint32_t iter_count = vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
+        args->pSparseMemoryRequirements = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSparseMemoryRequirements) * iter_count);
         if (!args->pSparseMemoryRequirements) return;
-        vn_decode_array_size(dec, (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0));
-        for (uint32_t i = 0; i < (args->pSparseMemoryRequirementCount ? *args->pSparseMemoryRequirementCount : 0); i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryRequirements2_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
         vn_decode_array_size(dec, 0);

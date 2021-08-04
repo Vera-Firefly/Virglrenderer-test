@@ -324,10 +324,10 @@ static inline void vn_decode_vkExecuteCommandStreamsMESA_args_temp(struct vn_cs_
 {
     vn_decode_uint32_t(dec, &args->streamCount);
     if (vn_peek_array_size(dec)) {
-        args->pStreams = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pStreams) * args->streamCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->streamCount);
+        args->pStreams = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pStreams) * iter_count);
         if (!args->pStreams) return;
-        vn_decode_array_size(dec, args->streamCount);
-        for (uint32_t i = 0; i < args->streamCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandStreamDescriptionMESA_temp(dec, &((VkCommandStreamDescriptionMESA *)args->pStreams)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -344,10 +344,10 @@ static inline void vn_decode_vkExecuteCommandStreamsMESA_args_temp(struct vn_cs_
     }
     vn_decode_uint32_t(dec, &args->dependencyCount);
     if (vn_peek_array_size(dec)) {
-        args->pDependencies = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDependencies) * args->dependencyCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->dependencyCount);
+        args->pDependencies = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDependencies) * iter_count);
         if (!args->pDependencies) return;
-        vn_decode_array_size(dec, args->dependencyCount);
-        for (uint32_t i = 0; i < args->dependencyCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandStreamDependencyMESA_temp(dec, &((VkCommandStreamDependencyMESA *)args->pDependencies)[i]);
     } else {
         vn_decode_array_size(dec, 0);

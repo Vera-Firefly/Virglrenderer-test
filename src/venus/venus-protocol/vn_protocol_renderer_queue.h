@@ -294,20 +294,20 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
     /* skip val->{sType,pNext} */
     vn_decode_uint32_t(dec, &val->waitSemaphoreCount);
     if (vn_peek_array_size(dec)) {
-        val->pWaitSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitSemaphores) * val->waitSemaphoreCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->waitSemaphoreCount);
+        val->pWaitSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitSemaphores) * iter_count);
         if (!val->pWaitSemaphores) return;
-        vn_decode_array_size(dec, val->waitSemaphoreCount);
-        for (uint32_t i = 0; i < val->waitSemaphoreCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pWaitSemaphores)[i]);
     } else {
         vn_decode_array_size(dec, 0);
         val->pWaitSemaphores = NULL;
     }
     if (vn_peek_array_size(dec)) {
-        val->pWaitDstStageMask = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitDstStageMask) * val->waitSemaphoreCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->waitSemaphoreCount);
+        val->pWaitDstStageMask = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitDstStageMask) * iter_count);
         if (!val->pWaitDstStageMask) return;
-        vn_decode_array_size(dec, val->waitSemaphoreCount);
-        for (uint32_t i = 0; i < val->waitSemaphoreCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFlags(dec, &((VkPipelineStageFlags *)val->pWaitDstStageMask)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -315,10 +315,10 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
     }
     vn_decode_uint32_t(dec, &val->commandBufferCount);
     if (vn_peek_array_size(dec)) {
-        val->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pCommandBuffers) * val->commandBufferCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->commandBufferCount);
+        val->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pCommandBuffers) * iter_count);
         if (!val->pCommandBuffers) return;
-        vn_decode_array_size(dec, val->commandBufferCount);
-        for (uint32_t i = 0; i < val->commandBufferCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)val->pCommandBuffers)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -326,10 +326,10 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreCount);
     if (vn_peek_array_size(dec)) {
-        val->pSignalSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSignalSemaphores) * val->signalSemaphoreCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->signalSemaphoreCount);
+        val->pSignalSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSignalSemaphores) * iter_count);
         if (!val->pSignalSemaphores) return;
-        vn_decode_array_size(dec, val->signalSemaphoreCount);
-        for (uint32_t i = 0; i < val->signalSemaphoreCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pSignalSemaphores)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -430,10 +430,10 @@ vn_decode_VkSparseBufferMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSparseB
     vn_decode_VkBuffer_lookup(dec, &val->buffer);
     vn_decode_uint32_t(dec, &val->bindCount);
     if (vn_peek_array_size(dec)) {
-        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * val->bindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->bindCount);
+        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * iter_count);
         if (!val->pBinds) return;
-        vn_decode_array_size(dec, val->bindCount);
-        for (uint32_t i = 0; i < val->bindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseMemoryBind_temp(dec, &((VkSparseMemoryBind *)val->pBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -460,10 +460,10 @@ vn_decode_VkSparseImageOpaqueMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSp
     vn_decode_VkImage_lookup(dec, &val->image);
     vn_decode_uint32_t(dec, &val->bindCount);
     if (vn_peek_array_size(dec)) {
-        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * val->bindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->bindCount);
+        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * iter_count);
         if (!val->pBinds) return;
-        vn_decode_array_size(dec, val->bindCount);
-        for (uint32_t i = 0; i < val->bindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseMemoryBind_temp(dec, &((VkSparseMemoryBind *)val->pBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -514,10 +514,10 @@ vn_decode_VkSparseImageMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSparseIm
     vn_decode_VkImage_lookup(dec, &val->image);
     vn_decode_uint32_t(dec, &val->bindCount);
     if (vn_peek_array_size(dec)) {
-        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * val->bindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->bindCount);
+        val->pBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBinds) * iter_count);
         if (!val->pBinds) return;
-        vn_decode_array_size(dec, val->bindCount);
-        for (uint32_t i = 0; i < val->bindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryBind_temp(dec, &((VkSparseImageMemoryBind *)val->pBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -640,10 +640,10 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
     /* skip val->{sType,pNext} */
     vn_decode_uint32_t(dec, &val->waitSemaphoreCount);
     if (vn_peek_array_size(dec)) {
-        val->pWaitSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitSemaphores) * val->waitSemaphoreCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->waitSemaphoreCount);
+        val->pWaitSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pWaitSemaphores) * iter_count);
         if (!val->pWaitSemaphores) return;
-        vn_decode_array_size(dec, val->waitSemaphoreCount);
-        for (uint32_t i = 0; i < val->waitSemaphoreCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pWaitSemaphores)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -651,10 +651,10 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
     }
     vn_decode_uint32_t(dec, &val->bufferBindCount);
     if (vn_peek_array_size(dec)) {
-        val->pBufferBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBufferBinds) * val->bufferBindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->bufferBindCount);
+        val->pBufferBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBufferBinds) * iter_count);
         if (!val->pBufferBinds) return;
-        vn_decode_array_size(dec, val->bufferBindCount);
-        for (uint32_t i = 0; i < val->bufferBindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseBufferMemoryBindInfo_temp(dec, &((VkSparseBufferMemoryBindInfo *)val->pBufferBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -662,10 +662,10 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
     }
     vn_decode_uint32_t(dec, &val->imageOpaqueBindCount);
     if (vn_peek_array_size(dec)) {
-        val->pImageOpaqueBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageOpaqueBinds) * val->imageOpaqueBindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->imageOpaqueBindCount);
+        val->pImageOpaqueBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageOpaqueBinds) * iter_count);
         if (!val->pImageOpaqueBinds) return;
-        vn_decode_array_size(dec, val->imageOpaqueBindCount);
-        for (uint32_t i = 0; i < val->imageOpaqueBindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageOpaqueMemoryBindInfo_temp(dec, &((VkSparseImageOpaqueMemoryBindInfo *)val->pImageOpaqueBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -673,10 +673,10 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
     }
     vn_decode_uint32_t(dec, &val->imageBindCount);
     if (vn_peek_array_size(dec)) {
-        val->pImageBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageBinds) * val->imageBindCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->imageBindCount);
+        val->pImageBinds = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageBinds) * iter_count);
         if (!val->pImageBinds) return;
-        vn_decode_array_size(dec, val->imageBindCount);
-        for (uint32_t i = 0; i < val->imageBindCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryBindInfo_temp(dec, &((VkSparseImageMemoryBindInfo *)val->pImageBinds)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -684,10 +684,10 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreCount);
     if (vn_peek_array_size(dec)) {
-        val->pSignalSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSignalSemaphores) * val->signalSemaphoreCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, val->signalSemaphoreCount);
+        val->pSignalSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSignalSemaphores) * iter_count);
         if (!val->pSignalSemaphores) return;
-        vn_decode_array_size(dec, val->signalSemaphoreCount);
-        for (uint32_t i = 0; i < val->signalSemaphoreCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pSignalSemaphores)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -769,10 +769,10 @@ static inline void vn_decode_vkQueueSubmit_args_temp(struct vn_cs_decoder *dec, 
     vn_decode_VkQueue_lookup(dec, &args->queue);
     vn_decode_uint32_t(dec, &args->submitCount);
     if (vn_peek_array_size(dec)) {
-        args->pSubmits = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSubmits) * args->submitCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->submitCount);
+        args->pSubmits = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSubmits) * iter_count);
         if (!args->pSubmits) return;
-        vn_decode_array_size(dec, args->submitCount);
-        for (uint32_t i = 0; i < args->submitCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubmitInfo_temp(dec, &((VkSubmitInfo *)args->pSubmits)[i]);
     } else {
         vn_decode_array_size(dec, 0);
@@ -826,10 +826,10 @@ static inline void vn_decode_vkQueueBindSparse_args_temp(struct vn_cs_decoder *d
     vn_decode_VkQueue_lookup(dec, &args->queue);
     vn_decode_uint32_t(dec, &args->bindInfoCount);
     if (vn_peek_array_size(dec)) {
-        args->pBindInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfo) * args->bindInfoCount);
+        const uint32_t iter_count = vn_decode_array_size(dec, args->bindInfoCount);
+        args->pBindInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfo) * iter_count);
         if (!args->pBindInfo) return;
-        vn_decode_array_size(dec, args->bindInfoCount);
-        for (uint32_t i = 0; i < args->bindInfoCount; i++)
+        for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindSparseInfo_temp(dec, &((VkBindSparseInfo *)args->pBindInfo)[i]);
     } else {
         vn_decode_array_size(dec, 0);
