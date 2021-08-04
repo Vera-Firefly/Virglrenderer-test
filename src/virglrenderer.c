@@ -744,7 +744,7 @@ int virgl_renderer_get_poll_fd(void)
 
 virgl_debug_callback_type virgl_set_debug_callback(virgl_debug_callback_type cb)
 {
-   return vrend_set_debug_callback(cb);
+   return virgl_log_set_logger(cb);
 }
 
 static int virgl_renderer_export_query(void *execute_args, uint32_t execute_size)

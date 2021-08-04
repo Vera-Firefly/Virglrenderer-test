@@ -25,12 +25,15 @@
 #ifndef VIRGL_UTIL_H
 #define VIRGL_UTIL_H
 
-#include <stdint.h>
+#include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "virglrenderer.h"
 
 #define TRACE_WITH_PERFETTO 1
 #define TRACE_WITH_STDERR 2
@@ -61,6 +64,17 @@ bool has_eventfd(void);
 int create_eventfd(unsigned int initval);
 int write_eventfd(int fd, uint64_t val);
 void flush_eventfd(int fd);
+
+virgl_debug_callback_type virgl_log_set_logger(virgl_debug_callback_type logger);
+void virgl_logv(const char *fmt, va_list va);
+
+static inline void virgl_log(const char *fmt, ...)
+{
+   va_list va;
+   va_start(va, fmt);
+   virgl_logv(fmt, va);
+   va_end(va);
+}
 
 #ifdef ENABLE_TRACING
 void trace_init(void);
