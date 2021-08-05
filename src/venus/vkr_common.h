@@ -288,6 +288,9 @@ struct object_array {
 extern uint32_t vkr_renderer_flags;
 extern uint32_t vkr_debug_flags;
 
+void
+vkr_log(const char *fmt, ...);
+
 bool
 object_array_init(struct object_array *arr,
                   uint32_t count,
