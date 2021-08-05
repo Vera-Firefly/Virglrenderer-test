@@ -200,8 +200,10 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
    mtx_lock(&ctx->mutex);
 
    /* CS error is considered fatal (destroy the context?) */
-   if (vkr_cs_decoder_get_fatal(&ctx->decoder))
+   if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
+      mtx_unlock(&ctx->mutex);
       return EINVAL;
+   }
 
    vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
 
