@@ -322,8 +322,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
    case VK_OBJECT_TYPE_COMMAND_BUFFER:  /* pool objects */
    case VK_OBJECT_TYPE_DESCRIPTOR_SET:  /* pool objects */
    default:
-      vrend_printf("Unhandled vkr_object(%p) with VkObjectType(%u)\n", obj,
-                   (uint32_t)obj->type);
+      vkr_log("Unhandled vkr_object(%p) with VkObjectType(%u)", obj, (uint32_t)obj->type);
       assert(false);
       break;
    };
@@ -339,10 +338,10 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
    VkDevice device = dev->base.handle.device;
    VkResult ret = vkDeviceWaitIdle(device);
    if (ret != VK_SUCCESS)
-      vrend_printf("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)ret);
+      vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)ret);
 
    if (!LIST_IS_EMPTY(&dev->objects)) {
-      vrend_printf("destroying device with valid objects");
+      vkr_log("destroying device with valid objects");
 
       struct vkr_object *obj, *obj_tmp;
       LIST_FOR_EACH_ENTRY_SAFE (obj, obj_tmp, &dev->objects, track_head)

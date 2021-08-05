@@ -30,7 +30,7 @@
 static void
 vkr_dispatch_debug_log(UNUSED struct vn_dispatch_context *dispatch, const char *msg)
 {
-   vrend_printf("vkr: %s\n", msg);
+   vkr_log(msg);
 }
 
 static void
@@ -383,7 +383,7 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
 
    /* TODO transfer via dmabuf (and find a solution to coherency issues) */
    if (LIST_IS_EMPTY(&att->memories)) {
-      vrend_printf("unable to transfer without VkDeviceMemory (TODO)");
+      vkr_log("unable to transfer without VkDeviceMemory (TODO)");
       return EINVAL;
    }
 
@@ -504,7 +504,7 @@ vkr_context_destroy(struct virgl_context *base)
    }
 
    if (ctx->instance) {
-      vrend_printf("destroying context with a valid instance");
+      vkr_log("destroying context with a valid instance");
 
       vkr_instance_destroy(ctx, ctx->instance);
    }

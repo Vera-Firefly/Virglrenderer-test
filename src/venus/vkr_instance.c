@@ -72,7 +72,7 @@ vkr_validation_callback(UNUSED VkDebugUtilsMessageSeverityFlagBitsEXT messageSev
 {
    struct vkr_context *ctx = pUserData;
 
-   vrend_printf("%s\n", pCallbackData->pMessage);
+   vkr_log(pCallbackData->pMessage);
 
    if (!ctx->validate_fatal)
       return false;

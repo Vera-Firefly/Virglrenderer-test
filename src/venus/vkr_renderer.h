@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #include "os/os_misc.h"
-#include "vrend_debug.h"
+#include "virgl_util.h"
 
 #define VKR_RENDERER_THREAD_SYNC (1u << 0)
 #define VKR_RENDERER_MULTI_PROCESS (1u << 1)
@@ -44,7 +44,7 @@ vkr_context_create(size_t debug_len, const char *debug_name);
 static inline int
 vkr_renderer_init(UNUSED uint32_t flags)
 {
-   vrend_printf("Vulkan support was not enabled in virglrenderer\n");
+   virgl_log("Vulkan support was not enabled in virglrenderer\n");
    return -1;
 }
 

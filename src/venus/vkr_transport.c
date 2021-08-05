@@ -181,7 +181,7 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
 
    /* TODO support scatter-gather or require logically contiguous resources */
    if (att->resource->iov_count != 1) {
-      vrend_printf("vkr: no scatter-gather support for ring buffers (TODO)");
+      vkr_log("no scatter-gather support for ring buffers (TODO)");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
