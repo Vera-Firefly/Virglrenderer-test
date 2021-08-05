@@ -108,9 +108,10 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
          if (result == VK_NOT_READY)
             break;
 
+         bool is_last_sync = sync->head.next == &queue->pending_syncs;
+
          list_del(&sync->head);
-         if (sync->head.next == &queue->pending_syncs ||
-             !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
+         if (is_last_sync || !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
             list_addtail(&sync->head, retired_syncs);
          else
             vkr_device_free_queue_sync(dev, sync);
