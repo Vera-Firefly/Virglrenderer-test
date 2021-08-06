@@ -128,10 +128,16 @@ vkr_queue_sync_retire(struct vkr_context *ctx,
                       struct vkr_device *dev,
                       struct vkr_queue_sync *sync)
 {
-   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
       ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
+      vkr_device_free_queue_sync(dev, sync);
+   } else {
+      vkDestroyFence(dev->base.handle.device, sync->fence, NULL);
+      sync->fence = VK_NULL_HANDLE;
 
-   vkr_device_free_queue_sync(dev, sync);
+      /* move to the ctx to be retired and freed at the next retire_fences */
+      list_addtail(&sync->head, &ctx->signaled_syncs);
+   }
 }
 
 static void

@@ -141,13 +141,21 @@ vkr_context_submit_fence(struct virgl_context *base,
 }
 
 static void
-vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
+vkr_context_retire_fences_locked(struct virgl_context *base)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_queue_sync *sync, *sync_tmp;
    struct vkr_queue *queue, *queue_tmp;
 
    assert(!(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB));
+
+   /* retire syncs from destroyed devices */
+   LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &ctx->signaled_syncs, head) {
+      /* queue_id might have already get reused but is opaque to the clients */
+      ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
+      free(sync);
+   }
+   list_inithead(&ctx->signaled_syncs);
 
    /* flush first and once because the per-queue sync threads might write to
     * it any time
@@ -514,6 +522,10 @@ vkr_context_destroy(struct virgl_context *base)
    util_hash_table_destroy(ctx->resource_table);
    util_hash_table_destroy_u64(ctx->object_table);
 
+   struct vkr_queue_sync *sync, *tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
+      free(sync);
+
    if (ctx->fence_eventfd >= 0)
       close(ctx->fence_eventfd);
 
@@ -621,6 +633,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    }
 
    list_inithead(&ctx->busy_queues);
+   list_inithead(&ctx->signaled_syncs);
 
    return &ctx->base;
 

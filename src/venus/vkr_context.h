@@ -59,6 +59,7 @@ struct vkr_context {
 
    int fence_eventfd;
    struct list_head busy_queues;
+   struct list_head signaled_syncs;
 
    struct vkr_instance *instance;
 };
