@@ -78,9 +78,9 @@ vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 }
 
 void
-vkr_queue_retire_syncs(struct vkr_queue *queue,
-                       struct list_head *retired_syncs,
-                       bool *queue_empty)
+vkr_queue_get_signaled_syncs(struct vkr_queue *queue,
+                             struct list_head *retired_syncs,
+                             bool *queue_empty)
 {
    struct vkr_device *dev = queue->device;
    struct vkr_queue_sync *sync, *tmp;
@@ -123,8 +123,19 @@ vkr_queue_retire_syncs(struct vkr_queue *queue,
    }
 }
 
-void
-vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
+static void
+vkr_queue_sync_retire(struct vkr_context *ctx,
+                      struct vkr_device *dev,
+                      struct vkr_queue_sync *sync)
+{
+   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
+      ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
+
+   vkr_device_free_queue_sync(dev, sync);
+}
+
+static void
+vkr_queue_retire_all_syncs(struct vkr_context *ctx, struct vkr_queue *queue)
 {
    struct vkr_queue_sync *sync, *tmp;
 
@@ -137,13 +148,20 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
       thrd_join(queue->thread, NULL);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head)
-         vkr_device_free_queue_sync(queue->device, sync);
+         vkr_queue_sync_retire(ctx, queue->device, sync);
    } else {
       assert(LIST_IS_EMPTY(&queue->signaled_syncs));
    }
 
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
-      vkr_device_free_queue_sync(queue->device, sync);
+      vkr_queue_sync_retire(ctx, queue->device, sync);
+}
+
+void
+vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
+{
+   /* vkDeviceWaitIdle has been called */
+   vkr_queue_retire_all_syncs(ctx, queue);
 
    mtx_destroy(&queue->mutex);
    cnd_destroy(&queue->cond);

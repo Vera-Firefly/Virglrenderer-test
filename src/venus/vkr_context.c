@@ -160,7 +160,7 @@ vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
       struct list_head retired_syncs;
       bool queue_empty;
 
-      vkr_queue_retire_syncs(queue, &retired_syncs, &queue_empty);
+      vkr_queue_get_signaled_syncs(queue, &retired_syncs, &queue_empty);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
          ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);

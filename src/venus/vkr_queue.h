@@ -89,9 +89,9 @@ void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync);
 
 void
-vkr_queue_retire_syncs(struct vkr_queue *queue,
-                       struct list_head *retired_syncs,
-                       bool *queue_empty);
+vkr_queue_get_signaled_syncs(struct vkr_queue *queue,
+                             struct list_head *retired_syncs,
+                             bool *queue_empty);
 
 struct vkr_queue *
 vkr_queue_create(struct vkr_context *ctx,
