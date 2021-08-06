@@ -18,6 +18,7 @@
 struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,
                             uint32_t fence_flags,
+                            uint64_t queue_id,
                             void *fence_cookie)
 {
    struct vkr_queue_sync *sync;
@@ -58,6 +59,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    }
 
    sync->flags = fence_flags;
+   sync->queue_id = queue_id;
    sync->fence_cookie = fence_cookie;
 
    return sync;
@@ -191,7 +193,7 @@ vkr_queue_thread(void *arg)
       list_del(&sync->head);
 
       if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-         ctx->base.fence_retire(&ctx->base, queue->base.id, sync->fence_cookie);
+         ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
          vkr_device_free_queue_sync(queue->device, sync);
       } else {
          list_addtail(&sync->head, &queue->signaled_syncs);

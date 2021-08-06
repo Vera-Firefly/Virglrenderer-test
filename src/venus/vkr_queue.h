@@ -12,6 +12,7 @@ struct vkr_queue_sync {
    VkFence fence;
 
    uint32_t flags;
+   uint64_t queue_id;
    void *fence_cookie;
 
    struct list_head head;
@@ -81,6 +82,7 @@ vkr_context_init_event_dispatch(struct vkr_context *ctx);
 struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,
                             uint32_t fence_flags,
+                            uint64_t queue_id,
                             void *fence_cookie);
 
 void

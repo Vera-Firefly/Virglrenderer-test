@@ -99,7 +99,8 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
       return -EINVAL;
    struct vkr_device *dev = queue->device;
 
-   struct vkr_queue_sync *sync = vkr_device_alloc_queue_sync(dev, flags, fence_cookie);
+   struct vkr_queue_sync *sync =
+      vkr_device_alloc_queue_sync(dev, flags, queue->base.id, fence_cookie);
    if (!sync)
       return -ENOMEM;
 
@@ -162,7 +163,7 @@ vkr_context_retire_fences_locked(UNUSED struct virgl_context *base)
       vkr_queue_retire_syncs(queue, &retired_syncs, &queue_empty);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
-         ctx->base.fence_retire(&ctx->base, queue->base.id, sync->fence_cookie);
+         ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
          vkr_device_free_queue_sync(dev, sync);
       }
 
