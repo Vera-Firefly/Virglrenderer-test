@@ -151,10 +151,6 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    struct vkr_physical_device *physical_dev =
       (struct vkr_physical_device *)args->physicalDevice;
-   if (!physical_dev || physical_dev->base.type != VK_OBJECT_TYPE_PHYSICAL_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    /* append extensions for our own use */
    const char **exts = NULL;
