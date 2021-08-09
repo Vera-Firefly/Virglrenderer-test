@@ -12,27 +12,18 @@
 #include "vkr_physical_device.h"
 
 static void
-vkr_dispatch_vkEnumerateInstanceVersion(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkEnumerateInstanceVersion(UNUSED struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkEnumerateInstanceVersion *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   if (!args->pApiVersion) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    vn_replace_vkEnumerateInstanceVersion_args_handle(args);
    args->ret = vkEnumerateInstanceVersion(args->pApiVersion);
 }
 
 static void
 vkr_dispatch_vkEnumerateInstanceExtensionProperties(
-   struct vn_dispatch_context *dispatch,
+   UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkEnumerateInstanceExtensionProperties *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
    VkExtensionProperties private_extensions[] = {
       {
          .extensionName = "VK_EXT_command_serialization",
@@ -41,11 +32,6 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(
          .extensionName = "VK_MESA_venus_protocol",
       },
    };
-
-   if (!args->pPropertyCount) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    if (!args->pProperties) {
       *args->pPropertyCount = ARRAY_SIZE(private_extensions);
@@ -94,11 +80,6 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    if (ctx->instance) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   if (!args->pCreateInfo) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }

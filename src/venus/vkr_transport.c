@@ -20,11 +20,6 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vkr_context *ctx = dispatch->data;
    struct vkr_resource_attachment *att;
 
-   if (!args->pStream) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    att = util_hash_table_get(ctx->resource_table,
                              uintptr_to_pointer(args->pStream->resourceId));
    if (!att) {
@@ -104,7 +99,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
 {
    struct vkr_context *ctx = dispatch->data;
 
-   if (!args->streamCount || !args->pStreams) {
+   if (!args->streamCount) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
@@ -167,11 +162,6 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    uint8_t *shared;
    size_t size;
    struct vkr_ring *ring;
-
-   if (!info) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(info->resourceId));
    if (!att) {
@@ -281,16 +271,9 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
 
 static void
 vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
-   struct vn_dispatch_context *dispatch,
+   UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   if (!args->pDataSize) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    const VkVenusExperimentalFeatures100000MESA features = {
       .memoryResourceAllocationSize = VK_TRUE,
    };
