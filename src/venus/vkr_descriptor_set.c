@@ -83,7 +83,7 @@ vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch,
 
    struct vkr_descriptor_pool *pool =
       (struct vkr_descriptor_pool *)(uintptr_t)args->descriptorPool;
-   if (!pool || pool->base.type != VK_OBJECT_TYPE_DESCRIPTOR_POOL) {
+   if (!pool) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }

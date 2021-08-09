@@ -160,11 +160,8 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device_memory *mem = (struct vkr_device_memory *)(uintptr_t)args->memory;
-   if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY) {
-      if (mem)
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+   if (!mem)
       return;
-   }
 
    vn_replace_vkFreeMemory_args_handle(args);
    vkFreeMemory(args->device, args->memory, NULL);

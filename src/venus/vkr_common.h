@@ -74,11 +74,8 @@
 
 #define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
    struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)args->vk_arg;        \
-   if (!obj || obj->base.type != VK_OBJECT_TYPE_##vk_obj) {                              \
-      if (obj)                                                                           \
-         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
+   if (!obj)                                                                             \
       return;                                                                            \
-   }                                                                                     \
                                                                                          \
    vn_replace_##vk_cmd##_args_handle(args);                                              \
    vk_cmd(args->device, args->vk_arg, NULL);                                             \
@@ -92,7 +89,7 @@
                                                                                          \
       struct vkr_##vkr_pool_type *pool =                                                 \
          (struct vkr_##vkr_pool_type *)(uintptr_t)args->pAllocateInfo->arg_pool;         \
-      if (!pool || pool->base.type != VK_OBJECT_TYPE_##vk_pool_type) {                   \
+      if (!pool) {                                                                       \
          vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
          return;                                                                         \
       }                                                                                  \
@@ -137,10 +134,6 @@
          struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)args->arg_obj[i];         \
          if (!obj)                                                                       \
             continue;                                                                    \
-         if (obj->base.type != VK_OBJECT_TYPE_##vk_type) {                               \
-            vkr_cs_decoder_set_fatal(&ctx->decoder);                                     \
-            return;                                                                      \
-         }                                                                               \
                                                                                          \
          list_del(&obj->base.track_head);                                                \
          list_addtail(&obj->base.track_head, &free_list);                                \
