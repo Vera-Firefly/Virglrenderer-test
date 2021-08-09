@@ -28,10 +28,6 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    struct vkr_render_pass *pass = calloc(1, sizeof(*pass));
    if (!pass) {

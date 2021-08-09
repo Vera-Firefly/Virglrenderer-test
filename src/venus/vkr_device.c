@@ -368,11 +368,9 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      if (dev)
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+   /* this never happens */
+   if (!dev)
       return;
-   }
 
    vkr_device_destroy(ctx, dev);
 }

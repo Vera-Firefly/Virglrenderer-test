@@ -43,15 +43,10 @@ vkr_dispatch_vkGetQueryPoolResults(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkResetQueryPool(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkResetQueryPool(UNUSED struct vn_dispatch_context *dispatch,
                               struct vn_command_vkResetQueryPool *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkResetQueryPool_args_handle(args);
    dev->ResetQueryPool(args->device, args->queryPool, args->firstQuery, args->queryCount);

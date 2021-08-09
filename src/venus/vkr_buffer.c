@@ -19,10 +19,6 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
 #ifdef FORCE_ENABLE_DMABUF
    VkExternalMemoryBufferCreateInfo local_external_info;
@@ -95,30 +91,20 @@ vkr_dispatch_vkBindBufferMemory2(UNUSED struct vn_dispatch_context *dispatch,
 
 static void
 vkr_dispatch_vkGetBufferOpaqueCaptureAddress(
-   struct vn_dispatch_context *dispatch,
+   UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetBufferOpaqueCaptureAddress *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkGetBufferOpaqueCaptureAddress_args_handle(args);
    args->ret = dev->GetBufferOpaqueCaptureAddress(args->device, args->pInfo);
 }
 
 static void
-vkr_dispatch_vkGetBufferDeviceAddress(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkGetBufferDeviceAddress(UNUSED struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkGetBufferDeviceAddress *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkGetBufferDeviceAddress_args_handle(args);
    args->ret = dev->GetBufferDeviceAddress(args->device, args->pInfo);

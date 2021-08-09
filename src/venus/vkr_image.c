@@ -21,10 +21,6 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
 #ifdef FORCE_ENABLE_DMABUF
    /* Do not chain VkExternalMemoryImageCreateInfo with optimal tiling, so that
@@ -133,15 +129,10 @@ vkr_dispatch_vkGetImageSubresourceLayout(
 
 static void
 vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(
-   struct vn_dispatch_context *dispatch,
+   UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageDrmFormatModifierPropertiesEXT *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkGetImageDrmFormatModifierPropertiesEXT_args_handle(args);
    args->ret = dev->get_image_drm_format_modifier_properties(args->device, args->image,

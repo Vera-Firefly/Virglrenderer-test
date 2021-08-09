@@ -53,10 +53,6 @@
  */
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
    struct vkr_device *_dev = (struct vkr_device *)args->device;                          \
-   if (!_dev || _dev->base.type != VK_OBJECT_TYPE_DEVICE) {                              \
-      vkr_cs_decoder_set_fatal(&ctx->decoder);                                           \
-      return;                                                                            \
-   }                                                                                     \
                                                                                          \
    struct vkr_##vkr_type *obj = calloc(1, sizeof(*obj));                                 \
    if (!obj) {                                                                           \
@@ -93,10 +89,6 @@
                               vkr_pool_type, vk_pool_type)                               \
    do {                                                                                  \
       struct vkr_device *dev = (struct vkr_device *)args->device;                        \
-      if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {                             \
-         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
-         return;                                                                         \
-      }                                                                                  \
                                                                                          \
       struct vkr_##vkr_pool_type *pool =                                                 \
          (struct vkr_##vkr_pool_type *)(uintptr_t)args->pAllocateInfo->arg_pool;         \
@@ -163,10 +155,6 @@
 #define CREATE_PIPELINES(vk_cmd)                                                         \
    do {                                                                                  \
       struct vkr_device *dev = (struct vkr_device *)args->device;                        \
-      if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {                             \
-         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
-         return;                                                                         \
-      }                                                                                  \
                                                                                          \
       struct object_array arr;                                                           \
       if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,       \

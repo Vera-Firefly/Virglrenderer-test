@@ -46,10 +46,6 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
 #ifdef FORCE_ENABLE_DMABUF
    VkExportMemoryAllocateInfo local_export_info;
@@ -190,15 +186,10 @@ vkr_dispatch_vkGetDeviceMemoryCommitment(
 
 static void
 vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(
-   struct vn_dispatch_context *dispatch,
+   UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkGetDeviceMemoryOpaqueCaptureAddress_args_handle(args);
    args->ret = dev->GetDeviceMemoryOpaqueCaptureAddress(args->device, args->pInfo);
@@ -211,10 +202,6 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    struct vkr_resource_attachment *att =
       util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));

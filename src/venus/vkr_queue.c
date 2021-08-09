@@ -299,10 +299,6 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    struct vkr_queue *queue = vkr_device_lookup_queue(
       dev, 0 /* flags */, args->queueFamilyIndex, args->queueIndex);
@@ -323,10 +319,6 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    struct vkr_queue *queue = vkr_device_lookup_queue(dev, args->pQueueInfo->flags,
                                                      args->pQueueInfo->queueFamilyIndex,
@@ -449,15 +441,10 @@ vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkGetSemaphoreCounterValue(UNUSED struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkGetSemaphoreCounterValue *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkGetSemaphoreCounterValue_args_handle(args);
    args->ret = dev->GetSemaphoreCounterValue(args->device, args->semaphore, args->pValue);
@@ -470,11 +457,6 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
 
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    /* no blocking call */
    if (args->timeout) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
@@ -486,15 +468,10 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkSignalSemaphore(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkSignalSemaphore(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkSignalSemaphore *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
-   if (!dev || dev->base.type != VK_OBJECT_TYPE_DEVICE) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    vn_replace_vkSignalSemaphore_args_handle(args);
    args->ret = dev->SignalSemaphore(args->device, args->pSignalInfo);
