@@ -314,4 +314,43 @@ vkr_find_pnext(const void *chain, VkStructureType type)
    return NULL;
 }
 
+static inline bool
+vkr_is_recognized_object_type(VkObjectType type)
+{
+   switch (type) {
+   /* VK_VERSION_1_0 */
+   case VK_OBJECT_TYPE_INSTANCE:
+   case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
+   case VK_OBJECT_TYPE_DEVICE:
+   case VK_OBJECT_TYPE_QUEUE:
+   case VK_OBJECT_TYPE_SEMAPHORE:
+   case VK_OBJECT_TYPE_COMMAND_BUFFER:
+   case VK_OBJECT_TYPE_FENCE:
+   case VK_OBJECT_TYPE_DEVICE_MEMORY:
+   case VK_OBJECT_TYPE_BUFFER:
+   case VK_OBJECT_TYPE_IMAGE:
+   case VK_OBJECT_TYPE_EVENT:
+   case VK_OBJECT_TYPE_QUERY_POOL:
+   case VK_OBJECT_TYPE_BUFFER_VIEW:
+   case VK_OBJECT_TYPE_IMAGE_VIEW:
+   case VK_OBJECT_TYPE_SHADER_MODULE:
+   case VK_OBJECT_TYPE_PIPELINE_CACHE:
+   case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
+   case VK_OBJECT_TYPE_RENDER_PASS:
+   case VK_OBJECT_TYPE_PIPELINE:
+   case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
+   case VK_OBJECT_TYPE_SAMPLER:
+   case VK_OBJECT_TYPE_DESCRIPTOR_POOL:
+   case VK_OBJECT_TYPE_DESCRIPTOR_SET:
+   case VK_OBJECT_TYPE_FRAMEBUFFER:
+   case VK_OBJECT_TYPE_COMMAND_POOL:
+   /* VK_VERSION_1_1 */
+   case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
+   case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
+      return true;
+   default:
+      return false;
+   }
+}
+
 #endif /* VKR_COMMON_H */

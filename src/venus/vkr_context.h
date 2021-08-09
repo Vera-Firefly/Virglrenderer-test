@@ -64,11 +64,31 @@ struct vkr_context {
 };
 
 static inline void
+vkr_context_add_object(struct vkr_context *ctx, struct vkr_object *obj)
+{
+   assert(vkr_is_recognized_object_type(obj->type));
+   /* TODO we might hit these at the moment */
+   assert(obj->id);
+   assert(!util_hash_table_get_u64(ctx->object_table, obj->id));
+
+   util_hash_table_set_u64(ctx->object_table, obj->id, obj);
+}
+
+static inline void
+vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
+{
+   assert(util_hash_table_get_u64(ctx->object_table, obj->id));
+
+   /* this frees obj */
+   util_hash_table_remove_u64(ctx->object_table, obj->id);
+}
+
+static inline void
 vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
 {
    struct vkr_object *obj, *tmp;
    LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, objects, track_head)
-      util_hash_table_remove_u64(ctx->object_table, obj->id);
+      vkr_context_remove_object(ctx, obj);
    /* objects should be reinitialized if to be reused */
 }
 
