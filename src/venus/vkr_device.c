@@ -233,6 +233,8 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 {
    VkDevice device = dev->base.handle.device;
 
+   assert(vkr_device_should_track_object(obj));
+
    switch (obj->type) {
    case VK_OBJECT_TYPE_SEMAPHORE:
       vkDestroySemaphore(device, obj->handle.semaphore, NULL);
@@ -315,12 +317,6 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       vkDestroyDescriptorUpdateTemplate(device, obj->handle.descriptor_update_template,
                                         NULL);
       break;
-   case VK_OBJECT_TYPE_INSTANCE:        /* non-device objects */
-   case VK_OBJECT_TYPE_PHYSICAL_DEVICE: /* non-device objects */
-   case VK_OBJECT_TYPE_DEVICE:          /* device itself */
-   case VK_OBJECT_TYPE_QUEUE:           /* not tracked as device objects */
-   case VK_OBJECT_TYPE_COMMAND_BUFFER:  /* pool objects */
-   case VK_OBJECT_TYPE_DESCRIPTOR_SET:  /* pool objects */
    default:
       vkr_log("Unhandled vkr_object(%p) with VkObjectType(%u)", obj, (uint32_t)obj->type);
       assert(false);
