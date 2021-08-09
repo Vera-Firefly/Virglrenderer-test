@@ -37,7 +37,7 @@ vn_decode_VkInstance_lookup(struct vn_cs_decoder *dec, VkInstance *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkInstance)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkInstance)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_INSTANCE);
 }
 
 static inline void
@@ -73,7 +73,7 @@ vn_decode_VkPhysicalDevice_lookup(struct vn_cs_decoder *dec, VkPhysicalDevice *v
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkPhysicalDevice)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkPhysicalDevice)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_PHYSICAL_DEVICE);
 }
 
 static inline void
@@ -109,7 +109,7 @@ vn_decode_VkDevice_lookup(struct vn_cs_decoder *dec, VkDevice *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDevice)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDevice)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DEVICE);
 }
 
 static inline void
@@ -145,7 +145,7 @@ vn_decode_VkQueue_lookup(struct vn_cs_decoder *dec, VkQueue *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkQueue)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkQueue)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_QUEUE);
 }
 
 static inline void
@@ -181,7 +181,7 @@ vn_decode_VkCommandBuffer_lookup(struct vn_cs_decoder *dec, VkCommandBuffer *val
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkCommandBuffer)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkCommandBuffer)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_COMMAND_BUFFER);
 }
 
 static inline void
@@ -212,7 +212,7 @@ vn_decode_VkDeviceMemory_lookup(struct vn_cs_decoder *dec, VkDeviceMemory *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDeviceMemory)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDeviceMemory)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DEVICE_MEMORY);
 }
 
 static inline void
@@ -243,7 +243,7 @@ vn_decode_VkCommandPool_lookup(struct vn_cs_decoder *dec, VkCommandPool *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkCommandPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkCommandPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_COMMAND_POOL);
 }
 
 static inline void
@@ -274,7 +274,7 @@ vn_decode_VkBuffer_lookup(struct vn_cs_decoder *dec, VkBuffer *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkBuffer)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkBuffer)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_BUFFER);
 }
 
 static inline void
@@ -305,7 +305,7 @@ vn_decode_VkBufferView_lookup(struct vn_cs_decoder *dec, VkBufferView *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkBufferView)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkBufferView)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_BUFFER_VIEW);
 }
 
 static inline void
@@ -336,7 +336,7 @@ vn_decode_VkImage_lookup(struct vn_cs_decoder *dec, VkImage *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkImage)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkImage)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_IMAGE);
 }
 
 static inline void
@@ -367,7 +367,7 @@ vn_decode_VkImageView_lookup(struct vn_cs_decoder *dec, VkImageView *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkImageView)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkImageView)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_IMAGE_VIEW);
 }
 
 static inline void
@@ -398,7 +398,7 @@ vn_decode_VkShaderModule_lookup(struct vn_cs_decoder *dec, VkShaderModule *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkShaderModule)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkShaderModule)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_SHADER_MODULE);
 }
 
 static inline void
@@ -429,7 +429,7 @@ vn_decode_VkPipeline_lookup(struct vn_cs_decoder *dec, VkPipeline *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkPipeline)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkPipeline)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_PIPELINE);
 }
 
 static inline void
@@ -460,7 +460,7 @@ vn_decode_VkPipelineLayout_lookup(struct vn_cs_decoder *dec, VkPipelineLayout *v
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkPipelineLayout)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkPipelineLayout)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
 }
 
 static inline void
@@ -491,7 +491,7 @@ vn_decode_VkSampler_lookup(struct vn_cs_decoder *dec, VkSampler *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkSampler)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkSampler)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_SAMPLER);
 }
 
 static inline void
@@ -522,7 +522,7 @@ vn_decode_VkDescriptorSet_lookup(struct vn_cs_decoder *dec, VkDescriptorSet *val
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDescriptorSet)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDescriptorSet)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DESCRIPTOR_SET);
 }
 
 static inline void
@@ -553,7 +553,7 @@ vn_decode_VkDescriptorSetLayout_lookup(struct vn_cs_decoder *dec, VkDescriptorSe
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDescriptorSetLayout)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDescriptorSetLayout)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT);
 }
 
 static inline void
@@ -584,7 +584,7 @@ vn_decode_VkDescriptorPool_lookup(struct vn_cs_decoder *dec, VkDescriptorPool *v
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDescriptorPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDescriptorPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DESCRIPTOR_POOL);
 }
 
 static inline void
@@ -615,7 +615,7 @@ vn_decode_VkFence_lookup(struct vn_cs_decoder *dec, VkFence *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkFence)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkFence)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_FENCE);
 }
 
 static inline void
@@ -646,7 +646,7 @@ vn_decode_VkSemaphore_lookup(struct vn_cs_decoder *dec, VkSemaphore *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkSemaphore)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkSemaphore)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_SEMAPHORE);
 }
 
 static inline void
@@ -677,7 +677,7 @@ vn_decode_VkEvent_lookup(struct vn_cs_decoder *dec, VkEvent *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkEvent)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkEvent)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_EVENT);
 }
 
 static inline void
@@ -708,7 +708,7 @@ vn_decode_VkQueryPool_lookup(struct vn_cs_decoder *dec, VkQueryPool *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkQueryPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkQueryPool)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_QUERY_POOL);
 }
 
 static inline void
@@ -739,7 +739,7 @@ vn_decode_VkFramebuffer_lookup(struct vn_cs_decoder *dec, VkFramebuffer *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkFramebuffer)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkFramebuffer)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_FRAMEBUFFER);
 }
 
 static inline void
@@ -770,7 +770,7 @@ vn_decode_VkRenderPass_lookup(struct vn_cs_decoder *dec, VkRenderPass *val)
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkRenderPass)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkRenderPass)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_RENDER_PASS);
 }
 
 static inline void
@@ -801,7 +801,7 @@ vn_decode_VkPipelineCache_lookup(struct vn_cs_decoder *dec, VkPipelineCache *val
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkPipelineCache)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkPipelineCache)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_PIPELINE_CACHE);
 }
 
 static inline void
@@ -832,7 +832,7 @@ vn_decode_VkDescriptorUpdateTemplate_lookup(struct vn_cs_decoder *dec, VkDescrip
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkDescriptorUpdateTemplate)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkDescriptorUpdateTemplate)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE);
 }
 
 static inline void
@@ -863,7 +863,7 @@ vn_decode_VkSamplerYcbcrConversion_lookup(struct vn_cs_decoder *dec, VkSamplerYc
 {
     uint64_t id;
     vn_decode_uint64_t(dec, &id);
-    *val = (VkSamplerYcbcrConversion)(uintptr_t)vn_cs_decoder_lookup_object(dec, id);
+    *val = (VkSamplerYcbcrConversion)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION);
 }
 
 static inline void

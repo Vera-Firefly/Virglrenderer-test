@@ -63,10 +63,10 @@ vn_cs_decoder_get_fatal(const struct vn_cs_decoder *dec)
 }
 
 static inline void *
-vn_cs_decoder_lookup_object(const struct vn_cs_decoder *dec, vn_object_id id)
+vn_cs_decoder_lookup_object(const struct vn_cs_decoder *dec, vn_object_id id, VkObjectType type)
 {
    const struct vkr_cs_decoder *d = (const struct vkr_cs_decoder *)dec;
-   return vkr_cs_decoder_lookup_object(d, id);
+   return vkr_cs_decoder_lookup_object(d, id, type);
 }
 
 static inline void

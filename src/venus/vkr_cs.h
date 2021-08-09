@@ -188,7 +188,9 @@ vkr_cs_decoder_peek(const struct vkr_cs_decoder *dec,
 }
 
 static inline struct vkr_object *
-vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec, vkr_object_id id)
+vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
+                             vkr_object_id id,
+                             UNUSED VkObjectType type)
 {
    struct vkr_object *obj;
 
