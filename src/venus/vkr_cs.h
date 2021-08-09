@@ -190,7 +190,7 @@ vkr_cs_decoder_peek(const struct vkr_cs_decoder *dec,
 static inline struct vkr_object *
 vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
                              vkr_object_id id,
-                             UNUSED VkObjectType type)
+                             VkObjectType type)
 {
    struct vkr_object *obj;
 
@@ -198,7 +198,7 @@ vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
       return NULL;
 
    obj = util_hash_table_get_u64((struct util_hash_table_u64 *)dec->object_table, id);
-   if (!obj)
+   if (!obj || obj->type != type)
       vkr_cs_decoder_set_fatal(dec);
 
    return obj;
