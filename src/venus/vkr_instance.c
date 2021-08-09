@@ -241,7 +241,7 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       }
    }
 
-   util_hash_table_set_u64(ctx->object_table, instance->base.id, instance);
+   vkr_context_add_object(ctx, &instance->base);
 
    ctx->instance = instance;
 }
@@ -267,7 +267,7 @@ vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
    free(instance->physical_device_handles);
    free(instance->physical_devices);
 
-   util_hash_table_remove_u64(ctx->object_table, instance->base.id);
+   vkr_context_remove_object(ctx, &instance->base);
 }
 
 static void

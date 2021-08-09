@@ -22,7 +22,7 @@ vkr_physical_device_destroy(struct vkr_context *ctx,
 
    free(physical_dev->extensions);
 
-   util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
+   vkr_context_remove_object(ctx, &physical_dev->base);
 }
 
 static VkResult
@@ -217,7 +217,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
 
       instance->physical_devices[i] = physical_dev;
 
-      util_hash_table_set_u64(ctx->object_table, physical_dev->base.id, physical_dev);
+      vkr_context_add_object(ctx, &physical_dev->base);
    }
    /* remove all physical devices on errors */
    if (i < count) {
@@ -226,7 +226,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
          if (!physical_dev)
             break;
          free(physical_dev->extensions);
-         util_hash_table_remove_u64(ctx->object_table, physical_dev->base.id);
+         vkr_context_remove_object(ctx, &physical_dev->base);
          instance->physical_devices[i] = NULL;
       }
    }

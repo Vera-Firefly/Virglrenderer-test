@@ -150,7 +150,7 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
    list_del(&queue->base.track_head);
 
    if (queue->base.id)
-      util_hash_table_remove_u64(ctx->object_table, queue->base.id);
+      vkr_context_remove_object(ctx, &queue->base);
    else
       free(queue);
 }
@@ -273,7 +273,7 @@ vkr_queue_assign_object_id(struct vkr_context *ctx,
 
    queue->base.id = id;
 
-   util_hash_table_set_u64(ctx->object_table, queue->base.id, queue);
+   vkr_context_add_object(ctx, &queue->base);
 }
 
 static struct vkr_queue *

@@ -129,7 +129,7 @@
          /* pool objects are tracked by the pool other than the device */                \
          list_add(&obj->base.track_head, &pool->vkr_type##s);                            \
                                                                                          \
-         util_hash_table_set_u64(ctx->object_table, obj->base.id, obj);                  \
+         vkr_context_add_object(ctx, &obj->base);                                        \
       }                                                                                  \
                                                                                          \
       arr.objects_stolen = true;                                                         \

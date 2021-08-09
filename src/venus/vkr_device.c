@@ -223,7 +223,7 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    list_add(&dev->base.track_head, &physical_dev->devices);
 
-   util_hash_table_set_u64(ctx->object_table, dev->base.id, dev);
+   vkr_context_add_object(ctx, &dev->base);
 }
 
 static void
@@ -362,7 +362,7 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
 
    list_del(&dev->base.track_head);
 
-   util_hash_table_remove_u64(ctx->object_table, dev->base.id);
+   vkr_context_remove_object(ctx, &dev->base);
 }
 
 static void
