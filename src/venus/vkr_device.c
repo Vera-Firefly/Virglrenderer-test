@@ -325,7 +325,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 
    list_del(&obj->track_head);
 
-   util_hash_table_remove_u64(ctx->object_table, obj->id);
+   vkr_device_remove_object(ctx, obj);
 }
 
 void

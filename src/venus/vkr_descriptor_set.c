@@ -32,7 +32,7 @@ vkr_dispatch_vkCreateDescriptorSetLayout(
    CREATE_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
                  vkCreateDescriptorSetLayout, pSetLayout);
 
-   util_hash_table_set_u64(ctx->object_table, layout->base.id, layout);
+   vkr_device_add_object(ctx, &layout->base);
 }
 
 static void
@@ -45,7 +45,7 @@ vkr_dispatch_vkDestroyDescriptorSetLayout(
    DESTROY_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
                   vkDestroyDescriptorSetLayout, descriptorSetLayout);
 
-   util_hash_table_remove_u64(ctx->object_table, layout->base.id);
+   vkr_device_remove_object(ctx, &layout->base);
 }
 
 static void
@@ -59,7 +59,7 @@ vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch,
 
    list_inithead(&pool->descriptor_sets);
 
-   util_hash_table_set_u64(ctx->object_table, pool->base.id, pool);
+   vkr_device_add_object(ctx, &pool->base);
 }
 
 static void
@@ -72,7 +72,7 @@ vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
                   descriptorPool);
 
    vkr_context_remove_objects(ctx, &pool->descriptor_sets);
-   util_hash_table_remove_u64(ctx->object_table, pool->base.id);
+   vkr_device_remove_object(ctx, &pool->base);
 }
 
 static void
@@ -138,7 +138,7 @@ vkr_dispatch_vkCreateDescriptorUpdateTemplate(
    CREATE_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
                  vkCreateDescriptorUpdateTemplate, pDescriptorUpdateTemplate);
 
-   util_hash_table_set_u64(ctx->object_table, templ->base.id, templ);
+   vkr_device_add_object(ctx, &templ->base);
 }
 
 static void
@@ -151,7 +151,7 @@ vkr_dispatch_vkDestroyDescriptorUpdateTemplate(
    DESTROY_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
                   vkDestroyDescriptorUpdateTemplate, descriptorUpdateTemplate);
 
-   util_hash_table_remove_u64(ctx->object_table, templ->base.id);
+   vkr_device_remove_object(ctx, &templ->base);
 }
 
 void

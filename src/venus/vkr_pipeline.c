@@ -21,7 +21,7 @@ vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(mod, shader_module, SHADER_MODULE, vkCreateShaderModule, pShaderModule);
 
-   util_hash_table_set_u64(ctx->object_table, mod->base.id, mod);
+   vkr_device_add_object(ctx, &mod->base);
 }
 
 static void
@@ -32,7 +32,7 @@ vkr_dispatch_vkDestroyShaderModule(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(mod, shader_module, SHADER_MODULE, vkDestroyShaderModule, shaderModule);
 
-   util_hash_table_remove_u64(ctx->object_table, mod->base.id);
+   vkr_device_remove_object(ctx, &mod->base);
 }
 
 static void
@@ -44,7 +44,7 @@ vkr_dispatch_vkCreatePipelineLayout(struct vn_dispatch_context *dispatch,
    CREATE_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkCreatePipelineLayout,
                  pPipelineLayout);
 
-   util_hash_table_set_u64(ctx->object_table, layout->base.id, layout);
+   vkr_device_add_object(ctx, &layout->base);
 }
 
 static void
@@ -56,7 +56,7 @@ vkr_dispatch_vkDestroyPipelineLayout(struct vn_dispatch_context *dispatch,
    DESTROY_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkDestroyPipelineLayout,
                   pipelineLayout);
 
-   util_hash_table_remove_u64(ctx->object_table, layout->base.id);
+   vkr_device_remove_object(ctx, &layout->base);
 }
 
 static void
@@ -68,7 +68,7 @@ vkr_dispatch_vkCreatePipelineCache(struct vn_dispatch_context *dispatch,
    CREATE_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkCreatePipelineCache,
                  pPipelineCache);
 
-   util_hash_table_set_u64(ctx->object_table, cache->base.id, cache);
+   vkr_device_add_object(ctx, &cache->base);
 }
 
 static void
@@ -80,7 +80,7 @@ vkr_dispatch_vkDestroyPipelineCache(struct vn_dispatch_context *dispatch,
    DESTROY_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkDestroyPipelineCache,
                   pipelineCache);
 
-   util_hash_table_remove_u64(ctx->object_table, cache->base.id);
+   vkr_device_remove_object(ctx, &cache->base);
 }
 
 static void
@@ -127,7 +127,7 @@ vkr_dispatch_vkDestroyPipeline(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(pipeline, pipeline, PIPELINE, vkDestroyPipeline, pipeline);
 
-   util_hash_table_remove_u64(ctx->object_table, pipeline->base.id);
+   vkr_device_remove_object(ctx, &pipeline->base);
 }
 
 void

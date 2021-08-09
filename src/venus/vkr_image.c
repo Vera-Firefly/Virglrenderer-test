@@ -50,7 +50,7 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(img, image, IMAGE, vkCreateImage, pImage);
 
-   util_hash_table_set_u64(ctx->object_table, img->base.id, img);
+   vkr_device_add_object(ctx, &img->base);
 }
 
 static void
@@ -61,7 +61,7 @@ vkr_dispatch_vkDestroyImage(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(img, image, IMAGE, vkDestroyImage, image);
 
-   util_hash_table_remove_u64(ctx->object_table, img->base.id);
+   vkr_device_remove_object(ctx, &img->base);
 }
 
 static void
@@ -156,7 +156,7 @@ vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(view, image_view, IMAGE_VIEW, vkCreateImageView, pView);
 
-   util_hash_table_set_u64(ctx->object_table, view->base.id, view);
+   vkr_device_add_object(ctx, &view->base);
 }
 
 static void
@@ -167,7 +167,7 @@ vkr_dispatch_vkDestroyImageView(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(view, image_view, IMAGE_VIEW, vkDestroyImageView, imageView);
 
-   util_hash_table_remove_u64(ctx->object_table, view->base.id);
+   vkr_device_remove_object(ctx, &view->base);
 }
 
 static void
@@ -178,7 +178,7 @@ vkr_dispatch_vkCreateSampler(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(sampler, sampler, SAMPLER, vkCreateSampler, pSampler);
 
-   util_hash_table_set_u64(ctx->object_table, sampler->base.id, sampler);
+   vkr_device_add_object(ctx, &sampler->base);
 }
 
 static void
@@ -189,7 +189,7 @@ vkr_dispatch_vkDestroySampler(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(sampler, sampler, SAMPLER, vkDestroySampler, sampler);
 
-   util_hash_table_remove_u64(ctx->object_table, sampler->base.id);
+   vkr_device_remove_object(ctx, &sampler->base);
 }
 
 static void
@@ -202,7 +202,7 @@ vkr_dispatch_vkCreateSamplerYcbcrConversion(
    CREATE_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
                  vkCreateSamplerYcbcrConversion, pYcbcrConversion);
 
-   util_hash_table_set_u64(ctx->object_table, conv->base.id, conv);
+   vkr_device_add_object(ctx, &conv->base);
 }
 
 static void
@@ -215,7 +215,7 @@ vkr_dispatch_vkDestroySamplerYcbcrConversion(
    DESTROY_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
                   vkDestroySamplerYcbcrConversion, ycbcrConversion);
 
-   util_hash_table_remove_u64(ctx->object_table, conv->base.id);
+   vkr_device_remove_object(ctx, &conv->base);
 }
 
 void

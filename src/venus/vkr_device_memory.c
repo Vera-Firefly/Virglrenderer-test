@@ -154,7 +154,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
 
    list_add(&mem->base.track_head, &dev->objects);
 
-   util_hash_table_set_u64(ctx->object_table, mem->base.id, mem);
+   vkr_device_add_object(ctx, &mem->base);
 }
 
 static void
@@ -176,7 +176,7 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
    list_del(&mem->exported_head);
    list_del(&mem->base.track_head);
 
-   util_hash_table_remove_u64(ctx->object_table, mem->base.id);
+   vkr_device_remove_object(ctx, &mem->base);
 }
 
 static void

@@ -21,7 +21,7 @@ vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch,
 
    list_inithead(&pool->command_buffers);
 
-   util_hash_table_set_u64(ctx->object_table, pool->base.id, pool);
+   vkr_device_add_object(ctx, &pool->base);
 }
 
 static void
@@ -33,7 +33,7 @@ vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch,
    DESTROY_OBJECT(pool, command_pool, COMMAND_POOL, vkDestroyCommandPool, commandPool);
 
    vkr_context_remove_objects(ctx, &pool->command_buffers);
-   util_hash_table_remove_u64(ctx->object_table, pool->base.id);
+   vkr_device_remove_object(ctx, &pool->base);
 }
 
 static void

@@ -44,7 +44,7 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(buf, buffer, BUFFER, vkCreateBuffer, pBuffer);
 
-   util_hash_table_set_u64(ctx->object_table, buf->base.id, buf);
+   vkr_device_add_object(ctx, &buf->base);
 }
 
 static void
@@ -55,7 +55,7 @@ vkr_dispatch_vkDestroyBuffer(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(buf, buffer, BUFFER, vkDestroyBuffer, buffer);
 
-   util_hash_table_remove_u64(ctx->object_table, buf->base.id);
+   vkr_device_remove_object(ctx, &buf->base);
 }
 
 static void
@@ -132,7 +132,7 @@ vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(view, buffer_view, BUFFER_VIEW, vkCreateBufferView, pView);
 
-   util_hash_table_set_u64(ctx->object_table, view->base.id, view);
+   vkr_device_add_object(ctx, &view->base);
 }
 
 static void
@@ -143,7 +143,7 @@ vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(view, buffer_view, BUFFER_VIEW, vkDestroyBufferView, bufferView);
 
-   util_hash_table_remove_u64(ctx->object_table, view->base.id);
+   vkr_device_remove_object(ctx, &view->base);
 }
 
 void

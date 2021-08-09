@@ -191,7 +191,7 @@
                                                                                          \
          list_add(&pipeline->base.track_head, &dev->objects);                            \
                                                                                          \
-         util_hash_table_set_u64(ctx->object_table, pipeline->base.id, pipeline);        \
+         vkr_device_add_object(ctx, &pipeline->base);                                    \
       }                                                                                  \
                                                                                          \
       arr.objects_stolen = true;                                                         \

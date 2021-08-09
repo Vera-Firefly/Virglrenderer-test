@@ -19,7 +19,7 @@ vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(pass, render_pass, RENDER_PASS, vkCreateRenderPass, pRenderPass);
 
-   util_hash_table_set_u64(ctx->object_table, pass->base.id, pass);
+   vkr_device_add_object(ctx, &pass->base);
 }
 
 static void
@@ -52,7 +52,7 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
 
    list_add(&pass->base.track_head, &dev->objects);
 
-   util_hash_table_set_u64(ctx->object_table, pass->base.id, pass);
+   vkr_device_add_object(ctx, &pass->base);
 }
 
 static void
@@ -63,7 +63,7 @@ vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(pass, render_pass, RENDER_PASS, vkDestroyRenderPass, renderPass);
 
-   util_hash_table_remove_u64(ctx->object_table, pass->base.id);
+   vkr_device_remove_object(ctx, &pass->base);
 }
 
 static void
@@ -82,7 +82,7 @@ vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(fb, framebuffer, FRAMEBUFFER, vkCreateFramebuffer, pFramebuffer);
 
-   util_hash_table_set_u64(ctx->object_table, fb->base.id, fb);
+   vkr_device_add_object(ctx, &fb->base);
 }
 
 static void
@@ -93,7 +93,7 @@ vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(fb, framebuffer, FRAMEBUFFER, vkDestroyFramebuffer, framebuffer);
 
-   util_hash_table_remove_u64(ctx->object_table, fb->base.id);
+   vkr_device_remove_object(ctx, &fb->base);
 }
 
 void

@@ -375,7 +375,7 @@ vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(fence, fence, FENCE, vkCreateFence, pFence);
 
-   util_hash_table_set_u64(ctx->object_table, fence->base.id, fence);
+   vkr_device_add_object(ctx, &fence->base);
 }
 
 static void
@@ -386,7 +386,7 @@ vkr_dispatch_vkDestroyFence(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(fence, fence, FENCE, vkDestroyFence, fence);
 
-   util_hash_table_remove_u64(ctx->object_table, fence->base.id);
+   vkr_device_remove_object(ctx, &fence->base);
 }
 
 static void
@@ -434,7 +434,7 @@ vkr_dispatch_vkCreateSemaphore(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(sem, semaphore, SEMAPHORE, vkCreateSemaphore, pSemaphore);
 
-   util_hash_table_set_u64(ctx->object_table, sem->base.id, sem);
+   vkr_device_add_object(ctx, &sem->base);
 }
 
 static void
@@ -445,7 +445,7 @@ vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(sem, semaphore, SEMAPHORE, vkDestroySemaphore, semaphore);
 
-   util_hash_table_remove_u64(ctx->object_table, sem->base.id);
+   vkr_device_remove_object(ctx, &sem->base);
 }
 
 static void
@@ -508,7 +508,7 @@ vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch,
 
    CREATE_OBJECT(ev, event, EVENT, vkCreateEvent, pEvent);
 
-   util_hash_table_set_u64(ctx->object_table, ev->base.id, ev);
+   vkr_device_add_object(ctx, &ev->base);
 }
 
 static void
@@ -519,7 +519,7 @@ vkr_dispatch_vkDestroyEvent(struct vn_dispatch_context *dispatch,
 
    DESTROY_OBJECT(ev, event, EVENT, vkDestroyEvent, event);
 
-   util_hash_table_remove_u64(ctx->object_table, ev->base.id);
+   vkr_device_remove_object(ctx, &ev->base);
 }
 
 static void
