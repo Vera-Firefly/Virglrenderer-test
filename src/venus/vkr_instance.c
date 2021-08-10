@@ -180,15 +180,13 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    }
    create_info->pApplicationInfo = &app_info;
 
-   struct vkr_instance *instance = calloc(1, sizeof(*instance));
+   struct vkr_instance *instance = vkr_context_alloc_object(
+      ctx, sizeof(*instance), VK_OBJECT_TYPE_INSTANCE, args->pInstance);
    if (!instance) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
 
-   instance->base.type = VK_OBJECT_TYPE_INSTANCE;
-   instance->base.id =
-      vkr_cs_handle_load_id((const void **)args->pInstance, instance->base.type);
    instance->api_version = app_info.apiVersion;
 
    vn_replace_vkCreateInstance_args_handle(args);

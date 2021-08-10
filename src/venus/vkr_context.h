@@ -65,6 +65,16 @@ struct vkr_context {
    char *instance_name;
 };
 
+static inline void *
+vkr_context_alloc_object(UNUSED struct vkr_context *ctx,
+                         size_t size,
+                         VkObjectType type,
+                         const void *id_handle)
+{
+   const vkr_object_id id = vkr_cs_handle_load_id((const void **)id_handle, type);
+   return vkr_object_alloc(size, type, id);
+}
+
 static inline void
 vkr_context_add_object(struct vkr_context *ctx, struct vkr_object *obj)
 {

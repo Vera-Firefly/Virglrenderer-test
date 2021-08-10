@@ -54,13 +54,12 @@
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
    struct vkr_device *_dev = (struct vkr_device *)args->device;                          \
                                                                                          \
-   struct vkr_##vkr_type *obj = calloc(1, sizeof(*obj));                                 \
+   struct vkr_##vkr_type *obj = vkr_context_alloc_object(                                \
+      ctx, sizeof(*obj), VK_OBJECT_TYPE_##vk_obj, args->vk_arg);                         \
    if (!obj) {                                                                           \
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                           \
       return;                                                                            \
    }                                                                                     \
-   obj->base.type = VK_OBJECT_TYPE_##vk_obj;                                             \
-   obj->base.id = vkr_cs_handle_load_id((const void **)args->vk_arg, obj->base.type);    \
                                                                                          \
    vn_replace_##vk_cmd##_args_handle(args);                                              \
    args->ret =                                                                           \

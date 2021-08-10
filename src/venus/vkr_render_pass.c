@@ -29,14 +29,12 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = (struct vkr_device *)args->device;
 
-   struct vkr_render_pass *pass = calloc(1, sizeof(*pass));
+   struct vkr_render_pass *pass = vkr_context_alloc_object(
+      ctx, sizeof(*pass), VK_OBJECT_TYPE_RENDER_PASS, args->pRenderPass);
    if (!pass) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
-   pass->base.type = VK_OBJECT_TYPE_RENDER_PASS;
-   pass->base.id =
-      vkr_cs_handle_load_id((const void **)args->pRenderPass, pass->base.type);
 
    vn_replace_vkCreateRenderPass2_args_handle(args);
    args->ret = dev->CreateRenderPass2(args->device, args->pCreateInfo, NULL,

@@ -100,16 +100,14 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       }
    }
 
-   struct vkr_device_memory *mem = calloc(1, sizeof(*mem));
+   struct vkr_device_memory *mem = vkr_context_alloc_object(
+      ctx, sizeof(*mem), VK_OBJECT_TYPE_DEVICE_MEMORY, args->pMemory);
    if (!mem) {
       if (import_resource_info)
          close(import_fd_info.fd);
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       return;
    }
-
-   mem->base.type = VK_OBJECT_TYPE_DEVICE_MEMORY;
-   mem->base.id = vkr_cs_handle_load_id((const void **)args->pMemory, mem->base.type);
 
    vn_replace_vkAllocateMemory_args_handle(args);
    args->ret = vkAllocateMemory(args->device, args->pAllocateInfo, NULL,

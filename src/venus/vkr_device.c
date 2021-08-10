@@ -179,15 +179,13 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
       ((VkDeviceCreateInfo *)args->pCreateInfo)->enabledExtensionCount = ext_count;
    }
 
-   struct vkr_device *dev = calloc(1, sizeof(*dev));
+   struct vkr_device *dev =
+      vkr_context_alloc_object(ctx, sizeof(*dev), VK_OBJECT_TYPE_DEVICE, args->pDevice);
    if (!dev) {
       args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
       free(exts);
       return;
    }
-
-   dev->base.type = VK_OBJECT_TYPE_DEVICE;
-   dev->base.id = vkr_cs_handle_load_id((const void **)args->pDevice, dev->base.type);
 
    vn_replace_vkCreateDevice_args_handle(args);
    args->ret = vkCreateDevice(args->physicalDevice, args->pCreateInfo, NULL,
