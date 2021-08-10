@@ -155,20 +155,49 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 static bool
 validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
 {
-   if (layout->head.offset > buf_size || layout->tail.offset > buf_size ||
-       layout->status.offset > buf_size || layout->buffer.offset > buf_size ||
-       layout->extra.offset > buf_size)
+   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size)) {
+      vkr_log("ring buffer size (%lu) must be a power of two",
+              layout->buffer.size);
       return false;
+   }
 
-   if (sizeof(uint32_t) > buf_size - layout->head.offset ||
-       sizeof(uint32_t) > buf_size - layout->tail.offset ||
-       sizeof(uint32_t) > buf_size - layout->status.offset ||
-       layout->buffer.size > buf_size - layout->buffer.offset ||
-       layout->extra.size > buf_size - layout->extra.offset)
-      return false;
+   const struct memory_region *regions[] = {
+      &layout->head,
+      &layout->tail,
+      &layout->status,
+      &layout->buffer,
+      &layout->extra,
+   };
 
-   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size))
-      return false;
+   for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
+      if (regions[i]->offset > buf_size ||
+          regions[i]->size > buf_size - regions[i]->offset) {
+         vkr_log("ring buffer control variable (offset=%lu, size=%lu) placed"
+                 " out-of-bounds in shared memory layout",
+                 regions[i]->offset, regions[i]->size);
+         return false;
+      }
+   }
+
+   /* assumes region->size == 0 is valid */
+   for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
+      if (!regions[i]->size)
+         continue;
+
+      for (size_t j = i + 1; j < ARRAY_SIZE(regions); j++) {
+         if (!regions[j]->size)
+            continue;
+
+         if (regions[i]->offset < regions[j]->offset + regions[j]->size &&
+             regions[j]->offset < regions[i]->offset + regions[i]->size) {
+            vkr_log("ring buffer control variable (offset=%lu, size=%lu)"
+                    " overlaps with control variable (offset=%lu, size=%lu)",
+                    regions[j]->offset, regions[j]->size, regions[i]->offset,
+                    regions[i]->size);
+            return false;
+         }
+      }
+   }
 
    return true;
 }
