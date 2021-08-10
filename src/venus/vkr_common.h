@@ -334,4 +334,21 @@ vkr_is_recognized_object_type(VkObjectType type)
    }
 }
 
+static inline void *
+vkr_object_alloc(size_t size, VkObjectType type, vkr_object_id id)
+{
+   assert(size >= sizeof(struct vkr_object));
+   assert(vkr_is_recognized_object_type(type));
+
+   struct vkr_object *obj = calloc(1, size);
+   if (!obj)
+      return NULL;
+
+   /* obj is only half-initialized */
+   obj->type = type;
+   obj->id = id;
+
+   return obj;
+}
+
 #endif /* VKR_COMMON_H */

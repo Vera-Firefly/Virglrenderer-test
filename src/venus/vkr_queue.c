@@ -240,12 +240,11 @@ vkr_queue_create(struct vkr_context *ctx,
    struct vkr_queue *queue;
    int ret;
 
-   queue = calloc(1, sizeof(*queue));
+   /* id is set to 0 until vkr_queue_assign_object_id */
+   queue = vkr_object_alloc(sizeof(*queue), VK_OBJECT_TYPE_QUEUE, 0);
    if (!queue)
       return NULL;
 
-   queue->base.type = VK_OBJECT_TYPE_QUEUE;
-   /* queue->base.id is not assigned until vkr_queue_assign_object_id */
    queue->base.handle.queue = handle;
 
    queue->context = ctx;

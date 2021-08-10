@@ -197,14 +197,13 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
          continue;
       }
 
-      physical_dev = calloc(1, sizeof(*physical_dev));
+      physical_dev =
+         vkr_object_alloc(sizeof(*physical_dev), VK_OBJECT_TYPE_PHYSICAL_DEVICE, id);
       if (!physical_dev) {
          args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
          break;
       }
 
-      physical_dev->base.type = VK_OBJECT_TYPE_PHYSICAL_DEVICE;
-      physical_dev->base.id = id;
       physical_dev->base.handle.physical_device = instance->physical_device_handles[i];
 
       vkr_physical_device_init_properties(physical_dev);
