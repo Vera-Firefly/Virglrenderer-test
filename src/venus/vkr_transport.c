@@ -155,19 +155,19 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 static bool
 validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
 {
-   if (layout->head_offset > buf_size || layout->tail_offset > buf_size ||
-       layout->status_offset > buf_size || layout->buffer_offset > buf_size ||
-       layout->extra_offset > buf_size)
+   if (layout->head.offset > buf_size || layout->tail.offset > buf_size ||
+       layout->status.offset > buf_size || layout->buffer.offset > buf_size ||
+       layout->extra.offset > buf_size)
       return false;
 
-   if (sizeof(uint32_t) > buf_size - layout->head_offset ||
-       sizeof(uint32_t) > buf_size - layout->tail_offset ||
-       sizeof(uint32_t) > buf_size - layout->status_offset ||
-       layout->buffer_size > buf_size - layout->buffer_offset ||
-       layout->extra_size > buf_size - layout->extra_offset)
+   if (sizeof(uint32_t) > buf_size - layout->head.offset ||
+       sizeof(uint32_t) > buf_size - layout->tail.offset ||
+       sizeof(uint32_t) > buf_size - layout->status.offset ||
+       layout->buffer.size > buf_size - layout->buffer.offset ||
+       layout->extra.size > buf_size - layout->extra.offset)
       return false;
 
-   if (!layout->buffer_size || !util_is_power_of_two(layout->buffer_size))
+   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size))
       return false;
 
    return true;
@@ -207,13 +207,11 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    size = info->size;
 
    const struct vkr_ring_layout layout = {
-      .head_offset = info->headOffset,
-      .tail_offset = info->tailOffset,
-      .status_offset = info->statusOffset,
-      .buffer_offset = info->bufferOffset,
-      .buffer_size = info->bufferSize,
-      .extra_offset = info->extraOffset,
-      .extra_size = info->extraSize,
+      .head = {info->headOffset, sizeof(uint32_t)},
+      .tail = {info->tailOffset, sizeof(uint32_t)},
+      .status = {info->statusOffset, sizeof(uint32_t)},
+      .buffer = {info->bufferOffset, info->bufferSize},
+      .extra = {info->extraOffset, info->extraSize},
    };
 
    if (!validate_ring_layout(&layout, size)) {

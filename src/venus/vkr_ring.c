@@ -68,7 +68,7 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
       return NULL;
 
 #define ring_attach_shared(member)                                                       \
-   ring->shared.member = (void *)((uint8_t *)shared + layout->member##_offset)
+   ring->shared.member = (void *)((uint8_t *)shared + layout->member.offset)
    ring_attach_shared(head);
    ring_attach_shared(tail);
    ring_attach_shared(status);
@@ -76,10 +76,10 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    ring_attach_shared(extra);
 #undef ring_attach_shared
 
-   assert(layout->buffer_size && util_is_power_of_two(layout->buffer_size));
-   ring->buffer_size = layout->buffer_size;
-   ring->buffer_mask = layout->buffer_size - 1;
-   ring->extra_size = layout->extra_size;
+   assert(layout->buffer.size && util_is_power_of_two(layout->buffer.size));
+   ring->buffer_size = layout->buffer.size;
+   ring->buffer_mask = layout->buffer.size - 1;
+   ring->extra_size = layout->extra.size;
 
    /* we will manage head and status, and we expect them to be 0 initially */
    if (*ring->shared.head || *ring->shared.status) {

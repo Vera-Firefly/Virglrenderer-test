@@ -10,17 +10,18 @@
 
 struct virgl_context;
 
+struct memory_region {
+   size_t offset;
+   size_t size;
+};
+
 /* the layout of a ring in a virgl_resource */
 struct vkr_ring_layout {
-   size_t head_offset;
-   size_t tail_offset;
-   size_t status_offset;
-
-   size_t buffer_offset;
-   size_t buffer_size;
-
-   size_t extra_offset;
-   size_t extra_size;
+   struct memory_region head;
+   struct memory_region tail;
+   struct memory_region status;
+   struct memory_region buffer;
+   struct memory_region extra;
 };
 
 static_assert(ATOMIC_INT_LOCK_FREE == 2 && sizeof(atomic_uint) == 4,
