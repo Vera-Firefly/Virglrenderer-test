@@ -5,14 +5,105 @@ import argparse
 import json
 import os
 
+SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL = '''
+/* create a driver {vk_type} and update the vkr_{vkr_type} */
+static inline VkResult
+vkr_{create_func_name}_create_driver_handle(
+   UNUSED struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args,
+   struct vkr_{vkr_type} *obj)
+{{
+   /* handles in args are replaced */
+   vn_replace_{create_cmd}_args_handle(args);
+   args->ret = {create_cmd}(args->device, args->{create_info}, NULL,
+      &obj->base.handle.{vkr_type});
+   return args->ret;
+}}
+'''
+
+SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = '''
+/* destroy a driver {vk_type} */
+static inline void
+vkr_{destroy_func_name}_destroy_driver_handle(
+   UNUSED struct vkr_context *ctx,
+   struct vn_command_{destroy_cmd} *args)
+{{
+   /* handles in args are replaced */
+   vn_replace_{destroy_cmd}_args_handle(args);
+   {destroy_cmd}(args->device, args->{destroy_obj}, NULL);
+}}
+'''
+
+PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL
+
+SIMPLE_OBJECT_CREATE_TEMPL = '''
+/* create a vkr_{vkr_type} */
+static inline struct vkr_{vkr_type} *
+vkr_{create_func_name}_create(
+   struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args)
+{{
+   struct vkr_{vkr_type} *obj = vkr_context_alloc_object(ctx, sizeof(*obj),
+      {vk_enum}, args->{create_obj});
+   if (!obj) {{
+      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+      return NULL;
+   }}
+
+   /* handles in args are replaced */
+   if (vkr_{create_func_name}_create_driver_handle(ctx, args, obj) != VK_SUCCESS) {{
+      free(obj);
+      return NULL;
+   }}
+
+   return obj;
+}}
+'''
+
+def apply_variant(json_obj, json_variant):
+    tmp_obj = json_obj.copy()
+    for key, val in json_variant.items():
+        tmp_obj[key] = val
+    return tmp_obj
+
 def simple_object_generator(json_obj):
-    return ''
+    '''Generate functions for a simple object.
+
+    For most device objects, object creation can be broken down into 3 steps
+
+     (1) allocate and initialize the object
+     (2) create the driver handle
+     (3) add the object to the device and the object table
+
+    SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL defines a function for (2).
+    SIMPLE_OBJECT_CREATE_TEMPL defines a function for (1) and (2).
+
+    Object destruction can be broken down into 2 steps
+
+     (1) destroy the driver handle
+     (2) remove the object from the device and the object table
+
+    SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL defines a function for (1).
+    '''
+    contents = ''
+
+    contents += SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL.format(**json_obj)
+    contents += SIMPLE_OBJECT_CREATE_TEMPL.format(**json_obj)
+
+    contents += SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
+
+    for json_variant in json_obj['variants']:
+        tmp_obj = apply_variant(json_obj, json_variant)
+        contents += SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL.format(**tmp_obj)
+        contents += SIMPLE_OBJECT_CREATE_TEMPL.format(**tmp_obj)
+
+    return contents
 
 def pool_object_generator(json_obj):
     return ''
 
 def pipeline_object_generator(json_obj):
-    return ''
+    return PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
 
 object_generators = {
     'simple-object': simple_object_generator,
