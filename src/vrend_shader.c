@@ -7075,9 +7075,6 @@ static void set_strbuffers(MAYBE_UNUSED const struct vrend_context *rctx, const 
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_ver_ext);
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_hdr);
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_main);
-   VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
-   VREND_DEBUG_EXT(dbg_shader_glsl, rctx, strarray_dump(shader));
-   VREND_DEBUG(dbg_shader_glsl, rctx, "\n");
 }
 
 static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vrend_context *rctx,
@@ -7214,6 +7211,10 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
 					      key->flatshade);
    }
 
+   VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
+   VREND_DEBUG_EXT(dbg_shader_glsl, rctx, strarray_dump(shader));
+   VREND_DEBUG(dbg_shader_glsl, rctx, "\n");
+
    return true;
  fail:
    strbuf_free(&ctx.glsl_strbufs.glsl_main);
@@ -7321,10 +7322,6 @@ static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vre
          return false;
       }
    }
-
-   VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
-   VREND_DEBUG_EXT(dbg_shader_glsl, rctx, strarray_dump(prog_strings));
-   VREND_DEBUG(dbg_shader_glsl, rctx, "\n");
 
    return true;
 }
@@ -7530,6 +7527,11 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
 
    fill_sinfo(&ctx, sinfo);
    set_strbuffers(rctx, &ctx.glsl_strbufs, shader);
+
+   VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
+   VREND_DEBUG_EXT(dbg_shader_glsl, rctx, strarray_dump(shader));
+   VREND_DEBUG(dbg_shader_glsl, rctx, "\n");
+
    return true;
 fail:
    strbuf_free(&ctx.glsl_strbufs.glsl_main);
