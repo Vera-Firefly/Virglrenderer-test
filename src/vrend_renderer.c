@@ -3532,6 +3532,9 @@ static int vrend_shader_create(struct vrend_context *ctx,
    shader->uid = ++uid;
 
    if (shader->sel->tokens) {
+
+      VREND_DEBUG(dbg_shader_tgsi, ctx, "shader\n%s\n", shader->sel->tmp_buf);
+
       bool ret = vrend_convert_shader(ctx, &ctx->shader_cfg, shader->sel->tokens,
                                       shader->sel->req_local_mem, key, &shader->sel->sinfo,
                                       &shader->var_sinfo, &shader->glsl_strings);
@@ -3679,14 +3682,15 @@ int vrend_create_shader(struct vrend_context *ctx,
      if (sel == NULL)
        return ENOMEM;
 
+     sel->buf_len = ((offlen + 3) / 4) * 4; /* round up buffer size */
+     sel->tmp_buf = malloc(sel->buf_len);
+     if (!sel->tmp_buf) {
+        ret = ENOMEM;
+        goto error;
+     }
+
+     memcpy(sel->tmp_buf, shd_text, pkt_length * 4);
      if (long_shader) {
-        sel->buf_len = ((offlen + 3) / 4) * 4; /* round up buffer size */
-        sel->tmp_buf = malloc(sel->buf_len);
-        if (!sel->tmp_buf) {
-           ret = ENOMEM;
-           goto error;
-        }
-        memcpy(sel->tmp_buf, shd_text, pkt_length * 4);
         sel->buf_offset = pkt_length * 4;
         sub_ctx->long_shader_in_progress_handle[type] = handle;
      } else
@@ -3747,8 +3751,6 @@ int vrend_create_shader(struct vrend_context *ctx,
          goto error;
       }
 
-      VREND_DEBUG(dbg_shader_tgsi, ctx, "shader\n%s\n", shd_text);
-
       if (!tgsi_text_translate((const char *)shd_text, tokens, num_tokens + 10)) {
          free(tokens);
          ret = EINVAL;
@@ -3760,8 +3762,10 @@ int vrend_create_shader(struct vrend_context *ctx,
          ret = EINVAL;
          goto error;
       } else {
-         free(sel->tmp_buf);
-         sel->tmp_buf = NULL;
+         if (!vrend_debug(ctx, dbg_shader_tgsi)) {
+            free(sel->tmp_buf);
+            sel->tmp_buf = NULL;
+         }
       }
       free(tokens);
       sub_ctx->long_shader_in_progress_handle[type] = 0;
