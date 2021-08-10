@@ -152,6 +152,27 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
    return NULL;
 }
 
+static bool
+validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
+{
+   if (layout->head_offset > buf_size || layout->tail_offset > buf_size ||
+       layout->status_offset > buf_size || layout->buffer_offset > buf_size ||
+       layout->extra_offset > buf_size)
+      return false;
+
+   if (sizeof(uint32_t) > buf_size - layout->head_offset ||
+       sizeof(uint32_t) > buf_size - layout->tail_offset ||
+       sizeof(uint32_t) > buf_size - layout->status_offset ||
+       layout->buffer_size > buf_size - layout->buffer_offset ||
+       layout->extra_size > buf_size - layout->extra_offset)
+      return false;
+
+   if (!layout->buffer_size || !util_is_power_of_two(layout->buffer_size))
+      return false;
+
+   return true;
+}
+
 static void
 vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkCreateRingMESA *args)
@@ -182,26 +203,8 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
-
    shared += info->offset;
    size = info->size;
-   if (info->headOffset > size || info->tailOffset > size || info->statusOffset > size ||
-       info->bufferOffset > size || info->extraOffset > size) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-   if (sizeof(uint32_t) > size - info->headOffset ||
-       sizeof(uint32_t) > size - info->tailOffset ||
-       sizeof(uint32_t) > size - info->statusOffset ||
-       info->bufferSize > size - info->bufferOffset ||
-       info->extraSize > size - info->extraOffset) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-   if (!info->bufferSize || !util_is_power_of_two(info->bufferSize)) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
 
    const struct vkr_ring_layout layout = {
       .head_offset = info->headOffset,
@@ -212,6 +215,12 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       .extra_offset = info->extraOffset,
       .extra_size = info->extraSize,
    };
+
+   if (!validate_ring_layout(&layout, size)) {
+      vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
 
    ring = vkr_ring_create(&layout, shared, &ctx->base, info->idleTimeout);
    if (!ring) {
