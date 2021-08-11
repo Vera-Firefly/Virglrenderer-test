@@ -158,7 +158,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_instance *instance = (struct vkr_instance *)args->instance;
+   struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
    if (instance != ctx->instance) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -238,7 +238,7 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_instance *instance = (struct vkr_instance *)args->instance;
+   struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
    if (instance != ctx->instance) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -297,7 +297,7 @@ vkr_dispatch_vkEnumerateDeviceExtensionProperties(
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_physical_device *physical_dev =
-      (struct vkr_physical_device *)args->physicalDevice;
+      vkr_physical_device_from_handle(args->physicalDevice);
    if (args->pLayerName) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -337,7 +337,7 @@ vkr_dispatch_vkGetPhysicalDeviceProperties(
    struct vn_command_vkGetPhysicalDeviceProperties *args)
 {
    struct vkr_physical_device *physical_dev =
-      (struct vkr_physical_device *)args->physicalDevice;
+      vkr_physical_device_from_handle(args->physicalDevice);
 
    *args->pProperties = physical_dev->properties;
 }
@@ -410,7 +410,7 @@ vkr_dispatch_vkGetPhysicalDeviceProperties2(
    struct vn_command_vkGetPhysicalDeviceProperties2 *args)
 {
    struct vkr_physical_device *physical_dev =
-      (struct vkr_physical_device *)args->physicalDevice;
+      vkr_physical_device_from_handle(args->physicalDevice);
 
    vn_replace_vkGetPhysicalDeviceProperties2_args_handle(args);
    vkGetPhysicalDeviceProperties2(args->physicalDevice, args->pProperties);

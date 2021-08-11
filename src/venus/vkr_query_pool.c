@@ -43,7 +43,7 @@ static void
 vkr_dispatch_vkResetQueryPool(UNUSED struct vn_dispatch_context *dispatch,
                               struct vn_command_vkResetQueryPool *args)
 {
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    vn_replace_vkResetQueryPool_args_handle(args);
    dev->ResetQueryPool(args->device, args->queryPool, args->firstQuery, args->queryCount);

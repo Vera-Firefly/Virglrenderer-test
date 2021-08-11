@@ -43,7 +43,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
 #ifdef FORCE_ENABLE_DMABUF
    VkExportMemoryAllocateInfo local_export_info;
@@ -155,7 +155,7 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device_memory *mem = (struct vkr_device_memory *)(uintptr_t)args->memory;
+   struct vkr_device_memory *mem = vkr_device_memory_from_handle(args->memory);
    if (!mem)
       return;
 
@@ -182,7 +182,7 @@ vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args)
 {
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    vn_replace_vkGetDeviceMemoryOpaqueCaptureAddress_args_handle(args);
    args->ret = dev->GetDeviceMemoryOpaqueCaptureAddress(args->device, args->pInfo);
@@ -194,7 +194,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    struct vn_command_vkGetMemoryResourcePropertiesMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    struct vkr_resource_attachment *att =
       util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));

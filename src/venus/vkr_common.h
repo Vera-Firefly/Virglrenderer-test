@@ -66,7 +66,7 @@
  * These macros may shadow your variables.  Use with care.
  */
 #define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
-   struct vkr_device *_dev = (struct vkr_device *)args->device;                          \
+   struct vkr_device *_dev = vkr_device_from_handle(args->device);                       \
                                                                                          \
    struct vkr_##vkr_type *obj = vkr_##vkr_type##_create(ctx, args);                      \
    if (!obj)                                                                             \
@@ -75,7 +75,7 @@
    list_add(&obj->base.track_head, &_dev->objects)
 
 #define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
-   struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)args->vk_arg;        \
+   struct vkr_##vkr_type *obj = vkr_##vkr_type##_from_handle(args->vk_arg);              \
    if (!obj)                                                                             \
       return;                                                                            \
                                                                                          \
@@ -86,10 +86,10 @@
 #define ALLOCATE_POOL_OBJECTS(vkr_type, vk_type, vk_obj, vk_cmd, arg_count, arg_pool,    \
                               vkr_pool_type, vk_pool_type)                               \
    do {                                                                                  \
-      struct vkr_device *dev = (struct vkr_device *)args->device;                        \
+      struct vkr_device *dev = vkr_device_from_handle(args->device);                     \
                                                                                          \
       struct vkr_##vkr_pool_type *pool =                                                 \
-         (struct vkr_##vkr_pool_type *)(uintptr_t)args->pAllocateInfo->arg_pool;         \
+         vkr_##vkr_pool_type##_from_handle(args->pAllocateInfo->arg_pool);               \
       if (!pool) {                                                                       \
          vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
          return;                                                                         \

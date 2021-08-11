@@ -318,7 +318,7 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    struct vkr_queue *queue = vkr_device_lookup_queue(
       dev, 0 /* flags */, args->queueFamilyIndex, args->queueIndex);
@@ -338,7 +338,7 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    struct vkr_queue *queue = vkr_device_lookup_queue(dev, args->pQueueInfo->flags,
                                                      args->pQueueInfo->queueFamilyIndex,
@@ -464,7 +464,7 @@ static void
 vkr_dispatch_vkGetSemaphoreCounterValue(UNUSED struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkGetSemaphoreCounterValue *args)
 {
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    vn_replace_vkGetSemaphoreCounterValue_args_handle(args);
    args->ret = dev->GetSemaphoreCounterValue(args->device, args->semaphore, args->pValue);
@@ -475,7 +475,7 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkWaitSemaphores *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    /* no blocking call */
    if (args->timeout) {
@@ -491,7 +491,7 @@ static void
 vkr_dispatch_vkSignalSemaphore(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkSignalSemaphore *args)
 {
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    vn_replace_vkSignalSemaphore_args_handle(args);
    args->ret = dev->SignalSemaphore(args->device, args->pSignalInfo);

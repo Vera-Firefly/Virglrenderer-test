@@ -508,7 +508,7 @@ static void
 vkr_dispatch_vkCmdBeginRenderPass2(UNUSED struct vn_dispatch_context *dispatch,
                                    struct vn_command_vkCmdBeginRenderPass2 *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdBeginRenderPass2_args_handle(args);
    cmd->device->CmdBeginRenderPass2(args->commandBuffer, args->pRenderPassBegin,
@@ -519,7 +519,7 @@ static void
 vkr_dispatch_vkCmdNextSubpass2(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCmdNextSubpass2 *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdNextSubpass2_args_handle(args);
    cmd->device->CmdNextSubpass2(args->commandBuffer, args->pSubpassBeginInfo,
@@ -530,7 +530,7 @@ static void
 vkr_dispatch_vkCmdEndRenderPass2(UNUSED struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCmdEndRenderPass2 *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdEndRenderPass2_args_handle(args);
    cmd->device->CmdEndRenderPass2(args->commandBuffer, args->pSubpassEndInfo);
@@ -540,7 +540,7 @@ static void
 vkr_dispatch_vkCmdDrawIndirectCount(UNUSED struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdDrawIndirectCount *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdDrawIndirectCount_args_handle(args);
    cmd->device->CmdDrawIndirectCount(args->commandBuffer, args->buffer, args->offset,
@@ -553,7 +553,7 @@ vkr_dispatch_vkCmdDrawIndexedIndirectCount(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdDrawIndexedIndirectCount *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdDrawIndexedIndirectCount_args_handle(args);
    cmd->device->CmdDrawIndexedIndirectCount(
@@ -566,7 +566,7 @@ vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdBindTransformFeedbackBuffersEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdBindTransformFeedbackBuffersEXT_args_handle(args);
    cmd->device->cmd_bind_transform_feedback_buffers(
@@ -579,7 +579,7 @@ vkr_dispatch_vkCmdBeginTransformFeedbackEXT(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdBeginTransformFeedbackEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdBeginTransformFeedbackEXT_args_handle(args);
    cmd->device->cmd_begin_transform_feedback(
@@ -592,7 +592,7 @@ vkr_dispatch_vkCmdEndTransformFeedbackEXT(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdEndTransformFeedbackEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdEndTransformFeedbackEXT_args_handle(args);
    cmd->device->cmd_end_transform_feedback(
@@ -604,7 +604,7 @@ static void
 vkr_dispatch_vkCmdBeginQueryIndexedEXT(UNUSED struct vn_dispatch_context *dispatch,
                                        struct vn_command_vkCmdBeginQueryIndexedEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdBeginQueryIndexedEXT_args_handle(args);
    cmd->device->cmd_begin_query_indexed(args->commandBuffer, args->queryPool, args->query,
@@ -615,7 +615,7 @@ static void
 vkr_dispatch_vkCmdEndQueryIndexedEXT(UNUSED struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkCmdEndQueryIndexedEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdEndQueryIndexedEXT_args_handle(args);
    cmd->device->cmd_end_query_indexed(args->commandBuffer, args->queryPool, args->query,
@@ -627,7 +627,7 @@ vkr_dispatch_vkCmdDrawIndirectByteCountEXT(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdDrawIndirectByteCountEXT *args)
 {
-   struct vkr_command_buffer *cmd = (struct vkr_command_buffer *)args->commandBuffer;
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
 
    vn_replace_vkCmdDrawIndirectByteCountEXT_args_handle(args);
    cmd->device->cmd_draw_indirect_byte_count(

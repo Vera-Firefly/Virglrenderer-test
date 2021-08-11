@@ -23,7 +23,7 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateRenderPass2 *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
 
    struct vkr_render_pass *pass = vkr_context_alloc_object(
       ctx, sizeof(*pass), VK_OBJECT_TYPE_RENDER_PASS, args->pRenderPass);

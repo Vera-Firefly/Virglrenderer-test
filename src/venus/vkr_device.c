@@ -150,7 +150,7 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    struct vkr_physical_device *physical_dev =
-      (struct vkr_physical_device *)args->physicalDevice;
+      vkr_physical_device_from_handle(args->physicalDevice);
 
    /* append extensions for our own use */
    const char **exts = NULL;
@@ -365,7 +365,7 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
 
-   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
    /* this never happens */
    if (!dev)
       return;

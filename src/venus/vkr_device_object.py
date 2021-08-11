@@ -81,7 +81,8 @@ vkr_{destroy_func_name}_destroy_driver_handles(
 {{
    list_inithead(free_list);
    for (uint32_t i = 0; i < args->{destroy_count}; i++) {{
-      struct vkr_{vkr_type} *obj = (struct vkr_{vkr_type} *)args->{destroy_objs}[i];
+      struct vkr_{vkr_type} *obj =
+         vkr_{vkr_type}_from_handle(args->{destroy_objs}[i]);
       if (!obj)
          continue;
 

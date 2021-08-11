@@ -252,7 +252,7 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkDestroyInstance *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_instance *instance = (struct vkr_instance *)args->instance;
+   struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
 
    if (ctx->instance != instance) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
