@@ -82,52 +82,16 @@
       }                                                                                  \
                                                                                          \
       struct object_array arr;                                                           \
-      if (!object_array_init(ctx, &arr, args->pAllocateInfo->arg_count,                  \
-                             VK_OBJECT_TYPE_##vk_type, sizeof(struct vkr_##vkr_type),    \
-                             sizeof(Vk##vk_obj), args->p##vk_obj##s)) {                  \
-         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
+      if (vkr_##vkr_type##_create_array(ctx, args, &arr) != VK_SUCCESS)                  \
          return;                                                                         \
-      }                                                                                  \
                                                                                          \
-      vn_replace_##vk_cmd##_args_handle(args);                                           \
-      args->ret = vk_cmd(args->device, args->pAllocateInfo, arr.handle_storage);         \
-      if (args->ret != VK_SUCCESS) {                                                     \
-         object_array_fini(&arr);                                                        \
-         return;                                                                         \
-      }                                                                                  \
-                                                                                         \
-      for (uint32_t i = 0; i < arr.count; i++) {                                         \
-         struct vkr_##vkr_type *obj = arr.objects[i];                                    \
-                                                                                         \
-         obj->base.handle.vkr_type = ((Vk##vk_obj *)arr.handle_storage)[i];              \
-         obj->device = dev;                                                              \
-                                                                                         \
-         /* pool objects are tracked by the pool other than the device */                \
-         list_add(&obj->base.track_head, &pool->vkr_type##s);                            \
-                                                                                         \
-         vkr_context_add_object(ctx, &obj->base);                                        \
-      }                                                                                  \
-                                                                                         \
-      arr.objects_stolen = true;                                                         \
-      object_array_fini(&arr);                                                           \
+      vkr_##vkr_type##_add_array(ctx, dev, pool, &arr);                                  \
    } while (0)
 
 #define FREE_POOL_OBJECTS(vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)       \
    do {                                                                                  \
       struct list_head free_list;                                                        \
-                                                                                         \
-      list_inithead(&free_list);                                                         \
-      for (uint32_t i = 0; i < args->arg_count; i++) {                                   \
-         struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)args->arg_obj[i];         \
-         if (!obj)                                                                       \
-            continue;                                                                    \
-                                                                                         \
-         list_del(&obj->base.track_head);                                                \
-         list_addtail(&obj->base.track_head, &free_list);                                \
-      }                                                                                  \
-                                                                                         \
-      vn_replace_##vk_cmd##_args_handle(args);                                           \
-      vk_cmd(args->device, args->arg_pool, args->arg_count, args->arg_obj);              \
+      vkr_##vkr_type##_destroy_driver_handles(ctx, args, &free_list);                    \
                                                                                          \
       vkr_context_remove_objects(ctx, &free_list);                                       \
    } while (0)

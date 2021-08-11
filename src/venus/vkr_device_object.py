@@ -21,6 +21,24 @@ vkr_{create_func_name}_create_driver_handle(
 }}
 '''
 
+POOL_OBJECT_CREATE_DRIVER_HANDLES_TEMPL = '''
+/* create an array of driver {vk_type}s from a pool and update the
+ * object_array
+ */
+static inline
+VkResult vkr_{create_func_name}_create_driver_handles(
+   UNUSED struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args,
+   struct object_array *arr)
+{{
+   /* handles in args are replaced */
+   vn_replace_{create_cmd}_args_handle(args);
+   args->ret = {create_cmd}(args->device, args->{create_info},
+      arr->handle_storage);
+   return args->ret;
+}}
+'''
+
 SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = '''
 /* destroy a driver {vk_type} */
 static inline void
@@ -34,7 +52,52 @@ vkr_{destroy_func_name}_destroy_driver_handle(
 }}
 '''
 
+POOL_OBJECT_DESTROY_DRIVER_HANDLES_TEMPL = '''
+/* destroy an array of driver {vk_type}s from a pool, remove them from the
+ * vkr_{pool_type}, and return the list of affected vkr_{vkr_type}s
+ */
+static inline void
+vkr_{destroy_func_name}_destroy_driver_handles(
+   UNUSED struct vkr_context *ctx,
+   struct vn_command_{destroy_cmd} *args,
+   struct list_head *free_list)
+{{
+   list_inithead(free_list);
+   for (uint32_t i = 0; i < args->{destroy_count}; i++) {{
+      struct vkr_{vkr_type} *obj = (struct vkr_{vkr_type} *)args->{destroy_objs}[i];
+      if (!obj)
+         continue;
+
+      list_del(&obj->base.track_head);
+      list_addtail(&obj->base.track_head, free_list);
+   }}
+
+   /* handles in args are replaced */
+   vn_replace_{destroy_cmd}_args_handle(args);
+   {destroy_cmd}(args->device, args->{destroy_pool},
+      args->{destroy_count}, args->{destroy_objs});
+}}
+'''
+
 PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL
+
+POOL_OBJECT_INIT_ARRAY_TEMPL = '''
+/* initialize an object_array for vkr_{vkr_type}s */
+static inline VkResult
+vkr_{create_func_name}_init_array(
+   struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args,
+   struct object_array *arr)
+{{
+   args->ret = object_array_init(ctx, arr, args->{create_count},
+                                 {vk_enum}, sizeof(struct vkr_{vkr_type}),
+                                 sizeof(*args->{create_objs}),
+                                 args->{create_objs})
+                  ? VK_SUCCESS
+                  : VK_ERROR_OUT_OF_HOST_MEMORY;
+   return args->ret;
+}}
+'''
 
 SIMPLE_OBJECT_CREATE_TEMPL = '''
 /* create a vkr_{vkr_type} */
@@ -57,6 +120,54 @@ vkr_{create_func_name}_create(
    }}
 
    return obj;
+}}
+'''
+
+POOL_OBJECT_CREATE_ARRAY_TEMPL = '''
+/* create an array of vkr_{vkr_type}s */
+static inline VkResult
+vkr_{create_func_name}_create_array(
+   struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args,
+   struct object_array *arr)
+{{
+   if (vkr_{create_func_name}_init_array(ctx, args, arr) != VK_SUCCESS)
+      return args->ret;
+
+   if (vkr_{create_func_name}_create_driver_handles(ctx, args, arr) != VK_SUCCESS) {{
+      object_array_fini(arr);
+      return args->ret;
+   }}
+
+   return args->ret;
+}}
+'''
+
+POOL_OBJECT_ADD_ARRAY_TEMPL = '''
+/* steal vkr_{vkr_type}s from an object_array and add them to the
+ * vkr_{pool_type} and the context
+ */
+static inline
+void vkr_{create_func_name}_add_array(
+   struct vkr_context *ctx,
+   struct vkr_device *dev,
+   struct vkr_{pool_type} *pool,
+   struct object_array *arr)
+{{
+   for (uint32_t i = 0; i < arr->count; i++) {{
+      struct vkr_{vkr_type} *obj = arr->objects[i];
+
+      obj->base.handle.{vkr_type} = (({vk_type} *)arr->handle_storage)[i];
+      obj->device = dev;
+
+      /* pool objects are tracked by the pool other than the device */
+      list_add(&obj->base.track_head, &pool->{vkr_type}s);
+
+      vkr_context_add_object(ctx, &obj->base);
+   }}
+
+   arr->objects_stolen = true;
+   object_array_fini(arr);
 }}
 '''
 
@@ -100,7 +211,40 @@ def simple_object_generator(json_obj):
     return contents
 
 def pool_object_generator(json_obj):
-    return ''
+    '''Generate functions for a pool object.
+
+    For VkCommandBuffer and VkDescriptorSet, object creation can be broken down
+    into 3 steps
+
+     (1) allocate and initialize the object array
+     (2) create the driver handles
+     (3) add the object array to the device and the object table
+
+    POOL_OBJECT_INIT_ARRAY_TEMPL defines a function for (1).
+    POOL_OBJECT_CREATE_DRIVER_HANDLES_TEMPL defines a function for (2).
+    POOL_OBJECT_CREATE_ARRAY_TEMPL defines a function for (1) and (2).
+    POOL_OBJECT_ADD_ARRAY_TEMPL defines a function for step (3).
+
+    Object destruction can be broken down into 2 steps
+
+     (1) destroy the driver handles
+     (2) remove the objects from the pool and the object table
+
+    POOL_OBJECT_DESTROY_DRIVER_HANDLES_TEMPL defines a function for (1) and
+    the first half of (2).
+    '''
+    contents = ''
+
+    contents += POOL_OBJECT_INIT_ARRAY_TEMPL.format(**json_obj)
+    contents += POOL_OBJECT_CREATE_DRIVER_HANDLES_TEMPL.format(**json_obj)
+    contents += POOL_OBJECT_CREATE_ARRAY_TEMPL.format(**json_obj)
+    contents += POOL_OBJECT_ADD_ARRAY_TEMPL.format(**json_obj)
+
+    contents += POOL_OBJECT_DESTROY_DRIVER_HANDLES_TEMPL.format(**json_obj)
+
+    assert not json_obj['variants']
+
+    return contents
 
 def pipeline_object_generator(json_obj):
     return PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
