@@ -105,9 +105,10 @@ vkr_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkFreeDescriptorSets *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct list_head free_list;
 
-   FREE_POOL_OBJECTS(descriptor_set, DESCRIPTOR_SET, vkFreeDescriptorSets,
-                     pDescriptorSets, descriptorSetCount, descriptorPool);
+   vkr_descriptor_set_destroy_driver_handles(ctx, args, &free_list);
+   vkr_context_remove_objects(ctx, &free_list);
 
    args->ret = VK_SUCCESS;
 }

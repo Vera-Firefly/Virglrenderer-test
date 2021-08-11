@@ -102,14 +102,6 @@
       vkr_##vkr_type##_add_array(ctx, dev, pool, &arr);                                  \
    } while (0)
 
-#define FREE_POOL_OBJECTS(vkr_type, vk_type, vk_cmd, arg_obj, arg_count, arg_pool)       \
-   do {                                                                                  \
-      struct list_head free_list;                                                        \
-      vkr_##vkr_type##_destroy_driver_handles(ctx, args, &free_list);                    \
-                                                                                         \
-      vkr_context_remove_objects(ctx, &free_list);                                       \
-   } while (0)
-
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;

@@ -64,9 +64,10 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkFreeCommandBuffers *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct list_head free_list;
 
-   FREE_POOL_OBJECTS(command_buffer, COMMAND_BUFFER, vkFreeCommandBuffers,
-                     pCommandBuffers, commandBufferCount, commandPool);
+   vkr_command_buffer_destroy_driver_handles(ctx, args, &free_list);
+   vkr_context_remove_objects(ctx, &free_list);
 }
 
 static void
