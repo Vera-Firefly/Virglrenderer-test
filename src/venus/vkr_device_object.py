@@ -39,6 +39,23 @@ VkResult vkr_{create_func_name}_create_driver_handles(
 }}
 '''
 
+PIPELINE_OBJECT_CREATE_DRIVER_HANDLES_TEMPL = '''
+/* create an array of driver {vk_type}s and update the object_array */
+static inline VkResult
+vkr_{create_func_name}_create_driver_handles(
+   UNUSED struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args,
+   struct object_array *arr)
+{{
+   /* handles in args are replaced */
+   vn_replace_{create_cmd}_args_handle(args);
+   args->ret = {create_cmd}(args->device, args->{create_cache},
+      args->{create_count}, args->{create_info}, NULL,
+      arr->handle_storage);
+   return args->ret;
+}}
+'''
+
 SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = '''
 /* destroy a driver {vk_type} */
 static inline void
@@ -81,7 +98,7 @@ vkr_{destroy_func_name}_destroy_driver_handles(
 
 PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL = SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL
 
-POOL_OBJECT_INIT_ARRAY_TEMPL = '''
+COMMON_OBJECT_INIT_ARRAY_TEMPL = '''
 /* initialize an object_array for vkr_{vkr_type}s */
 static inline VkResult
 vkr_{create_func_name}_init_array(
@@ -98,6 +115,9 @@ vkr_{create_func_name}_init_array(
    return args->ret;
 }}
 '''
+
+POOL_OBJECT_INIT_ARRAY_TEMPL = COMMON_OBJECT_INIT_ARRAY_TEMPL
+PIPELINE_OBJECT_INIT_ARRAY_TEMPL = COMMON_OBJECT_INIT_ARRAY_TEMPL
 
 SIMPLE_OBJECT_CREATE_TEMPL = '''
 /* create a vkr_{vkr_type} */
@@ -123,7 +143,7 @@ vkr_{create_func_name}_create(
 }}
 '''
 
-POOL_OBJECT_CREATE_ARRAY_TEMPL = '''
+COMMON_OBJECT_CREATE_ARRAY_TEMPL = '''
 /* create an array of vkr_{vkr_type}s */
 static inline VkResult
 vkr_{create_func_name}_create_array(
@@ -142,6 +162,9 @@ vkr_{create_func_name}_create_array(
    return args->ret;
 }}
 '''
+
+POOL_OBJECT_CREATE_ARRAY_TEMPL = COMMON_OBJECT_CREATE_ARRAY_TEMPL
+PIPELINE_OBJECT_CREATE_ARRAY_TEMPL = COMMON_OBJECT_CREATE_ARRAY_TEMPL
 
 POOL_OBJECT_ADD_ARRAY_TEMPL = '''
 /* steal vkr_{vkr_type}s from an object_array and add them to the
@@ -164,6 +187,29 @@ void vkr_{create_func_name}_add_array(
       list_add(&obj->base.track_head, &pool->{vkr_type}s);
 
       vkr_context_add_object(ctx, &obj->base);
+   }}
+
+   arr->objects_stolen = true;
+   object_array_fini(arr);
+}}
+'''
+
+PIPELINE_OBJECT_ADD_ARRAY_TEMPL = '''
+/* steal vkr_{vkr_type}s from an object_array and add them to the device */
+static inline void
+vkr_{create_func_name}_add_array(
+   struct vkr_context *ctx,
+   struct vkr_device *dev,
+   struct object_array *arr)
+{{
+   for (uint32_t i = 0; i < arr->count; i++) {{
+      struct vkr_{vkr_type} *obj = arr->objects[i];
+
+      obj->base.handle.{vkr_type} = (({vk_type} *)arr->handle_storage)[i];
+
+      list_add(&obj->base.track_head, &dev->objects);
+
+      vkr_device_add_object(ctx, &obj->base);
    }}
 
    arr->objects_stolen = true;
@@ -247,7 +293,46 @@ def pool_object_generator(json_obj):
     return contents
 
 def pipeline_object_generator(json_obj):
-    return PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
+    '''Generate functions for a pipeline object.
+
+    For VkPipeline, object creation can be broken down into 3 steps
+
+     (1) allocate and initialize the object array
+     (2) create the driver handles
+     (3) add the object array to the device and the object table
+
+    PIPELINE_OBJECT_INIT_ARRAY_TEMPL defines a function for (1).
+    PIPELINE_OBJECT_CREATE_DRIVER_HANDLES_TEMPL defines a function for (2).
+    PIPELINE_OBJECT_CREATE_ARRAY_TEMPL defines a function for (1) and (2).
+    PIPELINE_OBJECT_ADD_ARRAY_TEMPL defines a function for step (3).
+
+    Object destruction can be broken down into 2 steps
+
+     (1) destroy the driver handle
+     (2) remove the object from the device and the object table
+
+    PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL defines a function for (1).
+    '''
+    contents = ''
+
+    contents += PIPELINE_OBJECT_INIT_ARRAY_TEMPL.format(**json_obj)
+    contents += PIPELINE_OBJECT_CREATE_DRIVER_HANDLES_TEMPL.format(**json_obj)
+    contents += PIPELINE_OBJECT_CREATE_ARRAY_TEMPL.format(**json_obj)
+
+    # shared by both graphics and compute
+    tmp_obj = json_obj.copy()
+    tmp_obj['create_func_name'] = tmp_obj['vkr_type']
+    contents += PIPELINE_OBJECT_ADD_ARRAY_TEMPL.format(**tmp_obj)
+
+    contents += PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
+
+    for json_variant in json_obj['variants']:
+        tmp_obj = apply_variant(json_obj, json_variant)
+        contents += PIPELINE_OBJECT_INIT_ARRAY_TEMPL.format(**tmp_obj)
+        contents += PIPELINE_OBJECT_CREATE_DRIVER_HANDLES_TEMPL.format(**tmp_obj)
+        contents += PIPELINE_OBJECT_CREATE_ARRAY_TEMPL.format(**tmp_obj)
+
+    return contents
 
 object_generators = {
     'simple-object': simple_object_generator,

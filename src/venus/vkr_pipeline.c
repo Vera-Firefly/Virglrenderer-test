@@ -100,8 +100,13 @@ vkr_dispatch_vkCreateGraphicsPipelines(struct vn_dispatch_context *dispatch,
                                        struct vn_command_vkCreateGraphicsPipelines *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct object_array arr;
 
-   CREATE_PIPELINES(vkCreateGraphicsPipelines);
+   if (vkr_graphics_pipeline_create_array(ctx, args, &arr) != VK_SUCCESS)
+      return;
+
+   vkr_pipeline_add_array(ctx, dev, &arr);
 }
 
 static void
@@ -109,8 +114,13 @@ vkr_dispatch_vkCreateComputePipelines(struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkCreateComputePipelines *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_device *dev = (struct vkr_device *)args->device;
+   struct object_array arr;
 
-   CREATE_PIPELINES(vkCreateComputePipelines);
+   if (vkr_compute_pipeline_create_array(ctx, args, &arr) != VK_SUCCESS)
+      return;
+
+   vkr_pipeline_add_array(ctx, dev, &arr);
 }
 
 static void

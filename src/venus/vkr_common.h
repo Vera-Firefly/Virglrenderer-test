@@ -96,40 +96,6 @@
       vkr_context_remove_objects(ctx, &free_list);                                       \
    } while (0)
 
-#define CREATE_PIPELINES(vk_cmd)                                                         \
-   do {                                                                                  \
-      struct vkr_device *dev = (struct vkr_device *)args->device;                        \
-                                                                                         \
-      struct object_array arr;                                                           \
-      if (!object_array_init(ctx, &arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,  \
-                             sizeof(struct vkr_pipeline), sizeof(VkPipeline),            \
-                             args->pPipelines)) {                                        \
-         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
-         return;                                                                         \
-      }                                                                                  \
-                                                                                         \
-      vn_replace_##vk_cmd##_args_handle(args);                                           \
-      args->ret = vk_cmd(args->device, args->pipelineCache, args->createInfoCount,       \
-                         args->pCreateInfos, NULL, arr.handle_storage);                  \
-      if (args->ret != VK_SUCCESS) {                                                     \
-         object_array_fini(&arr);                                                        \
-         return;                                                                         \
-      }                                                                                  \
-                                                                                         \
-      for (uint32_t i = 0; i < arr.count; i++) {                                         \
-         struct vkr_pipeline *pipeline = arr.objects[i];                                 \
-                                                                                         \
-         pipeline->base.handle.pipeline = ((VkPipeline *)arr.handle_storage)[i];         \
-                                                                                         \
-         list_add(&pipeline->base.track_head, &dev->objects);                            \
-                                                                                         \
-         vkr_device_add_object(ctx, &pipeline->base);                                    \
-      }                                                                                  \
-                                                                                         \
-      arr.objects_stolen = true;                                                         \
-      object_array_fini(&arr);                                                           \
-   } while (0)
-
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;
