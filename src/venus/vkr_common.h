@@ -45,6 +45,20 @@
 
 #define VKR_DEBUG(category) (unlikely(vkr_debug_flags & VKR_DEBUG_##category))
 
+/* define a type-safe cast function */
+#define VKR_DEFINE_OBJECT_CAST(vkr_type, vk_enum, vk_type)                               \
+   static inline struct vkr_##vkr_type *vkr_##vkr_type##_from_handle(vk_type handle)     \
+   {                                                                                     \
+      struct vkr_##vkr_type *obj = (struct vkr_##vkr_type *)(uintptr_t)handle;           \
+      if (obj) {                                                                         \
+         assert(obj->base.type == vk_enum);                                              \
+         assert(obj->base.id);                                                           \
+         assert(obj->base.handle.vkr_type);                                              \
+         assert((uintptr_t)obj->base.handle.vkr_type == obj->base.handle.u64);           \
+      }                                                                                  \
+      return obj;                                                                        \
+   }
+
 /*
  * TODO Most of the functions are generated.  Some of them are then
  * hand-edited.  Find a better/cleaner way to reduce manual works.

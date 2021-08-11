@@ -48,6 +48,7 @@ struct vkr_device {
 
    struct list_head objects;
 };
+VKR_DEFINE_OBJECT_CAST(device, VK_OBJECT_TYPE_DEVICE, VkDevice)
 
 void
 vkr_context_init_device_dispatch(struct vkr_context *ctx);

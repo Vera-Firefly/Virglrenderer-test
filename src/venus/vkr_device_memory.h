@@ -19,6 +19,7 @@ struct vkr_device_memory {
    uint32_t exported_res_id;
    struct list_head exported_head;
 };
+VKR_DEFINE_OBJECT_CAST(device_memory, VK_OBJECT_TYPE_DEVICE_MEMORY, VkDeviceMemory)
 
 void
 vkr_context_init_device_memory_dispatch(struct vkr_context *ctx);

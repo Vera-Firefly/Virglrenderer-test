@@ -23,6 +23,7 @@ struct vkr_instance {
    VkPhysicalDevice *physical_device_handles;
    struct vkr_physical_device **physical_devices;
 };
+VKR_DEFINE_OBJECT_CAST(instance, VK_OBJECT_TYPE_INSTANCE, VkInstance)
 
 void
 vkr_context_init_instance_dispatch(struct vkr_context *ctx);

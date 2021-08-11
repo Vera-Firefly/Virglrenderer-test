@@ -26,6 +26,7 @@ struct vkr_physical_device {
 
    struct list_head devices;
 };
+VKR_DEFINE_OBJECT_CAST(physical_device, VK_OBJECT_TYPE_PHYSICAL_DEVICE, VkPhysicalDevice)
 
 void
 vkr_context_init_physical_device_dispatch(struct vkr_context *ctx);

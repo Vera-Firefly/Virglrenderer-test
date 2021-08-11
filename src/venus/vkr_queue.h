@@ -54,18 +54,22 @@ struct vkr_queue {
 
    struct list_head busy_head;
 };
+VKR_DEFINE_OBJECT_CAST(queue, VK_OBJECT_TYPE_QUEUE, VkQueue)
 
 struct vkr_fence {
    struct vkr_object base;
 };
+VKR_DEFINE_OBJECT_CAST(fence, VK_OBJECT_TYPE_FENCE, VkFence)
 
 struct vkr_semaphore {
    struct vkr_object base;
 };
+VKR_DEFINE_OBJECT_CAST(semaphore, VK_OBJECT_TYPE_SEMAPHORE, VkSemaphore)
 
 struct vkr_event {
    struct vkr_object base;
 };
+VKR_DEFINE_OBJECT_CAST(event, VK_OBJECT_TYPE_EVENT, VkEvent)
 
 void
 vkr_context_init_queue_dispatch(struct vkr_context *ctx);
