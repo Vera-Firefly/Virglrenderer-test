@@ -53,10 +53,20 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkAllocateCommandBuffers *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vkr_command_pool *pool =
+      vkr_command_pool_from_handle(args->pAllocateInfo->commandPool);
+   struct object_array arr;
 
-   ALLOCATE_POOL_OBJECTS(command_buffer, COMMAND_BUFFER, CommandBuffer,
-                         vkAllocateCommandBuffers, commandBufferCount, commandPool,
-                         command_pool, COMMAND_POOL);
+   if (!pool) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   if (vkr_command_buffer_create_array(ctx, args, &arr) != VK_SUCCESS)
+      return;
+
+   vkr_command_buffer_add_array(ctx, dev, pool, &arr);
 }
 
 static void

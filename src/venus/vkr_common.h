@@ -83,25 +83,6 @@
                                                                                          \
    list_del(&obj->base.track_head)
 
-#define ALLOCATE_POOL_OBJECTS(vkr_type, vk_type, vk_obj, vk_cmd, arg_count, arg_pool,    \
-                              vkr_pool_type, vk_pool_type)                               \
-   do {                                                                                  \
-      struct vkr_device *dev = vkr_device_from_handle(args->device);                     \
-                                                                                         \
-      struct vkr_##vkr_pool_type *pool =                                                 \
-         vkr_##vkr_pool_type##_from_handle(args->pAllocateInfo->arg_pool);               \
-      if (!pool) {                                                                       \
-         vkr_cs_decoder_set_fatal(&ctx->decoder);                                        \
-         return;                                                                         \
-      }                                                                                  \
-                                                                                         \
-      struct object_array arr;                                                           \
-      if (vkr_##vkr_type##_create_array(ctx, args, &arr) != VK_SUCCESS)                  \
-         return;                                                                         \
-                                                                                         \
-      vkr_##vkr_type##_add_array(ctx, dev, pool, &arr);                                  \
-   } while (0)
-
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;

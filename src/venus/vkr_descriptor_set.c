@@ -94,10 +94,20 @@ vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkAllocateDescriptorSets *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vkr_descriptor_pool *pool =
+      vkr_descriptor_pool_from_handle(args->pAllocateInfo->descriptorPool);
+   struct object_array arr;
 
-   ALLOCATE_POOL_OBJECTS(descriptor_set, DESCRIPTOR_SET, DescriptorSet,
-                         vkAllocateDescriptorSets, descriptorSetCount, descriptorPool,
-                         descriptor_pool, DESCRIPTOR_POOL);
+   if (!pool) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
+   if (vkr_descriptor_set_create_array(ctx, args, &arr) != VK_SUCCESS)
+      return;
+
+   vkr_descriptor_set_add_array(ctx, dev, pool, &arr);
 }
 
 static void
