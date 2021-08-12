@@ -222,7 +222,7 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       }
    }
 
-   vkr_context_add_instance(ctx, instance);
+   vkr_context_add_instance(ctx, instance, app_info.pApplicationName);
 }
 
 void

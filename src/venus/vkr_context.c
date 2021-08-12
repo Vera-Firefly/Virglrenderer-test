@@ -28,12 +28,19 @@
 #include "vkr_transport.h"
 
 void
-vkr_context_add_instance(struct vkr_context *ctx, struct vkr_instance *instance)
+vkr_context_add_instance(struct vkr_context *ctx,
+                         struct vkr_instance *instance,
+                         const char *name)
 {
    vkr_context_add_object(ctx, &instance->base);
 
    assert(!ctx->instance);
    ctx->instance = instance;
+
+   if (name && name[0] != '\0') {
+      assert(!ctx->instance_name);
+      ctx->instance_name = strdup(name);
+   }
 }
 
 void
@@ -41,6 +48,11 @@ vkr_context_remove_instance(struct vkr_context *ctx, struct vkr_instance *instan
 {
    assert(ctx->instance && ctx->instance == instance);
    ctx->instance = NULL;
+
+   if (ctx->instance_name) {
+      free(ctx->instance_name);
+      ctx->instance_name = NULL;
+   }
 
    vkr_context_remove_object(ctx, &instance->base);
 }

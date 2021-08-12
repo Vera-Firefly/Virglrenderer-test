@@ -62,6 +62,7 @@ struct vkr_context {
    struct list_head signaled_syncs;
 
    struct vkr_instance *instance;
+   char *instance_name;
 };
 
 static inline void
@@ -94,7 +95,9 @@ vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
 }
 
 void
-vkr_context_add_instance(struct vkr_context *ctx, struct vkr_instance *instance);
+vkr_context_add_instance(struct vkr_context *ctx,
+                         struct vkr_instance *instance,
+                         const char *name);
 
 void
 vkr_context_remove_instance(struct vkr_context *ctx, struct vkr_instance *instance);
