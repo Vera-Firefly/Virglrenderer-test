@@ -257,7 +257,7 @@ struct dump_ctx {
 
    const struct vrend_shader_key *key;
    int num_in_clip_dist;
-   int num_clip_dist;
+   int num_out_clip_dist;
    int fs_uses_clipdist_input;
    int glsl_ver_required;
    int color_in_mask;
@@ -1327,7 +1327,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          name_prefix = "gl_ClipDistance";
          ctx->outputs[i].glsl_predefined_no_emit = true;
          ctx->outputs[i].glsl_no_index = true;
-         ctx->num_clip_dist += 4 * (ctx->outputs[i].last - ctx->outputs[i].first + 1);
+         ctx->num_out_clip_dist += 4 * (ctx->outputs[i].last - ctx->outputs[i].first + 1);
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX &&
              (ctx->key->gs_present || ctx->key->tcs_present))
             ctx->glsl_ver_required = require_glsl_ver(ctx, 150);
@@ -2032,13 +2032,13 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
 
    if (ctx->prog_type == PIPE_SHADER_TESS_CTRL)
       prefix = "gl_out[gl_InvocationID].";
-   if (ctx->num_clip_dist == 0 && ctx->key->clip_plane_enable) {
+   if (ctx->num_out_clip_dist == 0 && ctx->key->clip_plane_enable) {
       for (i = 0; i < 8; i++) {
          emit_buff(glsl_strbufs, "%sgl_ClipDistance[%d] = dot(%s, clipp[%d]);\n", prefix, i, ctx->has_clipvertex ? "clipv_tmp" : "gl_Position", i);
       }
       return;
    }
-   ndists = ctx->num_clip_dist;
+   ndists = ctx->num_out_clip_dist;
    if (has_prop)
       ndists = num_clip + num_cull;
    for (i = 0; i < ndists; i++) {
@@ -5557,7 +5557,7 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       emit_ver_extf(glsl_strbufs, "#version %d es\n", ctx->cfg->glsl_version);
 
       if ((ctx->shader_req_bits & SHADER_REQ_CLIP_DISTANCE)||
-          (ctx->num_clip_dist == 0 && ctx->key->clip_plane_enable)) {
+          (ctx->num_out_clip_dist == 0 && ctx->key->clip_plane_enable)) {
          emit_ext(glsl_strbufs, "EXT_clip_cull_distance", "require");
       }
 
@@ -6432,9 +6432,9 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    if (ctx->has_clipvertex) {
       emit_hdrf(glsl_strbufs, "%svec4 clipv_tmp;\n", ctx->has_clipvertex_so ? "out " : "");
    }
-   if (ctx->num_clip_dist || ctx->key->clip_plane_enable) {
+   if (ctx->num_out_clip_dist || ctx->key->clip_plane_enable) {
       bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
-      int num_clip_dists = ctx->num_clip_dist ? ctx->num_clip_dist : 8;
+      int num_clip_dists = ctx->num_out_clip_dist ? ctx->num_out_clip_dist : 8;
       int num_cull_dists = 0;
       char cull_buf[64] = "";
       char clip_buf[64] = "";
@@ -6640,7 +6640,7 @@ static void emit_ios_per_vertex_in(const struct dump_ctx *ctx,
 static void emit_ios_per_vertex_out(const struct dump_ctx *ctx,
                                     struct vrend_glsl_strbufs *glsl_strbufs)
 {
-   if (ctx->num_clip_dist || ctx->num_cull_dist_prop) {
+   if (ctx->num_out_clip_dist || ctx->num_cull_dist_prop) {
       if (ctx->key->output.use_pervertex) {
 
          int clip_dist = ctx->num_clip_dist_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
@@ -6714,9 +6714,9 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
 
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
 
-   if (ctx->num_clip_dist) {
+   if (ctx->num_out_clip_dist) {
       bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
-      int num_clip_dists = ctx->num_clip_dist ? ctx->num_clip_dist : 8;
+      int num_clip_dists = ctx->num_out_clip_dist ? ctx->num_out_clip_dist : 8;
       int num_cull_dists = 0;
       char cull_buf[64] = "";
       char clip_buf[64] = "";
