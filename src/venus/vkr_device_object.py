@@ -180,8 +180,7 @@ vkr_{create_func_name}_create_and_add(
    if (!obj)
       return NULL;
 
-   list_add(&obj->base.track_head, &dev->objects);
-   vkr_device_add_object(ctx, &obj->base);
+   vkr_device_add_object(ctx, dev, &obj->base);
    return obj;
 }}
 '''
@@ -227,9 +226,7 @@ vkr_{create_func_name}_add_array(
 
       obj->base.handle.{vkr_type} = (({vk_type} *)arr->handle_storage)[i];
 
-      list_add(&obj->base.track_head, &dev->objects);
-
-      vkr_device_add_object(ctx, &obj->base);
+      vkr_device_add_object(ctx, dev, &obj->base);
    }}
 
    arr->objects_stolen = true;
@@ -244,14 +241,14 @@ vkr_{destroy_func_name}_destroy_and_remove(
    struct vkr_context *ctx,
    struct vn_command_{destroy_cmd} *args)
 {{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vkr_{vkr_type} *obj = vkr_{vkr_type}_from_handle(args->{destroy_obj});
    if (!obj)
       return;
 
    vkr_{destroy_func_name}_destroy_driver_handle(ctx, args);
 
-   list_del(&obj->base.track_head);
-   vkr_device_remove_object(ctx, &obj->base);
+   vkr_device_remove_object(ctx, dev, &obj->base);
 }}
 '''
 

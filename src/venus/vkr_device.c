@@ -317,9 +317,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       break;
    };
 
-   list_del(&obj->track_head);
-
-   vkr_device_remove_object(ctx, obj);
+   vkr_device_remove_object(ctx, dev, obj);
 }
 
 void

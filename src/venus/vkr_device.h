@@ -75,18 +75,25 @@ vkr_device_should_track_object(const struct vkr_object *obj)
 }
 
 static inline void
-vkr_device_add_object(struct vkr_context *ctx, struct vkr_object *obj)
+vkr_device_add_object(struct vkr_context *ctx,
+                      struct vkr_device *dev,
+                      struct vkr_object *obj)
 {
-   assert(vkr_device_should_track_object(obj));
-
-   /* TODO add to dev->objects */
    vkr_context_add_object(ctx, obj);
+
+   assert(vkr_device_should_track_object(obj));
+   list_add(&obj->track_head, &dev->objects);
 }
 
 static inline void
-vkr_device_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
+vkr_device_remove_object(struct vkr_context *ctx,
+                         UNUSED struct vkr_device *dev,
+                         struct vkr_object *obj)
 {
-   /* TODO remove from dev->objects */
+   assert(vkr_device_should_track_object(obj));
+   list_del(&obj->track_head);
+
+   /* this frees obj */
    vkr_context_remove_object(ctx, obj);
 }
 

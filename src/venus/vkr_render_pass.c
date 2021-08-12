@@ -36,9 +36,7 @@ vkr_dispatch_vkCreateRenderPass2(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   list_add(&pass->base.track_head, &dev->objects);
-
-   vkr_device_add_object(ctx, &pass->base);
+   vkr_device_add_object(ctx, dev, &pass->base);
 }
 
 static void
