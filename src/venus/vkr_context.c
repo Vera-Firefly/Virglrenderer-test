@@ -27,6 +27,24 @@
 #include "vkr_ring.h"
 #include "vkr_transport.h"
 
+void
+vkr_context_add_instance(struct vkr_context *ctx, struct vkr_instance *instance)
+{
+   vkr_context_add_object(ctx, &instance->base);
+
+   assert(!ctx->instance);
+   ctx->instance = instance;
+}
+
+void
+vkr_context_remove_instance(struct vkr_context *ctx, struct vkr_instance *instance)
+{
+   assert(ctx->instance && ctx->instance == instance);
+   ctx->instance = NULL;
+
+   vkr_context_remove_object(ctx, &instance->base);
+}
+
 static void
 vkr_dispatch_debug_log(UNUSED struct vn_dispatch_context *dispatch, const char *msg)
 {

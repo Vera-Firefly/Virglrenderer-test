@@ -222,9 +222,7 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       }
    }
 
-   vkr_context_add_object(ctx, &instance->base);
-
-   ctx->instance = instance;
+   vkr_context_add_instance(ctx, instance);
 }
 
 void
@@ -248,7 +246,7 @@ vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
    free(instance->physical_device_handles);
    free(instance->physical_devices);
 
-   vkr_context_remove_object(ctx, &instance->base);
+   vkr_context_remove_instance(ctx, instance);
 }
 
 static void
@@ -264,8 +262,6 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
    }
 
    vkr_instance_destroy(ctx, instance);
-
-   ctx->instance = NULL;
 }
 
 void

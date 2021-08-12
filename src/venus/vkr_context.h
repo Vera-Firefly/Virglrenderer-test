@@ -93,4 +93,10 @@ vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
    /* objects should be reinitialized if to be reused */
 }
 
+void
+vkr_context_add_instance(struct vkr_context *ctx, struct vkr_instance *instance);
+
+void
+vkr_context_remove_instance(struct vkr_context *ctx, struct vkr_instance *instance);
+
 #endif /* VKR_CONTEXT_H */
