@@ -98,25 +98,6 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       }
    }
 
-   struct vkr_device_memory *mem = vkr_context_alloc_object(
-      ctx, sizeof(*mem), VK_OBJECT_TYPE_DEVICE_MEMORY, args->pMemory);
-   if (!mem) {
-      if (import_resource_info)
-         close(import_fd_info.fd);
-      args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
-      return;
-   }
-
-   vn_replace_vkAllocateMemory_args_handle(args);
-   args->ret = vkAllocateMemory(args->device, args->pAllocateInfo, NULL,
-                                &mem->base.handle.device_memory);
-   if (args->ret != VK_SUCCESS) {
-      if (import_resource_info)
-         close(import_fd_info.fd);
-      free(mem);
-      return;
-   }
-
    const VkPhysicalDeviceMemoryProperties *mem_props =
       &dev->physical_device->memory_properties;
    const uint32_t mt_index = args->pAllocateInfo->memoryTypeIndex;
@@ -139,33 +120,30 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       pnext = pnext->pNext;
    }
 
+   struct vkr_device_memory *mem = vkr_device_memory_create_and_add(ctx, args);
+   if (!mem) {
+      if (import_resource_info)
+         close(import_fd_info.fd);
+      return;
+   }
+
    mem->device = args->device;
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
    list_inithead(&mem->exported_head);
-
-   list_add(&mem->base.track_head, &dev->objects);
-
-   vkr_device_add_object(ctx, &mem->base);
 }
 
 static void
 vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
                           struct vn_command_vkFreeMemory *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
    struct vkr_device_memory *mem = vkr_device_memory_from_handle(args->memory);
    if (!mem)
       return;
 
-   vn_replace_vkFreeMemory_args_handle(args);
-   vkFreeMemory(args->device, args->memory, NULL);
-
    list_del(&mem->exported_head);
-   list_del(&mem->base.track_head);
 
-   vkr_device_remove_object(ctx, &mem->base);
+   vkr_device_memory_destroy_and_remove(dispatch->data, args);
 }
 
 static void
