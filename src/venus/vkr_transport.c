@@ -177,6 +177,13 @@ validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
                  regions[i]->offset, regions[i]->size);
          return false;
       }
+
+      if (regions[i]->offset & 0x3) {
+         vkr_log("ring buffer control variable (offset=%lu, size=%lu) must be"
+                 " 32-bit aligned in shared memory layout",
+                 regions[i]->offset, regions[i]->size);
+         return false;
+      }
    }
 
    /* assumes region->size == 0 is valid */
