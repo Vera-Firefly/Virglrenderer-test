@@ -3062,6 +3062,14 @@ void load_clipdist_fs(const struct dump_ctx *ctx,
 {
    char clip_indirect[32] = "";
 
+   char swz[5] = {
+      get_swiz_char(src->Register.SwizzleX),
+      get_swiz_char(src->Register.SwizzleY),
+      get_swiz_char(src->Register.SwizzleZ),
+      get_swiz_char(src->Register.SwizzleW),
+      0
+   };
+
    int base_idx = ctx->inputs[input_idx].sid;
 
    /* With arrays enabled , but only when gl_ClipDistance or gl_CullDistance are emitted (>4)
@@ -3072,9 +3080,9 @@ void load_clipdist_fs(const struct dump_ctx *ctx,
       snprintf(clip_indirect, 32, "%d + %d", src->Register.Index - offset, base_idx);
 
    if (gl_in)
-      strbuf_fmt(result, "%s(clip_dist_temp[%s])", stypeprefix, clip_indirect);
+      strbuf_fmt(result, "%s(clip_dist_temp[%s].%s)", stypeprefix, clip_indirect, swz);
    else
-      strbuf_fmt(result, "%s(clip_dist_temp[%s])", stypeprefix, clip_indirect);
+      strbuf_fmt(result, "%s(clip_dist_temp[%s].%s)", stypeprefix, clip_indirect, swz);
 }
 
 
