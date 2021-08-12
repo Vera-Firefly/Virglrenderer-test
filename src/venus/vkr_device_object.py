@@ -167,6 +167,25 @@ vkr_{create_func_name}_create_array(
 POOL_OBJECT_CREATE_ARRAY_TEMPL = COMMON_OBJECT_CREATE_ARRAY_TEMPL
 PIPELINE_OBJECT_CREATE_ARRAY_TEMPL = COMMON_OBJECT_CREATE_ARRAY_TEMPL
 
+SIMPLE_OBJECT_CREATE_AND_ADD_TEMPL = '''
+/* create a vkr_{vkr_type} and add it to the vkr_device */
+static inline struct vkr_{vkr_type} *
+vkr_{create_func_name}_create_and_add(
+   struct vkr_context *ctx,
+   struct vn_command_{create_cmd} *args)
+{{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+
+   struct vkr_{vkr_type} *obj = vkr_{create_func_name}_create(ctx, args);
+   if (!obj)
+      return NULL;
+
+   list_add(&obj->base.track_head, &dev->objects);
+   vkr_device_add_object(ctx, &obj->base);
+   return obj;
+}}
+'''
+
 POOL_OBJECT_ADD_ARRAY_TEMPL = '''
 /* steal vkr_{vkr_type}s from an object_array and add them to the
  * vkr_{pool_type} and the context
@@ -218,6 +237,26 @@ vkr_{create_func_name}_add_array(
 }}
 '''
 
+SIMPLE_OBJECT_DESTROY_AND_REMOVE_TEMPL = '''
+/* remove a vkr_{vkr_type} from the device and destroy it */
+static inline void
+vkr_{destroy_func_name}_destroy_and_remove(
+   struct vkr_context *ctx,
+   struct vn_command_{destroy_cmd} *args)
+{{
+   struct vkr_{vkr_type} *obj = vkr_{vkr_type}_from_handle(args->{destroy_obj});
+   if (!obj)
+      return;
+
+   vkr_{destroy_func_name}_destroy_driver_handle(ctx, args);
+
+   list_del(&obj->base.track_head);
+   vkr_device_remove_object(ctx, &obj->base);
+}}
+'''
+
+PIPELINE_OBJECT_DESTROY_AND_REMOVE_TEMPL = SIMPLE_OBJECT_DESTROY_AND_REMOVE_TEMPL
+
 def apply_variant(json_obj, json_variant):
     tmp_obj = json_obj.copy()
     for key, val in json_variant.items():
@@ -235,6 +274,7 @@ def simple_object_generator(json_obj):
 
     SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL defines a function for (2).
     SIMPLE_OBJECT_CREATE_TEMPL defines a function for (1) and (2).
+    SIMPLE_OBJECT_CREATE_AND_ADD_TEMPL defines a function for all steps.
 
     Object destruction can be broken down into 2 steps
 
@@ -242,18 +282,22 @@ def simple_object_generator(json_obj):
      (2) remove the object from the device and the object table
 
     SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL defines a function for (1).
+    SIMPLE_OBJECT_DESTROY_AND_REMOVE_TEMPL defines a function for both steps.
     '''
     contents = ''
 
     contents += SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL.format(**json_obj)
     contents += SIMPLE_OBJECT_CREATE_TEMPL.format(**json_obj)
+    contents += SIMPLE_OBJECT_CREATE_AND_ADD_TEMPL.format(**json_obj)
 
     contents += SIMPLE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
+    contents += SIMPLE_OBJECT_DESTROY_AND_REMOVE_TEMPL.format(**json_obj)
 
     for json_variant in json_obj['variants']:
         tmp_obj = apply_variant(json_obj, json_variant)
         contents += SIMPLE_OBJECT_CREATE_DRIVER_HANDLE_TEMPL.format(**tmp_obj)
         contents += SIMPLE_OBJECT_CREATE_TEMPL.format(**tmp_obj)
+        contents += SIMPLE_OBJECT_CREATE_AND_ADD_TEMPL.format(**tmp_obj)
 
     return contents
 
@@ -313,6 +357,7 @@ def pipeline_object_generator(json_obj):
      (2) remove the object from the device and the object table
 
     PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL defines a function for (1).
+    PIPELINE_OBJECT_DESTROY_AND_REMOVE_TEMPL defines a function for both steps.
     '''
     contents = ''
 
@@ -326,6 +371,7 @@ def pipeline_object_generator(json_obj):
     contents += PIPELINE_OBJECT_ADD_ARRAY_TEMPL.format(**tmp_obj)
 
     contents += PIPELINE_OBJECT_DESTROY_DRIVER_HANDLE_TEMPL.format(**json_obj)
+    contents += PIPELINE_OBJECT_DESTROY_AND_REMOVE_TEMPL.format(**json_obj)
 
     for json_variant in json_obj['variants']:
         tmp_obj = apply_variant(json_obj, json_variant)

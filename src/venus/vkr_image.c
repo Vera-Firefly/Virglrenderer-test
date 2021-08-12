@@ -38,20 +38,14 @@ vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
    }
 #endif
 
-   CREATE_OBJECT(img, image, IMAGE, vkCreateImage, pImage);
-
-   vkr_device_add_object(ctx, &img->base);
+   vkr_image_create_and_add(ctx, args);
 }
 
 static void
 vkr_dispatch_vkDestroyImage(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkDestroyImage *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(img, image, IMAGE, vkDestroyImage, image);
-
-   vkr_device_remove_object(ctx, &img->base);
+   vkr_image_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -137,44 +131,28 @@ static void
 vkr_dispatch_vkCreateImageView(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateImageView *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(view, image_view, IMAGE_VIEW, vkCreateImageView, pView);
-
-   vkr_device_add_object(ctx, &view->base);
+   vkr_image_view_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyImageView(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkDestroyImageView *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(view, image_view, IMAGE_VIEW, vkDestroyImageView, imageView);
-
-   vkr_device_remove_object(ctx, &view->base);
+   vkr_image_view_destroy_and_remove(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkCreateSampler(struct vn_dispatch_context *dispatch,
                              struct vn_command_vkCreateSampler *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(sampler, sampler, SAMPLER, vkCreateSampler, pSampler);
-
-   vkr_device_add_object(ctx, &sampler->base);
+   vkr_sampler_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroySampler(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkDestroySampler *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(sampler, sampler, SAMPLER, vkDestroySampler, sampler);
-
-   vkr_device_remove_object(ctx, &sampler->base);
+   vkr_sampler_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -182,12 +160,7 @@ vkr_dispatch_vkCreateSamplerYcbcrConversion(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkCreateSamplerYcbcrConversion *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
-                 vkCreateSamplerYcbcrConversion, pYcbcrConversion);
-
-   vkr_device_add_object(ctx, &conv->base);
+   vkr_sampler_ycbcr_conversion_create_and_add(dispatch->data, args);
 }
 
 static void
@@ -195,12 +168,7 @@ vkr_dispatch_vkDestroySamplerYcbcrConversion(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkDestroySamplerYcbcrConversion *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(conv, sampler_ycbcr_conversion, SAMPLER_YCBCR_CONVERSION,
-                  vkDestroySamplerYcbcrConversion, ycbcrConversion);
-
-   vkr_device_remove_object(ctx, &conv->base);
+   vkr_sampler_ycbcr_conversion_destroy_and_remove(dispatch->data, args);
 }
 
 void

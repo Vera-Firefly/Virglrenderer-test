@@ -11,70 +11,42 @@ static void
 vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkCreateShaderModule *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(mod, shader_module, SHADER_MODULE, vkCreateShaderModule, pShaderModule);
-
-   vkr_device_add_object(ctx, &mod->base);
+   vkr_shader_module_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyShaderModule(struct vn_dispatch_context *dispatch,
                                    struct vn_command_vkDestroyShaderModule *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(mod, shader_module, SHADER_MODULE, vkDestroyShaderModule, shaderModule);
-
-   vkr_device_remove_object(ctx, &mod->base);
+   vkr_shader_module_destroy_and_remove(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkCreatePipelineLayout(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCreatePipelineLayout *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkCreatePipelineLayout,
-                 pPipelineLayout);
-
-   vkr_device_add_object(ctx, &layout->base);
+   vkr_pipeline_layout_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyPipelineLayout(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkDestroyPipelineLayout *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(layout, pipeline_layout, PIPELINE_LAYOUT, vkDestroyPipelineLayout,
-                  pipelineLayout);
-
-   vkr_device_remove_object(ctx, &layout->base);
+   vkr_pipeline_layout_destroy_and_remove(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkCreatePipelineCache(struct vn_dispatch_context *dispatch,
                                    struct vn_command_vkCreatePipelineCache *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkCreatePipelineCache,
-                 pPipelineCache);
-
-   vkr_device_add_object(ctx, &cache->base);
+   vkr_pipeline_cache_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyPipelineCache(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkDestroyPipelineCache *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(cache, pipeline_cache, PIPELINE_CACHE, vkDestroyPipelineCache,
-                  pipelineCache);
-
-   vkr_device_remove_object(ctx, &cache->base);
+   vkr_pipeline_cache_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -127,11 +99,7 @@ static void
 vkr_dispatch_vkDestroyPipeline(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkDestroyPipeline *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(pipeline, pipeline, PIPELINE, vkDestroyPipeline, pipeline);
-
-   vkr_device_remove_object(ctx, &pipeline->base);
+   vkr_pipeline_destroy_and_remove(dispatch->data, args);
 }
 
 void

@@ -21,12 +21,7 @@ vkr_dispatch_vkCreateDescriptorSetLayout(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkCreateDescriptorSetLayout *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
-                 vkCreateDescriptorSetLayout, pSetLayout);
-
-   vkr_device_add_object(ctx, &layout->base);
+   vkr_descriptor_set_layout_create_and_add(dispatch->data, args);
 }
 
 static void
@@ -34,26 +29,19 @@ vkr_dispatch_vkDestroyDescriptorSetLayout(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkDestroyDescriptorSetLayout *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(layout, descriptor_set_layout, DESCRIPTOR_SET_LAYOUT,
-                  vkDestroyDescriptorSetLayout, descriptorSetLayout);
-
-   vkr_device_remove_object(ctx, &layout->base);
+   vkr_descriptor_set_layout_destroy_and_remove(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCreateDescriptorPool *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkCreateDescriptorPool,
-                 pDescriptorPool);
+   struct vkr_descriptor_pool *pool =
+      vkr_descriptor_pool_create_and_add(dispatch->data, args);
+   if (!pool)
+      return;
 
    list_inithead(&pool->descriptor_sets);
-
-   vkr_device_add_object(ctx, &pool->base);
 }
 
 static void
@@ -61,12 +49,15 @@ vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
                                      struct vn_command_vkDestroyDescriptorPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_descriptor_pool *pool =
+      vkr_descriptor_pool_from_handle(args->descriptorPool);
 
-   DESTROY_OBJECT(pool, descriptor_pool, DESCRIPTOR_POOL, vkDestroyDescriptorPool,
-                  descriptorPool);
+   if (!pool)
+      return;
 
    vkr_context_remove_objects(ctx, &pool->descriptor_sets);
-   vkr_device_remove_object(ctx, &pool->base);
+
+   vkr_descriptor_pool_destroy_and_remove(ctx, args);
 }
 
 static void
@@ -138,12 +129,7 @@ vkr_dispatch_vkCreateDescriptorUpdateTemplate(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkCreateDescriptorUpdateTemplate *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
-                 vkCreateDescriptorUpdateTemplate, pDescriptorUpdateTemplate);
-
-   vkr_device_add_object(ctx, &templ->base);
+   vkr_descriptor_update_template_create_and_add(dispatch->data, args);
 }
 
 static void
@@ -151,12 +137,7 @@ vkr_dispatch_vkDestroyDescriptorUpdateTemplate(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkDestroyDescriptorUpdateTemplate *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(templ, descriptor_update_template, DESCRIPTOR_UPDATE_TEMPLATE,
-                  vkDestroyDescriptorUpdateTemplate, descriptorUpdateTemplate);
-
-   vkr_device_remove_object(ctx, &templ->base);
+   vkr_descriptor_update_template_destroy_and_remove(dispatch->data, args);
 }
 
 void

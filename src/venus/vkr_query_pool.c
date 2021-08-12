@@ -11,22 +11,14 @@ static void
 vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateQueryPool *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(pool, query_pool, QUERY_POOL, vkCreateQueryPool, pQueryPool);
-
-   vkr_device_add_object(ctx, &pool->base);
+   vkr_query_pool_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyQueryPool(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkDestroyQueryPool *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(pool, query_pool, QUERY_POOL, vkDestroyQueryPool, queryPool);
-
-   vkr_device_remove_object(ctx, &pool->base);
+   vkr_query_pool_destroy_and_remove(dispatch->data, args);
 }
 
 static void

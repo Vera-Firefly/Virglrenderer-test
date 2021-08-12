@@ -383,22 +383,14 @@ static void
 vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch,
                            struct vn_command_vkCreateFence *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(fence, fence, FENCE, vkCreateFence, pFence);
-
-   vkr_device_add_object(ctx, &fence->base);
+   vkr_fence_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyFence(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkDestroyFence *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(fence, fence, FENCE, vkDestroyFence, fence);
-
-   vkr_device_remove_object(ctx, &fence->base);
+   vkr_fence_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -442,22 +434,14 @@ static void
 vkr_dispatch_vkCreateSemaphore(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkCreateSemaphore *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(sem, semaphore, SEMAPHORE, vkCreateSemaphore, pSemaphore);
-
-   vkr_device_add_object(ctx, &sem->base);
+   vkr_semaphore_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroySemaphore(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkDestroySemaphore *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(sem, semaphore, SEMAPHORE, vkDestroySemaphore, semaphore);
-
-   vkr_device_remove_object(ctx, &sem->base);
+   vkr_semaphore_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -501,22 +485,14 @@ static void
 vkr_dispatch_vkCreateEvent(struct vn_dispatch_context *dispatch,
                            struct vn_command_vkCreateEvent *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(ev, event, EVENT, vkCreateEvent, pEvent);
-
-   vkr_device_add_object(ctx, &ev->base);
+   vkr_event_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyEvent(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkDestroyEvent *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(ev, event, EVENT, vkDestroyEvent, event);
-
-   vkr_device_remove_object(ctx, &ev->base);
+   vkr_event_destroy_and_remove(dispatch->data, args);
 }
 
 static void

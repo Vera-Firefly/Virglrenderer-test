@@ -59,30 +59,6 @@
       return obj;                                                                        \
    }
 
-/*
- * TODO Most of the functions are generated.  Some of them are then
- * hand-edited.  Find a better/cleaner way to reduce manual works.
- *
- * These macros may shadow your variables.  Use with care.
- */
-#define CREATE_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                             \
-   struct vkr_device *_dev = vkr_device_from_handle(args->device);                       \
-                                                                                         \
-   struct vkr_##vkr_type *obj = vkr_##vkr_type##_create(ctx, args);                      \
-   if (!obj)                                                                             \
-      return;                                                                            \
-                                                                                         \
-   list_add(&obj->base.track_head, &_dev->objects)
-
-#define DESTROY_OBJECT(obj, vkr_type, vk_obj, vk_cmd, vk_arg)                            \
-   struct vkr_##vkr_type *obj = vkr_##vkr_type##_from_handle(args->vk_arg);              \
-   if (!obj)                                                                             \
-      return;                                                                            \
-                                                                                         \
-   vkr_##vkr_type##_destroy_driver_handle(ctx, args);                                    \
-                                                                                         \
-   list_del(&obj->base.track_head)
-
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;

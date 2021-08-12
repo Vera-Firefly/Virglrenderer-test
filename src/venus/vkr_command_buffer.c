@@ -11,13 +11,11 @@ static void
 vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateCommandPool *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(pool, command_pool, COMMAND_POOL, vkCreateCommandPool, pCommandPool);
+   struct vkr_command_pool *pool = vkr_command_pool_create_and_add(dispatch->data, args);
+   if (!pool)
+      return;
 
    list_inithead(&pool->command_buffers);
-
-   vkr_device_add_object(ctx, &pool->base);
 }
 
 static void
@@ -25,11 +23,14 @@ vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkDestroyCommandPool *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_command_pool *pool = vkr_command_pool_from_handle(args->commandPool);
 
-   DESTROY_OBJECT(pool, command_pool, COMMAND_POOL, vkDestroyCommandPool, commandPool);
+   if (!pool)
+      return;
 
    vkr_context_remove_objects(ctx, &pool->command_buffers);
-   vkr_device_remove_object(ctx, &pool->base);
+
+   vkr_command_pool_destroy_and_remove(ctx, args);
 }
 
 static void

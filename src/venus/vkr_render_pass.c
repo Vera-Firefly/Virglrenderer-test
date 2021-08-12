@@ -11,11 +11,7 @@ static void
 vkr_dispatch_vkCreateRenderPass(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateRenderPass *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(pass, render_pass, RENDER_PASS, vkCreateRenderPass, pRenderPass);
-
-   vkr_device_add_object(ctx, &pass->base);
+   vkr_render_pass_create_and_add(dispatch->data, args);
 }
 
 static void
@@ -49,11 +45,7 @@ static void
 vkr_dispatch_vkDestroyRenderPass(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkDestroyRenderPass *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(pass, render_pass, RENDER_PASS, vkDestroyRenderPass, renderPass);
-
-   vkr_device_remove_object(ctx, &pass->base);
+   vkr_render_pass_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -68,22 +60,14 @@ static void
 vkr_dispatch_vkCreateFramebuffer(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkCreateFramebuffer *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(fb, framebuffer, FRAMEBUFFER, vkCreateFramebuffer, pFramebuffer);
-
-   vkr_device_add_object(ctx, &fb->base);
+   vkr_framebuffer_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyFramebuffer(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkDestroyFramebuffer *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(fb, framebuffer, FRAMEBUFFER, vkDestroyFramebuffer, framebuffer);
-
-   vkr_device_remove_object(ctx, &fb->base);
+   vkr_framebuffer_destroy_and_remove(dispatch->data, args);
 }
 
 void

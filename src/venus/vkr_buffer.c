@@ -34,20 +34,14 @@ vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
    }
 #endif
 
-   CREATE_OBJECT(buf, buffer, BUFFER, vkCreateBuffer, pBuffer);
-
-   vkr_device_add_object(ctx, &buf->base);
+   vkr_buffer_create_and_add(ctx, args);
 }
 
 static void
 vkr_dispatch_vkDestroyBuffer(struct vn_dispatch_context *dispatch,
                              struct vn_command_vkDestroyBuffer *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(buf, buffer, BUFFER, vkDestroyBuffer, buffer);
-
-   vkr_device_remove_object(ctx, &buf->base);
+   vkr_buffer_destroy_and_remove(dispatch->data, args);
 }
 
 static void
@@ -110,22 +104,14 @@ static void
 vkr_dispatch_vkCreateBufferView(struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkCreateBufferView *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   CREATE_OBJECT(view, buffer_view, BUFFER_VIEW, vkCreateBufferView, pView);
-
-   vkr_device_add_object(ctx, &view->base);
+   vkr_buffer_view_create_and_add(dispatch->data, args);
 }
 
 static void
 vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkDestroyBufferView *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   DESTROY_OBJECT(view, buffer_view, BUFFER_VIEW, vkDestroyBufferView, bufferView);
-
-   vkr_device_remove_object(ctx, &view->base);
+   vkr_buffer_view_destroy_and_remove(dispatch->data, args);
 }
 
 void
