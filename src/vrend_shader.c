@@ -6870,7 +6870,7 @@ static int emit_ios(const struct dump_ctx *ctx,
       emit_ios_cs(ctx, glsl_strbufs);
       break;
    default:
-      fprintf(stderr, "Unknown shader processor %d\n", ctx->prog_type);
+      vrend_printf("Unknown shader processor %d\n", ctx->prog_type);
       set_hdr_error(glsl_strbufs);
       return glsl_ver_required;
    }
