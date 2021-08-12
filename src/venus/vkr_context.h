@@ -94,6 +94,16 @@ vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
    /* objects should be reinitialized if to be reused */
 }
 
+static inline const char *
+vkr_context_get_name(const struct vkr_context *ctx)
+{
+   /* ctx->instance_name is the application name while ctx->debug_name is
+    * usually the guest process name or the hypervisor name.  This never
+    * returns NULL because ctx->debug_name is never NULL.
+    */
+   return ctx->instance_name ? ctx->instance_name : ctx->debug_name;
+}
+
 void
 vkr_context_add_instance(struct vkr_context *ctx,
                          struct vkr_instance *instance,

@@ -544,7 +544,7 @@ vkr_context_destroy(struct virgl_context *base)
 
    if (ctx->instance) {
       vkr_log("destroying context %d (%s) with a valid instance", ctx->base.ctx_id,
-              ctx->debug_name);
+              vkr_context_get_name(ctx));
 
       vkr_instance_destroy(ctx, ctx->instance);
    }
