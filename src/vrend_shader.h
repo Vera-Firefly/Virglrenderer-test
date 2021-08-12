@@ -81,8 +81,6 @@ struct vrend_fs_shader_info {
 };
 
 struct vrend_shader_info_out {
-   uint64_t num_clip : 8;
-   uint64_t num_cull : 8;
    uint64_t num_indirect_generic : 8;
    uint64_t num_indirect_patch : 8;
    uint64_t num_generic_and_patch : 8;
@@ -134,6 +132,8 @@ struct vrend_shader_info {
 struct vrend_variable_shader_info {
    struct vrend_fs_shader_info fs_info;
    int num_ucp;
+   int num_clip;
+   int num_cull;
 };
 
 struct vrend_shader_key {
@@ -170,6 +170,8 @@ struct vrend_shader_key {
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
+   uint8_t num_cull : 4;
+   uint8_t num_clip : 4;
    uint8_t pstipple_tex : 1;
    uint8_t add_alpha_test : 1;
    uint8_t color_two_side : 1;

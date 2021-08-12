@@ -2024,6 +2024,9 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
 {
    int i;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
+   int num_clip = has_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
+   int num_cull = has_prop ? ctx->num_cull_dist_prop : ctx->key->num_cull;
+
    int ndists;
    const char *prefix="";
 
@@ -2037,7 +2040,7 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
    }
    ndists = ctx->num_clip_dist;
    if (has_prop)
-      ndists = ctx->num_clip_dist_prop + ctx->num_cull_dist_prop;
+      ndists = num_clip + num_cull;
    for (i = 0; i < ndists; i++) {
       int clipidx = i < 4 ? 0 : 1;
       char swiz = i & 3;
@@ -2050,13 +2053,19 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
       case 3: wm = 'w'; break;
       }
       bool is_cull = false;
-      if (has_prop) {
-         if (i >= ctx->num_clip_dist_prop && i < ctx->num_clip_dist_prop + ctx->num_cull_dist_prop)
+      const char *clip_cull = "Clip";
+
+      if (i >= num_clip) {
+         if (i < ndists) {
             is_cull = true;
+            clip_cull = "Cull";
+         } else {
+            clip_cull = "ERROR";
+         }
       }
-      const char *clip_cull = is_cull ? "Cull" : "Clip";
+
       emit_buff(glsl_strbufs, "%sgl_%sDistance[%d] = clip_dist_temp[%d].%c;\n", prefix, clip_cull,
-               is_cull ? i - ctx->num_clip_dist_prop : i, clipidx, wm);
+               is_cull ? i - num_clip : i, clipidx, wm);
    }
 }
 
@@ -2999,10 +3008,14 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
 
    char clip_indirect[32] = "";
 
-   bool has_prev_vals = (ctx->key->input.num_cull + ctx->key->input.num_clip) > 0;
-   int num_culls = has_prev_vals ? ctx->key->input.num_cull : 0;
-   int num_clips = has_prev_vals ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
+   bool has_prop = (ctx->num_cull_dist_prop + ctx->num_clip_dist_prop) > 0;
+   int num_culls = has_prop ? ctx->num_cull_dist_prop : ctx->key->num_cull;
+   int num_clips = has_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
+
    int base_idx = ctx->inputs[input_idx].sid * 4;
+
+   // This doesn't work for indirect adressing
+   int base_offset = (src->Register.Index - offset) * 4;
 
    /* With arrays enabled , but only when gl_ClipDistance or gl_CullDistance are emitted (>4)
     * then we need to add indirect addressing */
@@ -3024,18 +3037,12 @@ create_swizzled_clipdist(const struct dump_ctx *ctx,
          idx += src->Register.SwizzleW;
 
       if (num_culls) {
-         if (idx >= num_clips) {
+         if (idx + base_offset >= num_clips) {
             idx -= num_clips;
             cc_name = "gl_CullDistance";
          }
-         if (ctx->key->input.num_cull)
-            if (idx >= ctx->key->input.num_cull)
-               idx = 0;
-      } else {
-         if (ctx->key->input.num_clip)
-            if (idx >= ctx->key->input.num_clip)
-               idx = 0;
       }
+
       if (gl_in)
          snprintf(clipdistvec[cc], 80, "%sgl_in%s.%s[%s %d]", prefix, arrayname, cc_name, clip_indirect,  idx);
       else
@@ -4710,7 +4717,7 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
    if (!ctx->fs_uses_clipdist_input)
       return;
 
-   int prev_num = ctx->key->input.num_clip + ctx->key->input.num_cull;
+   int prev_num = ctx->key->num_clip + ctx->key->num_cull;
    int ndists;
    const char *prefix="";
 
@@ -4734,12 +4741,12 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
       }
       bool is_cull = false;
       if (prev_num > 0) {
-         if (i >= ctx->key->input.num_clip && i < prev_num)
+         if (i >= ctx->key->num_clip && i < prev_num)
             is_cull = true;
       }
       const char *clip_cull = is_cull ? "Cull" : "Clip";
       emit_buff(glsl_strbufs, "clip_dist_temp[%d].%c = %sgl_%sDistance[%d];\n", clipidx, wm, prefix, clip_cull,
-                is_cull ? i - ctx->key->input.num_clip : i);
+                is_cull ? i - ctx->key->num_clip : i);
    }
 }
 
@@ -5662,7 +5669,7 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       if (ctx->ubo_used_mask)
          emit_ext(glsl_strbufs, "ARB_uniform_buffer_object", "require");
 
-      if (ctx->num_cull_dist_prop || ctx->key->input.num_cull)
+      if (ctx->num_cull_dist_prop || ctx->key->num_cull)
          emit_ext(glsl_strbufs, "ARB_cull_distance", "require");
       if (ctx->ssbo_used_mask)
          emit_ext(glsl_strbufs, "ARB_shader_storage_buffer_object", "require");
@@ -6443,7 +6450,8 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
       if (ctx->key->clip_plane_enable) {
          emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
       }
-      if ((ctx->key->gs_present || ctx->key->tes_present) && ctx->key->output.use_pervertex) {
+
+      if (ctx->key->gs_present || ctx->key->tes_present) {
          emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n %s%s};\n", clip_buf, cull_buf);
       } else {
          emit_hdrf(glsl_strbufs, "%s%s", clip_buf, cull_buf);
@@ -6586,14 +6594,14 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
    }
 
    if (ctx->num_in_clip_dist) {
-      if (ctx->key->input.num_clip) {
-         emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->key->input.num_clip);
-      } else if (ctx->num_in_clip_dist > 4 && !ctx->key->input.num_cull) {
+      if (ctx->key->num_clip) {
+         emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->key->num_clip);
+      } else if (ctx->num_in_clip_dist > 4 && !ctx->key->num_cull) {
          emit_hdrf(glsl_strbufs, "in float gl_ClipDistance[%d];\n", ctx->num_in_clip_dist);
       }
 
-      if (ctx->key->input.num_cull) {
-         emit_hdrf(glsl_strbufs, "in float gl_CullDistance[%d];\n", ctx->key->input.num_cull);
+      if (ctx->key->num_cull) {
+         emit_hdrf(glsl_strbufs, "in float gl_CullDistance[%d];\n", ctx->key->num_cull);
       }
       if(ctx->fs_uses_clipdist_input)
          emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
@@ -6604,6 +6612,50 @@ static bool
 can_emit_generic_geom(const struct vrend_shader_io *io)
 {
    return io->stream == 0;
+}
+
+static void emit_ios_per_vertex_in(const struct dump_ctx *ctx,
+                                   struct vrend_glsl_strbufs *glsl_strbufs,
+                                   bool *has_pervertex)
+{
+   if (ctx->num_in_clip_dist || ctx->key->clip_plane_enable) {
+      int clip_dist, cull_dist;
+      char clip_var[64] = "";
+      char cull_var[64] = "";
+
+      clip_dist = ctx->num_clip_dist_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
+      cull_dist = ctx->num_cull_dist_prop ? ctx->num_cull_dist_prop : ctx->key->num_cull;
+
+      if (clip_dist)
+         snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
+      if (cull_dist)
+         snprintf(cull_var, 64, "float gl_CullDistance[%d];\n", cull_dist);
+
+      (*has_pervertex) = true;
+      emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s\n} gl_in[];\n", clip_var, cull_var);
+   }
+}
+
+
+static void emit_ios_per_vertex_out(const struct dump_ctx *ctx,
+                                    struct vrend_glsl_strbufs *glsl_strbufs)
+{
+   if (ctx->num_clip_dist || ctx->num_cull_dist_prop) {
+      if (ctx->key->output.use_pervertex) {
+
+         int clip_dist = ctx->num_clip_dist_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
+         int cull_dist = ctx->num_cull_dist_prop ? ctx->num_cull_dist_prop : ctx->key->num_cull;
+
+         char clip_var[64] = "", cull_var[64] = "";
+         if (cull_dist)
+            snprintf(cull_var, 64, "float gl_CullDistance[%d];\n", cull_dist);
+
+         if (clip_dist)
+            snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
+         emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n %s%s\n} gl_out[];\n", clip_var, cull_var);
+      }
+      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
+   }
 }
 
 static void emit_ios_geom(const struct dump_ctx *ctx,
@@ -6660,22 +6712,8 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
 
    emit_winsys_correction(glsl_strbufs);
 
-   if (ctx->num_in_clip_dist || ctx->key->clip_plane_enable) {
-      int clip_dist, cull_dist;
-      char clip_var[64] = "";
-      char cull_var[64] = "";
+   emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
 
-      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->input.num_cull;
-
-      if (clip_dist)
-         snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
-      if (cull_dist)
-         snprintf(cull_var, 64, "float gl_CullDistance[%d];\n", cull_dist);
-
-      (*has_pervertex) = true;
-      emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s\n} gl_in[];\n", clip_var, cull_var);
-   }
    if (ctx->num_clip_dist) {
       bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
       int num_clip_dists = ctx->num_clip_dist ? ctx->num_clip_dist : 8;
@@ -6738,25 +6776,8 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
       }
    }
 
-   if (ctx->num_in_clip_dist) {
-      int clip_dist, cull_dist;
-      char clip_var[64] = "", cull_var[64] = "";
-
-      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->input.num_cull;
-
-      if (clip_dist)
-         snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
-      if (cull_dist)
-         snprintf(cull_var, 64, "float gl_CullDistance[%d];\n", cull_dist);
-
-      *has_pervertex = true;
-      emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s} gl_in[];\n", clip_var, cull_var);
-   }
-   if (ctx->num_clip_dist && ctx->key->output.use_pervertex) {
-      emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n float gl_ClipDistance[%d];\n} gl_out[];\n", ctx->num_clip_dist);
-      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
-   }
+   emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
+   emit_ios_per_vertex_out(ctx, glsl_strbufs);
 }
 
 static void emit_ios_tes(const struct dump_ctx *ctx,
@@ -6797,25 +6818,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
 
    emit_winsys_correction(glsl_strbufs);
 
-   if (ctx->num_in_clip_dist) {
-      int clip_dist, cull_dist;
-      char clip_var[64] = "", cull_var[64] = "";
-
-      clip_dist = ctx->key->input.num_clip ? ctx->key->input.num_clip : ctx->num_in_clip_dist;
-      cull_dist = ctx->key->input.num_cull;
-
-      if (clip_dist)
-         snprintf(clip_var, 64, "float gl_ClipDistance[%d];\n", clip_dist);
-      if (cull_dist)
-         snprintf(cull_var, 64, "float gl_CullDistance[%d];\n", cull_dist);
-
-      *has_pervertex = true;
-      emit_hdrf(glsl_strbufs, "in gl_PerVertex {\n vec4 gl_Position; \n %s%s} gl_in[];\n", clip_var, cull_var);
-   }
-   if (ctx->num_clip_dist && ctx->key->output.use_pervertex) {
-      emit_hdrf(glsl_strbufs, "out gl_PerVertex {\n vec4 gl_Position;\n float gl_ClipDistance[%d];\n} gl_out[];\n", ctx->num_clip_dist);
-      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
-   }
+   emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
+   emit_ios_per_vertex_out(ctx, glsl_strbufs);
 }
 
 
@@ -6971,14 +6975,15 @@ static void fill_var_sinfo(const struct dump_ctx *ctx, struct vrend_variable_sha
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
    sinfo->fs_info.num_interps = ctx->num_interps;
    sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
+   bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
+
+   sinfo->num_clip = has_prop ? ctx->num_clip_dist_prop : ctx->key->num_clip;
+   sinfo->num_cull = has_prop ? ctx->num_cull_dist_prop : ctx->key->num_cull;
 }
 
 static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)
 {
    sinfo->in.use_pervertex = ctx->has_pervertex;
-   bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
-   sinfo->out.num_clip = has_prop ? ctx->num_clip_dist_prop : (ctx->num_clip_dist ? ctx->num_clip_dist : 8);
-   sinfo->out.num_cull = has_prop ? ctx->num_cull_dist_prop : 0;
    sinfo->samplers_used_mask = ctx->samplers_used;
    sinfo->images_used_mask = ctx->images_used_mask;
    sinfo->num_consts = ctx->num_consts;

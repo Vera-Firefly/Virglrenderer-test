@@ -3423,6 +3423,12 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          && key->fs.prim_is_points
          ? sub_ctx->rs_state.sprite_coord_enable
          : 0x0;
+
+      if (prev_type != -1 && sub_ctx->shaders[prev_type]) {
+         key->num_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_clip;
+         key->num_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_cull;
+      }
+
    } else {
       if (sub_ctx->shaders[PIPE_SHADER_FRAGMENT]) {
          struct vrend_shader *fs =
@@ -3458,6 +3464,14 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 
    if (next_type != -1 && sub_ctx->shaders[next_type]) {
       key->output = sub_ctx->shaders[next_type]->sinfo.in;
+
+      /* FS gets the clip/cull info in the key from this shader, so
+       * we can avoid re-translating this shader by not updating the
+       * info in the key */
+      if (next_type != PIPE_SHADER_FRAGMENT) {
+         key->num_clip = sub_ctx->shaders[next_type]->current->var_sinfo.num_clip;
+         key->num_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_cull;
+      }
 
       if (type == PIPE_SHADER_VERTEX && next_type == PIPE_SHADER_FRAGMENT) {
          if (sub_ctx->shaders[type]) {
