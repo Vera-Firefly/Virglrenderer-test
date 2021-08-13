@@ -197,6 +197,9 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
          continue;
       }
 
+      if (!vkr_context_validate_object_id(ctx, id))
+         break;
+
       physical_dev =
          vkr_object_alloc(sizeof(*physical_dev), VK_OBJECT_TYPE_PHYSICAL_DEVICE, id);
       if (!physical_dev) {

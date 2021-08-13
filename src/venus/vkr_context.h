@@ -65,6 +65,17 @@ struct vkr_context {
    char *instance_name;
 };
 
+static inline bool
+vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
+{
+   if (unlikely(!id || util_hash_table_get_u64(ctx->object_table, id))) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return false;
+   }
+
+   return true;
+}
+
 static inline void *
 vkr_context_alloc_object(UNUSED struct vkr_context *ctx,
                          size_t size,
@@ -72,6 +83,9 @@ vkr_context_alloc_object(UNUSED struct vkr_context *ctx,
                          const void *id_handle)
 {
    const vkr_object_id id = vkr_cs_handle_load_id((const void **)id_handle, type);
+   if (!vkr_context_validate_object_id(ctx, id))
+      return NULL;
+
    return vkr_object_alloc(size, type, id);
 }
 
@@ -79,7 +93,6 @@ static inline void
 vkr_context_add_object(struct vkr_context *ctx, struct vkr_object *obj)
 {
    assert(vkr_is_recognized_object_type(obj->type));
-   /* TODO we might hit these at the moment */
    assert(obj->id);
    assert(!util_hash_table_get_u64(ctx->object_table, obj->id));
 

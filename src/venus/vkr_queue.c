@@ -290,6 +290,8 @@ vkr_queue_assign_object_id(struct vkr_context *ctx,
          vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
+   if (!vkr_context_validate_object_id(ctx, id))
+      return;
 
    queue->base.id = id;
 
