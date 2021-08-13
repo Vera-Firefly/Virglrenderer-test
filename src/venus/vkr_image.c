@@ -5,13 +5,7 @@
 
 #include "vkr_image.h"
 
-#include "venus-protocol/vn_protocol_renderer_image.h"
-#include "venus-protocol/vn_protocol_renderer_image_view.h"
-#include "venus-protocol/vn_protocol_renderer_sampler.h"
-#include "venus-protocol/vn_protocol_renderer_sampler_ycbcr_conversion.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_image_gen.h"
 #include "vkr_physical_device.h"
 
 static void

@@ -5,11 +5,7 @@
 
 #include "vkr_buffer.h"
 
-#include "venus-protocol/vn_protocol_renderer_buffer.h"
-#include "venus-protocol/vn_protocol_renderer_buffer_view.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_buffer_gen.h"
 #include "vkr_physical_device.h"
 
 static void

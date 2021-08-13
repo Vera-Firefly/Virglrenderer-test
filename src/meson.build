@@ -115,6 +115,23 @@ venus_sources = [
    'venus/vkr_transport.h',
 ]
 
+venus_codegen = custom_target(
+   'venus_codegen',
+   input : ['venus/vkr_device_object.py', 'venus/vkr_device_object.json'],
+   output : [
+      'vkr_buffer_gen.h',
+      'vkr_command_buffer_gen.h',
+      'vkr_descriptor_set_gen.h',
+      'vkr_device_memory_gen.h',
+      'vkr_image_gen.h',
+      'vkr_pipeline_gen.h',
+      'vkr_query_pool_gen.h',
+      'vkr_queue_gen.h',
+      'vkr_render_pass_gen.h',
+   ],
+   command : [prog_python, '@INPUT0@', '-o', '@OUTDIR@', '@INPUT1@'],
+)
+
 virgl_depends = [
    gallium_dep,
    epoxy_dep,
@@ -145,6 +162,7 @@ endif
 
 if with_venus
    virgl_sources += venus_sources
+   virgl_sources += venus_codegen
    virgl_depends += [venus_dep]
 endif
 

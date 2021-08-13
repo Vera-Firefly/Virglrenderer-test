@@ -5,11 +5,7 @@
 
 #include "vkr_command_buffer.h"
 
-#include "venus-protocol/vn_protocol_renderer_command_buffer.h"
-#include "venus-protocol/vn_protocol_renderer_command_pool.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_command_buffer_gen.h"
 
 static void
 vkr_dispatch_vkCreateCommandPool(struct vn_dispatch_context *dispatch,

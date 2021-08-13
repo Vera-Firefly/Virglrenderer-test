@@ -5,13 +5,7 @@
 
 #include "vkr_descriptor_set.h"
 
-#include "venus-protocol/vn_protocol_renderer_descriptor_pool.h"
-#include "venus-protocol/vn_protocol_renderer_descriptor_set.h"
-#include "venus-protocol/vn_protocol_renderer_descriptor_set_layout.h"
-#include "venus-protocol/vn_protocol_renderer_descriptor_update_template.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_descriptor_set_gen.h"
 
 static void
 vkr_dispatch_vkGetDescriptorSetLayoutSupport(

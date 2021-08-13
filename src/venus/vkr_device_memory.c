@@ -5,11 +5,9 @@
 
 #include "vkr_device_memory.h"
 
-#include "venus-protocol/vn_protocol_renderer_device_memory.h"
 #include "venus-protocol/vn_protocol_renderer_transport.h"
 
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_device_memory_gen.h"
 #include "vkr_physical_device.h"
 
 static bool

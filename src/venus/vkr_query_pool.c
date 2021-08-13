@@ -5,10 +5,7 @@
 
 #include "vkr_query_pool.h"
 
-#include "venus-protocol/vn_protocol_renderer_query_pool.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_query_pool_gen.h"
 
 static void
 vkr_dispatch_vkCreateQueryPool(struct vn_dispatch_context *dispatch,

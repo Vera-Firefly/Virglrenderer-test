@@ -5,13 +5,7 @@
 
 #include "vkr_pipeline.h"
 
-#include "venus-protocol/vn_protocol_renderer_pipeline.h"
-#include "venus-protocol/vn_protocol_renderer_pipeline_cache.h"
-#include "venus-protocol/vn_protocol_renderer_pipeline_layout.h"
-#include "venus-protocol/vn_protocol_renderer_shader_module.h"
-
-#include "vkr_context.h"
-#include "vkr_device.h"
+#include "vkr_pipeline_gen.h"
 
 static void
 vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch,

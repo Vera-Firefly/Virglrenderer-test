@@ -5,15 +5,10 @@
 
 #include "vkr_queue.h"
 
-#include "venus-protocol/vn_protocol_renderer_device.h"
-#include "venus-protocol/vn_protocol_renderer_event.h"
-#include "venus-protocol/vn_protocol_renderer_fence.h"
 #include "venus-protocol/vn_protocol_renderer_queue.h"
-#include "venus-protocol/vn_protocol_renderer_semaphore.h"
 
-#include "vkr_context.h"
-#include "vkr_device.h"
 #include "vkr_physical_device.h"
+#include "vkr_queue_gen.h"
 
 struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,
