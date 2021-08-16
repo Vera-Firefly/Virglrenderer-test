@@ -94,7 +94,7 @@
       }                                                                                  \
                                                                                          \
       struct object_array arr;                                                           \
-      if (!object_array_init(&arr, args->pAllocateInfo->arg_count,                       \
+      if (!object_array_init(ctx, &arr, args->pAllocateInfo->arg_count,                  \
                              VK_OBJECT_TYPE_##vk_type, sizeof(struct vkr_##vkr_type),    \
                              sizeof(Vk##vk_obj), args->p##vk_obj##s)) {                  \
          args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
@@ -149,7 +149,7 @@
       struct vkr_device *dev = (struct vkr_device *)args->device;                        \
                                                                                          \
       struct object_array arr;                                                           \
-      if (!object_array_init(&arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,       \
+      if (!object_array_init(ctx, &arr, args->createInfoCount, VK_OBJECT_TYPE_PIPELINE,  \
                              sizeof(struct vkr_pipeline), sizeof(VkPipeline),            \
                              args->pPipelines)) {                                        \
          args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;                                        \
@@ -272,7 +272,8 @@ void
 vkr_log(const char *fmt, ...);
 
 bool
-object_array_init(struct object_array *arr,
+object_array_init(struct vkr_context *ctx,
+                  struct object_array *arr,
                   uint32_t count,
                   VkObjectType obj_type,
                   size_t obj_size,

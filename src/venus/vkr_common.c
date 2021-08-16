@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "vkr_context.h"
 #include "vkr_cs.h"
 
 void
@@ -59,12 +60,13 @@ object_array_fini(struct object_array *arr)
 }
 
 bool
-object_array_init(struct object_array *arr,
+object_array_init(struct vkr_context *ctx,
+                  struct object_array *arr,
                   uint32_t count,
                   VkObjectType obj_type,
                   size_t obj_size,
                   size_t handle_size,
-                  const void *handles)
+                  const void *obj_id_handles)
 {
    arr->count = count;
 
@@ -80,16 +82,14 @@ object_array_init(struct object_array *arr,
 
    arr->objects_stolen = false;
    for (uint32_t i = 0; i < count; i++) {
-      struct vkr_object *obj = calloc(1, obj_size);
+      const void *obj_id_handle = (const char *)obj_id_handles + handle_size * i;
+      struct vkr_object *obj =
+         vkr_context_alloc_object(ctx, obj_size, obj_type, obj_id_handle);
       if (!obj) {
          arr->count = i;
          object_array_fini(arr);
          return false;
       }
-
-      obj->type = obj_type;
-      obj->id = vkr_cs_handle_load_id((const void **)((char *)handles + handle_size * i),
-                                      obj->type);
 
       arr->objects[i] = obj;
    }
