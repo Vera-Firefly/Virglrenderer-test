@@ -37,7 +37,7 @@ vn_decode_VkShaderModuleCreateInfo_self_temp(struct vn_cs_decoder *dec, VkShader
         if (!val->pCode) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pCode, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->codeSize / 4);
         val->pCode = NULL;
     }
 }

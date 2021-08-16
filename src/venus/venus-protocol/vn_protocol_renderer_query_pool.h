@@ -163,7 +163,7 @@ static inline void vn_decode_vkGetQueryPoolResults_args_temp(struct vn_cs_decode
         args->pData = vn_cs_decoder_alloc_temp(dec, array_size);
         if (!args->pData) return;
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->dataSize);
         args->pData = NULL;
     }
     vn_decode_VkDeviceSize(dec, &args->stride);

@@ -709,7 +709,7 @@ static inline void vn_decode_vkFlushMappedMemoryRanges_args_temp(struct vn_cs_de
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMappedMemoryRange_temp(dec, &((VkMappedMemoryRange *)args->pMemoryRanges)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->memoryRangeCount);
         args->pMemoryRanges = NULL;
     }
 }
@@ -745,7 +745,7 @@ static inline void vn_decode_vkInvalidateMappedMemoryRanges_args_temp(struct vn_
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMappedMemoryRange_temp(dec, &((VkMappedMemoryRange *)args->pMemoryRanges)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->memoryRangeCount);
         args->pMemoryRanges = NULL;
     }
 }

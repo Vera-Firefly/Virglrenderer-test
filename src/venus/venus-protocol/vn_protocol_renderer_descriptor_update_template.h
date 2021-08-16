@@ -62,7 +62,7 @@ vn_decode_VkDescriptorUpdateTemplateCreateInfo_self_temp(struct vn_cs_decoder *d
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorUpdateTemplateEntry_temp(dec, &((VkDescriptorUpdateTemplateEntry *)val->pDescriptorUpdateEntries)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->descriptorUpdateEntryCount);
         val->pDescriptorUpdateEntries = NULL;
     }
     vn_decode_VkDescriptorUpdateTemplateType(dec, &val->templateType);

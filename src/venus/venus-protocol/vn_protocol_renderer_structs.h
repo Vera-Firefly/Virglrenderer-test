@@ -263,7 +263,7 @@ vn_decode_VkImageFormatListCreateInfo_self_temp(struct vn_cs_decoder *dec, VkIma
         if (!val->pViewFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pViewFormats, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->viewFormatCount);
         val->pViewFormats = NULL;
     }
 }

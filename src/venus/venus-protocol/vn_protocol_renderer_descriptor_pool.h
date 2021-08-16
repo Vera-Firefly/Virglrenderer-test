@@ -55,7 +55,7 @@ vn_decode_VkDescriptorPoolCreateInfo_self_temp(struct vn_cs_decoder *dec, VkDesc
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorPoolSize_temp(dec, &((VkDescriptorPoolSize *)val->pPoolSizes)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->poolSizeCount);
         val->pPoolSizes = NULL;
     }
 }

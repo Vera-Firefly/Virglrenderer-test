@@ -56,7 +56,7 @@ vn_decode_VkPipelineLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, VkPipe
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSetLayout_lookup(dec, &((VkDescriptorSetLayout *)val->pSetLayouts)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->setLayoutCount);
         val->pSetLayouts = NULL;
     }
     vn_decode_uint32_t(dec, &val->pushConstantRangeCount);
@@ -67,7 +67,7 @@ vn_decode_VkPipelineLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, VkPipe
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPushConstantRange_temp(dec, &((VkPushConstantRange *)val->pPushConstantRanges)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->pushConstantRangeCount);
         val->pPushConstantRanges = NULL;
     }
 }

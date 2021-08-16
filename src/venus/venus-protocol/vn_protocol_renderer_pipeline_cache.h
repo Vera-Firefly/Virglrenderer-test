@@ -37,7 +37,7 @@ vn_decode_VkPipelineCacheCreateInfo_self_temp(struct vn_cs_decoder *dec, VkPipel
         if (!val->pInitialData) return;
         vn_decode_blob_array(dec, (void *)val->pInitialData, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->initialDataSize);
         val->pInitialData = NULL;
     }
 }
@@ -174,7 +174,7 @@ static inline void vn_decode_vkGetPipelineCacheData_args_temp(struct vn_cs_decod
         args->pData = vn_cs_decoder_alloc_temp(dec, array_size);
         if (!args->pData) return;
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pData = NULL;
     }
 }
@@ -216,7 +216,7 @@ static inline void vn_decode_vkMergePipelineCaches_args_temp(struct vn_cs_decode
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipelineCache_lookup(dec, &((VkPipelineCache *)args->pSrcCaches)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->srcCacheCount);
         args->pSrcCaches = NULL;
     }
 }

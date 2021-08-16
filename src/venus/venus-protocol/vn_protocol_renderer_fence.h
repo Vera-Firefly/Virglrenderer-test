@@ -236,7 +236,7 @@ static inline void vn_decode_vkResetFences_args_temp(struct vn_cs_decoder *dec, 
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFence_lookup(dec, &((VkFence *)args->pFences)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->fenceCount);
         args->pFences = NULL;
     }
 }
@@ -293,7 +293,7 @@ static inline void vn_decode_vkWaitForFences_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFence_lookup(dec, &((VkFence *)args->pFences)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->fenceCount);
         args->pFences = NULL;
     }
     vn_decode_VkBool32(dec, &args->waitAll);

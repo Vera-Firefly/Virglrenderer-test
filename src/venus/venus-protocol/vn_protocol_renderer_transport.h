@@ -330,7 +330,7 @@ static inline void vn_decode_vkExecuteCommandStreamsMESA_args_temp(struct vn_cs_
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandStreamDescriptionMESA_temp(dec, &((VkCommandStreamDescriptionMESA *)args->pStreams)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->streamCount);
         args->pStreams = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -339,7 +339,7 @@ static inline void vn_decode_vkExecuteCommandStreamsMESA_args_temp(struct vn_cs_
         if (!args->pReplyPositions) return;
         vn_decode_size_t_array(dec, (size_t *)args->pReplyPositions, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pReplyPositions = NULL;
     }
     vn_decode_uint32_t(dec, &args->dependencyCount);
@@ -350,7 +350,7 @@ static inline void vn_decode_vkExecuteCommandStreamsMESA_args_temp(struct vn_cs_
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandStreamDependencyMESA_temp(dec, &((VkCommandStreamDependencyMESA *)args->pDependencies)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->dependencyCount);
         args->pDependencies = NULL;
     }
     vn_decode_VkFlags(dec, &args->flags);
@@ -522,7 +522,7 @@ static inline void vn_decode_vkGetVenusExperimentalFeatureData100000MESA_args_te
         args->pData = vn_cs_decoder_alloc_temp(dec, array_size);
         if (!args->pData) return;
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pData = NULL;
     }
 }

@@ -30,7 +30,7 @@ vn_decode_VkDescriptorSetLayoutBinding_temp(struct vn_cs_decoder *dec, VkDescrip
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSampler_lookup(dec, &((VkSampler *)val->pImmutableSamplers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pImmutableSamplers = NULL;
     }
 }
@@ -71,7 +71,7 @@ vn_decode_VkDescriptorSetLayoutBindingFlagsCreateInfo_self_temp(struct vn_cs_dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFlags(dec, &((VkDescriptorBindingFlags *)val->pBindingFlags)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bindingCount);
         val->pBindingFlags = NULL;
     }
 }
@@ -160,7 +160,7 @@ vn_decode_VkDescriptorSetLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, V
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSetLayoutBinding_temp(dec, &((VkDescriptorSetLayoutBinding *)val->pBindings)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bindingCount);
         val->pBindings = NULL;
     }
 }

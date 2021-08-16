@@ -843,7 +843,7 @@ vn_decode_VkDeviceGroupRenderPassBeginInfo_self_temp(struct vn_cs_decoder *dec, 
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)val->pDeviceRenderAreas)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->deviceRenderAreaCount);
         val->pDeviceRenderAreas = NULL;
     }
 }
@@ -915,7 +915,7 @@ vn_decode_VkRenderPassAttachmentBeginInfo_self_temp(struct vn_cs_decoder *dec, V
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageView_lookup(dec, &((VkImageView *)val->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->attachmentCount);
         val->pAttachments = NULL;
     }
 }
@@ -1017,7 +1017,7 @@ vn_decode_VkRenderPassBeginInfo_self_temp(struct vn_cs_decoder *dec, VkRenderPas
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearValue_temp(dec, &((VkClearValue *)val->pClearValues)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pClearValues = NULL;
     }
 }
@@ -1201,7 +1201,7 @@ static inline void vn_decode_vkAllocateCommandBuffers_args_temp(struct vn_cs_dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_temp(dec, &args->pCommandBuffers[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
         args->pCommandBuffers = NULL;
     }
 }
@@ -1242,7 +1242,7 @@ static inline void vn_decode_vkFreeCommandBuffers_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)args->pCommandBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pCommandBuffers = NULL;
     }
 }
@@ -1371,7 +1371,7 @@ static inline void vn_decode_vkCmdSetViewport_args_temp(struct vn_cs_decoder *de
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkViewport_temp(dec, &((VkViewport *)args->pViewports)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->viewportCount);
         args->pViewports = NULL;
     }
 }
@@ -1409,7 +1409,7 @@ static inline void vn_decode_vkCmdSetScissor_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)args->pScissors)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->scissorCount);
         args->pScissors = NULL;
     }
 }
@@ -1610,7 +1610,7 @@ static inline void vn_decode_vkCmdBindDescriptorSets_args_temp(struct vn_cs_deco
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSet_lookup(dec, &((VkDescriptorSet *)args->pDescriptorSets)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->descriptorSetCount);
         args->pDescriptorSets = NULL;
     }
     vn_decode_uint32_t(dec, &args->dynamicOffsetCount);
@@ -1620,7 +1620,7 @@ static inline void vn_decode_vkCmdBindDescriptorSets_args_temp(struct vn_cs_deco
         if (!args->pDynamicOffsets) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)args->pDynamicOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->dynamicOffsetCount);
         args->pDynamicOffsets = NULL;
     }
 }
@@ -1692,7 +1692,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers_args_temp(struct vn_cs_decod
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindingCount);
         args->pBuffers = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -1701,7 +1701,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers_args_temp(struct vn_cs_decod
         if (!args->pOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindingCount);
         args->pOffsets = NULL;
     }
 }
@@ -1910,7 +1910,7 @@ static inline void vn_decode_vkCmdCopyBuffer_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferCopy_temp(dec, &((VkBufferCopy *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
 }
@@ -1953,7 +1953,7 @@ static inline void vn_decode_vkCmdCopyImage_args_temp(struct vn_cs_decoder *dec,
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageCopy_temp(dec, &((VkImageCopy *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
 }
@@ -2000,7 +2000,7 @@ static inline void vn_decode_vkCmdBlitImage_args_temp(struct vn_cs_decoder *dec,
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageBlit_temp(dec, &((VkImageBlit *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
     vn_decode_VkFilter(dec, &args->filter);
@@ -2049,7 +2049,7 @@ static inline void vn_decode_vkCmdCopyBufferToImage_args_temp(struct vn_cs_decod
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy_temp(dec, &((VkBufferImageCopy *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
 }
@@ -2093,7 +2093,7 @@ static inline void vn_decode_vkCmdCopyImageToBuffer_args_temp(struct vn_cs_decod
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy_temp(dec, &((VkBufferImageCopy *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
 }
@@ -2135,7 +2135,7 @@ static inline void vn_decode_vkCmdUpdateBuffer_args_temp(struct vn_cs_decoder *d
         if (!args->pData) return;
         vn_decode_blob_array(dec, (void *)args->pData, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->dataSize);
         args->pData = NULL;
     }
 }
@@ -2209,7 +2209,7 @@ static inline void vn_decode_vkCmdClearColorImage_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageSubresourceRange_temp(dec, &((VkImageSubresourceRange *)args->pRanges)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->rangeCount);
         args->pRanges = NULL;
     }
 }
@@ -2260,7 +2260,7 @@ static inline void vn_decode_vkCmdClearDepthStencilImage_args_temp(struct vn_cs_
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageSubresourceRange_temp(dec, &((VkImageSubresourceRange *)args->pRanges)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->rangeCount);
         args->pRanges = NULL;
     }
 }
@@ -2302,7 +2302,7 @@ static inline void vn_decode_vkCmdClearAttachments_args_temp(struct vn_cs_decode
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearAttachment_temp(dec, &((VkClearAttachment *)args->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->attachmentCount);
         args->pAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &args->rectCount);
@@ -2313,7 +2313,7 @@ static inline void vn_decode_vkCmdClearAttachments_args_temp(struct vn_cs_decode
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearRect_temp(dec, &((VkClearRect *)args->pRects)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->rectCount);
         args->pRects = NULL;
     }
 }
@@ -2359,7 +2359,7 @@ static inline void vn_decode_vkCmdResolveImage_args_temp(struct vn_cs_decoder *d
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageResolve_temp(dec, &((VkImageResolve *)args->pRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->regionCount);
         args->pRegions = NULL;
     }
 }
@@ -2448,7 +2448,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkEvent_lookup(dec, &((VkEvent *)args->pEvents)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->eventCount);
         args->pEvents = NULL;
     }
     vn_decode_VkFlags(dec, &args->srcStageMask);
@@ -2461,7 +2461,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMemoryBarrier_temp(dec, &((VkMemoryBarrier *)args->pMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->memoryBarrierCount);
         args->pMemoryBarriers = NULL;
     }
     vn_decode_uint32_t(dec, &args->bufferMemoryBarrierCount);
@@ -2472,7 +2472,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferMemoryBarrier_temp(dec, &((VkBufferMemoryBarrier *)args->pBufferMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bufferMemoryBarrierCount);
         args->pBufferMemoryBarriers = NULL;
     }
     vn_decode_uint32_t(dec, &args->imageMemoryBarrierCount);
@@ -2483,7 +2483,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageMemoryBarrier_temp(dec, &((VkImageMemoryBarrier *)args->pImageMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->imageMemoryBarrierCount);
         args->pImageMemoryBarriers = NULL;
     }
 }
@@ -2546,7 +2546,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMemoryBarrier_temp(dec, &((VkMemoryBarrier *)args->pMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->memoryBarrierCount);
         args->pMemoryBarriers = NULL;
     }
     vn_decode_uint32_t(dec, &args->bufferMemoryBarrierCount);
@@ -2557,7 +2557,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferMemoryBarrier_temp(dec, &((VkBufferMemoryBarrier *)args->pBufferMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bufferMemoryBarrierCount);
         args->pBufferMemoryBarriers = NULL;
     }
     vn_decode_uint32_t(dec, &args->imageMemoryBarrierCount);
@@ -2568,7 +2568,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageMemoryBarrier_temp(dec, &((VkImageMemoryBarrier *)args->pImageMemoryBarriers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->imageMemoryBarrierCount);
         args->pImageMemoryBarriers = NULL;
     }
 }
@@ -2764,7 +2764,7 @@ static inline void vn_decode_vkCmdPushConstants_args_temp(struct vn_cs_decoder *
         if (!args->pValues) return;
         vn_decode_blob_array(dec, (void *)args->pValues, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->size);
         args->pValues = NULL;
     }
 }
@@ -2870,7 +2870,7 @@ static inline void vn_decode_vkCmdExecuteCommands_args_temp(struct vn_cs_decoder
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)args->pCommandBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->commandBufferCount);
         args->pCommandBuffers = NULL;
     }
 }
@@ -3137,7 +3137,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindingCount);
         args->pBuffers = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -3146,7 +3146,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
         if (!args->pOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindingCount);
         args->pOffsets = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -3155,7 +3155,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
         if (!args->pSizes) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pSizes, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pSizes = NULL;
     }
 }
@@ -3197,7 +3197,7 @@ static inline void vn_decode_vkCmdBeginTransformFeedbackEXT_args_temp(struct vn_
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pCounterBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pCounterBuffers = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -3206,7 +3206,7 @@ static inline void vn_decode_vkCmdBeginTransformFeedbackEXT_args_temp(struct vn_
         if (!args->pCounterBufferOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pCounterBufferOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pCounterBufferOffsets = NULL;
     }
 }
@@ -3246,7 +3246,7 @@ static inline void vn_decode_vkCmdEndTransformFeedbackEXT_args_temp(struct vn_cs
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pCounterBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pCounterBuffers = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -3255,7 +3255,7 @@ static inline void vn_decode_vkCmdEndTransformFeedbackEXT_args_temp(struct vn_cs
         if (!args->pCounterBufferOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pCounterBufferOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pCounterBufferOffsets = NULL;
     }
 }

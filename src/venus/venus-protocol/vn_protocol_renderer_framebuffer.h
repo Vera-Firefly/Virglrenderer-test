@@ -41,7 +41,7 @@ vn_decode_VkFramebufferAttachmentImageInfo_self_temp(struct vn_cs_decoder *dec, 
         if (!val->pViewFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pViewFormats, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->viewFormatCount);
         val->pViewFormats = NULL;
     }
 }
@@ -114,7 +114,7 @@ vn_decode_VkFramebufferAttachmentsCreateInfo_self_temp(struct vn_cs_decoder *dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFramebufferAttachmentImageInfo_temp(dec, &((VkFramebufferAttachmentImageInfo *)val->pAttachmentImageInfos)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->attachmentImageInfoCount);
         val->pAttachmentImageInfos = NULL;
     }
 }
@@ -207,7 +207,7 @@ vn_decode_VkFramebufferCreateInfo_self_temp(struct vn_cs_decoder *dec, VkFramebu
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageView_lookup(dec, &((VkImageView *)val->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &val->width);

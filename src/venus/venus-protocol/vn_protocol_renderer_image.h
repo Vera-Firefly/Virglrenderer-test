@@ -115,7 +115,7 @@ vn_decode_VkImageDrmFormatModifierListCreateInfoEXT_self_temp(struct vn_cs_decod
         if (!val->pDrmFormatModifiers) return;
         vn_decode_uint64_t_array(dec, (uint64_t *)val->pDrmFormatModifiers, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->drmFormatModifierCount);
         val->pDrmFormatModifiers = NULL;
     }
 }
@@ -226,7 +226,7 @@ vn_decode_VkImageDrmFormatModifierExplicitCreateInfoEXT_self_temp(struct vn_cs_d
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubresourceLayout_temp(dec, &((VkSubresourceLayout *)val->pPlaneLayouts)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->drmFormatModifierPlaneCount);
         val->pPlaneLayouts = NULL;
     }
 }
@@ -359,7 +359,7 @@ vn_decode_VkImageCreateInfo_self_temp(struct vn_cs_decoder *dec, VkImageCreateIn
         if (!val->pQueueFamilyIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pQueueFamilyIndices, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pQueueFamilyIndices = NULL;
     }
     vn_decode_VkImageLayout(dec, &val->initialLayout);
@@ -490,7 +490,7 @@ vn_decode_VkBindImageMemoryDeviceGroupInfo_self_temp(struct vn_cs_decoder *dec, 
         if (!val->pDeviceIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pDeviceIndices, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->deviceIndexCount);
         val->pDeviceIndices = NULL;
     }
     vn_decode_uint32_t(dec, &val->splitInstanceBindRegionCount);
@@ -501,7 +501,7 @@ vn_decode_VkBindImageMemoryDeviceGroupInfo_self_temp(struct vn_cs_decoder *dec, 
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)val->pSplitInstanceBindRegions)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->splitInstanceBindRegionCount);
         val->pSplitInstanceBindRegions = NULL;
     }
 }
@@ -1152,7 +1152,7 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements_args_temp(struct
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryRequirements_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pSparseMemoryRequirements = NULL;
     }
 }
@@ -1309,7 +1309,7 @@ static inline void vn_decode_vkBindImageMemory2_args_temp(struct vn_cs_decoder *
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindImageMemoryInfo_temp(dec, &((VkBindImageMemoryInfo *)args->pBindInfos)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindInfoCount);
         args->pBindInfos = NULL;
     }
 }
@@ -1399,7 +1399,7 @@ static inline void vn_decode_vkGetImageSparseMemoryRequirements2_args_temp(struc
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryRequirements2_partial_temp(dec, &args->pSparseMemoryRequirements[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         args->pSparseMemoryRequirements = NULL;
     }
 }

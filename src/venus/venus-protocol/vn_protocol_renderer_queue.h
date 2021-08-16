@@ -36,7 +36,7 @@ vn_decode_VkDeviceGroupSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkDeviceG
         if (!val->pWaitSemaphoreDeviceIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pWaitSemaphoreDeviceIndices, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->waitSemaphoreCount);
         val->pWaitSemaphoreDeviceIndices = NULL;
     }
     vn_decode_uint32_t(dec, &val->commandBufferCount);
@@ -46,7 +46,7 @@ vn_decode_VkDeviceGroupSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkDeviceG
         if (!val->pCommandBufferDeviceMasks) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pCommandBufferDeviceMasks, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->commandBufferCount);
         val->pCommandBufferDeviceMasks = NULL;
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreCount);
@@ -56,7 +56,7 @@ vn_decode_VkDeviceGroupSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkDeviceG
         if (!val->pSignalSemaphoreDeviceIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pSignalSemaphoreDeviceIndices, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->signalSemaphoreCount);
         val->pSignalSemaphoreDeviceIndices = NULL;
     }
 }
@@ -184,7 +184,7 @@ vn_decode_VkTimelineSemaphoreSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkT
         if (!val->pWaitSemaphoreValues) return;
         vn_decode_uint64_t_array(dec, (uint64_t *)val->pWaitSemaphoreValues, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pWaitSemaphoreValues = NULL;
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreValueCount);
@@ -194,7 +194,7 @@ vn_decode_VkTimelineSemaphoreSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkT
         if (!val->pSignalSemaphoreValues) return;
         vn_decode_uint64_t_array(dec, (uint64_t *)val->pSignalSemaphoreValues, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pSignalSemaphoreValues = NULL;
     }
 }
@@ -300,7 +300,7 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pWaitSemaphores)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->waitSemaphoreCount);
         val->pWaitSemaphores = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -310,7 +310,7 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFlags(dec, &((VkPipelineStageFlags *)val->pWaitDstStageMask)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->waitSemaphoreCount);
         val->pWaitDstStageMask = NULL;
     }
     vn_decode_uint32_t(dec, &val->commandBufferCount);
@@ -321,7 +321,7 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)val->pCommandBuffers)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->commandBufferCount);
         val->pCommandBuffers = NULL;
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreCount);
@@ -332,7 +332,7 @@ vn_decode_VkSubmitInfo_self_temp(struct vn_cs_decoder *dec, VkSubmitInfo *val)
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pSignalSemaphores)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->signalSemaphoreCount);
         val->pSignalSemaphores = NULL;
     }
 }
@@ -436,7 +436,7 @@ vn_decode_VkSparseBufferMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSparseB
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseMemoryBind_temp(dec, &((VkSparseMemoryBind *)val->pBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bindCount);
         val->pBinds = NULL;
     }
 }
@@ -466,7 +466,7 @@ vn_decode_VkSparseImageOpaqueMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSp
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseMemoryBind_temp(dec, &((VkSparseMemoryBind *)val->pBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bindCount);
         val->pBinds = NULL;
     }
 }
@@ -520,7 +520,7 @@ vn_decode_VkSparseImageMemoryBindInfo_temp(struct vn_cs_decoder *dec, VkSparseIm
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryBind_temp(dec, &((VkSparseImageMemoryBind *)val->pBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bindCount);
         val->pBinds = NULL;
     }
 }
@@ -646,7 +646,7 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pWaitSemaphores)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->waitSemaphoreCount);
         val->pWaitSemaphores = NULL;
     }
     vn_decode_uint32_t(dec, &val->bufferBindCount);
@@ -657,7 +657,7 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseBufferMemoryBindInfo_temp(dec, &((VkSparseBufferMemoryBindInfo *)val->pBufferBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->bufferBindCount);
         val->pBufferBinds = NULL;
     }
     vn_decode_uint32_t(dec, &val->imageOpaqueBindCount);
@@ -668,7 +668,7 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageOpaqueMemoryBindInfo_temp(dec, &((VkSparseImageOpaqueMemoryBindInfo *)val->pImageOpaqueBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->imageOpaqueBindCount);
         val->pImageOpaqueBinds = NULL;
     }
     vn_decode_uint32_t(dec, &val->imageBindCount);
@@ -679,7 +679,7 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSparseImageMemoryBindInfo_temp(dec, &((VkSparseImageMemoryBindInfo *)val->pImageBinds)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->imageBindCount);
         val->pImageBinds = NULL;
     }
     vn_decode_uint32_t(dec, &val->signalSemaphoreCount);
@@ -690,7 +690,7 @@ vn_decode_VkBindSparseInfo_self_temp(struct vn_cs_decoder *dec, VkBindSparseInfo
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pSignalSemaphores)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->signalSemaphoreCount);
         val->pSignalSemaphores = NULL;
     }
 }
@@ -775,7 +775,7 @@ static inline void vn_decode_vkQueueSubmit_args_temp(struct vn_cs_decoder *dec, 
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubmitInfo_temp(dec, &((VkSubmitInfo *)args->pSubmits)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->submitCount);
         args->pSubmits = NULL;
     }
     vn_decode_VkFence_lookup(dec, &args->fence);
@@ -832,7 +832,7 @@ static inline void vn_decode_vkQueueBindSparse_args_temp(struct vn_cs_decoder *d
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindSparseInfo_temp(dec, &((VkBindSparseInfo *)args->pBindInfo)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, args->bindInfoCount);
         args->pBindInfo = NULL;
     }
     vn_decode_VkFence_lookup(dec, &args->fence);

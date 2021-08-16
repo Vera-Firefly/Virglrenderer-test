@@ -75,7 +75,7 @@ vn_decode_VkSubpassDescription_temp(struct vn_cs_decoder *dec, VkSubpassDescript
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference_temp(dec, &((VkAttachmentReference *)val->pInputAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->inputAttachmentCount);
         val->pInputAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &val->colorAttachmentCount);
@@ -86,7 +86,7 @@ vn_decode_VkSubpassDescription_temp(struct vn_cs_decoder *dec, VkSubpassDescript
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference_temp(dec, &((VkAttachmentReference *)val->pColorAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->colorAttachmentCount);
         val->pColorAttachments = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -96,7 +96,7 @@ vn_decode_VkSubpassDescription_temp(struct vn_cs_decoder *dec, VkSubpassDescript
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference_temp(dec, &((VkAttachmentReference *)val->pResolveAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pResolveAttachments = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
@@ -113,7 +113,7 @@ vn_decode_VkSubpassDescription_temp(struct vn_cs_decoder *dec, VkSubpassDescript
         if (!val->pPreserveAttachments) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pPreserveAttachments, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->preserveAttachmentCount);
         val->pPreserveAttachments = NULL;
     }
 }
@@ -191,7 +191,7 @@ vn_decode_VkRenderPassMultiviewCreateInfo_self_temp(struct vn_cs_decoder *dec, V
         if (!val->pViewMasks) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pViewMasks, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->subpassCount);
         val->pViewMasks = NULL;
     }
     vn_decode_uint32_t(dec, &val->dependencyCount);
@@ -201,7 +201,7 @@ vn_decode_VkRenderPassMultiviewCreateInfo_self_temp(struct vn_cs_decoder *dec, V
         if (!val->pViewOffsets) return;
         vn_decode_int32_t_array(dec, (int32_t *)val->pViewOffsets, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->dependencyCount);
         val->pViewOffsets = NULL;
     }
     vn_decode_uint32_t(dec, &val->correlationMaskCount);
@@ -211,7 +211,7 @@ vn_decode_VkRenderPassMultiviewCreateInfo_self_temp(struct vn_cs_decoder *dec, V
         if (!val->pCorrelationMasks) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pCorrelationMasks, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->correlationMaskCount);
         val->pCorrelationMasks = NULL;
     }
 }
@@ -301,7 +301,7 @@ vn_decode_VkRenderPassInputAttachmentAspectCreateInfo_self_temp(struct vn_cs_dec
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkInputAttachmentAspectReference_temp(dec, &((VkInputAttachmentAspectReference *)val->pAspectReferences)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->aspectReferenceCount);
         val->pAspectReferences = NULL;
     }
 }
@@ -401,7 +401,7 @@ vn_decode_VkRenderPassCreateInfo_self_temp(struct vn_cs_decoder *dec, VkRenderPa
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentDescription_temp(dec, &((VkAttachmentDescription *)val->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->attachmentCount);
         val->pAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &val->subpassCount);
@@ -412,7 +412,7 @@ vn_decode_VkRenderPassCreateInfo_self_temp(struct vn_cs_decoder *dec, VkRenderPa
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubpassDescription_temp(dec, &((VkSubpassDescription *)val->pSubpasses)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->subpassCount);
         val->pSubpasses = NULL;
     }
     vn_decode_uint32_t(dec, &val->dependencyCount);
@@ -423,7 +423,7 @@ vn_decode_VkRenderPassCreateInfo_self_temp(struct vn_cs_decoder *dec, VkRenderPa
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubpassDependency_temp(dec, &((VkSubpassDependency *)val->pDependencies)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->dependencyCount);
         val->pDependencies = NULL;
     }
 }
@@ -898,7 +898,7 @@ vn_decode_VkSubpassDescription2_self_temp(struct vn_cs_decoder *dec, VkSubpassDe
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference2_temp(dec, &((VkAttachmentReference2 *)val->pInputAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->inputAttachmentCount);
         val->pInputAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &val->colorAttachmentCount);
@@ -909,7 +909,7 @@ vn_decode_VkSubpassDescription2_self_temp(struct vn_cs_decoder *dec, VkSubpassDe
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference2_temp(dec, &((VkAttachmentReference2 *)val->pColorAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->colorAttachmentCount);
         val->pColorAttachments = NULL;
     }
     if (vn_peek_array_size(dec)) {
@@ -919,7 +919,7 @@ vn_decode_VkSubpassDescription2_self_temp(struct vn_cs_decoder *dec, VkSubpassDe
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentReference2_temp(dec, &((VkAttachmentReference2 *)val->pResolveAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size_unchecked(dec);
         val->pResolveAttachments = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
@@ -936,7 +936,7 @@ vn_decode_VkSubpassDescription2_self_temp(struct vn_cs_decoder *dec, VkSubpassDe
         if (!val->pPreserveAttachments) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pPreserveAttachments, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->preserveAttachmentCount);
         val->pPreserveAttachments = NULL;
     }
 }
@@ -1098,7 +1098,7 @@ vn_decode_VkRenderPassCreateInfo2_self_temp(struct vn_cs_decoder *dec, VkRenderP
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkAttachmentDescription2_temp(dec, &((VkAttachmentDescription2 *)val->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->attachmentCount);
         val->pAttachments = NULL;
     }
     vn_decode_uint32_t(dec, &val->subpassCount);
@@ -1109,7 +1109,7 @@ vn_decode_VkRenderPassCreateInfo2_self_temp(struct vn_cs_decoder *dec, VkRenderP
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubpassDescription2_temp(dec, &((VkSubpassDescription2 *)val->pSubpasses)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->subpassCount);
         val->pSubpasses = NULL;
     }
     vn_decode_uint32_t(dec, &val->dependencyCount);
@@ -1120,7 +1120,7 @@ vn_decode_VkRenderPassCreateInfo2_self_temp(struct vn_cs_decoder *dec, VkRenderP
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSubpassDependency2_temp(dec, &((VkSubpassDependency2 *)val->pDependencies)[i]);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->dependencyCount);
         val->pDependencies = NULL;
     }
     vn_decode_uint32_t(dec, &val->correlatedViewMaskCount);
@@ -1130,7 +1130,7 @@ vn_decode_VkRenderPassCreateInfo2_self_temp(struct vn_cs_decoder *dec, VkRenderP
         if (!val->pCorrelatedViewMasks) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pCorrelatedViewMasks, array_size);
     } else {
-        vn_decode_array_size(dec, 0);
+        vn_decode_array_size(dec, val->correlatedViewMaskCount);
         val->pCorrelatedViewMasks = NULL;
     }
 }
