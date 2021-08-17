@@ -77,6 +77,12 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct list_head free_list;
 
+   /* args->pCommandBuffers is marked noautovalidity="true" */
+   if (args->commandBufferCount && !args->pCommandBuffers) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return;
+   }
+
    vkr_command_buffer_destroy_driver_handles(ctx, args, &free_list);
    vkr_context_remove_objects(ctx, &free_list);
 }
