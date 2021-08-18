@@ -1494,14 +1494,16 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
 {
    if (!has_feature(feat_ubo))
       return next_ubo_id;
-   if (sprog->ss[id]->sel->sinfo.ubo_used_mask) {
+
+   const struct vrend_shader_info *sinfo = &sprog->ss[id]->sel->sinfo;
+   if (sinfo->ubo_used_mask) {
       const char *prefix = pipe_shader_to_prefix(id);
 
-      unsigned mask = sprog->ss[id]->sel->sinfo.ubo_used_mask;
+      unsigned mask = sinfo->ubo_used_mask;
       while (mask) {
          uint32_t ubo_idx = u_bit_scan(&mask);
          char name[32];
-         if (sprog->ss[id]->sel->sinfo.ubo_indirect)
+         if (sinfo->ubo_indirect)
             snprintf(name, 32, "%subo[%d]", prefix, ubo_idx - 1);
          else
             snprintf(name, 32, "%subo%d", prefix, ubo_idx);
@@ -1511,7 +1513,7 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
       }
    }
 
-   sprog->ubo_used_mask[id] = sprog->ss[id]->sel->sinfo.ubo_used_mask;
+   sprog->ubo_used_mask[id] = sinfo->ubo_used_mask;
 
    return next_ubo_id;
 }
