@@ -4293,13 +4293,9 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
                                            int next_sampler_id)
 {
    int index = 0;
-
    int n_samplers = 0;
-
    uint32_t dirty = sub_ctx->sampler_views_dirty[shader_type];
-
    uint32_t mask = sub_ctx->prog->samplers_used_mask[shader_type];
-
    struct vrend_shader_view *sviews = &sub_ctx->views[shader_type];
 
    while (mask) {
