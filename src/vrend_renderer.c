@@ -4301,11 +4301,8 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
    while (mask) {
       int i = u_bit_scan(&mask);
 
-      if (!(dirty & (1 << i)))
-          continue;
-
       struct vrend_sampler_view *tview = sviews->views[i];
-      if (tview) {
+      if ((dirty & (1 << i)) && tview) {
          if (sub_ctx->prog->shadow_samp_mask[shader_type] & (1 << i)) {
             glUniform4f(sub_ctx->prog->shadow_samp_mask_locs[shader_type][index],
                         (tview->gl_swizzle[0] == GL_ZERO || tview->gl_swizzle[0] == GL_ONE) ? 0.0 : 1.0,
@@ -4317,6 +4314,7 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
                         tview->gl_swizzle[1] == GL_ONE ? 1.0 : 0.0,
                         tview->gl_swizzle[2] == GL_ONE ? 1.0 : 0.0,
                         tview->gl_swizzle[3] == GL_ONE ? 1.0 : 0.0);
+            index++;
          }
 
          if (tview->texture) {
@@ -4349,7 +4347,6 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
          }
       }
       next_sampler_id++;
-      index++;
    }
 
    sub_ctx->n_samplers[shader_type] = n_samplers;
