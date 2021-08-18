@@ -1532,9 +1532,10 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
    int i;
    char name[32];
    const char *prefix = pipe_shader_to_prefix(id);
+   const struct vrend_shader_info *sinfo = &sprog->ss[id]->sel->sinfo;
 
-   uint32_t mask = sprog->ss[id]->sel->sinfo.images_used_mask;
-   if (!mask && ! sprog->ss[id]->sel->sinfo.num_image_arrays)
+   uint32_t mask = sinfo->images_used_mask;
+   if (!mask && !sinfo->num_image_arrays)
       return;
 
    if (!has_feature(feat_images))
@@ -1548,9 +1549,9 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
    } else
       sprog->img_locs[id] = NULL;
 
-   if (sprog->ss[id]->sel->sinfo.num_image_arrays) {
-      for (i = 0; i < sprog->ss[id]->sel->sinfo.num_image_arrays; i++) {
-         struct vrend_array *img_array = &sprog->ss[id]->sel->sinfo.image_arrays[i];
+   if (sinfo->num_image_arrays) {
+      for (i = 0; i < sinfo->num_image_arrays; i++) {
+         struct vrend_array *img_array = &sinfo->image_arrays[i];
          for (int j = 0; j < img_array->array_size; j++) {
             snprintf(name, 32, "%simg%d[%d]", prefix, img_array->first, j);
             sprog->img_locs[id][img_array->first + j] = glGetUniformLocation(sprog->id, name);
