@@ -5846,17 +5846,18 @@ void vrend_bind_sampler_states(struct vrend_context *ctx,
 
    ctx->sub->num_sampler_states[shader_type] = num_states;
 
-   uint32_t dirty = 0;
    for (i = 0; i < num_states; i++) {
       if (handles[i] == 0)
          state = NULL;
       else
          state = vrend_object_lookup(ctx->sub->object_hash, handles[i], VIRGL_OBJECT_SAMPLER_STATE);
 
-      ctx->sub->sampler_state[shader_type][i + start_slot] = state;
-      dirty |= 1 << (start_slot + i);
+      if (!state && handles[i])
+         vrend_printf("Failed to bind sampler state (handle=%d)\n", handles[i]);
+
+      ctx->sub->sampler_state[shader_type][start_slot + i] = state;
+      ctx->sub->sampler_views_dirty[shader_type] |= (1 << (start_slot + i));
    }
-   ctx->sub->sampler_views_dirty[shader_type] |= dirty;
 }
 
 static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
