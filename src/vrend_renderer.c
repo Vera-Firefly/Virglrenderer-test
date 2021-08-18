@@ -5866,10 +5866,10 @@ static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
    bool set_all = false;
    GLenum target = tex->base.target;
 
-   if (!state) {
-      vrend_printf( "cannot find sampler state for %d %d\n", shader_type, id);
+   assert(offsetof(struct vrend_sampler_state, base) == 0);
+   if (!state)
       return;
-   }
+
    if (res->base.nr_samples > 0) {
       tex->state = *state;
       return;
