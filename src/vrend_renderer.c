@@ -4292,7 +4292,7 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
                                            int shader_type,
                                            int next_sampler_id)
 {
-   int index = 0;
+   int sampler_index = 0;
    int n_samplers = 0;
    uint32_t dirty = sub_ctx->sampler_views_dirty[shader_type];
    uint32_t mask = sub_ctx->prog->samplers_used_mask[shader_type];
@@ -4304,17 +4304,16 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
       struct vrend_sampler_view *tview = sviews->views[i];
       if ((dirty & (1 << i)) && tview) {
          if (sub_ctx->prog->shadow_samp_mask[shader_type] & (1 << i)) {
-            glUniform4f(sub_ctx->prog->shadow_samp_mask_locs[shader_type][index],
+            glUniform4f(sub_ctx->prog->shadow_samp_mask_locs[shader_type][sampler_index],
                         (tview->gl_swizzle[0] == GL_ZERO || tview->gl_swizzle[0] == GL_ONE) ? 0.0 : 1.0,
                         (tview->gl_swizzle[1] == GL_ZERO || tview->gl_swizzle[1] == GL_ONE) ? 0.0 : 1.0,
                         (tview->gl_swizzle[2] == GL_ZERO || tview->gl_swizzle[2] == GL_ONE) ? 0.0 : 1.0,
                         (tview->gl_swizzle[3] == GL_ZERO || tview->gl_swizzle[3] == GL_ONE) ? 0.0 : 1.0);
-            glUniform4f(sub_ctx->prog->shadow_samp_add_locs[shader_type][index],
+            glUniform4f(sub_ctx->prog->shadow_samp_add_locs[shader_type][sampler_index],
                         tview->gl_swizzle[0] == GL_ONE ? 1.0 : 0.0,
                         tview->gl_swizzle[1] == GL_ONE ? 1.0 : 0.0,
                         tview->gl_swizzle[2] == GL_ONE ? 1.0 : 0.0,
                         tview->gl_swizzle[3] == GL_ONE ? 1.0 : 0.0);
-            index++;
          }
 
          if (tview->texture) {
@@ -4346,6 +4345,7 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
             dirty &= ~(1 << i);
          }
       }
+      sampler_index++;
       next_sampler_id++;
    }
 
