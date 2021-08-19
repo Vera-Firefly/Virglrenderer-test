@@ -1479,25 +1479,25 @@ static int bind_sampler_locs(struct vrend_linked_shader_program *sprog,
 }
 
 static void bind_const_locs(struct vrend_linked_shader_program *sprog,
-                            int id)
+                            int shader_type)
 {
-  if (sprog->ss[id]->sel->sinfo.num_consts) {
+  if (sprog->ss[shader_type]->sel->sinfo.num_consts) {
      char name[32];
-     snprintf(name, 32, "%sconst0", pipe_shader_to_prefix(id));
-     sprog->const_location[id] = glGetUniformLocation(sprog->id, name);
+     snprintf(name, 32, "%sconst0", pipe_shader_to_prefix(shader_type));
+     sprog->const_location[shader_type] = glGetUniformLocation(sprog->id, name);
   } else
-      sprog->const_location[id] = -1;
+      sprog->const_location[shader_type] = -1;
 }
 
 static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
-                         int id, int next_ubo_id)
+                         int shader_type, int next_ubo_id)
 {
    if (!has_feature(feat_ubo))
       return next_ubo_id;
 
-   const struct vrend_shader_info *sinfo = &sprog->ss[id]->sel->sinfo;
+   const struct vrend_shader_info *sinfo = &sprog->ss[shader_type]->sel->sinfo;
    if (sinfo->ubo_used_mask) {
-      const char *prefix = pipe_shader_to_prefix(id);
+      const char *prefix = pipe_shader_to_prefix(shader_type);
 
       unsigned mask = sinfo->ubo_used_mask;
       while (mask) {
@@ -1513,26 +1513,26 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
       }
    }
 
-   sprog->ubo_used_mask[id] = sinfo->ubo_used_mask;
+   sprog->ubo_used_mask[shader_type] = sinfo->ubo_used_mask;
 
    return next_ubo_id;
 }
 
 static void bind_ssbo_locs(struct vrend_linked_shader_program *sprog,
-                           int id)
+                           int shader_type)
 {
    if (!has_feature(feat_ssbo))
       return;
-   sprog->ssbo_used_mask[id] = sprog->ss[id]->sel->sinfo.ssbo_used_mask;
+   sprog->ssbo_used_mask[shader_type] = sprog->ss[shader_type]->sel->sinfo.ssbo_used_mask;
 }
 
 static void bind_image_locs(struct vrend_linked_shader_program *sprog,
-                            int id)
+                            int shader_type)
 {
    int i;
    char name[32];
-   const char *prefix = pipe_shader_to_prefix(id);
-   const struct vrend_shader_info *sinfo = &sprog->ss[id]->sel->sinfo;
+   const char *prefix = pipe_shader_to_prefix(shader_type);
+   const struct vrend_shader_info *sinfo = &sprog->ss[shader_type]->sel->sinfo;
 
    uint32_t mask = sinfo->images_used_mask;
    if (!mask && !sinfo->num_image_arrays)
@@ -1543,19 +1543,19 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
 
    int nsamp = util_last_bit(mask);
    if (nsamp) {
-      sprog->img_locs[id] = calloc(nsamp, sizeof(GLint));
-      if (!sprog->img_locs[id])
+      sprog->img_locs[shader_type] = calloc(nsamp, sizeof(GLint));
+      if (!sprog->img_locs[shader_type])
          return;
    } else
-      sprog->img_locs[id] = NULL;
+      sprog->img_locs[shader_type] = NULL;
 
    if (sinfo->num_image_arrays) {
       for (i = 0; i < sinfo->num_image_arrays; i++) {
          struct vrend_array *img_array = &sinfo->image_arrays[i];
          for (int j = 0; j < img_array->array_size; j++) {
             snprintf(name, 32, "%simg%d[%d]", prefix, img_array->first, j);
-            sprog->img_locs[id][img_array->first + j] = glGetUniformLocation(sprog->id, name);
-            if (sprog->img_locs[id][img_array->first + j] == -1)
+            sprog->img_locs[shader_type][img_array->first + j] = glGetUniformLocation(sprog->id, name);
+            if (sprog->img_locs[shader_type][img_array->first + j] == -1)
                vrend_printf( "failed to get uniform loc for image %s\n", name);
          }
       }
@@ -1563,15 +1563,15 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
       for (i = 0; i < nsamp; i++) {
          if (mask & (1 << i)) {
             snprintf(name, 32, "%simg%d", prefix, i);
-            sprog->img_locs[id][i] = glGetUniformLocation(sprog->id, name);
-            if (sprog->img_locs[id][i] == -1)
+            sprog->img_locs[shader_type][i] = glGetUniformLocation(sprog->id, name);
+            if (sprog->img_locs[shader_type][i] == -1)
                vrend_printf( "failed to get uniform loc for image %s\n", name);
          } else {
-            sprog->img_locs[id][i] = -1;
+            sprog->img_locs[shader_type][i] = -1;
          }
       }
    }
-   sprog->images_used_mask[id] = mask;
+   sprog->images_used_mask[shader_type] = mask;
 }
 
 static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_context *ctx,
@@ -1625,7 +1625,6 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    int i;
    GLuint prog_id;
    GLint lret;
-   int id;
    int last_shader;
    if (!sprog)
       return NULL;
@@ -1730,15 +1729,15 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    vrend_use_program(sub_ctx, prog_id);
 
    int next_ubo_id = 0, next_sampler_id = 0;
-   for (id = PIPE_SHADER_VERTEX; id <= last_shader; id++) {
-      if (!sprog->ss[id])
+   for (int shader_type = PIPE_SHADER_VERTEX; shader_type <= last_shader; shader_type++) {
+      if (!sprog->ss[shader_type])
          continue;
 
-      next_sampler_id = bind_sampler_locs(sprog, id, next_sampler_id);
-      bind_const_locs(sprog, id);
-      next_ubo_id = bind_ubo_locs(sprog, id, next_ubo_id);
-      bind_image_locs(sprog, id);
-      bind_ssbo_locs(sprog, id);
+      next_sampler_id = bind_sampler_locs(sprog, shader_type, next_sampler_id);
+      bind_const_locs(sprog, shader_type);
+      next_ubo_id = bind_ubo_locs(sprog, shader_type, next_ubo_id);
+      bind_image_locs(sprog, shader_type);
+      bind_ssbo_locs(sprog, shader_type);
    }
 
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
@@ -4424,7 +4423,8 @@ static void vrend_draw_bind_const_shader(struct vrend_sub_context *sub_ctx,
    }
 }
 
-static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx, int shader_type)
+static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx,
+                                        int shader_type)
 {
    uint32_t mask;
    struct vrend_ssbo *ssbo;
