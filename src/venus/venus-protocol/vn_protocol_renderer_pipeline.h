@@ -96,7 +96,7 @@ vn_decode_VkPipelineShaderStageCreateInfo_self_temp(struct vn_cs_decoder *dec, V
         if (!val->pName) return;
         vn_decode_char_array(dec, (char *)val->pName, string_size);
     } else {
-        vn_decode_array_size(dec, strlen(val->pName) + 1);
+        vn_decode_array_size_unchecked(dec);
         val->pName = NULL;
     }
     if (vn_decode_simple_pointer(dec)) {
