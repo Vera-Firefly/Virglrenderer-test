@@ -88,10 +88,10 @@ struct vrend_shader_info_out {
 };
 
 struct vrend_shader_info_in {
-   uint64_t generic_emitted_mask : 32;
-   uint64_t num_indirect_generic : 8;
-   uint64_t num_indirect_patch : 8;
-   uint64_t use_pervertex : 1;
+   uint64_t generic_emitted_mask;
+   uint32_t num_indirect_generic : 8;
+   uint32_t num_indirect_patch : 8;
+   uint32_t use_pervertex : 1;
 };
 
 

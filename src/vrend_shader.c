@@ -162,9 +162,9 @@ struct vrend_generic_ios {
    struct vrend_io_range input_range;
    struct vrend_io_range output_range;
 
-   uint32_t outputs_expected_mask;
-   uint32_t inputs_emitted_mask;
-   uint32_t outputs_emitted_mask;
+   uint64_t outputs_expected_mask;
+   uint64_t inputs_emitted_mask;
+   uint64_t outputs_emitted_mask;
 };
 
 struct vrend_patch_ios {
@@ -6246,11 +6246,11 @@ emit_ios_generic(const struct dump_ctx *ctx,
                 postfix);
 
       if (io->name == TGSI_SEMANTIC_GENERIC) {
-         assert(io->sid < 32);
+         assert(io->sid < 64);
          if (iot == io_in) {
-            generic_ios->inputs_emitted_mask |= 1 << io->sid;
+            generic_ios->inputs_emitted_mask |= 1ull << io->sid;
          } else {
-            generic_ios->outputs_emitted_mask |= 1 << io->sid;
+            generic_ios->outputs_emitted_mask |= 1ull << io->sid;
          }
       }
 
@@ -6891,8 +6891,8 @@ static int emit_ios(const struct dump_ctx *ctx,
 
    if (generic_ios->outputs_expected_mask &&
        (generic_ios->outputs_expected_mask != generic_ios->outputs_emitted_mask)) {
-      for (int i = 0; i < 31; ++i) {
-         uint32_t mask = 1 << i;
+      for (int i = 0; i < 64; ++i) {
+         uint64_t mask = 1ull << i;
          bool expecting = generic_ios->outputs_expected_mask & mask;
          if (expecting & !(generic_ios->outputs_emitted_mask & mask))
             emit_hdrf(glsl_strbufs, "                              out vec4 %s_g%dA0_f%s;\n",
