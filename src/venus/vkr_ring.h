@@ -8,20 +8,13 @@
 
 #include "vkr_common.h"
 
-struct virgl_context;
-
-struct memory_region {
-   size_t offset;
-   size_t size;
-};
-
 /* the layout of a ring in a virgl_resource */
 struct vkr_ring_layout {
-   struct memory_region head;
-   struct memory_region tail;
-   struct memory_region status;
-   struct memory_region buffer;
-   struct memory_region extra;
+   struct vkr_region head;
+   struct vkr_region tail;
+   struct vkr_region status;
+   struct vkr_region buffer;
+   struct vkr_region extra;
 };
 
 static_assert(ATOMIC_INT_LOCK_FREE == 2 && sizeof(atomic_uint) == 4,

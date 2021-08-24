@@ -155,62 +155,62 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 static bool
 vkr_ring_layout_init(struct vkr_ring_layout *layout, const VkRingCreateInfoMESA *info)
 {
+   /* clang-format off */
    *layout = (struct vkr_ring_layout){
-      .head = { info->headOffset, sizeof(uint32_t) },
-      .tail = { info->tailOffset, sizeof(uint32_t) },
-      .status = { info->statusOffset, sizeof(uint32_t) },
-      .buffer = { info->bufferOffset, info->bufferSize },
-      .extra = { info->extraOffset, info->extraSize },
+      .head   = VKR_REGION_INIT(info->headOffset, sizeof(uint32_t)),
+      .tail   = VKR_REGION_INIT(info->tailOffset, sizeof(uint32_t)),
+      .status = VKR_REGION_INIT(info->statusOffset, sizeof(uint32_t)),
+      .buffer = VKR_REGION_INIT(info->bufferOffset, info->bufferSize),
+      .extra  = VKR_REGION_INIT(info->extraOffset, info->extraSize),
    };
 
-   const struct memory_region *regions[] = {
+   const struct vkr_region res_region = VKR_REGION_INIT(0, info->size);
+   const struct vkr_region *regions[] = {
       &layout->head,
       &layout->tail,
       &layout->status,
       &layout->buffer,
       &layout->extra,
    };
+   /* clang-format on */
 
    for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
-      if (regions[i]->offset > info->size ||
-          regions[i]->size > info->size - regions[i]->offset) {
-         vkr_log("ring buffer control variable (offset=%lu, size=%lu) placed"
+      const struct vkr_region *region = regions[i];
+
+      if (!vkr_region_is_valid(region) || !vkr_region_is_within(region, &res_region)) {
+         vkr_log("ring buffer control variable (begin=%lu, end=%lu) placed"
                  " out-of-bounds in shared memory layout",
-                 regions[i]->offset, regions[i]->size);
+                 region->begin, region->end);
          return false;
       }
 
-      if (regions[i]->offset & 0x3) {
-         vkr_log("ring buffer control variable (offset=%lu, size=%lu) must be"
+      if (!vkr_region_is_aligned(region, 4)) {
+         vkr_log("ring buffer control variable (begin=%lu, end=%lu) must be"
                  " 32-bit aligned in shared memory layout",
-                 regions[i]->offset, regions[i]->size);
+                 region->begin, region->end);
          return false;
       }
    }
 
    /* assumes region->size == 0 is valid */
    for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
-      if (!regions[i]->size)
-         continue;
+      const struct vkr_region *region = regions[i];
 
       for (size_t j = i + 1; j < ARRAY_SIZE(regions); j++) {
-         if (!regions[j]->size)
-            continue;
+         const struct vkr_region *other = regions[j];
 
-         if (regions[i]->offset < regions[j]->offset + regions[j]->size &&
-             regions[j]->offset < regions[i]->offset + regions[i]->size) {
-            vkr_log("ring buffer control variable (offset=%lu, size=%lu)"
-                    " overlaps with control variable (offset=%lu, size=%lu)",
-                    regions[j]->offset, regions[j]->size, regions[i]->offset,
-                    regions[i]->size);
+         if (!vkr_region_is_disjoint(region, other)) {
+            vkr_log("ring buffer control variable (begin=%lu, end=%lu)"
+                    " overlaps with control variable (begin=%lu, end=%lu)",
+                    other->begin, other->end, region->begin, region->end);
             return false;
          }
       }
    }
 
-   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size)) {
-      vkr_log("ring buffer size (%lu) must be a power of two",
-              layout->buffer.size);
+   const size_t buf_size = vkr_region_size(&layout->buffer);
+   if (!buf_size || !util_is_power_of_two(buf_size)) {
+      vkr_log("ring buffer size (%lu) must be a power of two", buf_size);
       return false;
    }
 
