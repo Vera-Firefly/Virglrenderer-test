@@ -7138,6 +7138,17 @@ static bool vrend_patch_vertex_shader_interpolants(const struct vrend_shader_cfg
                                             const char *oprefix,
                                             bool flatshade);
 
+static int compare_sid(const void *lhs, const void *rhs)
+{
+   const struct vrend_shader_io *l = (struct vrend_shader_io *)lhs;
+   const struct vrend_shader_io *r = (struct vrend_shader_io *)rhs;
+
+   if (l->name != r->name)
+      return l->name - r->name;
+
+   return l->sid - r->sid;
+}
+
 bool vrend_convert_shader(const struct vrend_context *rctx,
                           const struct vrend_shader_cfg *cfg,
                           const struct tgsi_token *tokens,
@@ -7216,6 +7227,9 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
 
    for (size_t i = 0; i < ARRAY_SIZE(ctx.src_bufs); ++i)
       strbuf_free(ctx.src_bufs + i);
+
+   if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT)
+      qsort(ctx.outputs, ctx.num_outputs, sizeof(struct vrend_shader_io), compare_sid);
 
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
