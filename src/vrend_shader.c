@@ -1216,6 +1216,20 @@ iter_declaration(struct tgsi_iterate_context *iter,
             break;
          }
          /* fallthrough */
+      case TGSI_SEMANTIC_PCOORD:
+         if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+            if (ctx->cfg->use_gles)
+               name_prefix = "vec4(gl_PointCoord.x, mix(1.0 - gl_PointCoord.y, gl_PointCoord.y, clamp(winsys_adjust_y, 0.0, 1.0)), 0.0, 1.0)";
+            else
+               name_prefix = "vec4(gl_PointCoord, 0.0, 1.0)";
+            ctx->inputs[i].glsl_predefined_no_emit = true;
+            ctx->inputs[i].glsl_no_index = true;
+            ctx->inputs[i].num_components = 4;
+            ctx->inputs[i].swizzle_offset = 0;
+            ctx->inputs[i].usage_mask = 0xf;
+            break;
+         }
+         /* fallthrough */
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
