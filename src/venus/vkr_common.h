@@ -59,6 +59,12 @@
       return obj;                                                                        \
    }
 
+/* vkr_region_is_valid should be used to check for overflows */
+#define VKR_REGION_INIT(offset, size)                                                    \
+   {                                                                                     \
+      .begin = (offset), .end = (offset) + (size)                                        \
+   }
+
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;
@@ -146,6 +152,11 @@ struct object_array {
    bool objects_stolen;
 };
 
+struct vkr_region {
+   size_t begin;
+   size_t end;
+};
+
 extern uint32_t vkr_renderer_flags;
 extern uint32_t vkr_debug_flags;
 
@@ -230,6 +241,48 @@ vkr_object_alloc(size_t size, VkObjectType type, vkr_object_id id)
    obj->id = id;
 
    return obj;
+}
+
+static inline bool
+vkr_region_is_valid(const struct vkr_region *region)
+{
+   return region->begin <= region->end;
+}
+
+static inline size_t
+vkr_region_size(const struct vkr_region *region)
+{
+   return region->end - region->begin;
+}
+
+static inline bool
+vkr_region_is_aligned(const struct vkr_region *region, size_t align)
+{
+   assert(align && util_is_power_of_two(align));
+   return !((region->begin | region->end) & (align - 1));
+}
+
+static inline bool
+vkr_region_is_disjoint(const struct vkr_region *region, const struct vkr_region *other)
+{
+   return region->begin >= other->end || region->end <= other->begin;
+}
+
+static inline bool
+vkr_region_is_within(const struct vkr_region *region, const struct vkr_region *other)
+{
+   /* note that when region regresses to a point at other->end, both this
+    * function and vkr_region_is_disjoint return true
+    */
+   return region->begin >= other->begin && region->end <= other->end;
+}
+
+static inline struct vkr_region
+vkr_region_make_relative(const struct vkr_region *region)
+{
+   return (struct vkr_region){
+      .end = region->end - region->begin,
+   };
 }
 
 #endif /* VKR_COMMON_H */
