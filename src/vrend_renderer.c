@@ -1683,6 +1683,10 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       /* dump shaders */
       vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
       vrend_shader_dump(vs);
+      if (tcs)
+         vrend_shader_dump(tcs);
+      if (tes)
+         vrend_shader_dump(tes);
       if (gs)
          vrend_shader_dump(gs);
       vrend_shader_dump(fs);
