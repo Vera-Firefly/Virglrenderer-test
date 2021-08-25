@@ -22,13 +22,22 @@ struct vkr_ring_layout {
 };
 
 static_assert(ATOMIC_INT_LOCK_FREE == 2 && sizeof(atomic_uint) == 4,
-              "vkr_ring_shared requires lock-free 32-bit atomic_uint");
+              "vkr_ring_control requires lock-free 32-bit atomic_uint");
 
-/* pointers to a ring in a virgl_resource */
-struct vkr_ring_shared {
+/* the control region of a ring */
+struct vkr_ring_control {
+   /* Pointers to ring head, tail, and status.
+    *
+    * Clients increment the tail after commands are added.  We increment the
+    * head after commands are executed.  The status is updated when there is a
+    * status change to the ring thread.
+    */
    volatile atomic_uint *head;
    const volatile atomic_uint *tail;
    volatile atomic_uint *status;
+};
+
+struct vkr_ring_shared {
    const void *buffer;
 
    void *extra;
@@ -39,7 +48,10 @@ struct vkr_ring {
    vkr_object_id id;
    struct list_head head;
 
+   /* ring regions */
    struct virgl_resource *resource;
+   struct vkr_ring_control control;
+
    struct vkr_ring_shared shared;
    uint32_t buffer_size;
    uint32_t buffer_mask;
@@ -48,6 +60,7 @@ struct vkr_ring {
 
    size_t extra_size;
 
+   /* ring thread */
    struct virgl_context *context;
    uint64_t idle_timeout;
 

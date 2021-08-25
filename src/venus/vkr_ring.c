@@ -15,13 +15,59 @@ enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
 };
 
+/* callers must make sure they do not seek to end-of-resource or beyond */
+static const struct iovec *
+seek_resource(const struct virgl_resource *res,
+              int base_iov_index,
+              size_t offset,
+              int *out_iov_index,
+              size_t *out_iov_offset)
+{
+   const struct iovec *iov = &res->iov[base_iov_index];
+   assert(iov - res->iov < res->iov_count);
+   while (offset >= iov->iov_len) {
+      offset -= iov->iov_len;
+      iov++;
+      assert(iov - res->iov < res->iov_count);
+   }
+
+   *out_iov_index = iov - res->iov;
+   *out_iov_offset = offset;
+
+   return iov;
+}
+
+static void *
+get_resource_pointer(const struct virgl_resource *res, int base_iov_index, size_t offset)
+{
+   const struct iovec *iov =
+      seek_resource(res, base_iov_index, offset, &base_iov_index, &offset);
+   return (uint8_t *)iov->iov_base + offset;
+}
+
+static bool
+vkr_ring_init_control(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
+{
+   struct vkr_ring_control *ctrl = &ring->control;
+
+   ctrl->head = get_resource_pointer(layout->resource, 0, layout->head.begin);
+   ctrl->tail = get_resource_pointer(layout->resource, 0, layout->tail.begin);
+   ctrl->status = get_resource_pointer(layout->resource, 0, layout->status.begin);
+
+   /* we will manage head and status, and we expect them to be 0 initially */
+   if (*ctrl->head || *ctrl->status)
+      return false;
+
+   return true;
+}
+
 static void
 vkr_ring_store_head(struct vkr_ring *ring)
 {
    /* the renderer is expected to load the head with memory_order_acquire,
     * forming a release-acquire ordering
     */
-   atomic_store_explicit(ring->shared.head, ring->cur, memory_order_release);
+   atomic_store_explicit(ring->control.head, ring->cur, memory_order_release);
 }
 
 static uint32_t
@@ -30,13 +76,13 @@ vkr_ring_load_tail(const struct vkr_ring *ring)
    /* the driver is expected to store the tail with memory_order_release,
     * forming a release-acquire ordering
     */
-   return atomic_load_explicit(ring->shared.tail, memory_order_acquire);
+   return atomic_load_explicit(ring->control.tail, memory_order_acquire);
 }
 
 static void
 vkr_ring_store_status(struct vkr_ring *ring, uint32_t status)
 {
-   atomic_store_explicit(ring->shared.status, status, memory_order_seq_cst);
+   atomic_store_explicit(ring->control.status, status, memory_order_seq_cst);
 }
 
 static void
@@ -69,12 +115,14 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
 
    ring->resource = layout->resource;
 
+   if (!vkr_ring_init_control(ring, layout)) {
+      free(ring);
+      return NULL;
+   }
+
    uint8_t *shared = layout->resource->iov[0].iov_base;
 #define ring_attach_shared(member)                                                       \
    ring->shared.member = (void *)(shared + layout->member.begin)
-   ring_attach_shared(head);
-   ring_attach_shared(tail);
-   ring_attach_shared(status);
    ring_attach_shared(buffer);
    ring_attach_shared(extra);
 #undef ring_attach_shared
@@ -83,12 +131,6 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    assert(ring->buffer_size && util_is_power_of_two(ring->buffer_size));
    ring->buffer_mask = ring->buffer_size - 1;
    ring->extra_size = vkr_region_size(&layout->extra);
-
-   /* we will manage head and status, and we expect them to be 0 initially */
-   if (*ring->shared.head || *ring->shared.status) {
-      free(ring);
-      return NULL;
-   }
 
    ring->cmd = malloc(ring->buffer_size);
    if (!ring->cmd) {
