@@ -157,14 +157,14 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout, const VkRingCreateInfoMESA 
 {
    /* clang-format off */
    *layout = (struct vkr_ring_layout){
-      .head   = VKR_REGION_INIT(info->headOffset, sizeof(uint32_t)),
-      .tail   = VKR_REGION_INIT(info->tailOffset, sizeof(uint32_t)),
-      .status = VKR_REGION_INIT(info->statusOffset, sizeof(uint32_t)),
-      .buffer = VKR_REGION_INIT(info->bufferOffset, info->bufferSize),
-      .extra  = VKR_REGION_INIT(info->extraOffset, info->extraSize),
+      .head   = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
+      .tail   = VKR_REGION_INIT(info->offset + info->tailOffset, sizeof(uint32_t)),
+      .status = VKR_REGION_INIT(info->offset + info->statusOffset, sizeof(uint32_t)),
+      .buffer = VKR_REGION_INIT(info->offset + info->bufferOffset, info->bufferSize),
+      .extra  = VKR_REGION_INIT(info->offset + info->extraOffset, info->extraSize),
    };
 
-   const struct vkr_region res_region = VKR_REGION_INIT(0, info->size);
+   const struct vkr_region res_region = VKR_REGION_INIT(info->offset, info->size);
    const struct vkr_region *regions[] = {
       &layout->head,
       &layout->tail,
@@ -247,7 +247,6 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
-   shared += info->offset;
 
    struct vkr_ring_layout layout;
    if (!vkr_ring_layout_init(&layout, info)) {
