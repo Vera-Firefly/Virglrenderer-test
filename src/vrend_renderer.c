@@ -3414,6 +3414,9 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
       memcpy(key->prev_stage_generic_and_patch_outputs_layout,
              prev->sinfo.generic_outputs_layout,
              prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
+
+      key->num_in_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_clip;
+      key->num_in_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_cull;
    }
 
    int next_type = -1;
@@ -3443,11 +3446,6 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          && key->fs.prim_is_points
          ? sub_ctx->rs_state.sprite_coord_enable
          : 0x0;
-
-      if (prev_type != -1 && sub_ctx->shaders[prev_type]) {
-         key->num_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_clip;
-         key->num_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_cull;
-      }
 
    } else {
       if (sub_ctx->shaders[PIPE_SHADER_FRAGMENT]) {
@@ -3489,8 +3487,8 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
        * we can avoid re-translating this shader by not updating the
        * info in the key */
       if (next_type != PIPE_SHADER_FRAGMENT) {
-         key->num_clip = sub_ctx->shaders[next_type]->current->var_sinfo.num_clip;
-         key->num_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_cull;
+         key->num_out_clip = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_clip;
+         key->num_out_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_cull;
       }
 
       if (type == PIPE_SHADER_VERTEX && next_type == PIPE_SHADER_FRAGMENT) {

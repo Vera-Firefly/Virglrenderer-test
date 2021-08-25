@@ -131,9 +131,11 @@ struct vrend_shader_info {
 
 struct vrend_variable_shader_info {
    struct vrend_fs_shader_info fs_info;
+   uint32_t num_in_clip:4;
+   uint32_t num_in_cull:4;
+   uint32_t num_out_clip:4;
+   uint32_t num_out_cull:4;
    int num_ucp;
-   int num_clip;
-   int num_cull;
 };
 
 struct vrend_shader_key {
@@ -173,8 +175,10 @@ struct vrend_shader_key {
 
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
-   uint8_t num_cull : 4;
-   uint8_t num_clip : 4;
+   uint8_t num_in_cull : 4;
+   uint8_t num_in_clip : 4;
+   uint8_t num_out_cull : 4;
+   uint8_t num_out_clip : 4;
    uint8_t pstipple_tex : 1;
    uint8_t add_alpha_test : 1;
    uint8_t color_two_side : 1;
