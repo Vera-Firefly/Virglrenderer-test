@@ -46,6 +46,17 @@ get_resource_pointer(const struct virgl_resource *res, int base_iov_index, size_
 }
 
 static void
+vkr_ring_init_extra(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
+{
+   struct vkr_ring_extra *extra = &ring->extra;
+
+   seek_resource(layout->resource, 0, layout->extra.begin, &extra->base_iov_index,
+                 &extra->base_iov_offset);
+
+   extra->region = vkr_region_make_relative(&layout->extra);
+}
+
+static void
 vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
 {
    struct vkr_ring_buffer *buf = &ring->buffer;
@@ -138,14 +149,7 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    }
 
    vkr_ring_init_buffer(ring, layout);
-
-   uint8_t *shared = layout->resource->iov[0].iov_base;
-#define ring_attach_shared(member)                                                       \
-   ring->shared.member = (void *)(shared + layout->member.begin)
-   ring_attach_shared(extra);
-#undef ring_attach_shared
-
-   ring->extra_size = vkr_region_size(&layout->extra);
+   vkr_ring_init_extra(ring, layout);
 
    ring->cmd = malloc(ring->buffer.size);
    if (!ring->cmd) {
@@ -323,11 +327,20 @@ vkr_ring_notify(struct vkr_ring *ring)
 bool
 vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
 {
-   if (offset > ring->extra_size || sizeof(val) > ring->extra_size - offset)
-      return false;
+   struct vkr_ring_extra *extra = &ring->extra;
 
-   volatile atomic_uint *dst = (void *)((uint8_t *)ring->shared.extra + offset);
-   atomic_store_explicit(dst, val, memory_order_release);
+   if (unlikely(extra->cached_offset != offset || !extra->cached_data)) {
+      const struct vkr_region access = VKR_REGION_INIT(offset, sizeof(val));
+      if (!vkr_region_is_valid(&access) || !vkr_region_is_within(&access, &extra->region))
+         return false;
+
+      /* Mesa always sets offset to 0 and the cache hit rate will be 100% */
+      extra->cached_offset = offset;
+      extra->cached_data = get_resource_pointer(ring->resource, extra->base_iov_index,
+                                                extra->base_iov_offset + offset);
+   }
+
+   atomic_store_explicit(extra->cached_data, val, memory_order_release);
 
    {
       TRACE_SCOPE("ring extra done");

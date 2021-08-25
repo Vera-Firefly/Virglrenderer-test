@@ -50,8 +50,18 @@ struct vkr_ring_buffer {
    const uint8_t *data;
 };
 
-struct vkr_ring_shared {
-   void *extra;
+/* the extra region of a ring */
+struct vkr_ring_extra {
+   /* the base of the region in the resource */
+   int base_iov_index;
+   size_t base_iov_offset;
+
+   /* used for offset validation */
+   struct vkr_region region;
+
+   /* cache the latest offset->pointer result */
+   size_t cached_offset;
+   volatile atomic_uint *cached_data;
 };
 
 struct vkr_ring {
@@ -63,15 +73,12 @@ struct vkr_ring {
    struct virgl_resource *resource;
    struct vkr_ring_control control;
    struct vkr_ring_buffer buffer;
-
-   struct vkr_ring_shared shared;
-   void *cmd;
-
-   size_t extra_size;
+   struct vkr_ring_extra extra;
 
    /* ring thread */
    struct virgl_context *context;
    uint64_t idle_timeout;
+   void *cmd;
 
    mtx_t mutex;
    cnd_t cond;
