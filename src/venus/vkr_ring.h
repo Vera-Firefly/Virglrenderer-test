@@ -8,8 +8,12 @@
 
 #include "vkr_common.h"
 
-/* the layout of a ring in a virgl_resource */
+/* The layout of a ring in a virgl_resource.  This is parsed and discarded by
+ * vkr_ring_create.
+ */
 struct vkr_ring_layout {
+   struct virgl_resource *resource;
+
    struct vkr_region head;
    struct vkr_region tail;
    struct vkr_region status;
@@ -35,6 +39,7 @@ struct vkr_ring {
    vkr_object_id id;
    struct list_head head;
 
+   struct virgl_resource *resource;
    struct vkr_ring_shared shared;
    uint32_t buffer_size;
    uint32_t buffer_mask;
@@ -55,7 +60,6 @@ struct vkr_ring {
 
 struct vkr_ring *
 vkr_ring_create(const struct vkr_ring_layout *layout,
-                void *shared,
                 struct virgl_context *ctx,
                 uint64_t idle_timeout);
 

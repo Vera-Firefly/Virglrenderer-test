@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "virgl_context.h"
+#include "vrend_iov.h"
 
 enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
@@ -56,7 +57,6 @@ vkr_ring_read_buffer(struct vkr_ring *ring, void *data, size_t size)
 
 struct vkr_ring *
 vkr_ring_create(const struct vkr_ring_layout *layout,
-                void *shared,
                 struct virgl_context *ctx,
                 uint64_t idle_timeout)
 {
@@ -67,8 +67,11 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    if (!ring)
       return NULL;
 
+   ring->resource = layout->resource;
+
+   uint8_t *shared = layout->resource->iov[0].iov_base;
 #define ring_attach_shared(member)                                                       \
-   ring->shared.member = (void *)((uint8_t *)shared + layout->member.begin)
+   ring->shared.member = (void *)(shared + layout->member.begin)
    ring_attach_shared(head);
    ring_attach_shared(tail);
    ring_attach_shared(status);

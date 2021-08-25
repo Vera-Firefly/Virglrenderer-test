@@ -153,10 +153,13 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 }
 
 static bool
-vkr_ring_layout_init(struct vkr_ring_layout *layout, const VkRingCreateInfoMESA *info)
+vkr_ring_layout_init(struct vkr_ring_layout *layout,
+                     struct virgl_resource *res,
+                     const VkRingCreateInfoMESA *info)
 {
    /* clang-format off */
    *layout = (struct vkr_ring_layout){
+      .resource = res,
       .head   = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
       .tail   = VKR_REGION_INIT(info->offset + info->tailOffset, sizeof(uint32_t)),
       .status = VKR_REGION_INIT(info->offset + info->statusOffset, sizeof(uint32_t)),
@@ -173,6 +176,15 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout, const VkRingCreateInfoMESA 
       &layout->extra,
    };
    /* clang-format on */
+
+   if (res->iov_count != 1) {
+      vkr_log("no scatter-gather support for ring buffers (TODO)");
+      return false;
+   }
+
+   const struct vkr_region res_size = VKR_REGION_INIT(0, res->iov[0].iov_len);
+   if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
+      return false;
 
    for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
       const struct vkr_region *region = regions[i];
@@ -224,8 +236,6 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    const VkRingCreateInfoMESA *info = args->pCreateInfo;
    const struct vkr_resource_attachment *att;
-   uint8_t *shared;
-   size_t size;
    struct vkr_ring *ring;
 
    att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(info->resourceId));
@@ -234,28 +244,14 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   /* TODO support scatter-gather or require logically contiguous resources */
-   if (att->resource->iov_count != 1) {
-      vkr_log("no scatter-gather support for ring buffers (TODO)");
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
-   shared = att->resource->iov[0].iov_base;
-   size = att->resource->iov[0].iov_len;
-   if (info->offset > size || info->size > size - info->offset) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    struct vkr_ring_layout layout;
-   if (!vkr_ring_layout_init(&layout, info)) {
+   if (!vkr_ring_layout_init(&layout, att->resource, info)) {
       vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
-   ring = vkr_ring_create(&layout, shared, &ctx->base, info->idleTimeout);
+   ring = vkr_ring_create(&layout, &ctx->base, info->idleTimeout);
    if (!ring) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
