@@ -153,13 +153,15 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 }
 
 static bool
-validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
+vkr_ring_layout_init(struct vkr_ring_layout *layout, const VkRingCreateInfoMESA *info)
 {
-   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size)) {
-      vkr_log("ring buffer size (%lu) must be a power of two",
-              layout->buffer.size);
-      return false;
-   }
+   *layout = (struct vkr_ring_layout){
+      .head = { info->headOffset, sizeof(uint32_t) },
+      .tail = { info->tailOffset, sizeof(uint32_t) },
+      .status = { info->statusOffset, sizeof(uint32_t) },
+      .buffer = { info->bufferOffset, info->bufferSize },
+      .extra = { info->extraOffset, info->extraSize },
+   };
 
    const struct memory_region *regions[] = {
       &layout->head,
@@ -170,8 +172,8 @@ validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
    };
 
    for (size_t i = 0; i < ARRAY_SIZE(regions); i++) {
-      if (regions[i]->offset > buf_size ||
-          regions[i]->size > buf_size - regions[i]->offset) {
+      if (regions[i]->offset > info->size ||
+          regions[i]->size > info->size - regions[i]->offset) {
          vkr_log("ring buffer control variable (offset=%lu, size=%lu) placed"
                  " out-of-bounds in shared memory layout",
                  regions[i]->offset, regions[i]->size);
@@ -204,6 +206,12 @@ validate_ring_layout(const struct vkr_ring_layout *layout, size_t buf_size)
             return false;
          }
       }
+   }
+
+   if (!layout->buffer.size || !util_is_power_of_two(layout->buffer.size)) {
+      vkr_log("ring buffer size (%lu) must be a power of two",
+              layout->buffer.size);
+      return false;
    }
 
    return true;
@@ -240,17 +248,9 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       return;
    }
    shared += info->offset;
-   size = info->size;
 
-   const struct vkr_ring_layout layout = {
-      .head = {info->headOffset, sizeof(uint32_t)},
-      .tail = {info->tailOffset, sizeof(uint32_t)},
-      .status = {info->statusOffset, sizeof(uint32_t)},
-      .buffer = {info->bufferOffset, info->bufferSize},
-      .extra = {info->extraOffset, info->extraSize},
-   };
-
-   if (!validate_ring_layout(&layout, size)) {
+   struct vkr_ring_layout layout;
+   if (!vkr_ring_layout_init(&layout, info)) {
       vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
