@@ -37,9 +37,20 @@ struct vkr_ring_control {
    volatile atomic_uint *status;
 };
 
-struct vkr_ring_shared {
-   const void *buffer;
+/* the buffer region of a ring */
+struct vkr_ring_buffer {
+   uint32_t size;
+   uint32_t mask;
 
+   /* The current offset in the buffer region.  It is free-running and must be
+    * masked to be between [0, size).
+    */
+   uint32_t cur;
+
+   const uint8_t *data;
+};
+
+struct vkr_ring_shared {
    void *extra;
 };
 
@@ -51,11 +62,9 @@ struct vkr_ring {
    /* ring regions */
    struct virgl_resource *resource;
    struct vkr_ring_control control;
+   struct vkr_ring_buffer buffer;
 
    struct vkr_ring_shared shared;
-   uint32_t buffer_size;
-   uint32_t buffer_mask;
-   uint32_t cur;
    void *cmd;
 
    size_t extra_size;

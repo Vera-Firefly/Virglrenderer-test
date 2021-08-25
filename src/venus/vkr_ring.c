@@ -45,6 +45,21 @@ get_resource_pointer(const struct virgl_resource *res, int base_iov_index, size_
    return (uint8_t *)iov->iov_base + offset;
 }
 
+static void
+vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
+{
+   struct vkr_ring_buffer *buf = &ring->buffer;
+
+   buf->size = vkr_region_size(&layout->buffer);
+   assert(buf->size && util_is_power_of_two(buf->size));
+   buf->mask = buf->size - 1;
+
+   buf->cur = 0;
+
+   /* TODO iov support */
+   buf->data = get_resource_pointer(layout->resource, 0, layout->buffer.begin);
+}
+
 static bool
 vkr_ring_init_control(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
 {
@@ -67,7 +82,7 @@ vkr_ring_store_head(struct vkr_ring *ring)
    /* the renderer is expected to load the head with memory_order_acquire,
     * forming a release-acquire ordering
     */
-   atomic_store_explicit(ring->control.head, ring->cur, memory_order_release);
+   atomic_store_explicit(ring->control.head, ring->buffer.cur, memory_order_release);
 }
 
 static uint32_t
@@ -88,17 +103,19 @@ vkr_ring_store_status(struct vkr_ring *ring, uint32_t status)
 static void
 vkr_ring_read_buffer(struct vkr_ring *ring, void *data, size_t size)
 {
-   const size_t offset = ring->cur & ring->buffer_mask;
-   assert(size <= ring->buffer_size);
-   if (offset + size <= ring->buffer_size) {
-      memcpy(data, (const uint8_t *)ring->shared.buffer + offset, size);
+   struct vkr_ring_buffer *buf = &ring->buffer;
+
+   const size_t offset = buf->cur & buf->mask;
+   assert(size <= buf->size);
+   if (offset + size <= buf->size) {
+      memcpy(data, buf->data + offset, size);
    } else {
-      const size_t s = ring->buffer_size - offset;
-      memcpy(data, (const uint8_t *)ring->shared.buffer + offset, s);
-      memcpy((uint8_t *)data + s, ring->shared.buffer, size - s);
+      const size_t s = buf->size - offset;
+      memcpy(data, buf->data + offset, s);
+      memcpy((uint8_t *)data + s, buf->data, size - s);
    }
 
-   ring->cur += size;
+   buf->cur += size;
 }
 
 struct vkr_ring *
@@ -120,19 +137,17 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
       return NULL;
    }
 
+   vkr_ring_init_buffer(ring, layout);
+
    uint8_t *shared = layout->resource->iov[0].iov_base;
 #define ring_attach_shared(member)                                                       \
    ring->shared.member = (void *)(shared + layout->member.begin)
-   ring_attach_shared(buffer);
    ring_attach_shared(extra);
 #undef ring_attach_shared
 
-   ring->buffer_size = vkr_region_size(&layout->buffer);
-   assert(ring->buffer_size && util_is_power_of_two(ring->buffer_size));
-   ring->buffer_mask = ring->buffer_size - 1;
    ring->extra_size = vkr_region_size(&layout->extra);
 
-   ring->cmd = malloc(ring->buffer_size);
+   ring->cmd = malloc(ring->buffer.size);
    if (!ring->cmd) {
       free(ring);
       return NULL;
@@ -220,7 +235,7 @@ vkr_ring_thread(void *arg)
       if (vkr_ring_now() >= last_submit + ring->idle_timeout) {
          ring->pending_notify = false;
          vkr_ring_store_status(ring, VKR_RING_STATUS_IDLE);
-         wait = ring->cur == vkr_ring_load_tail(ring);
+         wait = ring->buffer.cur == vkr_ring_load_tail(ring);
          if (!wait)
             vkr_ring_store_status(ring, 0);
       }
@@ -241,9 +256,9 @@ vkr_ring_thread(void *arg)
          relax_iter = 0;
       }
 
-      cmd_size = vkr_ring_load_tail(ring) - ring->cur;
+      cmd_size = vkr_ring_load_tail(ring) - ring->buffer.cur;
       if (cmd_size) {
-         if (cmd_size > ring->buffer_size) {
+         if (cmd_size > ring->buffer.size) {
             ret = -EINVAL;
             break;
          }
