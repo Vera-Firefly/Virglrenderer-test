@@ -1103,8 +1103,10 @@ iter_declaration(struct tgsi_iterate_context *iter,
                }
                name_prefix = "ex";
             }
-            break;
+         } else {
+            name_prefix = get_stage_input_name_prefix(ctx, iter->processor.Processor);
          }
+         break;
          /* fallthrough */
       case TGSI_SEMANTIC_PRIMID:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
@@ -1400,9 +1402,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->outputs[i].type = get_type(ctx->key->fs.cbufs_signed_int_bitmask,
                                             ctx->key->fs.cbufs_unsigned_int_bitmask,
                                             ctx->outputs[i].sid);
-         }
-
-         if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
+            name_prefix = ctx->key->fs.logicop_enabled ? "fsout_tmp" : "fsout";
+         } else {
             if (ctx->glsl_ver_required < 140) {
                ctx->outputs[i].glsl_no_index = true;
                if (ctx->outputs[i].sid == 0)
@@ -1410,13 +1411,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
                else if (ctx->outputs[i].sid == 1)
                   name_prefix = "gl_FrontSecondaryColor";
             } else
-               name_prefix = "ex";
-            break;
-         } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
-                    ctx->key->fs.logicop_enabled) {
-            name_prefix = "fsout_tmp";
-            break;
+               name_prefix = ctx->is_last_vertex_stage ? "ex" : get_stage_output_name_prefix(iter->processor.Processor);
          }
+         break;
          /* fallthrough */
       case TGSI_SEMANTIC_BCOLOR:
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
