@@ -42,6 +42,10 @@ struct vkr_ring_control {
 
 /* the buffer region of a ring */
 struct vkr_ring_buffer {
+   /* the base of the region in the resource */
+   int base_iov_index;
+   size_t base_iov_offset;
+
    uint32_t size;
    uint32_t mask;
 
@@ -50,7 +54,10 @@ struct vkr_ring_buffer {
     */
    uint32_t cur;
 
-   const uint8_t *data;
+   /* The current iov and iov offset in the resource. */
+   const struct iovec *cur_iov;
+   int cur_iov_index;
+   size_t cur_iov_offset;
 };
 
 /* the extra region of a ring */

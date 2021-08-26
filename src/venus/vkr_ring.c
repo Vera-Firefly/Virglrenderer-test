@@ -61,14 +61,18 @@ vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout
 {
    struct vkr_ring_buffer *buf = &ring->buffer;
 
+   const struct iovec *base_iov =
+      seek_resource(layout->resource, 0, layout->buffer.begin, &buf->base_iov_index,
+                    &buf->base_iov_offset);
+
    buf->size = vkr_region_size(&layout->buffer);
    assert(buf->size && util_is_power_of_two(buf->size));
    buf->mask = buf->size - 1;
 
    buf->cur = 0;
-
-   /* TODO iov support */
-   buf->data = get_resource_pointer(layout->resource, 0, layout->buffer.begin);
+   buf->cur_iov = base_iov;
+   buf->cur_iov_index = buf->base_iov_index;
+   buf->cur_iov_offset = buf->base_iov_offset;
 }
 
 static bool
@@ -111,22 +115,67 @@ vkr_ring_store_status(struct vkr_ring *ring, uint32_t status)
    atomic_store_explicit(ring->control.status, status, memory_order_seq_cst);
 }
 
+/* TODO consider requiring virgl_resource to be logically contiguous */
 static void
-vkr_ring_read_buffer(struct vkr_ring *ring, void *data, size_t size)
+vkr_ring_read_buffer(struct vkr_ring *ring, void *data, uint32_t size)
 {
    struct vkr_ring_buffer *buf = &ring->buffer;
+   const struct virgl_resource *res = ring->resource;
 
-   const size_t offset = buf->cur & buf->mask;
    assert(size <= buf->size);
-   if (offset + size <= buf->size) {
-      memcpy(data, buf->data + offset, size);
+   const uint32_t buf_offset = buf->cur & buf->mask;
+   const uint32_t buf_avail = buf->size - buf_offset;
+   const bool wrap = size >= buf_avail;
+
+   uint32_t read_size;
+   uint32_t wrap_size;
+   if (!wrap) {
+      read_size = size;
+      wrap_size = 0;
    } else {
-      const size_t s = buf->size - offset;
-      memcpy(data, buf->data + offset, s);
-      memcpy((uint8_t *)data + s, buf->data, size - s);
+      read_size = buf_avail;
+      /* When size == buf_avail, wrap is true but wrap_size is 0.  We want to
+       * wrap because it seems slightly faster on the next call.  Besides,
+       * seek_resource does not support seeking to end-of-resource which could
+       * happen if we don't wrap and the buffer region end coincides with the
+       * resource end.
+       */
+      wrap_size = size - buf_avail;
    }
 
+   /* do the reads */
+   if (read_size <= buf->cur_iov->iov_len - buf->cur_iov_offset) {
+      const void *src = (const uint8_t *)buf->cur_iov->iov_base + buf->cur_iov_offset;
+      memcpy(data, src, read_size);
+
+      /* fast path */
+      if (!wrap) {
+         assert(!wrap_size);
+         buf->cur += read_size;
+         buf->cur_iov_offset += read_size;
+         return;
+      }
+   } else {
+      vrend_read_from_iovec(buf->cur_iov, res->iov_count - buf->cur_iov_index,
+                            buf->cur_iov_offset, data, read_size);
+   }
+
+   if (wrap_size) {
+      vrend_read_from_iovec(res->iov + buf->base_iov_index,
+                            res->iov_count - buf->base_iov_index, buf->base_iov_offset,
+                            (char *)data + read_size, wrap_size);
+   }
+
+   /* advance cur */
    buf->cur += size;
+   if (!wrap) {
+      buf->cur_iov = seek_resource(res, buf->cur_iov_index, buf->cur_iov_offset + size,
+                                   &buf->cur_iov_index, &buf->cur_iov_offset);
+   } else {
+      buf->cur_iov =
+         seek_resource(res, buf->base_iov_index, buf->base_iov_offset + wrap_size,
+                       &buf->cur_iov_index, &buf->cur_iov_offset);
+   }
 }
 
 struct vkr_ring *
