@@ -41,6 +41,8 @@ vkr_dispatch_vkCreateDescriptorPool(struct vn_dispatch_context *dispatch,
    if (!pool)
       return;
 
+   pool->flags = args->pCreateInfo->flags;
+
    list_inithead(&pool->descriptor_sets);
 }
 
@@ -89,14 +91,19 @@ vkr_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_context *dispatch,
    struct vkr_descriptor_pool *pool =
       vkr_descriptor_pool_from_handle(args->pAllocateInfo->descriptorPool);
    struct object_array arr;
+   VkResult result;
 
    if (!pool) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
-   if (vkr_descriptor_set_create_array(ctx, args, &arr) != VK_SUCCESS)
+   result = vkr_descriptor_set_create_array(ctx, args, &arr);
+   if (result != VK_SUCCESS) {
+      if (!(pool->flags & VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT))
+         vkr_log("Warning: vkAllocateDescriptorSets failed(%u)", result);
       return;
+   }
 
    vkr_descriptor_set_add_array(ctx, dev, pool, &arr);
 }

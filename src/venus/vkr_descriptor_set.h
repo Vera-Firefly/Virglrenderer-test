@@ -18,6 +18,8 @@ VKR_DEFINE_OBJECT_CAST(descriptor_set_layout,
 struct vkr_descriptor_pool {
    struct vkr_object base;
 
+   VkDescriptorPoolCreateFlags flags;
+
    struct list_head descriptor_sets;
 };
 VKR_DEFINE_OBJECT_CAST(descriptor_pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, VkDescriptorPool)
