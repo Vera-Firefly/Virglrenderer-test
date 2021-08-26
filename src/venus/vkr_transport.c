@@ -312,6 +312,8 @@ vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
 {
    const VkVenusExperimentalFeatures100000MESA features = {
       .memoryResourceAllocationSize = VK_TRUE,
+      .globalFencing = VK_FALSE,
+      .largeRing = VK_TRUE,
    };
 
    vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(args);
