@@ -8,6 +8,9 @@
 
 #include "vkr_common.h"
 
+/* this must not exceed UINT32_MAX because the ring head and tail are 32-bit */
+#define VKR_RING_BUFFER_MAX_SIZE UINT32_MAX
+
 /* The layout of a ring in a virgl_resource.  This is parsed and discarded by
  * vkr_ring_create.
  */
