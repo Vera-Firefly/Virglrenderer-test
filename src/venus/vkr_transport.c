@@ -177,12 +177,8 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    };
    /* clang-format on */
 
-   if (res->iov_count != 1) {
-      vkr_log("no scatter-gather support for ring buffers (TODO)");
-      return false;
-   }
-
-   const struct vkr_region res_size = VKR_REGION_INIT(0, res->iov[0].iov_len);
+   const struct vkr_region res_size =
+      VKR_REGION_INIT(0, vrend_get_iovec_size(res->iov, res->iov_count));
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
       return false;
 

@@ -8,8 +8,14 @@
 
 #include "vkr_common.h"
 
-/* this must not exceed UINT32_MAX because the ring head and tail are 32-bit */
-#define VKR_RING_BUFFER_MAX_SIZE UINT32_MAX
+/* We read from the ring buffer to a temporary buffer for
+ * virgl_context::submit_cmd.  Until that is changed, we want to put a limit
+ * on the size of the temporary buffer.  It also makes no sense to have huge
+ * rings.
+ *
+ * This must not exceed UINT32_MAX because the ring head and tail are 32-bit.
+ */
+#define VKR_RING_BUFFER_MAX_SIZE (16u * 1024 * 1024)
 
 /* The layout of a ring in a virgl_resource.  This is parsed and discarded by
  * vkr_ring_create.
