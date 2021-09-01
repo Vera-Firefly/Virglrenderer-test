@@ -5464,7 +5464,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
                emit_buf(&ctx->glsl_strbufs, "memoryBarrierBuffer();\n");
             }
             if (val & TGSI_MEMBAR_ATOMIC_BUFFER) {
-               emit_buf(&ctx->glsl_strbufs, "memoryBarrierAtomic();\n");
+               emit_buf(&ctx->glsl_strbufs, "memoryBarrierAtomicCounter();\n");
             }
             if (val & TGSI_MEMBAR_SHADER_IMAGE) {
                emit_buf(&ctx->glsl_strbufs, "memoryBarrierImage();\n");
