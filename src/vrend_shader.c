@@ -4467,15 +4467,17 @@ get_source_info(struct dump_ctx *ctx,
             if (src->Dimension.Index == ctx->abo_idx[j] &&
                 src->Register.Index >= ctx->abo_offsets[j] &&
                 src->Register.Index < ctx->abo_offsets[j] + ctx->abo_sizes[j]) {
+               int abo_idx = ctx->abo_idx[j];
+               int abo_offset = ctx->abo_offsets[j] * 4;
                if (ctx->abo_sizes[j] > 1) {
                   int offset = src->Register.Index - ctx->abo_offsets[j];
                   if (src->Register.Indirect) {
                      assert(src->Indirect.File == TGSI_FILE_ADDRESS);
-                     strbuf_fmt(src_buf, "ac%d[addr%d + %d]", j, src->Indirect.Index, offset);
+                     strbuf_fmt(src_buf, "ac%d_%d[addr%d + %d]", abo_idx, abo_offset, src->Indirect.Index, offset);
                   } else
-                     strbuf_fmt(src_buf, "ac%d[%d]", j, offset);
+                     strbuf_fmt(src_buf, "ac%d_%d[%d]", abo_idx, abo_offset, offset);
                } else
-                  strbuf_fmt(src_buf, "ac%d", j);
+                  strbuf_fmt(src_buf, "ac%d_%d", abo_idx, abo_offset);
                break;
             }
          }
@@ -6080,9 +6082,9 @@ static int emit_ios_common(const struct dump_ctx *ctx,
 
    for (i = 0; i < ctx->num_abo; i++){
       if (ctx->abo_sizes[i] > 1)
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d[%d];\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, i, ctx->abo_sizes[i]);
+         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d_%d[%d];\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_sizes[i]);
       else
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d;\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, i);
+         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d_%d;\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_idx[i], ctx->abo_offsets[i] * 4);
    }
 
    if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
