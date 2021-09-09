@@ -45,6 +45,7 @@ extern "C" {
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
 
+__attribute__((no_sanitize("memory")))
 static inline boolean
 p_atomic_dec_zero(int32_t *v)
 {
@@ -92,6 +93,7 @@ extern "C" {
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
 
+__attribute__((no_sanitize("memory")))
 static inline boolean
 p_atomic_dec_zero(int32_t *v)
 {
@@ -204,6 +206,7 @@ extern "C" {
 #define p_atomic_set(_v, _i) (*(_v) = (_i))
 #define p_atomic_read(_v) (*(_v))
 
+__attribute__((no_sanitize("memory")))
 static inline boolean
 p_atomic_dec_zero(int32_t *v)
 {
