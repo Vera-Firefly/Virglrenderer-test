@@ -4672,7 +4672,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
       struct vrend_shader *shader = sel->current;
       if (shader && !shader->is_compiled) {//shader->sel->type == PIPE_SHADER_FRAGMENT || shader->sel->type == PIPE_SHADER_GEOMETRY) {
          if (!vrend_compile_shader(sub_ctx, shader))
-            return -1;
+            return false;
       }
       if (vrend_state.use_gles && sel->sinfo.gles_use_tex_query_level)
          gles_emulate_query_texture_levels_mask |= 1 << i;
