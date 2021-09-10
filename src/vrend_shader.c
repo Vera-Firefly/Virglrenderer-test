@@ -1110,6 +1110,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
             ctx->inputs[i].is_int = true;
+            ctx->inputs[i].type = VEC_INT;
             ctx->inputs[i].override_no_wm = true;
             name_prefix = "gl_ViewportIndex";
             if (ctx->glsl_ver_required >= 140)
@@ -1125,6 +1126,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
             ctx->inputs[i].is_int = true;
+            ctx->inputs[i].type = VEC_INT;
             ctx->inputs[i].override_no_wm = true;
             ctx->shader_req_bits |= SHADER_REQ_LAYER;
             break;
@@ -4112,10 +4114,7 @@ get_source_info(struct dump_ctx *ctx,
                   get_tesslevel_as_source(src_buf, prefix, ctx->inputs[j].glsl_name, &src->Register);
                } else {
                   enum vrend_type_qualifier srcstypeprefix = stypeprefix;
-                  if ((stype == TGSI_TYPE_UNSIGNED || stype == TGSI_TYPE_SIGNED) &&
-                      ctx->inputs[j].is_int)
-                     srcstypeprefix = TYPE_CONVERSION_NONE;
-                  else if (ctx->inputs[j].type) {
+                  if (ctx->inputs[j].type != VEC_FLOAT) {
                      if (stype == TGSI_TYPE_UNSIGNED)
                         srcstypeprefix = UVEC4;
                      else if (stype == TGSI_TYPE_SIGNED)
