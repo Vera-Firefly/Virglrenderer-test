@@ -1214,7 +1214,6 @@ static bool vrend_compile_shader(struct vrend_sub_context *sub_ctx,
       char infolog[65536];
       int len;
       glGetShaderInfoLog(shader->id, 65536, &len, infolog);
-      glDeleteShader(shader->id);
       vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
       vrend_printf("shader failed to compile\n%s\n", infolog);
       vrend_shader_dump(shader);
@@ -4672,13 +4671,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
 
       struct vrend_shader *shader = sel->current;
       if (shader && !shader->is_compiled) {//shader->sel->type == PIPE_SHADER_FRAGMENT || shader->sel->type == PIPE_SHADER_GEOMETRY) {
-         bool ret;
-
-         ret = vrend_compile_shader(sub_ctx, shader);
-         if (ret == false) {
-            strarray_free(&shader->glsl_strings, true);
+         if (!vrend_compile_shader(sub_ctx, shader))
             return -1;
-         }
       }
       if (vrend_state.use_gles && sel->sinfo.gles_use_tex_query_level)
          gles_emulate_query_texture_levels_mask |= 1 << i;
