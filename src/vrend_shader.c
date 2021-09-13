@@ -3736,7 +3736,7 @@ get_destination_info(struct dump_ctx *ctx,
                      else
                         snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", dst_reg->Register.Index - ctx->outputs[j].first);
                   }
-                  snprintf(dsts[i], 255, "clip_dist_temp[%d %s]", ctx->outputs[j].sid, clip_indirect);
+                  snprintf(dsts[i], 255, "clip_dist_temp[%d %s]%s", ctx->outputs[j].sid, clip_indirect, writemask);
                } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
                           ctx->outputs[j].name == TGSI_SEMANTIC_TESSINNER ||
                           ctx->outputs[j].name == TGSI_SEMANTIC_SAMPLEMASK) {
