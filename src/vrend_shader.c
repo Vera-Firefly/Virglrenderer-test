@@ -6081,10 +6081,10 @@ static int emit_ios_common(const struct dump_ctx *ctx,
    }
 
    for (i = 0; i < ctx->num_abo; i++){
+      emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d_%d", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_idx[i], ctx->abo_offsets[i] * 4);
       if (ctx->abo_sizes[i] > 1)
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d_%d[%d];\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_sizes[i]);
-      else
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, offset = %d) uniform atomic_uint ac%d_%d;\n", ctx->abo_idx[i], ctx->abo_offsets[i] * 4, ctx->abo_idx[i], ctx->abo_offsets[i] * 4);
+         emit_hdrf(glsl_strbufs, "[%d]", ctx->abo_sizes[i]);
+      emit_hdrf(glsl_strbufs, ";\n");
    }
 
    if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
