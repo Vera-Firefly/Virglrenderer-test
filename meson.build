@@ -245,6 +245,7 @@ subdir('src')
 subdir('vtest')
 
 if with_tests
+   assert(have_egl, 'Tests require EGL, but it is not available')
    subdir('tests')
 endif
 
