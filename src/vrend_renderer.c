@@ -2144,6 +2144,21 @@ static inline GLenum to_gl_swizzle(int swizzle)
    }
 }
 
+static inline int to_pipe_swizzle(GLenum swizzle)
+{
+   switch (swizzle) {
+   case GL_RED: return PIPE_SWIZZLE_RED;
+   case GL_GREEN: return PIPE_SWIZZLE_GREEN;
+   case GL_BLUE: return PIPE_SWIZZLE_BLUE;
+   case GL_ALPHA: return PIPE_SWIZZLE_ALPHA;
+   case GL_ZERO: return PIPE_SWIZZLE_ZERO;
+   case GL_ONE: return PIPE_SWIZZLE_ONE;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
 int vrend_create_sampler_view(struct vrend_context *ctx,
                               uint32_t handle,
                               uint32_t res_handle, uint32_t format,
@@ -3533,6 +3548,18 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
 
    if (type != PIPE_SHADER_COMPUTE)
       vrend_sync_shader_io(sub_ctx, sel, key);
+
+   for (int i = 0; i < sub_ctx->views->num_views; i++) {
+      struct vrend_sampler_view *view = sub_ctx->views[type].views[i];
+      if (view && view->texture->target == GL_TEXTURE_BUFFER &&
+         view->format != tex_conv_table[view->format].internalformat) {
+         key->sampler_views_lower_swizzle_mask |= 1 << i;
+         key->tex_swizzle[i] = to_pipe_swizzle(view->gl_swizzle[0])      |
+                               to_pipe_swizzle(view->gl_swizzle[1]) << 3 |
+                               to_pipe_swizzle(view->gl_swizzle[2]) << 6 |
+                               to_pipe_swizzle(view->gl_swizzle[3]) << 9 ;
+      }
+   }
 }
 
 static int vrend_shader_create(struct vrend_context *ctx,

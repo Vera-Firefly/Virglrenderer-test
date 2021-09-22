@@ -168,6 +168,9 @@ struct vrend_shader_key {
 
    uint32_t compiled_fs_uid;
 
+   uint32_t sampler_views_lower_swizzle_mask;
+   uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
+
    uint8_t alpha_test;
    uint8_t clip_plane_enable;
    uint8_t num_cull : 4;

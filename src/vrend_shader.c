@@ -441,6 +441,21 @@ static inline const char *get_wm_string(unsigned wm)
    }
 }
 
+static inline const char *get_swizzle_string(uint8_t swizzle)
+{
+   switch (swizzle) {
+   case PIPE_SWIZZLE_RED: return ".x";
+   case PIPE_SWIZZLE_GREEN: return ".y";
+   case PIPE_SWIZZLE_BLUE: return ".z";
+   case PIPE_SWIZZLE_ALPHA: return ".w";
+   case PIPE_SWIZZLE_ZERO: 
+   case PIPE_SWIZZLE_ONE: return ".0";
+   default:
+      assert(0);
+      return "";
+   }
+}
+
 const char *get_internalformat_string(int virgl_format, enum tgsi_return_type *stype);
 
 static inline const char *tgsi_proc_to_prefix(int shader_type)
@@ -2903,6 +2918,17 @@ static void translate_tex(struct dump_ctx *ctx,
                    tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
                    get_wm_string(twm), bias, offset,
                    dinfo->dst_override_no_wm[0] ? "" : writemask);
+         if (ctx->key->sampler_views_lower_swizzle_mask & (1 << sinfo->sreg_index)) {
+            uint8_t swizzle_r = ctx->key->tex_swizzle[sinfo->sreg_index] & 7;
+            uint8_t swizzle_g = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 3)) >> 3;
+            uint8_t swizzle_b = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 6)) >> 6;
+            uint8_t swizzle_a = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 9)) >> 9;
+            emit_buff(&ctx->glsl_strbufs, "%s = vec4(%s%s, %s%s, %s%s, %s%s);\n", dst,
+               swizzle_r == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_r == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_r),
+               swizzle_g == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_g == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_g),
+               swizzle_b == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_b == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_b),
+               swizzle_a == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_a == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_a));
+         }
       }
    } else if (ctx->cfg->glsl_version < 140 && (ctx->shader_req_bits & SHADER_REQ_SAMPLER_RECT)) {
       /* rect is special in GLSL 1.30 */
