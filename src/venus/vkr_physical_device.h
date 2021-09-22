@@ -30,7 +30,8 @@ struct vkr_physical_device {
 
    VkPhysicalDeviceMemoryProperties memory_properties;
    VkPhysicalDeviceIDProperties id_properties;
-   bool is_memory_export_supported;
+   bool is_dma_buf_fd_export_supported;
+   bool is_opaque_fd_export_supported;
    struct gbm_device *gbm_device;
 
    struct list_head devices;

@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "util/u_format.h"
 #include "util/u_math.h"
+#include "vkr_allocator.h"
 #include "vkr_renderer.h"
 #include "vrend_renderer.h"
 #include "proxy/proxy_renderer.h"
@@ -605,8 +606,11 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
    if (state.proxy_initialized)
       proxy_renderer_fini();
 
-   if (state.vkr_initialized)
+   if (state.vkr_initialized) {
       vkr_renderer_fini();
+      /* vkr_allocator_init is called on-demand upon the first map */
+      vkr_allocator_fini();
+   }
 
    if (state.vrend_initialized)
       vrend_renderer_fini();
@@ -973,20 +977,25 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
    TRACE_FUNC();
    int ret = 0;
    void *map = NULL;
+   uint64_t map_size = 0;
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
    if (!res || res->mapped)
       return -EINVAL;
 
    if (res->pipe_resource) {
-      ret = vrend_renderer_resource_map(res->pipe_resource, &map, &res->map_size);
+      ret = vrend_renderer_resource_map(res->pipe_resource, &map, &map_size);
+      if (!ret)
+         res->map_size = map_size;
    } else {
       switch (res->fd_type) {
       case VIRGL_RESOURCE_FD_DMABUF:
       case VIRGL_RESOURCE_FD_SHM:
          map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+         map_size = res->map_size;
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:
-         /* TODO support mapping opaque FD. Fallthrough for now. */
+         ret = vkr_allocator_resource_map(res, &map, &map_size);
+         break;
       default:
          break;
       }
@@ -997,7 +1006,7 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
 
    res->mapped = map;
    *out_map = map;
-   *out_size = res->map_size;
+   *out_size = map_size;
    return ret;
 }
 
@@ -1012,7 +1021,17 @@ int virgl_renderer_resource_unmap(uint32_t res_handle)
    if (res->pipe_resource) {
       ret = vrend_renderer_resource_unmap(res->pipe_resource);
    } else {
-      ret = munmap(res->mapped, res->map_size);
+      switch (res->fd_type) {
+      case VIRGL_RESOURCE_FD_DMABUF:
+         ret = munmap(res->mapped, res->map_size);
+         break;
+      case VIRGL_RESOURCE_FD_OPAQUE:
+         ret = vkr_allocator_resource_unmap(res);
+         break;
+      default:
+         ret = -EINVAL;
+         break;
+      }
    }
 
    assert(!ret);

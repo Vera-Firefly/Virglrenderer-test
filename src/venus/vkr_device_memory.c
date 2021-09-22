@@ -167,21 +167,25 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
     * new extension.
     */
    VkExportMemoryAllocateInfo local_export_info;
-   if ((property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) &&
-       dev->physical_device->EXT_external_memory_dma_buf) {
-      if (dev->physical_device->is_memory_export_supported) {
+   if (property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+      if (dev->physical_device->is_dma_buf_fd_export_supported ||
+          dev->physical_device->is_opaque_fd_export_supported) {
+         VkExternalMemoryHandleTypeFlagBits handle_type =
+            dev->physical_device->is_dma_buf_fd_export_supported
+               ? VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT
+               : VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
          if (export_info) {
-            export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+            export_info->handleTypes |= handle_type;
          } else {
             local_export_info = (const VkExportMemoryAllocateInfo){
                .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
                .pNext = args->pAllocateInfo->pNext,
-               .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+               .handleTypes = handle_type,
             };
             export_info = &local_export_info;
             ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
          }
-      } else if (!res_info) {
+      } else if (!res_info && dev->physical_device->EXT_external_memory_dma_buf) {
          /* For non-import case, we allocate gbm bo to force import. */
          VkResult result;
 
