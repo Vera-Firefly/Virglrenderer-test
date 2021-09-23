@@ -25,7 +25,7 @@ project(
    'virglrenderer', 'c',
    version: '0.9.0',
    license : 'MIT',
-   meson_version : '>= 0.46',
+   meson_version : '>= 0.49',
    default_options : ['buildtype=release', 'b_ndebug=if-release',
                       'warning_level=3', 'c_std=gnu11']
 )
@@ -43,10 +43,6 @@ interface_age = 5
 revision      = 3
 
 cc = meson.get_compiler('c')
-
-add_project_arguments('-DHAVE_CONFIG_H=1', language : 'c')
-add_project_arguments('-D_GNU_SOURCE=1', language : 'c')
-add_project_arguments('-DVIRGL_RENDERER_UNSTABLE_APIS', language : 'c')
 
 warnings = [
    '-Werror=implicit-function-declaration',
@@ -81,6 +77,8 @@ m_dep = cc.find_library('m')
 
 conf_data = configuration_data()
 conf_data.set('VERSION', '0.8.1')
+conf_data.set('_GNU_SOURCE', 1)
+conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
 
 with_tracing = get_option('tracing')
 
@@ -225,6 +223,9 @@ endif
 configure_file(input : 'config.h.meson',
                output : 'config.h',
                configuration : conf_data)
+
+add_project_arguments('-imacros', meson.build_root() / 'config.h', language : 'c')
+add_project_arguments('-DHAVE_CONFIG_H=1', language : 'c')
 
 pkgconf_data = configuration_data()
 pkgconf_data.set('PACKAGE_VERSION', meson.project_version())

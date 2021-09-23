@@ -1,4 +1,6 @@
 #mesondefine VERSION
+#mesondefine _GNU_SOURCE
+#mesondefine VIRGL_RENDERER_UNSTABLE_APIS
 #mesondefine HAVE_SYS_UIO_H
 #mesondefine HAVE_PTHREAD
 #mesondefine HAVE_EPOXY_EGL_H
