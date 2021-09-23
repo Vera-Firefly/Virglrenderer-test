@@ -8123,7 +8123,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
    if (actually_invert && !has_feature(feat_mesa_invert))
       separate_invert = true;
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
    glPixelStorei(GL_PACK_SWAP_BYTES, 1);
 #endif
 
@@ -8213,7 +8213,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
       glPixelStorei(GL_PACK_ROW_LENGTH, 0);
    glPixelStorei(GL_PACK_ALIGNMENT, 4);
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
    glPixelStorei(GL_PACK_SWAP_BYTES, 0);
 #endif
 

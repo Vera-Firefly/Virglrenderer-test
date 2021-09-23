@@ -761,7 +761,7 @@ util_bitreverse(unsigned n)
  * Convert from little endian to CPU byte order.
  */
 
-#ifdef PIPE_ARCH_BIG_ENDIAN
+#if UTIL_ARCH_BIG_ENDIAN
 #define util_le64_to_cpu(x) util_bswap64(x)
 #define util_le32_to_cpu(x) util_bswap32(x)
 #define util_le16_to_cpu(x) util_bswap16(x)

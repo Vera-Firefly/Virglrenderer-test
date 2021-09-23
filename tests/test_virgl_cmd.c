@@ -67,7 +67,7 @@ START_TEST(virgl_test_overlap_obj_id)
 }
 END_TEST
 
-#ifdef PIPE_ARCH_LITTLE_ENDIAN
+#if UTIL_ARCH_LITTLE_ENDIAN
 static const uint32_t test_green = 0xff00ff00;
 #else
 static const uint32_t test_green = 0x00ff00ff;

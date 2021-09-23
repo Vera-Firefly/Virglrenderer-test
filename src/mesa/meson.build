@@ -1,7 +1,7 @@
 # Copyright 2021 Google LLC
 # SPDX-License-Identifier: MIT
 
-inc_mesa = include_directories('.', 'compat')
+inc_mesa = include_directories('.', 'compat', 'pipe', 'util')
 
 files_mesa = files(
 )

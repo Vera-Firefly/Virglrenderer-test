@@ -140,9 +140,11 @@ foreach f : ['timespec_get']
 endforeach
 
 if host_machine.endian() == 'little'
-  conf_data.set('PIPE_ARCH_LITTLE_ENDIAN', true)
+  conf_data.set('UTIL_ARCH_LITTLE_ENDIAN', 1)
+  conf_data.set('UTIL_ARCH_BIG_ENDIAN', 0)
 elif host_machine.endian() == 'big'
-  conf_data.set('PIPE_ARCH_BIG_ENDIAN', true)
+  conf_data.set('UTIL_ARCH_LITTLE_ENDIAN', 0)
+  conf_data.set('UTIL_ARCH_BIG_ENDIAN', 1)
 else
   error('It wasn\'t possible to figure out the endianess of the machine')  
 endif
