@@ -37,7 +37,7 @@
 
 #include "util/u_pointer.h"
 #include "util/u_debug.h"
-#include "os/os_memory.h"
+#include "util/os_memory.h"
 
 
 #ifdef __cplusplus

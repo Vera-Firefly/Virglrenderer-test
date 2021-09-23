@@ -92,13 +92,9 @@ sources_libgallium = [
    'auxiliary/tgsi/tgsi_util.c',
    'auxiliary/tgsi/tgsi_sanity.h',
    'auxiliary/tgsi/tgsi_transform.c',
-   'auxiliary/os/os_memory_aligned.h',
    'auxiliary/os/os_thread.h',
    'auxiliary/os/os_mman.h',
    'auxiliary/os/os_misc.h',
-   'auxiliary/os/os_memory.h',
-   'auxiliary/os/os_memory_debug.h',
-   'auxiliary/os/os_memory_stdc.h',
    'auxiliary/os/os_misc.c',
 ]
 

@@ -27,7 +27,7 @@
 
 
 /*
- * Debugging wrappers for OS memory management abstractions.
+ * OS memory management abstractions for the standard C library.
  */
 
 
@@ -35,58 +35,26 @@
 #error "Must not be included directly. Include os_memory.h instead"
 #endif
 
-
-#include "pipe/p_compiler.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdlib.h>
 
 
-void *
-debug_malloc(const char *file, unsigned line, const char *function,
-             size_t size);
+#define os_malloc(_size)  malloc(_size)
+#define os_calloc(_count, _size )  calloc(_count, _size )
+#define os_free(_ptr)  free(_ptr)
 
-void *
-debug_calloc(const char *file, unsigned line, const char *function,
-             size_t count, size_t size );
+#define os_realloc( _old_ptr, _old_size, _new_size) \
+   realloc(_old_ptr, _new_size + 0*(_old_size))
 
-void
-debug_free(const char *file, unsigned line, const char *function,
-           void *ptr);
+#if DETECT_OS_WINDOWS
 
-void *
-debug_realloc(const char *file, unsigned line, const char *function,
-              void *old_ptr, size_t old_size, size_t new_size );
+#include <malloc.h>
 
-void
-debug_memory_tag(void *ptr, unsigned tag);
+#define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
+#define os_free_aligned(_ptr) _aligned_free(_ptr)
+#define os_realloc_aligned(_ptr, _oldsize, _newsize, _alignment) _aligned_realloc(_ptr, _newsize, _alignment)
 
-void
-debug_memory_check_block(void *ptr);
+#else
 
-void 
-debug_memory_check(void);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#ifndef DEBUG_MEMORY_IMPLEMENTATION
-
-#define os_malloc( _size ) \
-   debug_malloc( __FILE__, __LINE__, __FUNCTION__, _size )
-#define os_calloc( _count, _size ) \
-   debug_calloc(__FILE__, __LINE__, __FUNCTION__, _count, _size )
-#define os_free( _ptr ) \
-   debug_free( __FILE__, __LINE__, __FUNCTION__,  _ptr )
-#define os_realloc( _ptr, _old_size, _new_size ) \
-   debug_realloc( __FILE__, __LINE__, __FUNCTION__,  _ptr, _old_size, _new_size )
-
-/* TODO: wrap os_malloc_aligned() and os_free_aligned() too */
 #include "os_memory_aligned.h"
 
-#endif /* !DEBUG_MEMORY_IMPLEMENTATION */
+#endif
