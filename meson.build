@@ -126,6 +126,19 @@ if cc.has_header('sys/select.h')
   conf_data.set('HAVE_SYS_SELECT_H', 1)
 endif
 
+supported_function_attributes = cc.get_supported_function_attributes([
+  'weak'
+])
+foreach a : supported_function_attributes
+    conf_data.set('HAVE_FUNC_ATTRIBUTE_@0@'.format(a.to_upper()), 1)
+endforeach
+
+foreach f : ['timespec_get']
+  if cc.has_function(f)
+    conf_data.set('HAVE_@0@'.format(f.to_upper()), 1)
+  endif
+endforeach
+
 if host_machine.endian() == 'little'
   conf_data.set('PIPE_ARCH_LITTLE_ENDIAN', true)
 elif host_machine.endian() == 'big'

@@ -22,8 +22,6 @@
 #
 
 sources_libgallium = [
-   'include/c99_compat.h',
-   'include/no_extern_c.h',
    'include/pipe/p_config.h',
    'include/pipe/p_defines.h',
    'include/pipe/p_context.h',
@@ -33,9 +31,6 @@ sources_libgallium = [
    'include/pipe/p_screen.h',
    'include/pipe/p_compiler.h',
    'include/pipe/p_video_enums.h',
-   'include/c11/threads_win32.h',
-   'include/c11/threads.h',
-   'include/c11/threads_posix.h',
    'auxiliary/util/u_format.h',
    'auxiliary/util/u_memory.h',
    'auxiliary/util/u_rect.h',
