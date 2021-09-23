@@ -39,8 +39,9 @@
 #define U_DEBUG_H_
 
 
-#include "os/os_misc.h"
+#include "util/os_misc.h"
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 
 

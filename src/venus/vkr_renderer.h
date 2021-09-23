@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "os/os_misc.h"
+#include "util/os_misc.h"
 #include "virgl_util.h"
 
 #define VKR_RENDERER_THREAD_SYNC (1u << 0)

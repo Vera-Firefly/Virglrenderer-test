@@ -94,8 +94,6 @@ sources_libgallium = [
    'auxiliary/tgsi/tgsi_transform.c',
    'auxiliary/os/os_thread.h',
    'auxiliary/os/os_mman.h',
-   'auxiliary/os/os_misc.h',
-   'auxiliary/os/os_misc.c',
 ]
 
 inc_gallium = include_directories('include', 'auxiliary', 'auxiliary/util')

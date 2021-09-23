@@ -39,7 +39,6 @@
 #include "vrend_winsys_egl.h"
 #include "virglrenderer.h"
 #include "virgl_protocol.h"
-#include "os/os_misc.h"
 #include <epoxy/egl.h>
 
 

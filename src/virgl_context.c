@@ -26,7 +26,7 @@
 
 #include <errno.h>
 
-#include "os/os_misc.h"
+#include "util/os_misc.h"
 #include "util/u_hash_table.h"
 #include "util/u_pointer.h"
 #include "virgl_util.h"

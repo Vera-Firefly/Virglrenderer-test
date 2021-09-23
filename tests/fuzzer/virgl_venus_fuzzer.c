@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "os/os_misc.h"
+#include "util/macros.h"
 #include "virglrenderer.h"
 #include "virglrenderer_hw.h"
 
