@@ -699,7 +699,7 @@ static void vrend_set_vertex_param(GLuint prog_id)
 }
 
 /* implement blitting using OpenGL. */
-void vrend_renderer_blit_gl(MAYBE_UNUSED struct vrend_context *ctx,
+void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                             struct vrend_resource *src_res,
                             struct vrend_resource *dst_res,
                             GLenum blit_views[2],

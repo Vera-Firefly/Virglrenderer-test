@@ -28,7 +28,6 @@ sources_libgallium = [
    'include/pipe/p_format.h',
    'include/pipe/p_shader_tokens.h',
    'include/pipe/p_screen.h',
-   'include/pipe/p_compiler.h',
    'include/pipe/p_video_enums.h',
    'auxiliary/util/u_format.h',
    'auxiliary/util/u_memory.h',

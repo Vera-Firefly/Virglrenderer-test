@@ -1028,7 +1028,7 @@ static void __report_core_warn(const char *fname, struct vrend_context *ctx,
 #define GLES_WARN_TIMESTAMP 16
 #define GLES_WARN_IMPLICIT_MSAA_SURFACE 17
 
-MAYBE_UNUSED
+ASSERTED
 static const char *vrend_gles_warn_strings[] = {
    [GLES_WARN_NONE]                  = "None",
    [GLES_WARN_STIPPLE]               = "Stipple",
@@ -1049,17 +1049,17 @@ static const char *vrend_gles_warn_strings[] = {
    [GLES_WARN_IMPLICIT_MSAA_SURFACE] = "Implicit MSAA Surface",
 };
 
-static void __report_gles_warn(MAYBE_UNUSED const char *fname,
-                               MAYBE_UNUSED struct vrend_context *ctx,
-                               MAYBE_UNUSED enum virgl_ctx_errors error)
+static void __report_gles_warn(ASSERTED const char *fname,
+                               ASSERTED struct vrend_context *ctx,
+                               ASSERTED enum virgl_ctx_errors error)
 {
    VREND_DEBUG(dbg_gles, ctx, "%s: GLES violation - %s\n", fname, vrend_gles_warn_strings[error]);
 }
 #define report_gles_warn(ctx, error) __report_gles_warn(__func__, ctx, error)
 
-static void __report_gles_missing_func(MAYBE_UNUSED const char *fname,
-                                       MAYBE_UNUSED struct vrend_context *ctx,
-                                       MAYBE_UNUSED const char *missf)
+static void __report_gles_missing_func(ASSERTED const char *fname,
+                                       ASSERTED struct vrend_context *ctx,
+                                       ASSERTED const char *missf)
 {
    VREND_DEBUG(dbg_gles, ctx, "%s: GLES function %s is missing\n", fname, missf);
 }
@@ -1324,7 +1324,7 @@ static void vrend_stencil_test_enable(struct vrend_sub_context *sub_ctx, bool st
    }
 }
 
-MAYBE_UNUSED
+ASSERTED
 static void dump_stream_out(struct pipe_stream_output_info *so)
 {
    unsigned i;
@@ -1372,7 +1372,7 @@ static char *get_skip_str(int *skip_val)
    return start_skip;
 }
 
-static void set_stream_out_varyings(MAYBE_UNUSED struct vrend_sub_context *sub_ctx,
+static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
                                     int prog_id,
                                     struct vrend_shader_info *sinfo)
 {
@@ -2394,9 +2394,9 @@ static void vrend_framebuffer_texture_2d(struct vrend_resource *res,
 }
 
 static
-void debug_texture(MAYBE_UNUSED const char *f, const struct vrend_resource *gt)
+void debug_texture(ASSERTED const char *f, const struct vrend_resource *gt)
 {
-   MAYBE_UNUSED const struct pipe_resource *pr = &gt->base;
+   ASSERTED const struct pipe_resource *pr = &gt->base;
 #define PRINT_TARGET(X) case X: vrend_printf( #X); break
    VREND_DEBUG_EXT(dbg_tex, NULL,
                vrend_printf("%s: ", f);
@@ -9282,7 +9282,7 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       intermediate_copy = (struct vrend_resource *)CALLOC_STRUCT(vrend_texture);
       vrend_renderer_resource_copy_args(&args, intermediate_copy);
       /* this is PIPE_MASK_ZS and bgra fixup is not needed */
-      MAYBE_UNUSED int r = vrend_resource_alloc_texture(intermediate_copy, args.format, NULL);
+      ASSERTED int r = vrend_resource_alloc_texture(intermediate_copy, args.format, NULL);
       assert(!r);
 
       glGenFramebuffers(1, &intermediate_fbo);
@@ -10155,7 +10155,7 @@ static int vrender_get_glsl_version(void)
 {
    int major_local = 0, minor_local = 0;
    const GLubyte *version_str;
-   MAYBE_UNUSED int c;
+   ASSERTED int c;
 
    version_str = glGetString(GL_SHADING_LANGUAGE_VERSION);
    if (vrend_state.use_gles) {

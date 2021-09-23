@@ -7109,7 +7109,7 @@ static bool allocate_strbuffers(struct vrend_glsl_strbufs* glsl_strbufs)
    return true;
 }
 
-static void set_strbuffers(MAYBE_UNUSED const struct vrend_context *rctx, const struct vrend_glsl_strbufs* glsl_strbufs,
+static void set_strbuffers(ASSERTED const struct vrend_context *rctx, const struct vrend_glsl_strbufs* glsl_strbufs,
                            struct vrend_strarray *shader)
 {
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_ver_ext);
@@ -7117,7 +7117,7 @@ static void set_strbuffers(MAYBE_UNUSED const struct vrend_context *rctx, const 
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_main);
 }
 
-static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vrend_context *rctx,
+static bool vrend_patch_vertex_shader_interpolants(ASSERTED const struct vrend_context *rctx,
                                             const struct vrend_shader_cfg *cfg,
                                             struct vrend_strarray *prog_strings,
                                             const struct vrend_shader_info *vs_info,
@@ -7303,7 +7303,7 @@ static void require_gpu_shader5_and_msinterp(struct vrend_strarray *program)
    strbuf_append(&program->strings[SHADER_STRING_VER_EXT], gpu_shader5_and_msinterp_string);
 }
 
-static bool vrend_patch_vertex_shader_interpolants(MAYBE_UNUSED const struct vrend_context *rctx,
+static bool vrend_patch_vertex_shader_interpolants(ASSERTED const struct vrend_context *rctx,
                                             const struct vrend_shader_cfg *cfg,
                                             struct vrend_strarray *prog_strings,
                                             const struct vrend_shader_info *vs_info,

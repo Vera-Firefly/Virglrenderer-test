@@ -126,8 +126,15 @@ if cc.has_header('sys/select.h')
   conf_data.set('HAVE_SYS_SELECT_H', 1)
 endif
 
+foreach b : ['expect', 'types_compatible_p', 'unreachable']
+  if cc.has_function(b)
+    conf_data.set('HAVE___BUILTIN_@0@'.format(b.to_upper()), 1)
+  endif
+endforeach
+
 supported_function_attributes = cc.get_supported_function_attributes([
-  'weak'
+  'const', 'flatten', 'format', 'malloc', 'noreturn', 'packed', 'pure',
+  'returns_nonnull', 'unused', 'warn_unused_result', 'weak',
 ])
 foreach a : supported_function_attributes
     conf_data.set('HAVE_FUNC_ATTRIBUTE_@0@'.format(a.to_upper()), 1)

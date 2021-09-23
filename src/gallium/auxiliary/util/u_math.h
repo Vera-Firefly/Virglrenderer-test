@@ -821,8 +821,9 @@ util_bswap16(uint16_t n)
 /**
  * Clamp X to [MIN, MAX].
  * This is a macro to allow float, int, uint, etc. types.
+ * We arbitrarily turn NaN into MIN.
  */
-#define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
+#define CLAMP( X, MIN, MAX )  ( (X)>(MIN) ? ((X)>(MAX) ? (MAX) : (X)) : (MIN) )
 
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
