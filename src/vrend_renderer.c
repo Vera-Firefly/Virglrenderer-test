@@ -4693,6 +4693,9 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
    GLuint tcs_id = shaders[PIPE_SHADER_TESS_CTRL] ? shaders[PIPE_SHADER_TESS_CTRL]->current->id : 0;
    GLuint tes_id = shaders[PIPE_SHADER_TESS_EVAL] ? shaders[PIPE_SHADER_TESS_EVAL]->current->id : 0;
 
+   if (shaders[PIPE_SHADER_FRAGMENT]->current->sel->sinfo.num_outputs <= 1)
+      dual_src = false;
+
    bool same_prog = sub_ctx->prog &&
                     vs_id == sub_ctx->prog_ids[PIPE_SHADER_VERTEX] &&
                     fs_id == sub_ctx->prog_ids[PIPE_SHADER_FRAGMENT] &&
