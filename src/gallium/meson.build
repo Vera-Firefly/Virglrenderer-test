@@ -30,7 +30,6 @@ sources_libgallium = [
    'include/pipe/p_screen.h',
    'include/pipe/p_video_enums.h',
    'auxiliary/util/u_format.h',
-   'auxiliary/util/u_memory.h',
    'auxiliary/util/u_rect.h',
    'auxiliary/util/u_surface.h',
    'auxiliary/util/u_math.h',

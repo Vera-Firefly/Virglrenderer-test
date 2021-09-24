@@ -53,6 +53,7 @@
 #include "util/u_double_list.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_pointer.h"
 #include "util/u_hash_table.h"
 
 #define VTEST_MAX_SYNC_QUEUE_COUNT 64

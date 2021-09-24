@@ -44,6 +44,7 @@
 #include "cso_cache/cso_hash.h"
 
 #include "util/u_memory.h"
+#include "util/u_pointer.h"
 #include "util/u_hash_table.h"
 
 #define XXH_INLINE_ALL
