@@ -143,7 +143,7 @@ foreach a : supported_function_attributes
     conf_data.set('HAVE_FUNC_ATTRIBUTE_@0@'.format(a.to_upper()), 1)
 endforeach
 
-foreach f : ['timespec_get']
+foreach f : ['strtok_r', 'timespec_get']
   if cc.has_function(f)
     conf_data.set('HAVE_@0@'.format(f.to_upper()), 1)
   endif

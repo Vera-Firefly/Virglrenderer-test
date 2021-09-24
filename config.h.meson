@@ -15,6 +15,7 @@
 #mesondefine HAVE_FUNC_ATTRIBUTE_UNUSED
 #mesondefine HAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT
 #mesondefine HAVE_FUNC_ATTRIBUTE_WEAK
+#mesondefine HAVE_STRTOK_R
 #mesondefine HAVE_TIMESPEC_GET
 #mesondefine HAVE_SYS_UIO_H
 #mesondefine HAVE_PTHREAD

@@ -38,23 +38,28 @@
 #ifndef U_DEBUG_H_
 #define U_DEBUG_H_
 
+#include <stdarg.h>
+#include <string.h>
+#if !defined(_WIN32)
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 #include "util/os_misc.h"
+#include "util/detect_os.h"
+#include "util/macros.h"
 
-#include "pipe/p_compiler.h"
-#include "pipe/p_format.h"
-
+#if DETECT_OS_HAIKU
+/* Haiku provides debug_printf in libroot with OS.h */
+#include <OS.h>
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 
-#if defined(__GNUC__)
-#define _util_printf_format(fmt, list) __attribute__ ((format (printf, fmt, list)))
-#else
-#define _util_printf_format(fmt, list)
-#endif
+#define _util_printf_format(fmt, list) PRINTFLIKE(fmt, list)
 
 void _debug_vprintf(const char *format, va_list ap);
    
@@ -78,7 +83,7 @@ _debug_printf(const char *format, ...)
  * - avoid outputing large strings (512 bytes is the current maximum length
  * that is guaranteed to be printed in all platforms)
  */
-#if !defined(PIPE_OS_HAIKU)
+#if !DETECT_OS_HAIKU
 static inline void
 debug_printf(const char *format, ...) _util_printf_format(1,2);
 
@@ -94,9 +99,6 @@ debug_printf(const char *format, ...)
    (void) format; /* silence warning */
 #endif
 }
-#else /* is Haiku */
-/* Haiku provides debug_printf in libroot with OS.h */
-#include <OS.h>
 #endif
 
 
@@ -108,9 +110,9 @@ debug_printf(const char *format, ...)
  */
 #define debug_printf_once(args) \
    do { \
-      static boolean once = TRUE; \
+      static bool once = true; \
       if (once) { \
-         once = FALSE; \
+         once = false; \
          debug_printf args; \
       } \
    } while (0)
@@ -129,13 +131,8 @@ debug_printf(const char *format, ...)
  * messages.
  */
 void debug_print_blob( const char *name, const void *blob, unsigned size );
-
-/* Print a message along with a prettified format string
- */
-void debug_print_format(const char *msg, unsigned fmt );
 #else
 #define debug_print_blob(_name, _blob, _size) ((void)0)
-#define debug_print_format(_msg, _fmt) ((void)0)
 #endif
 
 
@@ -157,6 +154,12 @@ debug_disable_error_message_boxes(void);
 #define debug_break() ((void)0)
 #endif /* !DEBUG */
 
+
+long
+debug_get_num_option(const char *name, long dfault);
+
+void
+debug_get_version_option(const char *name, unsigned *major, unsigned *minor);
 
 #ifdef _MSC_VER
 __declspec(noreturn)
@@ -180,7 +183,7 @@ void _debug_assert_fail(const char *expr,
  * For non debug builds the assert macro will expand to a no-op, so do not
  * call functions with side effects in the assert expression.
  */
-#ifdef DEBUG
+#ifndef NDEBUG
 #define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
 #define debug_assert(expr) (void)(0 && (expr))
@@ -236,11 +239,11 @@ void _debug_assert_fail(const char *expr,
 #ifdef DEBUG
 #define debug_warn_once(__msg) \
    do { \
-      static bool warned = FALSE; \
+      static bool warned = false; \
       if (!warned) { \
          _debug_printf("%s:%u:%s: one time warning: %s\n", \
                        __FILE__, __LINE__, __FUNCTION__, __msg); \
-         warned = TRUE; \
+         warned = true; \
       } \
    } while (0)
 #else
@@ -260,6 +263,11 @@ void _debug_assert_fail(const char *expr,
    _debug_printf("error: %s\n", __msg)
 #endif
 
+/**
+ * Output a debug log message to the debug info callback.
+ * (virglrenderer) Removed.
+ */
+
 
 /**
  * Used by debug_dump_enum and debug_dump_flags to describe symbols.
@@ -267,7 +275,7 @@ void _debug_assert_fail(const char *expr,
 struct debug_named_value
 {
    const char *name;
-   unsigned long value;
+   uint64_t value;
    const char *desc;
 };
 
@@ -369,25 +377,71 @@ void debug_funclog_enter_exit(const char* f, const int line, const char* file);
 const char *
 debug_get_option(const char *name, const char *dfault);
 
-boolean
-debug_get_bool_option(const char *name, boolean dfault);
+bool
+debug_get_bool_option(const char *name, bool dfault);
 
 long
 debug_get_num_option(const char *name, long dfault);
 
-unsigned long
+uint64_t
 debug_get_flags_option(const char *name, 
                        const struct debug_named_value *flags,
-                       unsigned long dfault);
+                       uint64_t dfault);
+
+#define DEBUG_GET_ONCE_OPTION(suffix, name, dfault) \
+static const char * \
+debug_get_option_ ## suffix (void) \
+{ \
+   static bool first = true; \
+   static const char * value; \
+   if (first) { \
+      first = false; \
+      value = debug_get_option(name, dfault); \
+   } \
+   return value; \
+}
+
+static inline bool
+__check_suid(void)
+{
+#if !defined(_WIN32)
+   if (geteuid() != getuid())
+      return true;
+#endif
+   return false;
+}
+
+/**
+ * Define a getter for a debug option which specifies a 'FILE *'
+ * to open, with additional checks for suid executables.  Note
+ * that if the return is not NULL, the caller owns the 'FILE *'
+ * reference.
+ */
+#define DEBUG_GET_ONCE_FILE_OPTION(suffix, name, dfault, mode) \
+static FILE * \
+debug_get_option_ ## suffix (void) \
+{ \
+   static bool first = true; \
+   static const char * value; \
+   if (__check_suid()) \
+      return NULL; \
+   if (first) { \
+      first = false; \
+      value = debug_get_option(name, dfault); \
+   } \
+   if (!value) \
+      return NULL; \
+   return fopen(value, mode); \
+}
 
 #define DEBUG_GET_ONCE_BOOL_OPTION(sufix, name, dfault) \
-static boolean \
+static bool \
 debug_get_option_ ## sufix (void) \
 { \
-   static boolean first = TRUE; \
-   static boolean value; \
+   static bool first = true; \
+   static bool value; \
    if (first) { \
-      first = FALSE; \
+      first = false; \
       value = debug_get_bool_option(name, dfault); \
    } \
    return value; \
@@ -397,10 +451,10 @@ debug_get_option_ ## sufix (void) \
 static long \
 debug_get_option_ ## sufix (void) \
 { \
-   static boolean first = TRUE; \
+   static bool first = true; \
    static long value; \
    if (first) { \
-      first = FALSE; \
+      first = false; \
       value = debug_get_num_option(name, dfault); \
    } \
    return value; \
@@ -410,48 +464,14 @@ debug_get_option_ ## sufix (void) \
 static unsigned long \
 debug_get_option_ ## sufix (void) \
 { \
-   static boolean first = TRUE; \
+   static bool first = true; \
    static unsigned long value; \
    if (first) { \
-      first = FALSE; \
+      first = false; \
       value = debug_get_flags_option(name, flags, dfault); \
    } \
    return value; \
 }
-
-
-unsigned long
-debug_memory_begin(void);
-
-void 
-debug_memory_end(unsigned long beginning);
-
-
-#ifdef DEBUG
-struct pipe_context;
-struct pipe_surface;
-struct pipe_transfer;
-struct pipe_resource;
-
-void debug_dump_image(const char *prefix,
-                      enum pipe_format format, unsigned cpp,
-                      unsigned width, unsigned height,
-                      unsigned stride,
-                      const void *data);
-void debug_dump_surface(struct pipe_context *pipe,
-			const char *prefix,
-                        struct pipe_surface *surface);   
-void debug_dump_texture(struct pipe_context *pipe,
-			const char *prefix,
-                        struct pipe_resource *texture);
-#else
-#define debug_dump_image(prefix, format, cpp, width, height, stride, data) ((void)0)
-#define debug_dump_surface(pipe, prefix, surface) ((void)0)
-#endif
-
-
-void
-debug_print_transfer_flags(const char *msg, unsigned usage);
 
 
 #ifdef	__cplusplus

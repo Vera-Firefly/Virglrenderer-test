@@ -6,6 +6,7 @@ inc_mesa = include_directories('.', 'compat', 'pipe', 'util')
 files_mesa = files(
   'util/os_file.c',
   'util/os_misc.c',
+  'util/u_debug.c',
 )
 
 deps_mesa = [
