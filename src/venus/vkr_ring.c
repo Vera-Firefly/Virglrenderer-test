@@ -66,7 +66,7 @@ vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout
                     &buf->base_iov_offset);
 
    buf->size = vkr_region_size(&layout->buffer);
-   assert(buf->size && util_is_power_of_two(buf->size));
+   assert(util_is_power_of_two_nonzero(buf->size));
    buf->mask = buf->size - 1;
 
    buf->cur = 0;

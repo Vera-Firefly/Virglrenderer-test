@@ -217,8 +217,7 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    }
 
    const size_t buf_size = vkr_region_size(&layout->buffer);
-   if (!buf_size || buf_size > VKR_RING_BUFFER_MAX_SIZE ||
-       !util_is_power_of_two(buf_size)) {
+   if (buf_size > VKR_RING_BUFFER_MAX_SIZE || !util_is_power_of_two_nonzero(buf_size)) {
       vkr_log("ring buffer size (%lu) must be a power of two and not exceed %lu",
               buf_size, VKR_RING_BUFFER_MAX_SIZE);
       return false;

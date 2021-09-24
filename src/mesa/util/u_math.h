@@ -39,175 +39,22 @@
 #define U_MATH_H
 
 
-#include "pipe/p_compiler.h"
+#include "c99_math.h"
+#include <assert.h>
+#include <float.h>
+#include <stdarg.h>
 
+#include "bitscan.h"
+#include "u_endian.h" /* for UTIL_ARCH_BIG_ENDIAN */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-#include <math.h>
-#include <float.h>
-#include <stdarg.h>
-
-#ifdef PIPE_OS_UNIX
-#include <strings.h> /* for ffs */
-#endif
-
-
 #ifndef M_SQRT2
 #define M_SQRT2 1.41421356237309504880
 #endif
-
-
-#if defined(_MSC_VER) 
-
-#if _MSC_VER < 1400 && !defined(__cplusplus)
- 
-static inline float cosf( float f ) 
-{
-   return (float) cos( (double) f );
-}
-
-static inline float sinf( float f ) 
-{
-   return (float) sin( (double) f );
-}
-
-static inline float ceilf( float f ) 
-{
-   return (float) ceil( (double) f );
-}
-
-static inline float floorf( float f ) 
-{
-   return (float) floor( (double) f );
-}
-
-static inline float powf( float f, float g ) 
-{
-   return (float) pow( (double) f, (double) g );
-}
-
-static inline float sqrtf( float f ) 
-{
-   return (float) sqrt( (double) f );
-}
-
-static inline float fabsf( float f ) 
-{
-   return (float) fabs( (double) f );
-}
-
-static inline float logf( float f ) 
-{
-   return (float) log( (double) f );
-}
-
-#else
-/* Work-around an extra semi-colon in VS 2005 logf definition */
-#ifdef logf
-#undef logf
-#define logf(x) ((float)log((double)(x)))
-#endif /* logf */
-
-#if _MSC_VER < 1800
-#define isfinite(x) _finite((double)(x))
-#define isnan(x) _isnan((double)(x))
-#endif /* _MSC_VER < 1800 */
-#endif /* _MSC_VER < 1400 && !defined(__cplusplus) */
-
-#if _MSC_VER < 1800
-static inline double log2( double x )
-{
-   const double invln2 = 1.442695041;
-   return log( x ) * invln2;
-}
-
-static inline double
-round(double x)
-{
-   return x >= 0.0 ? floor(x + 0.5) : ceil(x - 0.5);
-}
-
-static inline float
-roundf(float x)
-{
-   return x >= 0.0f ? floorf(x + 0.5f) : ceilf(x - 0.5f);
-}
-#endif
-
-#ifndef INFINITY
-#define INFINITY (DBL_MAX + DBL_MAX)
-#endif
-
-#ifndef NAN
-#define NAN (INFINITY - INFINITY)
-#endif
-
-#endif /* _MSC_VER */
-
-
-#if __STDC_VERSION__ < 199901L && (!defined(__cplusplus) || defined(_MSC_VER))
-static inline long int
-lrint(double d)
-{
-   long int rounded = (long int)(d + 0.5);
-
-   if (d - floor(d) == 0.5) {
-      if (rounded % 2 != 0)
-         rounded += (d > 0) ? -1 : 1;
-   }
-
-   return rounded;
-}
-
-static inline long int
-lrintf(float f)
-{
-   long int rounded = (long int)(f + 0.5f);
-
-   if (f - floorf(f) == 0.5f) {
-      if (rounded % 2 != 0)
-         rounded += (f > 0) ? -1 : 1;
-   }
-
-   return rounded;
-}
-
-static inline long long int
-llrint(double d)
-{
-   long long int rounded = (long long int)(d + 0.5);
-
-   if (d - floor(d) == 0.5) {
-      if (rounded % 2 != 0)
-         rounded += (d > 0) ? -1 : 1;
-   }
-
-   return rounded;
-}
-
-static inline long long int
-llrintf(float f)
-{
-   long long int rounded = (long long int)(f + 0.5f);
-
-   if (f - floorf(f) == 0.5f) {
-      if (rounded % 2 != 0)
-         rounded += (f > 0) ? -1 : 1;
-   }
-
-   return rounded;
-}
-#endif /* C99 */
-
-#define POW2_TABLE_SIZE_LOG2 9
-#define POW2_TABLE_SIZE (1 << POW2_TABLE_SIZE_LOG2)
-#define POW2_TABLE_OFFSET (POW2_TABLE_SIZE/2)
-#define POW2_TABLE_SCALE ((float)(POW2_TABLE_SIZE/2))
-extern float pow2_table[POW2_TABLE_SIZE];
 
 
 /**
@@ -236,7 +83,8 @@ union di {
  * Extract the IEEE float32 exponent.
  */
 static inline signed
-util_get_float32_exponent(float x) {
+util_get_float32_exponent(float x)
+{
    union fi f;
 
    f.f = x;
@@ -245,57 +93,7 @@ util_get_float32_exponent(float x) {
 }
 
 
-/**
- * Fast version of 2^x
- * Identity: exp2(a + b) = exp2(a) * exp2(b)
- * Let ipart = int(x)
- * Let fpart = x - ipart;
- * So, exp2(x) = exp2(ipart) * exp2(fpart)
- * Compute exp2(ipart) with i << ipart
- * Compute exp2(fpart) with lookup table.
- */
-static inline float
-util_fast_exp2(float x)
-{
-   int32_t ipart;
-   float fpart, mpart;
-   union fi epart;
-
-   if(x > 129.00000f)
-      return 3.402823466e+38f;
-
-   if (x < -126.99999f)
-      return 0.0f;
-
-   ipart = (int32_t) x;
-   fpart = x - (float) ipart;
-
-   /* same as
-    *   epart.f = (float) (1 << ipart)
-    * but faster and without integer overflow for ipart > 31
-    */
-   epart.i = (ipart + 127 ) << 23;
-
-   mpart = pow2_table[POW2_TABLE_OFFSET + (int)(fpart * POW2_TABLE_SCALE)];
-
-   return epart.f * mpart;
-}
-
-
-/**
- * Fast approximation to exp(x).
- */
-static inline float
-util_fast_exp(float x)
-{
-   const float k = 1.44269f; /* = log2(e) */
-   return util_fast_exp2(k * x);
-}
-
-
-#if 0
-
-#define LOG2_TABLE_SIZE_LOG2 16
+#define LOG2_TABLE_SIZE_LOG2 8
 #define LOG2_TABLE_SCALE (1 << LOG2_TABLE_SIZE_LOG2)
 #define LOG2_TABLE_SIZE (LOG2_TABLE_SCALE + 1)
 extern float log2_table[LOG2_TABLE_SIZE];
@@ -318,29 +116,28 @@ util_fast_log2(float x)
 
 
 /**
- * Fast approximation to x^y.
- */
-static inline float
-util_fast_pow(float x, float y)
-{
-   return util_fast_exp2(util_fast_log2(x) * y);
-}
-#endif
-/* Note that this counts zero as a power of two.
- */
-static inline boolean
-util_is_power_of_two( unsigned v )
-{
-   return (v & (v-1)) == 0;
-}
-
-
-/**
  * Floor(x), returned as int.
  */
 static inline int
 util_ifloor(float f)
 {
+#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
+   /*
+    * IEEE floor for computers that round to nearest or even.
+    * 'f' must be between -4194304 and 4194303.
+    * This floor operation is done by "(iround(f + .5) + iround(f - .5)) >> 1",
+    * but uses some IEEE specific tricks for better speed.
+    * Contributed by Josh Vanderhoof
+    */
+   int ai, bi;
+   double af, bf;
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   /* GCC generates an extra fstp/fld without this. */
+   __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
+   __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
+   return (ai - bi) >> 1;
+#else
    int ai, bi;
    double af, bf;
    union fi u;
@@ -349,6 +146,7 @@ util_ifloor(float f)
    u.f = (float) af;  ai = u.i;
    u.f = (float) bf;  bi = u.i;
    return (ai - bi) >> 1;
+#endif
 }
 
 
@@ -381,10 +179,10 @@ util_iround(float f)
 /**
  * Approximate floating point comparison
  */
-static inline boolean
+static inline bool
 util_is_approx(float a, float b, float tol)
 {
-   return fabs(b - a) <= tol;
+   return fabsf(b - a) <= tol;
 }
 
 
@@ -400,7 +198,7 @@ util_is_approx(float a, float b, float tol)
 /**
  * Single-float
  */
-static inline boolean
+static inline bool
 util_is_inf_or_nan(float x)
 {
    union fi tmp;
@@ -409,7 +207,7 @@ util_is_inf_or_nan(float x)
 }
 
 
-static inline boolean
+static inline bool
 util_is_nan(float x)
 {
    union fi tmp;
@@ -434,7 +232,7 @@ util_inf_sign(float x)
 /**
  * Double-float
  */
-static inline boolean
+static inline bool
 util_is_double_inf_or_nan(double x)
 {
    union di tmp;
@@ -443,7 +241,7 @@ util_is_double_inf_or_nan(double x)
 }
 
 
-static inline boolean
+static inline bool
 util_is_double_nan(double x)
 {
    union di tmp;
@@ -468,14 +266,14 @@ util_double_inf_sign(double x)
 /**
  * Half-float
  */
-static inline boolean
+static inline bool
 util_is_half_inf_or_nan(int16_t x)
 {
    return (x & 0x7c00) == 0x7c00;
 }
 
 
-static inline boolean
+static inline bool
 util_is_half_nan(int16_t x)
 {
    return (x & 0x7fff) > 0x7c00;
@@ -494,123 +292,6 @@ util_half_inf_sign(int16_t x)
 
 
 /**
- * Find first bit set in word.  Least significant bit is 1.
- * Return 0 if no bits set.
- */
-#ifndef FFS_DEFINED
-#define FFS_DEFINED 1
-
-#if defined(_MSC_VER) && _MSC_VER >= 1300 && (_M_IX86 || _M_AMD64 || _M_IA64)
-unsigned char _BitScanForward(unsigned long* Index, unsigned long Mask);
-#pragma intrinsic(_BitScanForward)
-static inline
-unsigned long ffs( unsigned long u )
-{
-   unsigned long i;
-   if (_BitScanForward(&i, u))
-      return i + 1;
-   else
-      return 0;
-}
-#elif defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
-static inline
-unsigned ffs( unsigned u )
-{
-   unsigned i;
-
-   if (u == 0) {
-      return 0;
-   }
-
-   __asm bsf eax, [u]
-   __asm inc eax
-   __asm mov [i], eax
-
-   return i;
-}
-#elif defined(__MINGW32__) || defined(PIPE_OS_ANDROID)
-#define ffs __builtin_ffs
-#endif
-
-#endif /* FFS_DEFINED */
-
-/**
- * Find last bit set in a word.  The least significant bit is 1.
- * Return 0 if no bits are set.
- */
-static inline unsigned util_last_bit(unsigned u)
-{
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304)
-   return u == 0 ? 0 : 32 - __builtin_clz(u);
-#else
-   unsigned r = 0;
-   while (u) {
-       r++;
-       u >>= 1;
-   }
-   return r;
-#endif
-}
-
-/**
- * Find last bit in a word that does not match the sign bit. The least
- * significant bit is 1.
- * Return 0 if no bits are set.
- */
-static inline unsigned util_last_bit_signed(int i)
-{
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 407)
-   return 31 - __builtin_clrsb(i);
-#else
-   if (i >= 0)
-      return util_last_bit(i);
-   else
-      return util_last_bit(~(unsigned)i);
-#endif
-}
-
-/* Destructively loop over all of the bits in a mask as in:
- *
- * while (mymask) {
- *   int i = u_bit_scan(&mymask);
- *   ... process element i
- * }
- * 
- */
-static inline int u_bit_scan(unsigned *mask)
-{
-   int i = ffs(*mask) - 1;
-   *mask &= ~(1 << i);
-   return i;
-}
-
-/* For looping over a bitmask when you want to loop over consecutive bits
- * manually, for example:
- *
- * while (mask) {
- *    int start, count, i;
- *
- *    u_bit_scan_consecutive_range(&mask, &start, &count);
- *
- *    for (i = 0; i < count; i++)
- *       ... process element (start+i)
- * }
- */
-static inline void
-u_bit_scan_consecutive_range(unsigned *mask, int *start, int *count)
-{
-   if (*mask == 0xffffffff) {
-      *start = 0;
-      *count = 32;
-      *mask = 0;
-      return;
-   }
-   *start = ffs(*mask) - 1;
-   *count = ffs(~(*mask >> *start)) - 1;
-   *mask &= ~(((1u << *count) - 1) << *start);
-}
-
-/**
  * Return float bits.
  */
 static inline unsigned
@@ -621,36 +302,74 @@ fui( float f )
    return fi.ui;
 }
 
+static inline float
+uif(uint32_t ui)
+{
+   union fi fi;
+   fi.ui = ui;
+   return fi.f;
+}
+
 
 /**
- * Convert ubyte to float in [0, 1].
- * XXX a 256-entry lookup table would be slightly faster.
+ * Convert uint8_t to float in [0, 1].
  */
 static inline float
-ubyte_to_float(ubyte ub)
+ubyte_to_float(uint8_t ub)
 {
    return (float) ub * (1.0f / 255.0f);
 }
 
 
 /**
- * Convert float in [0,1] to ubyte in [0,255] with clamping.
+ * Convert float in [0,1] to uint8_t in [0,255] with clamping.
  */
-static inline ubyte
+static inline uint8_t
 float_to_ubyte(float f)
 {
-   union fi tmp;
-
-   tmp.f = f;
-   if (tmp.i < 0) {
-      return (ubyte) 0;
+   /* return 0 for NaN too */
+   if (!(f > 0.0f)) {
+      return (uint8_t) 0;
    }
-   else if (tmp.i >= 0x3f800000 /* 1.0f */) {
-      return (ubyte) 255;
+   else if (f >= 1.0f) {
+      return (uint8_t) 255;
    }
    else {
+      union fi tmp;
+      tmp.f = f;
       tmp.f = tmp.f * (255.0f/256.0f) + 32768.0f;
-      return (ubyte) tmp.i;
+      return (uint8_t) tmp.i;
+   }
+}
+
+/**
+ * Convert uint16_t to float in [0, 1].
+ */
+static inline float
+ushort_to_float(uint16_t us)
+{
+   return (float) us * (1.0f / 65535.0f);
+}
+
+
+/**
+ * Convert float in [0,1] to uint16_t in [0,65535] with clamping.
+ */
+static inline uint16_t
+float_to_ushort(float f)
+{
+   /* return 0 for NaN too */
+   if (!(f > 0.0f)) {
+      return (uint16_t) 0;
+   }
+   else if (f >= 1.0f) {
+      return (uint16_t) 65535;
+   }
+   else {
+      union fi tmp;
+      tmp.f = f;
+      tmp.f = tmp.f * (65535.0f/65536.0f) + 128.0f;
+      return (uint16_t) tmp.i;
    }
 }
 
@@ -672,7 +391,7 @@ float_to_byte_tex(float f)
 static inline unsigned
 util_logbase2(unsigned n)
 {
-#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
+#if defined(HAVE___BUILTIN_CLZ)
    return ((sizeof(unsigned) * 8 - 1) - __builtin_clz(n | 1));
 #else
    unsigned pos = 0;
@@ -685,6 +404,44 @@ util_logbase2(unsigned n)
 #endif
 }
 
+static inline uint64_t
+util_logbase2_64(uint64_t n)
+{
+#if defined(HAVE___BUILTIN_CLZLL)
+   return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#else
+   uint64_t pos = 0ull;
+   if (n >= 1ull<<32) { n >>= 32; pos += 32; }
+   if (n >= 1ull<<16) { n >>= 16; pos += 16; }
+   if (n >= 1ull<< 8) { n >>=  8; pos +=  8; }
+   if (n >= 1ull<< 4) { n >>=  4; pos +=  4; }
+   if (n >= 1ull<< 2) { n >>=  2; pos +=  2; }
+   if (n >= 1ull<< 1) {           pos +=  1; }
+   return pos;
+#endif
+}
+
+/**
+ * Returns the ceiling of log n base 2, and 0 when n == 0. Equivalently,
+ * returns the smallest x such that n <= 2**x.
+ */
+static inline unsigned
+util_logbase2_ceil(unsigned n)
+{
+   if (n <= 1)
+      return 0;
+
+   return 1 + util_logbase2(n - 1);
+}
+
+static inline uint64_t
+util_logbase2_ceil64(uint64_t n)
+{
+   if (n <= 1)
+      return 0;
+
+   return 1ull + util_logbase2_64(n - 1);
+}
 
 /**
  * Returns the smallest power of two >= x
@@ -692,7 +449,7 @@ util_logbase2(unsigned n)
 static inline unsigned
 util_next_power_of_two(unsigned x)
 {
-#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
+#if defined(HAVE___BUILTIN_CLZ)
    if (x <= 1)
        return 1;
 
@@ -703,7 +460,7 @@ util_next_power_of_two(unsigned x)
    if (x <= 1)
       return 1;
 
-   if (util_is_power_of_two(x))
+   if (util_is_power_of_two_or_zero(x))
       return x;
 
    val--;
@@ -717,27 +474,32 @@ util_next_power_of_two(unsigned x)
 #endif
 }
 
-
-/**
- * Return number of bits set in n.
- */
-static inline unsigned
-util_bitcount(unsigned n)
+static inline uint64_t
+util_next_power_of_two64(uint64_t x)
 {
-#if defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 304)
-   return __builtin_popcount(n);
+#if defined(HAVE___BUILTIN_CLZLL)
+   if (x <= 1)
+       return 1;
+
+   return (1ull << ((sizeof(uint64_t) * 8) - __builtin_clzll(x - 1)));
 #else
-   /* K&R classic bitcount.
-    *
-    * For each iteration, clear the LSB from the bitfield.
-    * Requires only one iteration per set bit, instead of
-    * one iteration per bit less than highest set bit.
-    */
-   unsigned bits = 0;
-   for (bits; n; bits++) {
-      n &= n - 1;
-   }
-   return bits;
+   uint64_t val = x;
+
+   if (x <= 1)
+      return 1;
+
+   if (util_is_power_of_two_or_zero64(x))
+      return x;
+
+   val--;
+   val = (val >> 1)  | val;
+   val = (val >> 2)  | val;
+   val = (val >> 4)  | val;
+   val = (val >> 8)  | val;
+   val = (val >> 16) | val;
+   val = (val >> 32) | val;
+   val++;
+   return val;
 #endif
 }
 
@@ -781,8 +543,7 @@ util_bitreverse(unsigned n)
 static inline uint32_t
 util_bswap32(uint32_t n)
 {
-/* We need the gcc version checks for non-autoconf build system */
-#if defined(HAVE___BUILTIN_BSWAP32) || (defined(PIPE_CC_GCC) && (PIPE_CC_GCC_VERSION >= 403))
+#if defined(HAVE___BUILTIN_BSWAP32)
    return __builtin_bswap32(n);
 #else
    return (n >> 24) |
@@ -801,7 +562,7 @@ util_bswap64(uint64_t n)
 #if defined(HAVE___BUILTIN_BSWAP64)
    return __builtin_bswap64(n);
 #else
-   return ((uint64_t)util_bswap32(n) << 32) |
+   return ((uint64_t)util_bswap32((uint32_t)n) << 32) |
           util_bswap32((n >> 32));
 #endif
 }
@@ -817,6 +578,37 @@ util_bswap16(uint16_t n)
           (n << 8);
 }
 
+/**
+ * Extend sign.
+ */
+static inline int64_t
+util_sign_extend(uint64_t val, unsigned width)
+{
+	assert(width > 0);
+	if (val & (UINT64_C(1) << (width - 1))) {
+		return -(int64_t)((UINT64_C(1) << width) - val);
+	} else {
+		return val;
+	}
+}
+
+static inline void*
+util_memcpy_cpu_to_le32(void * restrict dest, const void * restrict src, size_t n)
+{
+#if UTIL_ARCH_BIG_ENDIAN
+   size_t i, e;
+   assert(n % 4 == 0);
+
+   for (i = 0, e = n / 4; i < e; i++) {
+      uint32_t * restrict d = (uint32_t* restrict)dest;
+      const uint32_t * restrict s = (const uint32_t* restrict)src;
+      d[i] = util_bswap32(s[i]);
+   }
+   return dest;
+#else
+   return memcpy(dest, src, n);
+#endif
+}
 
 /**
  * Clamp X to [MIN, MAX].
@@ -824,6 +616,9 @@ util_bswap16(uint16_t n)
  * We arbitrarily turn NaN into MIN.
  */
 #define CLAMP( X, MIN, MAX )  ( (X)>(MIN) ? ((X)>(MAX) ? (MAX) : (X)) : (MIN) )
+
+/* Syntax sugar occuring frequently in graphics code */
+#define SATURATE( X ) CLAMP(X, 0.0f, 1.0f)
 
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
@@ -836,12 +631,68 @@ util_bswap16(uint16_t n)
 
 
 /**
+ * Align a value up to an alignment value
+ *
+ * If \c value is not already aligned to the requested alignment value, it
+ * will be rounded up.
+ *
+ * \param value  Value to be rounded
+ * \param alignment  Alignment value to be used.  This must be a power of two.
+ *
+ * \sa ROUND_DOWN_TO()
+ */
+
+#if defined(ALIGN)
+#undef ALIGN
+#endif
+static inline uintptr_t
+ALIGN(uintptr_t value, int32_t alignment)
+{
+   assert(util_is_power_of_two_nonzero(alignment));
+   return (((value) + (alignment) - 1) & ~((alignment) - 1));
+}
+
+/**
+ * Like ALIGN(), but works with a non-power-of-two alignment.
+ */
+static inline uintptr_t
+ALIGN_NPOT(uintptr_t value, int32_t alignment)
+{
+   assert(alignment > 0);
+   return (value + alignment - 1) / alignment * alignment;
+}
+
+/**
+ * Align a value down to an alignment value
+ *
+ * If \c value is not already aligned to the requested alignment value, it
+ * will be rounded down.
+ *
+ * \param value  Value to be rounded
+ * \param alignment  Alignment value to be used.  This must be a power of two.
+ *
+ * \sa ALIGN()
+ */
+static inline uint64_t
+ROUND_DOWN_TO(uint64_t value, int32_t alignment)
+{
+   assert(util_is_power_of_two_nonzero(alignment));
+   return ((value) & ~(alignment - 1));
+}
+
+/**
  * Align a value, only works pot alignemnts.
  */
 static inline int
 align(int value, int alignment)
 {
    return (value + alignment - 1) & ~(alignment - 1);
+}
+
+static inline uint64_t
+align64(uint64_t value, unsigned alignment)
+{
+   return (value + alignment - 1) & ~((uint64_t)alignment - 1);
 }
 
 /**
@@ -888,12 +739,14 @@ do {                                     \
 #endif
 
 
-static inline uint32_t util_unsigned_fixed(float value, unsigned frac_bits)
+static inline uint32_t
+util_unsigned_fixed(float value, unsigned frac_bits)
 {
    return value < 0 ? 0 : (uint32_t)(value * (1<<frac_bits));
 }
 
-static inline int32_t util_signed_fixed(float value, unsigned frac_bits)
+static inline int32_t
+util_signed_fixed(float value, unsigned frac_bits)
 {
    return (int32_t)(value * (1<<frac_bits));
 }
@@ -905,7 +758,41 @@ util_fpstate_set_denorms_to_zero(unsigned current_fpstate);
 void
 util_fpstate_set(unsigned fpstate);
 
+/**
+ * For indexed draw calls, return true if the vertex count to be drawn is
+ * much lower than the vertex count that has to be uploaded, meaning
+ * that the driver should flatten indices instead of trying to upload
+ * a too big range.
+ *
+ * This is used by vertex upload code in u_vbuf and glthread.
+ */
+static inline bool
+util_is_vbo_upload_ratio_too_large(unsigned draw_vertex_count,
+                                   unsigned upload_vertex_count)
+{
+   if (draw_vertex_count > 1024)
+      return upload_vertex_count > draw_vertex_count * 4;
+   else if (draw_vertex_count > 32)
+      return upload_vertex_count > draw_vertex_count * 8;
+   else
+      return upload_vertex_count > draw_vertex_count * 16;
+}
 
+bool util_invert_mat4x4(float *out, const float *m);
+
+/* Quantize the lod bias value to reduce the number of sampler state
+ * variants in gallium because apps use it for smooth mipmap transitions,
+ * thrashing cso_cache and degrading performance.
+ *
+ * This quantization matches the AMD hw specification, so having more
+ * precision would have no effect anyway.
+ */
+static inline float
+util_quantize_lod_bias(float lod)
+{
+   lod = CLAMP(lod, -16, 16);
+   return roundf(lod * 256) / 256;
+}
 
 #ifdef __cplusplus
 }

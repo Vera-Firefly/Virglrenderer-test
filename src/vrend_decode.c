@@ -233,13 +233,6 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
    return 0;
 }
 
-static float uif(unsigned int ui)
-{
-   union { float f; unsigned int ui; } myuif;
-   myuif.ui = ui;
-   return myuif.f;
-}
-
 static int vrend_decode_set_viewport_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
    struct pipe_viewport_state vps[PIPE_MAX_VIEWPORTS];

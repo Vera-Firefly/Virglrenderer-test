@@ -129,7 +129,8 @@ if cc.has_header('sys/select.h')
   conf_data.set('HAVE_SYS_SELECT_H', 1)
 endif
 
-foreach b : ['expect', 'types_compatible_p', 'unreachable']
+foreach b : ['bswap32', 'bswap64', 'clz', 'clzll', 'expect', 'ffs', 'ffsll',
+             'popcount', 'popcountll', 'types_compatible_p', 'unreachable']
   if cc.has_function(b)
     conf_data.set('HAVE___BUILTIN_@0@'.format(b.to_upper()), 1)
   endif

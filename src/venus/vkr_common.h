@@ -258,7 +258,7 @@ vkr_region_size(const struct vkr_region *region)
 static inline bool
 vkr_region_is_aligned(const struct vkr_region *region, size_t align)
 {
-   assert(align && util_is_power_of_two(align));
+   assert(util_is_power_of_two_nonzero(align));
    return !((region->begin | region->end) & (align - 1));
 }
 

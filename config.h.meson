@@ -1,7 +1,15 @@
 #mesondefine VERSION
 #mesondefine _GNU_SOURCE
 #mesondefine VIRGL_RENDERER_UNSTABLE_APIS
+#mesondefine HAVE___BUILTIN_BSWAP32
+#mesondefine HAVE___BUILTIN_BSWAP64
+#mesondefine HAVE___BUILTIN_CLZ
+#mesondefine HAVE___BUILTIN_CLZLL
 #mesondefine HAVE___BUILTIN_EXPECT
+#mesondefine HAVE___BUILTIN_FFS
+#mesondefine HAVE___BUILTIN_FFSLL
+#mesondefine HAVE___BUILTIN_POPCOUNT
+#mesondefine HAVE___BUILTIN_POPCOUNTLL
 #mesondefine HAVE___BUILTIN_TYPES_COMPATIBLE_P
 #mesondefine HAVE___BUILTIN_UNREACHABLE
 #mesondefine HAVE_FUNC_ATTRIBUTE_CONST
