@@ -325,11 +325,11 @@ struct global_renderer_state {
    int gl_major_ver;
    int gl_minor_ver;
 
-   pipe_mutex fence_mutex;
-   pipe_thread sync_thread;
+   mtx_t fence_mutex;
+   thrd_t sync_thread;
    virgl_gl_context sync_context;
 
-   pipe_condvar fence_cond;
+   cnd_t fence_cond;
 
    float tess_factors[6];
    int eventfd;
@@ -6044,13 +6044,13 @@ static GLenum tgsitargettogltarget(const enum pipe_texture_target target, int nr
 static inline void lock_sync(void)
 {
    if (vrend_state.sync_thread && vrend_state.use_async_fence_cb)
-      pipe_mutex_lock(vrend_state.fence_mutex);
+      mtx_lock(&vrend_state.fence_mutex);
 }
 
 static inline void unlock_sync(void)
 {
    if (vrend_state.sync_thread && vrend_state.use_async_fence_cb)
-      pipe_mutex_unlock(vrend_state.fence_mutex);
+      mtx_unlock(&vrend_state.fence_mutex);
 }
 
 static void vrend_free_sync_thread(void)
@@ -6058,16 +6058,16 @@ static void vrend_free_sync_thread(void)
    if (!vrend_state.sync_thread)
       return;
 
-   pipe_mutex_lock(vrend_state.fence_mutex);
+   mtx_lock(&vrend_state.fence_mutex);
    vrend_state.stop_sync_thread = true;
-   pipe_condvar_signal(vrend_state.fence_cond);
-   pipe_mutex_unlock(vrend_state.fence_mutex);
+   cnd_signal(&vrend_state.fence_cond);
+   mtx_unlock(&vrend_state.fence_mutex);
 
-   pipe_thread_wait(vrend_state.sync_thread);
+   thrd_join(vrend_state.sync_thread, NULL);
    vrend_state.sync_thread = 0;
 
-   pipe_condvar_destroy(vrend_state.fence_cond);
-   pipe_mutex_destroy(vrend_state.fence_mutex);
+   cnd_destroy(&vrend_state.fence_cond);
+   mtx_destroy(&vrend_state.fence_mutex);
 }
 
 static void free_fence_locked(struct vrend_fence *fence)
@@ -6102,7 +6102,7 @@ static void vrend_free_fences_for_context(struct vrend_context *ctx)
    struct vrend_fence *fence, *stor;
 
    if (vrend_state.sync_thread) {
-      pipe_mutex_lock(vrend_state.fence_mutex);
+      mtx_lock(&vrend_state.fence_mutex);
       LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
          if (fence->ctx == ctx)
             free_fence_locked(fence);
@@ -6115,7 +6115,7 @@ static void vrend_free_fences_for_context(struct vrend_context *ctx)
          /* mark the fence invalid as the sync thread is still waiting on it */
          vrend_state.fence_waiting->ctx = NULL;
       }
-      pipe_mutex_unlock(vrend_state.fence_mutex);
+      mtx_unlock(&vrend_state.fence_mutex);
    } else {
       LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
          if (fence->ctx == ctx)
@@ -6157,7 +6157,7 @@ static void wait_sync(struct vrend_fence *fence)
 
    do_wait(fence, /* can_block */ true);
 
-   pipe_mutex_lock(vrend_state.fence_mutex);
+   mtx_lock(&vrend_state.fence_mutex);
    if (vrend_state.use_async_fence_cb) {
       vrend_renderer_check_queries_locked();
       /* to be able to call free_fence_locked without locking */
@@ -6166,7 +6166,7 @@ static void wait_sync(struct vrend_fence *fence)
       list_addtail(&fence->fences, &vrend_state.fence_list);
    }
    vrend_state.fence_waiting = NULL;
-   pipe_mutex_unlock(vrend_state.fence_mutex);
+   mtx_unlock(&vrend_state.fence_mutex);
 
    if (vrend_state.use_async_fence_cb) {
       ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
@@ -6186,12 +6186,12 @@ static int thread_sync(UNUSED void *arg)
 
    pipe_thread_setname("vrend-sync");
 
-   pipe_mutex_lock(vrend_state.fence_mutex);
+   mtx_lock(&vrend_state.fence_mutex);
    vrend_clicbs->make_current(gl_context);
 
    while (!vrend_state.stop_sync_thread) {
       if (LIST_IS_EMPTY(&vrend_state.fence_wait_list) &&
-          pipe_condvar_wait(vrend_state.fence_cond, vrend_state.fence_mutex) != 0) {
+          cnd_wait(&vrend_state.fence_cond, &vrend_state.fence_mutex) != 0) {
          vrend_printf( "error while waiting on condition\n");
          break;
       }
@@ -6201,15 +6201,15 @@ static int thread_sync(UNUSED void *arg)
             break;
          list_del(&fence->fences);
          vrend_state.fence_waiting = fence;
-         pipe_mutex_unlock(vrend_state.fence_mutex);
+         mtx_unlock(&vrend_state.fence_mutex);
          wait_sync(fence);
-         pipe_mutex_lock(vrend_state.fence_mutex);
+         mtx_lock(&vrend_state.fence_mutex);
       }
    }
 
    vrend_clicbs->make_current(0);
    vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
-   pipe_mutex_unlock(vrend_state.fence_mutex);
+   mtx_unlock(&vrend_state.fence_mutex);
    return 0;
 }
 
@@ -6238,8 +6238,8 @@ static void vrend_renderer_use_threaded_sync(void)
       }
    }
 
-   pipe_condvar_init(vrend_state.fence_cond);
-   pipe_mutex_init(vrend_state.fence_mutex);
+   cnd_init(&vrend_state.fence_cond);
+   mtx_init(&vrend_state.fence_mutex, mtx_plain);
 
    vrend_state.sync_thread = pipe_thread_create(thread_sync, NULL);
    if (!vrend_state.sync_thread) {
@@ -6248,8 +6248,8 @@ static void vrend_renderer_use_threaded_sync(void)
          vrend_state.eventfd = -1;
       }
       vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
-      pipe_condvar_destroy(vrend_state.fence_cond);
-      pipe_mutex_destroy(vrend_state.fence_mutex);
+      cnd_destroy(&vrend_state.fence_cond);
+      mtx_destroy(&vrend_state.fence_mutex);
    }
 }
 
@@ -9523,10 +9523,10 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
       goto fail;
 
    if (vrend_state.sync_thread) {
-      pipe_mutex_lock(vrend_state.fence_mutex);
+      mtx_lock(&vrend_state.fence_mutex);
       list_addtail(&fence->fences, &vrend_state.fence_wait_list);
-      pipe_condvar_signal(vrend_state.fence_cond);
-      pipe_mutex_unlock(vrend_state.fence_mutex);
+      cnd_signal(&vrend_state.fence_cond);
+      mtx_unlock(&vrend_state.fence_mutex);
    } else
       list_addtail(&fence->fences, &vrend_state.fence_list);
    return 0;
@@ -9573,7 +9573,7 @@ void vrend_renderer_check_fences(void)
 
    if (vrend_state.sync_thread) {
       flush_eventfd(vrend_state.eventfd);
-      pipe_mutex_lock(vrend_state.fence_mutex);
+      mtx_lock(&vrend_state.fence_mutex);
       LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
          /* vrend_free_fences_for_context might have marked the fence invalid
           * by setting fence->ctx to NULL
@@ -9590,7 +9590,7 @@ void vrend_renderer_check_fences(void)
             free_fence_locked(fence);
          }
       }
-      pipe_mutex_unlock(vrend_state.fence_mutex);
+      mtx_unlock(&vrend_state.fence_mutex);
    } else {
       vrend_renderer_force_ctx_0();
 
@@ -11426,7 +11426,7 @@ int vrend_renderer_export_ctx0_fence(uint32_t fence_id, int* out_fd) {
    }
 
    if (vrend_state.sync_thread)
-      pipe_mutex_lock(vrend_state.fence_mutex);
+      mtx_lock(&vrend_state.fence_mutex);
 
    void *fence_cookie = (void *)(uintptr_t)fence_id;
    bool seen_first = false;
@@ -11446,7 +11446,7 @@ int vrend_renderer_export_ctx0_fence(uint32_t fence_id, int* out_fd) {
    }
 
    if (vrend_state.sync_thread)
-      pipe_mutex_unlock(vrend_state.fence_mutex);
+      mtx_unlock(&vrend_state.fence_mutex);
 
    if (found) {
       if (fence)
