@@ -124,7 +124,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    struct vkr_queue *queue;
    VkResult result;
 
-   queue = util_hash_table_get_u64(ctx->object_table, queue_id);
+   queue = vkr_context_get_object(ctx, queue_id);
    if (!queue)
       return -EINVAL;
    struct vkr_device *dev = queue->device;
@@ -271,7 +271,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    struct vkr_device_memory *mem;
    enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
 
-   mem = util_hash_table_get_u64(ctx->object_table, blob_id);
+   mem = vkr_context_get_object(ctx, blob_id);
    if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
       return EINVAL;
 

@@ -144,6 +144,12 @@ vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
    /* objects should be reinitialized if to be reused */
 }
 
+static inline void *
+vkr_context_get_object(struct vkr_context *ctx, vkr_object_id obj_id)
+{
+   return util_hash_table_get_u64(ctx->object_table, obj_id);
+}
+
 static inline const char *
 vkr_context_get_name(const struct vkr_context *ctx)
 {
