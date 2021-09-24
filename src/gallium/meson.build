@@ -92,7 +92,6 @@ sources_libgallium = [
    'auxiliary/tgsi/tgsi_util.c',
    'auxiliary/tgsi/tgsi_sanity.h',
    'auxiliary/tgsi/tgsi_transform.c',
-   'auxiliary/os/os_thread.h',
    'auxiliary/os/os_mman.h',
 ]
 

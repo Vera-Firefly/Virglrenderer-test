@@ -276,7 +276,7 @@ vkr_ring_thread(void *arg)
    char thread_name[16];
 
    snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-ring-%d", ctx->ctx_id);
-   pipe_thread_setname(thread_name);
+   u_thread_setname(thread_name);
 
    uint64_t last_submit = vkr_ring_now();
    uint32_t relax_iter = 0;

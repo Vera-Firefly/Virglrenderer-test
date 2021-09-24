@@ -18,7 +18,6 @@
 #include <string.h>
 
 #include "c11/threads.h"
-#include "os/os_thread.h"
 #include "pipe/p_compiler.h"
 #include "util/os_misc.h"
 #include "util/u_double_list.h"
@@ -26,6 +25,7 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
+#include "util/u_thread.h"
 #include "venus-protocol/vulkan.h"
 #include "virgl_util.h"
 #include "virglrenderer.h"

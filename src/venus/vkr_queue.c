@@ -186,7 +186,7 @@ vkr_queue_thread(void *arg)
    char thread_name[16];
 
    snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-queue-%d", ctx->base.ctx_id);
-   pipe_thread_setname(thread_name);
+   u_thread_setname(thread_name);
 
    mtx_lock(&queue->mutex);
    while (true) {

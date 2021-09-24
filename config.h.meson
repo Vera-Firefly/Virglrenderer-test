@@ -18,6 +18,7 @@
 #mesondefine HAVE_TIMESPEC_GET
 #mesondefine HAVE_SYS_UIO_H
 #mesondefine HAVE_PTHREAD
+#mesondefine HAVE_PTHREAD_SETAFFINITY
 #mesondefine HAVE_EPOXY_EGL_H
 #mesondefine HAVE_EPOXY_GLX_H
 #mesondefine ENABLE_MINIGBM_ALLOCATION

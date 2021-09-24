@@ -38,7 +38,7 @@
 #include "util/u_memory.h"
 #include "util/u_dual_blend.h"
 
-#include "os/os_thread.h"
+#include "util/u_thread.h"
 #include "util/u_format.h"
 #include "tgsi/tgsi_parse.h"
 
@@ -6184,7 +6184,7 @@ static int thread_sync(UNUSED void *arg)
    virgl_gl_context gl_context = vrend_state.sync_context;
    struct vrend_fence *fence, *stor;
 
-   pipe_thread_setname("vrend-sync");
+   u_thread_setname("vrend-sync");
 
    mtx_lock(&vrend_state.fence_mutex);
    vrend_clicbs->make_current(gl_context);
@@ -6241,7 +6241,7 @@ static void vrend_renderer_use_threaded_sync(void)
    cnd_init(&vrend_state.fence_cond);
    mtx_init(&vrend_state.fence_mutex, mtx_plain);
 
-   vrend_state.sync_thread = pipe_thread_create(thread_sync, NULL);
+   vrend_state.sync_thread = u_thread_create(thread_sync, NULL);
    if (!vrend_state.sync_thread) {
       if (vrend_state.eventfd != -1) {
          close(vrend_state.eventfd);
