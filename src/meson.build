@@ -21,6 +21,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
+subdir('mesa')
 subdir('gallium')
 
 virgl_sources = [

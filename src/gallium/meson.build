@@ -126,9 +126,11 @@ libgallium = static_library(
    include_directories : [
       inc_gallium, inc_configuration
    ],
+   dependencies: mesa_dep,
 )
 
 gallium_dep = declare_dependency(
    link_with: libgallium,
-   include_directories: [inc_gallium, inc_configuration]
+   include_directories: [inc_gallium, inc_configuration],
+   dependencies: mesa_dep,
 )
