@@ -44,6 +44,10 @@ revision      = 3
 
 cc = meson.get_compiler('c')
 
+if cc.get_id() == 'gcc' and cc.version().version_compare('< 4.1')
+  error('When using GCC, version 4.1 or later is required.')
+endif
+
 warnings = [
    '-Werror=implicit-function-declaration',
    '-Werror=missing-prototypes',
