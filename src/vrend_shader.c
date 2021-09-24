@@ -261,6 +261,7 @@ struct dump_ctx {
    int fs_uses_clipdist_input;
    int glsl_ver_required;
    int color_in_mask;
+   int color_out_mask;
    /* only used when cull is enabled */
    uint8_t num_cull_dist_prop, num_clip_dist_prop;
    bool has_pervertex;
@@ -1409,8 +1410,10 @@ iter_declaration(struct tgsi_iterate_context *iter,
                   name_prefix = "gl_FrontColor";
                else if (ctx->outputs[i].sid == 1)
                   name_prefix = "gl_FrontSecondaryColor";
-            } else
+            } else {
                name_prefix = ctx->is_last_vertex_stage ? "ex" : get_stage_output_name_prefix(iter->processor.Processor);
+               ctx->color_out_mask |= (1 << decl->Semantic.Index);
+            }
          }
          ctx->outputs[i].override_no_wm = false;
          break;
@@ -1424,9 +1427,10 @@ iter_declaration(struct tgsi_iterate_context *iter,
                else if (ctx->outputs[i].sid == 1)
                   name_prefix = "gl_BackSecondaryColor";
                break;
-            } else
-               name_prefix = "ex";
-            ctx->outputs[i].override_no_wm = false;
+            } else {
+               ctx->outputs[i].override_no_wm = false;
+               ctx->color_out_mask |= (1 << decl->Semantic.Index) << 2;
+            }
             break;
          }
          /* fallthrough */
@@ -6581,6 +6585,24 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
          const char *prefix = "";
          const char *auxprefix = "";
 
+         if (ctx->cfg->use_gles) {
+            if (ctx->inputs[i].name == TGSI_SEMANTIC_COLOR) {
+               if (!(ctx->key->fs.available_color_in_bits & (1 << ctx->inputs[i].sid))) {
+                  emit_hdrf(glsl_strbufs, "vec4 %s = vec4(0.0, 0.0, 0.0, 0.0);\n",
+                            ctx->inputs[i].glsl_name);
+                  continue;
+               }
+            }
+
+            if (ctx->inputs[i].name == TGSI_SEMANTIC_BCOLOR) {
+               if (!(ctx->key->fs.available_color_in_bits & (1 << ctx->inputs[i].sid) << 2)) {
+                  emit_hdrf(glsl_strbufs, "vec4 %s = vec4(0.0, 0.0, 0.0, 0.0);\n",
+                            ctx->inputs[i].glsl_name);
+                  continue;
+               }
+            }
+         }
+
          if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC ||
               ctx->inputs[i].name == TGSI_SEMANTIC_COLOR ||
               ctx->inputs[i].name == TGSI_SEMANTIC_BCOLOR) {
@@ -7092,6 +7114,7 @@ static void fill_var_sinfo(const struct dump_ctx *ctx, struct vrend_variable_sha
    sinfo->num_in_cull = has_prop ? ctx->num_cull_dist_prop : ctx->key->num_in_cull;
    sinfo->num_out_clip = has_prop ? ctx->num_clip_dist_prop : ctx->key->num_out_clip;
    sinfo->num_out_cull = has_prop ? ctx->num_cull_dist_prop : ctx->key->num_out_cull;
+   sinfo->legacy_color_bits = ctx->color_out_mask;
 }
 
 static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sinfo)

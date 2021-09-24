@@ -136,6 +136,7 @@ struct vrend_variable_shader_info {
    uint32_t num_out_clip:4;
    uint32_t num_out_cull:4;
    int num_ucp;
+   int legacy_color_bits;
 };
 
 struct vrend_shader_key {
@@ -159,6 +160,7 @@ struct vrend_shader_key {
          uint32_t logicop_enabled : 1;
          uint32_t prim_is_points : 1;
          uint32_t invert_origin : 1;
+         uint32_t available_color_in_bits : 4;
       } fs;
 
       struct {

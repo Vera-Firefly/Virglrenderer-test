@@ -3417,6 +3417,9 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 
       key->num_in_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_clip;
       key->num_in_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_cull;
+
+      if (vrend_state.use_gles && type == PIPE_SHADER_FRAGMENT)
+         key->fs.available_color_in_bits = sub_ctx->shaders[prev_type]->current->var_sinfo.legacy_color_bits;
    }
 
    int next_type = -1;
