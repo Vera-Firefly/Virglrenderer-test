@@ -5,8 +5,10 @@ inc_mesa = include_directories('.', 'compat', 'pipe', 'util')
 
 files_mesa = files(
   'util/bitscan.c',
+  'util/hash_table.c',
   'util/os_file.c',
   'util/os_misc.c',
+  'util/ralloc.c',
   'util/u_cpu_detect.c',
   'util/u_debug.c',
   'util/u_math.c',
