@@ -65,6 +65,25 @@ struct vkr_context {
    char *instance_name;
 };
 
+static inline void
+vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource_attachment *att)
+{
+   const uint32_t res_id = att->resource->res_id;
+   util_hash_table_set(ctx->resource_table, uintptr_to_pointer(res_id), att);
+}
+
+static inline void
+vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
+{
+   util_hash_table_remove(ctx->resource_table, uintptr_to_pointer(res_id));
+}
+
+static inline struct vkr_resource_attachment *
+vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
+{
+   return util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
+}
+
 static inline bool
 vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
 {

@@ -20,8 +20,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vkr_context *ctx = dispatch->data;
    struct vkr_resource_attachment *att;
 
-   att = util_hash_table_get(ctx->resource_table,
-                             uintptr_to_pointer(args->pStream->resourceId));
+   att = vkr_context_get_resource(ctx, args->pStream->resourceId);
    if (!att) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
@@ -46,7 +45,7 @@ copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMES
    struct vkr_resource_attachment *att;
    struct virgl_resource *res;
 
-   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(stream->resourceId));
+   att = vkr_context_get_resource(ctx, stream->resourceId);
    if (!att)
       return NULL;
    res = att->resource;
@@ -235,7 +234,7 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    const struct vkr_resource_attachment *att;
    struct vkr_ring *ring;
 
-   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(info->resourceId));
+   att = vkr_context_get_resource(ctx, info->resourceId);
    if (!att) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;

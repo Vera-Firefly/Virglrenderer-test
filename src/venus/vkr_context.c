@@ -414,7 +414,7 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
    if (!iov || !iov_count)
       return 0;
 
-   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res->res_id));
+   att = vkr_context_get_resource(ctx, res->res_id);
    if (!att)
       return EINVAL;
 
@@ -476,7 +476,7 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_resource_attachment *att;
 
-   att = util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res->res_id));
+   att = vkr_context_get_resource(ctx, res->res_id);
    if (att) {
       assert(att->resource == res);
       return;
@@ -506,7 +506,7 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
       }
    }
 
-   util_hash_table_set(ctx->resource_table, uintptr_to_pointer(res->res_id), att);
+   vkr_context_add_resource(ctx, att);
 }
 
 static void
@@ -524,7 +524,7 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    mtx_lock(&ctx->mutex);
-   util_hash_table_remove(ctx->resource_table, uintptr_to_pointer(res->res_id));
+   vkr_context_remove_resource(ctx, res->res_id);
    mtx_unlock(&ctx->mutex);
 }
 

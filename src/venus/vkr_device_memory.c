@@ -81,8 +81,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    }
    if (import_resource_info) {
       uint32_t res_id = import_resource_info->resourceId;
-      struct vkr_resource_attachment *att =
-         util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
+      struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res_id);
       if (!att) {
          vkr_cs_decoder_set_fatal(&ctx->decoder);
          return;
@@ -174,8 +173,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
 
-   struct vkr_resource_attachment *att =
-      util_hash_table_get(ctx->resource_table, uintptr_to_pointer(args->resourceId));
+   struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, args->resourceId);
    if (!att) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
