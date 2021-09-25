@@ -169,7 +169,7 @@ vkr_cs_encoder_write_internal(struct vkr_cs_encoder *enc,
 
 void
 vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
-                    const struct util_hash_table_u64 *object_table)
+                    const struct util_hash_table *object_table)
 {
    memset(dec, 0, sizeof(*dec));
    dec->object_table = object_table;

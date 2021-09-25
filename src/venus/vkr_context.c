@@ -10,6 +10,9 @@
 #include "virgl_protocol.h" /* for transfer_mode */
 #include "vrend_iov.h"
 
+#define XXH_INLINE_ALL
+#include "util/xxhash.h"
+
 #include "vkr_buffer.h"
 #include "vkr_command_buffer.h"
 #include "vkr_context.h"
@@ -550,7 +553,7 @@ vkr_context_destroy(struct virgl_context *base)
    }
 
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
-   util_hash_table_destroy_u64(ctx->object_table);
+   util_hash_table_destroy(ctx->object_table);
 
    struct vkr_queue_sync *sync, *tmp;
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
@@ -580,6 +583,18 @@ vkr_context_init_base(struct vkr_context *ctx)
    ctx->base.get_fencing_fd = vkr_context_get_fencing_fd;
    ctx->base.retire_fences = vkr_context_retire_fences;
    ctx->base.submit_fence = vkr_context_submit_fence;
+}
+
+static unsigned
+vkr_hash_u64(void *key)
+{
+   return XXH32(key, sizeof(uint64_t), 0);
+}
+
+static int
+vkr_key_u64_equal(void *key1, void *key2)
+{
+   return *(const uint64_t *)key1 != *(const uint64_t *)key2;
 }
 
 static void
@@ -639,7 +654,8 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
    list_inithead(&ctx->rings);
 
-   ctx->object_table = util_hash_table_create_u64(destroy_func_object);
+   ctx->object_table =
+      util_hash_table_create(vkr_hash_u64, vkr_key_u64_equal, destroy_func_object);
    ctx->resource_table =
       _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
    if (!ctx->object_table || !ctx->resource_table)
@@ -669,7 +685,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
 fail:
    if (ctx->object_table)
-      util_hash_table_destroy_u64(ctx->object_table);
+      util_hash_table_destroy(ctx->object_table);
    if (ctx->resource_table)
       _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
    mtx_destroy(&ctx->mutex);

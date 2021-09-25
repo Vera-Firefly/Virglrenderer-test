@@ -52,7 +52,7 @@ struct vkr_cs_decoder_temp_pool {
 };
 
 struct vkr_cs_decoder {
-   const struct util_hash_table_u64 *object_table;
+   const struct util_hash_table *object_table;
 
    bool fatal_error;
    struct vkr_cs_decoder_temp_pool temp_pool;
@@ -113,7 +113,7 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
 
 void
 vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
-                    const struct util_hash_table_u64 *object_table);
+                    const struct util_hash_table *object_table);
 
 void
 vkr_cs_decoder_fini(struct vkr_cs_decoder *dec);
@@ -197,7 +197,7 @@ vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
    if (!id)
       return NULL;
 
-   obj = util_hash_table_get_u64((struct util_hash_table_u64 *)dec->object_table, id);
+   obj = util_hash_table_get((struct util_hash_table *)dec->object_table, &id);
    if (!obj || obj->type != type)
       vkr_cs_decoder_set_fatal(dec);
 

@@ -49,7 +49,7 @@ struct vkr_context {
    mtx_t mutex;
 
    struct list_head rings;
-   struct util_hash_table_u64 *object_table;
+   struct util_hash_table *object_table;
    struct hash_table *resource_table;
    struct list_head newly_exported_memories;
 
@@ -95,7 +95,7 @@ vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 static inline bool
 vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
 {
-   if (unlikely(!id || util_hash_table_get_u64(ctx->object_table, id))) {
+   if (unlikely(!id || util_hash_table_get(ctx->object_table, &id))) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return false;
    }
@@ -121,18 +121,18 @@ vkr_context_add_object(struct vkr_context *ctx, struct vkr_object *obj)
 {
    assert(vkr_is_recognized_object_type(obj->type));
    assert(obj->id);
-   assert(!util_hash_table_get_u64(ctx->object_table, obj->id));
+   assert(!util_hash_table_get(ctx->object_table, &obj->id));
 
-   util_hash_table_set_u64(ctx->object_table, obj->id, obj);
+   util_hash_table_set(ctx->object_table, &obj->id, obj);
 }
 
 static inline void
 vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
 {
-   assert(util_hash_table_get_u64(ctx->object_table, obj->id));
+   assert(util_hash_table_get(ctx->object_table, &obj->id));
 
    /* this frees obj */
-   util_hash_table_remove_u64(ctx->object_table, obj->id);
+   util_hash_table_remove(ctx->object_table, &obj->id);
 }
 
 static inline void
@@ -147,7 +147,7 @@ vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
 static inline void *
 vkr_context_get_object(struct vkr_context *ctx, vkr_object_id obj_id)
 {
-   return util_hash_table_get_u64(ctx->object_table, obj_id);
+   return util_hash_table_get(ctx->object_table, &obj_id);
 }
 
 static inline const char *
