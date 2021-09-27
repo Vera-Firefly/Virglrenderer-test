@@ -5805,11 +5805,6 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
          report_core_warn(ctx, CORE_PROFILE_WARN_CLAMP);
    }
 
-   /* read-color-clamping is handled in the mesa frontend */
-   if (!vrend_state.use_gles) {
-       glClampColor(GL_CLAMP_READ_COLOR_ARB, GL_FALSE);
-   }
-
    if (has_feature(feat_multisample)) {
       if (has_feature(feat_sample_mask)) {
 	 if (state->multisample)
@@ -8071,6 +8066,11 @@ static void do_readpixels(struct vrend_resource *res,
             vrend_printf( "GL_IMPLEMENTATION_COLOR_READ_FORMAT is not expected native format 0x%x != imp 0x%x\n", format, imp);
          }
       }
+   }
+
+   /* read-color clamping is handled in the mesa frontend */
+   if (!vrend_state.use_gles) {
+       glClampColor(GL_CLAMP_READ_COLOR_ARB, GL_FALSE);
    }
 
    if (has_feature(feat_arb_robustness))
