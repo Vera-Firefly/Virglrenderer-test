@@ -74,7 +74,7 @@ u_format_table_c = custom_target(
    'u_format_table.c',
    input : ['auxiliary/util/u_format_table.py', 'auxiliary/util/u_format.csv'],
    output : 'u_format_table.c',
-   command : [prog_python, '@INPUT@'],
+   command : [prog_python, '-B', '@INPUT@'],
    depend_files : files('auxiliary/util/u_format_parse.py'),
    capture : true,
 )
