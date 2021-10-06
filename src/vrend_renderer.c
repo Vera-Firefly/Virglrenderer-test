@@ -551,6 +551,7 @@ struct vrend_vertex_element_array {
    GLuint id;
    uint32_t signed_int_bitmask;
    uint32_t unsigned_int_bitmask;
+   struct vrend_sub_context *owning_sub;
 };
 
 struct vrend_constants {
@@ -2004,6 +2005,9 @@ static void vrend_destroy_vertex_elements_object(void *obj_ptr)
 {
    struct vrend_vertex_element_array *v = obj_ptr;
 
+   if (v == v->owning_sub->ve)
+      v->owning_sub->ve = NULL;
+
    if (has_feature(feat_gles31_vertex_attrib_binding)) {
       glDeleteVertexArrays(1, &v->id);
    }
@@ -2915,6 +2919,7 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
       FREE(v);
       return ENOMEM;
    }
+   v->owning_sub = ctx->sub;
    return 0;
 }
 
@@ -4840,6 +4845,11 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       sub_ctx->prim_mode = (int)info->mode;
    }
 
+   if (!sub_ctx->ve) {
+      vrend_printf("illegal VE setup - skipping renderering\n");
+      return 0;
+   }
+
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
        sub_ctx->convert_linear_to_srgb_on_write)
       new_program = vrend_select_program(sub_ctx, info);
@@ -4869,10 +4879,6 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    vrend_draw_bind_objects(sub_ctx, new_program);
 
 
-   if (!sub_ctx->ve) {
-      vrend_printf("illegal VE setup - skipping renderering\n");
-      return 0;
-   }
    float viewport_neg_val = sub_ctx->viewport_is_negative ? -1.0 : 1.0;
    if (sub_ctx->prog->viewport_neg_val != viewport_neg_val) {
       glUniform1f(sub_ctx->prog->vs_ws_adjust_loc, viewport_neg_val);
