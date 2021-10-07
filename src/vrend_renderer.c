@@ -4889,7 +4889,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       for (unsigned i = PIPE_SHADER_VERTEX; i < PIPE_SHADER_COMPUTE; ++i) {
          if (sub_ctx->prog->gles_use_query_texturelevel_mask & (1 << i)) {
             char loc_name[32];
-            snprintf(loc_name, 32, "%s_texlod[0]", pipe_shader_to_prefix(i));
+            snprintf(loc_name, 32, "%s_texlod", pipe_shader_to_prefix(i));
             sub_ctx->prog->tex_levels_uniform_id[i] = glGetUniformLocation(sub_ctx->prog->id, loc_name);
          } else {
             sub_ctx->prog->tex_levels_uniform_id[i] = -1;
