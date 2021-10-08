@@ -257,8 +257,12 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    if (msaa && !blit_ctx->use_gles)
       ext_str = "#extension GL_ARB_texture_multisample : enable\n";
    else if (tgsi_tex_target == TGSI_TEXTURE_CUBE_ARRAY ||
-            tgsi_tex_target == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
-      ext_str = "#extension GL_ARB_texture_cube_map_array : require\n";
+            tgsi_tex_target == TGSI_TEXTURE_SHADOWCUBE_ARRAY) {
+      if (blit_ctx->use_gles)
+         ext_str = "#extension GL_EXT_texture_cube_map_array : require\n";
+      else
+         ext_str = "#extension GL_ARB_texture_cube_map_array : require\n";
+   }
 
    if (blit_ctx->use_gles)
       flags |= BLIT_USE_GLES;

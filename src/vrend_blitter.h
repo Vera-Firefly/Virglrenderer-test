@@ -29,6 +29,24 @@
 
 /* shaders for blitting */
 
+#define FS_HEADER_GL                               \
+   "#version 130\n"                             \
+   "// Blitter\n"                               \
+   "%s"                                         \
+
+#define FS_HEADER_GLES                             \
+   "#version 310 es\n"                          \
+   "// Blitter\n"                               \
+   "%s"                                         \
+   "precision mediump float;\n"                 \
+
+#define FS_HEADER_GLES_MS_ARRAY                             \
+   "#version 310 es\n"                          \
+   "// Blitter\n"                               \
+   "#extension GL_OES_texture_storage_multisample_2d_array: require\n" \
+   "%s"                                         \
+   "precision mediump float;\n"                 \
+
 #define HEADER_GL                               \
    "#version 130\n"                             \
    "// Blitter\n"                               \
@@ -44,7 +62,6 @@
    "#extension GL_OES_texture_storage_multisample_2d_array: require\n" \
    "precision mediump float;\n"                 \
 
-
 #define VS_PASSTHROUGH_BODY                     \
    "in vec4 arg0;\n"                            \
    "in vec4 arg1;\n"                            \
@@ -59,7 +76,6 @@
 
 
 #define FS_TEXFETCH_COL_BODY                    \
-   "%s"                                         \
    "#define cvec4 %s\n"                         \
    "uniform mediump %csampler%s samp;\n"        \
    "in vec4 tc;\n"                              \
@@ -70,7 +86,6 @@
    "}\n"
 
 #define FS_TEXFETCH_COL_GLES_1D_BODY            \
-   "%s"                                         \
    "#define cvec4 %s\n"                         \
    "uniform mediump %csampler%s samp;\n"        \
    "in vec4 tc;\n"                              \
@@ -80,12 +95,11 @@
    "   FragColor = cvec4(%s);\n"                \
    "}\n"
 
-#define FS_TEXFETCH_COL_GL HEADER_GL FS_TEXFETCH_COL_BODY
-#define FS_TEXFETCH_COL_GLES HEADER_GLES FS_TEXFETCH_COL_BODY
-#define FS_TEXFETCH_COL_GLES_1D HEADER_GLES FS_TEXFETCH_COL_GLES_1D_BODY
+#define FS_TEXFETCH_COL_GL FS_HEADER_GL FS_TEXFETCH_COL_BODY
+#define FS_TEXFETCH_COL_GLES FS_HEADER_GLES FS_TEXFETCH_COL_BODY
+#define FS_TEXFETCH_COL_GLES_1D FS_HEADER_GLES FS_TEXFETCH_COL_GLES_1D_BODY
 
 #define FS_TEXFETCH_COL_MSAA_BODY                       \
-   "%s"                                                 \
    "#define cvec4 %s\n"                                 \
    "uniform mediump %csampler%s samp;\n"                \
    "in vec4 tc;\n"                                      \
@@ -99,9 +113,9 @@
    "   FragColor = cvec4(%s);\n"                        \
    "}\n"
 
-#define FS_TEXFETCH_COL_MSAA_GL HEADER_GL FS_TEXFETCH_COL_MSAA_BODY
-#define FS_TEXFETCH_COL_MSAA_GLES HEADER_GLES FS_TEXFETCH_COL_MSAA_BODY
-#define FS_TEXFETCH_COL_MSAA_ARRAY_GLES HEADER_GLES_MS_ARRAY FS_TEXFETCH_COL_MSAA_BODY
+#define FS_TEXFETCH_COL_MSAA_GL FS_HEADER_GL FS_TEXFETCH_COL_MSAA_BODY
+#define FS_TEXFETCH_COL_MSAA_GLES FS_HEADER_GLES FS_TEXFETCH_COL_MSAA_BODY
+#define FS_TEXFETCH_COL_MSAA_ARRAY_GLES FS_HEADER_GLES_MS_ARRAY FS_TEXFETCH_COL_MSAA_BODY
 
 #define FS_TEXFETCH_DS_BODY                             \
    "uniform mediump sampler%s samp;\n"                          \
