@@ -12,29 +12,32 @@ static void
 vkr_dispatch_vkCreateBuffer(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkCreateBuffer *args)
 {
-   struct vkr_context *ctx = dispatch->data;
+   /* XXX If VkExternalMemoryBufferCreateInfo is chained by the app, all is
+    * good.  If it is not chained, we might still bind an external memory to
+    * the buffer, because vkr_dispatch_vkAllocateMemory makes any HOST_VISIBLE
+    * memory external.  That is a spec violation.
+    *
+    * We could unconditionally chain VkExternalMemoryBufferCreateInfo.  Or we
+    * could call vkGetPhysicalDeviceExternalBufferProperties and fail
+    * vkCreateBuffer if the buffer does not support external memory.  But we
+    * would still end up with spec violation either way, while having a higher
+    * chance of causing compatibility issues.
+    *
+    * In practice, drivers usually ignore VkExternalMemoryBufferCreateInfo, or
+    * use it to filter out memory types in VkMemoryRequirements that do not
+    * support external memory.  Binding an external memory to a buffer created
+    * without VkExternalMemoryBufferCreateInfo usually works.
+    *
+    * To formalize this, we are potentially looking for an extension that
+    * supports exporting memories without making them external.  Because they
+    * are not external, they can be bound to buffers created without
+    * VkExternalMemoryBufferCreateInfo.  And because they are not external, we
+    * need something that is not vkGetPhysicalDeviceExternalBufferProperties
+    * to determine the exportability.  See
+    * vkr_physical_device_init_memory_properties as well.
+    */
 
-   struct vkr_device *dev = vkr_device_from_handle(args->device);
-
-#ifdef FORCE_ENABLE_DMABUF
-   VkExternalMemoryBufferCreateInfo local_external_info;
-   if (dev->physical_device->EXT_external_memory_dma_buf) {
-      VkExternalMemoryBufferCreateInfo *external_info = vkr_find_pnext(
-         args->pCreateInfo->pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO);
-      if (external_info) {
-         external_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-      } else {
-         local_external_info = (const VkExternalMemoryBufferCreateInfo){
-            .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO,
-            .pNext = args->pCreateInfo->pNext,
-            .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-         };
-         ((VkBufferCreateInfo *)args->pCreateInfo)->pNext = &local_external_info;
-      }
-   }
-#endif
-
-   vkr_buffer_create_and_add(ctx, args);
+   vkr_buffer_create_and_add(dispatch->data, args);
 }
 
 static void
