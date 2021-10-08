@@ -132,14 +132,14 @@
    "uniform sampler%s samp;\n"                                           \
    "in vec4 tc;\n"                                                       \
    "void main() {\n"                                                     \
-   "   gl_FragDepth = float(texelFetch(samp, %s(tc%s), int(tc.z)).x);\n" \
+   "   gl_FragDepth = float(texelFetch(samp, %s(tc%s), 0).x);\n" \
    "}\n"
 
 #define FS_TEXFETCH_DS_MSAA_BODY_GLES                                     \
    "uniform mediump sampler%s samp;\n"                                           \
    "in vec4 tc;\n"                                                       \
    "void main() {\n"                                                     \
-   "   gl_FragDepth = float(texelFetch(samp, %s(tc%s), int(tc.z)).x);\n" \
+   "   gl_FragDepth = float(texelFetch(samp, %s(tc%s), 0).x);\n" \
    "}\n"
 
 
