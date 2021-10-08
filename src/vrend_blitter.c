@@ -205,8 +205,14 @@ static void blit_get_swizzle(int tgsi_tex_target, unsigned flags,
       if (flags & BLIT_USE_MSAA) {
          retval->type = "ivec2";
       }
-      /* fallthrough */
+      retval->swizzle = ".xy";
+      break;
    case TGSI_TEXTURE_1D_ARRAY:
+      if (flags & (BLIT_USE_GLES)) {
+         retval->swizzle = ".xyz";
+         break;
+      }
+      /* fallthrough */
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       retval->swizzle = ".xy";
