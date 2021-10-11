@@ -76,6 +76,25 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
 {
    VkPhysicalDevice handle = physical_dev->base.handle.physical_device;
    vkGetPhysicalDeviceMemoryProperties(handle, &physical_dev->memory_properties);
+
+   /* XXX When a VkMemoryType has VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, we
+    * assume any VkDeviceMemory with the memory type can be made external and
+    * be exportable.  That is incorrect but is what we have to live with with
+    * the existing external memory extensions.
+    *
+    * The main reason is that the external memory extensions require us to use
+    * vkGetPhysicalDeviceExternalBufferProperties or
+    * vkGetPhysicalDeviceImageFormatProperties2 to determine if we can
+    * allocate an exportable external VkDeviceMemory.  But we normally do not
+    * have the info to make the queries during vkAllocateMemory.
+    *
+    * We only have VkMemoryAllocateInfo during vkAllocateMemory.  The only
+    * useful info in the struct is the memory type.  What we need is thus an
+    * extension that tells us that, given a memory type, if all VkDeviceMemory
+    * with the memory type is exportable.  If we had the extension, we could
+    * filter out VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT here if a memory type is
+    * not always exportable.
+    */
 }
 
 static void
@@ -361,9 +380,9 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceMemoryProperties *args)
 {
-   /* TODO lie about this */
-   vn_replace_vkGetPhysicalDeviceMemoryProperties_args_handle(args);
-   vkGetPhysicalDeviceMemoryProperties(args->physicalDevice, args->pMemoryProperties);
+   struct vkr_physical_device *physical_dev =
+      vkr_physical_device_from_handle(args->physicalDevice);
+   *args->pMemoryProperties = physical_dev->memory_properties;
 }
 
 static void
@@ -483,9 +502,9 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceMemoryProperties2 *args)
 {
-   /* TODO lie about this */
-   vn_replace_vkGetPhysicalDeviceMemoryProperties2_args_handle(args);
-   vkGetPhysicalDeviceMemoryProperties2(args->physicalDevice, args->pMemoryProperties);
+   struct vkr_physical_device *physical_dev =
+      vkr_physical_device_from_handle(args->physicalDevice);
+   args->pMemoryProperties->memoryProperties = physical_dev->memory_properties;
 }
 
 static void
