@@ -12,33 +12,26 @@ static void
 vkr_dispatch_vkCreateImage(struct vn_dispatch_context *dispatch,
                            struct vn_command_vkCreateImage *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-
-   struct vkr_device *dev = vkr_device_from_handle(args->device);
-
-#ifdef FORCE_ENABLE_DMABUF
-   /* Do not chain VkExternalMemoryImageCreateInfo with optimal tiling, so that
-    * guest Venus can pass memory requirement cts with dedicated allocation.
+   /* XXX If VkExternalMemoryImageCreateInfo is chained by the app, all is
+    * good.  If it is not chained, we might still bind an external memory to
+    * the image, because vkr_dispatch_vkAllocateMemory makes any HOST_VISIBLE
+    * memory external.  That is a spec violation.
+    *
+    * The discussions in vkr_dispatch_vkCreateBuffer are applicable to both
+    * buffers and images.  Additionally, drivers usually use
+    * VkExternalMemoryImageCreateInfo to pick a well-defined image layout for
+    * interoperability with foreign queues.  However, a well-defined layout
+    * might not exist for some images.  When it does, it might still require a
+    * dedicated allocation or might have a degraded performance.
+    *
+    * On the other hand, binding an external memory to an image created
+    * without VkExternalMemoryImageCreateInfo usually works.  Yes, it will
+    * explode if the external memory is accessed by foreign queues due to the
+    * lack of a well-defined image layout.  But we never end up in that
+    * situation because the app does not consider the memory external.
     */
-   VkExternalMemoryImageCreateInfo local_external_info;
-   if (args->pCreateInfo->tiling != VK_IMAGE_TILING_OPTIMAL &&
-       dev->physical_device->EXT_external_memory_dma_buf) {
-      VkExternalMemoryImageCreateInfo *external_info = vkr_find_pnext(
-         args->pCreateInfo->pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO);
-      if (external_info) {
-         external_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-      } else {
-         local_external_info = (const VkExternalMemoryImageCreateInfo){
-            .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
-            .pNext = args->pCreateInfo->pNext,
-            .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
-         };
-         ((VkImageCreateInfo *)args->pCreateInfo)->pNext = &local_external_info;
-      }
-   }
-#endif
 
-   vkr_image_create_and_add(ctx, args);
+   vkr_image_create_and_add(dispatch->data, args);
 }
 
 static void
