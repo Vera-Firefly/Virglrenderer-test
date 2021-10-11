@@ -553,7 +553,7 @@ vkr_context_destroy(struct virgl_context *base)
    }
 
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
-   util_hash_table_destroy(ctx->object_table);
+   _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 
    struct vkr_queue_sync *sync, *tmp;
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
@@ -585,22 +585,22 @@ vkr_context_init_base(struct vkr_context *ctx)
    ctx->base.submit_fence = vkr_context_submit_fence;
 }
 
-static unsigned
-vkr_hash_u64(void *key)
+static uint32_t
+vkr_hash_u64(const void *key)
 {
    return XXH32(key, sizeof(uint64_t), 0);
 }
 
-static int
-vkr_key_u64_equal(void *key1, void *key2)
+static bool
+vkr_key_u64_equal(const void *key1, const void *key2)
 {
-   return *(const uint64_t *)key1 != *(const uint64_t *)key2;
+   return *(const uint64_t *)key1 == *(const uint64_t *)key2;
 }
 
-static void
-destroy_func_object(void *val)
+void
+vkr_context_free_object(struct hash_entry *entry)
 {
-   struct vkr_object *obj = val;
+   struct vkr_object *obj = entry->data;
    free(obj);
 }
 
@@ -654,8 +654,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
    list_inithead(&ctx->rings);
 
-   ctx->object_table =
-      util_hash_table_create(vkr_hash_u64, vkr_key_u64_equal, destroy_func_object);
+   ctx->object_table = _mesa_hash_table_create(NULL, vkr_hash_u64, vkr_key_u64_equal);
    ctx->resource_table =
       _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
    if (!ctx->object_table || !ctx->resource_table)
@@ -685,7 +684,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
 fail:
    if (ctx->object_table)
-      util_hash_table_destroy(ctx->object_table);
+      _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
    if (ctx->resource_table)
       _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
    mtx_destroy(&ctx->mutex);

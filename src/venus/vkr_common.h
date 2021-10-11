@@ -22,7 +22,6 @@
 #include "util/hash_table.h"
 #include "util/os_misc.h"
 #include "util/u_double_list.h"
-#include "util/u_hash_table.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
