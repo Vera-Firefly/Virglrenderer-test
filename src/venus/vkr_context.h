@@ -50,7 +50,7 @@ struct vkr_context {
 
    struct list_head rings;
    struct util_hash_table_u64 *object_table;
-   struct util_hash_table *resource_table;
+   struct hash_table *resource_table;
    struct list_head newly_exported_memories;
 
    struct vkr_cs_encoder encoder;
@@ -65,23 +65,31 @@ struct vkr_context {
    char *instance_name;
 };
 
+void
+vkr_context_free_resource(struct hash_entry *entry);
+
 static inline void
 vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource_attachment *att)
 {
-   const uint32_t res_id = att->resource->res_id;
-   util_hash_table_set(ctx->resource_table, uintptr_to_pointer(res_id), att);
+   assert(!_mesa_hash_table_search(ctx->resource_table, &att->resource->res_id));
+   _mesa_hash_table_insert(ctx->resource_table, &att->resource->res_id, att);
 }
 
 static inline void
 vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
 {
-   util_hash_table_remove(ctx->resource_table, uintptr_to_pointer(res_id));
+   struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
+   if (likely(entry)) {
+      vkr_context_free_resource(entry);
+      _mesa_hash_table_remove(ctx->resource_table, entry);
+   }
 }
 
 static inline struct vkr_resource_attachment *
 vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 {
-   return util_hash_table_get(ctx->resource_table, uintptr_to_pointer(res_id));
+   const struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
+   return likely(entry) ? entry->data : NULL;
 }
 
 static inline bool

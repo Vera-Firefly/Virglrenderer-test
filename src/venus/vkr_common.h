@@ -19,6 +19,7 @@
 
 #include "c11/threads.h"
 #include "pipe/p_compiler.h"
+#include "util/hash_table.h"
 #include "util/os_misc.h"
 #include "util/u_double_list.h"
 #include "util/u_hash_table.h"

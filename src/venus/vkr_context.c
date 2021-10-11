@@ -549,7 +549,7 @@ vkr_context_destroy(struct virgl_context *base)
       vkr_instance_destroy(ctx, ctx->instance);
    }
 
-   util_hash_table_destroy(ctx->resource_table);
+   _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
    util_hash_table_destroy_u64(ctx->object_table);
 
    struct vkr_queue_sync *sync, *tmp;
@@ -589,10 +589,10 @@ destroy_func_object(void *val)
    free(obj);
 }
 
-static void
-destroy_func_resource(void *val)
+void
+vkr_context_free_resource(struct hash_entry *entry)
 {
-   struct vkr_resource_attachment *att = val;
+   struct vkr_resource_attachment *att = entry->data;
    struct vkr_device_memory *mem, *tmp;
 
    LIST_FOR_EACH_ENTRY_SAFE (mem, tmp, &att->memories, exported_head)
@@ -641,7 +641,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
 
    ctx->object_table = util_hash_table_create_u64(destroy_func_object);
    ctx->resource_table =
-      util_hash_table_create(hash_func_u32, compare_func, destroy_func_resource);
+      _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
    if (!ctx->object_table || !ctx->resource_table)
       goto fail;
 
@@ -671,7 +671,7 @@ fail:
    if (ctx->object_table)
       util_hash_table_destroy_u64(ctx->object_table);
    if (ctx->resource_table)
-      util_hash_table_destroy(ctx->resource_table);
+      _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
    mtx_destroy(&ctx->mutex);
    free(ctx->debug_name);
    free(ctx);
