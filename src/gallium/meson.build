@@ -42,7 +42,6 @@ sources_libgallium = [
    'auxiliary/util/u_half.h',
    'auxiliary/util/u_prim.h',
    'auxiliary/util/u_debug_describe.c',
-   'auxiliary/util/xxhash.h',
    'auxiliary/cso_cache/cso_hash.h',
    'auxiliary/cso_cache/cso_cache.h',
    'auxiliary/cso_cache/cso_cache.c',
