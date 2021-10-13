@@ -1413,6 +1413,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             } else
                name_prefix = ctx->is_last_vertex_stage ? "ex" : get_stage_output_name_prefix(iter->processor.Processor);
          }
+         ctx->outputs[i].override_no_wm = false;
          break;
          /* fallthrough */
       case TGSI_SEMANTIC_BCOLOR:
@@ -1426,6 +1427,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                break;
             } else
                name_prefix = "ex";
+            ctx->outputs[i].override_no_wm = false;
             break;
          }
          /* fallthrough */
