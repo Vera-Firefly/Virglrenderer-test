@@ -1376,7 +1376,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
       case TGSI_SEMANTIC_CLIPVERTEX:
          ctx->outputs[i].override_no_wm = true;
          ctx->outputs[i].invariant = false;
-         ctx->outputs[i].precise = false;
          if (ctx->glsl_ver_required >= 140) {
             ctx->has_clipvertex = true;
             name_prefix = get_stage_output_name_prefix(iter->processor.Processor);
