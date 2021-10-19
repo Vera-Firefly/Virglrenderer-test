@@ -971,6 +971,8 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_ILLEGAL_FORMAT]        = "Illegal format ID",
    [VIRGL_ERROR_CTX_ILLEGAL_SAMPLER_VIEW_TARGET] = "Illegat target for sampler view",
    [VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS]   = "IOV data size exceeds resource capacity",
+   [VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND]= "Dual source blend not supported",
+   [VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION]  = "Unsupported host function called",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -1650,20 +1652,32 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    glAttachShader(prog_id, fs->id);
 
    if (fs->sel->sinfo.num_outputs > 1) {
-      if (util_blend_state_is_dual(&sub_ctx->blend_state, 0)) {
+      sprog->dual_src_linked = util_blend_state_is_dual(&sub_ctx->blend_state, 0);
+      if (sprog->dual_src_linked) {
          if (has_feature(feat_dual_src_blend)) {
-            glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
-            glBindFragDataLocationIndexed(prog_id, 0, 1, "fsout_c1");
+            if (!vrend_state.use_gles) {
+               glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexed(prog_id, 0, 1, "fsout_c1");
+            } else {
+               glBindFragDataLocationIndexedEXT(prog_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexedEXT(prog_id, 0, 1, "fsout_c1");
+            }
          } else {
             vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND, 0);
          }
-         sprog->dual_src_linked = true;
-      } else {
-         if (has_feature(feat_dual_src_blend)) {
-            glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
-            glBindFragDataLocationIndexed(prog_id, 1, 0, "fsout_c1");
+      } else if (has_feature(feat_dual_src_blend)) {
+         for (int i = 0; i < fs->sel->sinfo.num_outputs; ++i) {
+            if (fs->sel->sinfo.fs_output_layout[i] >= 0) {
+               char buf[64];
+               snprintf(buf, sizeof(buf), "fsout_c%d", fs->sel->sinfo.fs_output_layout[i]);
+               if (!vrend_state.use_gles)
+                  glBindFragDataLocationIndexed(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
+               else
+                  glBindFragDataLocationIndexedEXT(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
+            }
          }
-         sprog->dual_src_linked = false;
+      } else {
+         vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION, 0);
       }
    } else
       sprog->dual_src_linked = false;

@@ -5653,6 +5653,8 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
             emit_ext(glsl_strbufs, "EXT_shader_framebuffer_fetch", "require");
          if (ctx->shader_req_bits & SHADER_REQ_BLEND_EQUATION_ADVANCED)
             emit_ext(glsl_strbufs, "KHR_blend_equation_advanced", "require");
+         if (ctx->cfg->has_dual_src_blend)
+            emit_ext(glsl_strbufs, "EXT_blend_func_extended", "require");
       }
 
       if (ctx->shader_req_bits & SHADER_REQ_VIEWPORT_IDX)
@@ -7175,6 +7177,13 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].array_id = ctx->outputs[i].array_id;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].usage_mask = ctx->outputs[i].usage_mask;
          sinfo->out.num_generic_and_patch++;
+      }
+
+      if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT) {
+         if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR)
+            sinfo->fs_output_layout[i] = ctx->outputs[i].sid;
+         else
+            sinfo->fs_output_layout[i] = -1;
       }
    }
 

@@ -106,6 +106,9 @@ struct vrend_shader_info {
    char **so_names;
    struct pipe_stream_output_info so_info;
 
+   /* 8 cbufs + depth + stencil + samplemask */
+   int8_t fs_output_layout[12];
+
    uint32_t samplers_used_mask;
    uint32_t images_used_mask;
    uint32_t ubo_used_mask;
