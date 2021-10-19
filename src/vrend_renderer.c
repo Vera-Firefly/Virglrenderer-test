@@ -9141,6 +9141,7 @@ static void vrend_renderer_prepare_blit_extra_info(struct vrend_context *ctx,
       uint8_t temp = info->swizzle[0];
       info->swizzle[0] = info->swizzle[2];
       info->swizzle[2] = temp;
+      info->can_fbo_blit = false;
    }
 
    /* for scaled MS blits we either need extensions or hand roll */
