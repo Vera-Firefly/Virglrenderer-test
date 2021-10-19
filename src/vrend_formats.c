@@ -483,6 +483,7 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
         entry = &rg_base_formats[0];
         swizzle[0] = swizzle[1] = swizzle[2] = PIPE_SWIZZLE_ZERO;
         swizzle[3] = PIPE_SWIZZLE_RED;
+
         break;
       case VIRGL_FORMAT_A16_UNORM:
         entry = &rg_base_formats[2];
@@ -523,14 +524,19 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
 
     status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     binding = VIRGL_BIND_SAMPLER_VIEW;
-    if (status == GL_FRAMEBUFFER_COMPLETE) {
+    if (status == GL_FRAMEBUFFER_COMPLETE)
        binding |= is_depth ? VIRGL_BIND_DEPTH_STENCIL : VIRGL_BIND_RENDER_TARGET;
 
-       if (is_desktop_gl ||
-           (is_depth && depth_stencil_formats_can_readback(table[i].format)) ||
-           color_format_can_readback(&table[i], gles_ver))
-          flags |= VIRGL_TEXTURE_CAN_READBACK;
-    }
+    /* On OpenGL all textures can be read back using glGetTexImage, but on GLES
+       we have to be able to bind textures to framebuffers, and use glReadPixels
+       to get the data. And apart from a few formats where support is required
+       (by the GLES version), we have to query the driver to identify additional
+       formats that are supported as destination formats by glReadPixels. */
+    if (is_desktop_gl ||
+        (status == GL_FRAMEBUFFER_COMPLETE &&
+         ((is_depth && depth_stencil_formats_can_readback(table[i].format)) ||
+          color_format_can_readback(&table[i], gles_ver))))
+       flags |= VIRGL_TEXTURE_CAN_READBACK;
 
     glDeleteTextures(1, &tex_id);
     glDeleteFramebuffers(1, &fb_id);
