@@ -4662,7 +4662,7 @@ void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
 
 
 static bool
-vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_info *info)
+vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch)
 {
    struct vrend_linked_shader_program *prog;
    bool fs_dirty, vs_dirty, gs_dirty, tcs_dirty, tes_dirty;
@@ -4691,7 +4691,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_TESS_CTRL], &tcs_dirty);
    else if (vrend_state.use_gles && shaders[PIPE_SHADER_TESS_EVAL]) {
       VREND_DEBUG(dbg_shader, sub_ctx->parent, "Need to inject a TCS\n");
-      vrend_inject_tcs(sub_ctx, info->vertices_per_patch);
+      vrend_inject_tcs(sub_ctx, vertices_per_patch);
 
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
    }
@@ -4711,7 +4711,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, const struct pipe_draw_i
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_TESS_CTRL], &tcs_dirty);
    else if (vrend_state.use_gles && shaders[PIPE_SHADER_TESS_EVAL]) {
       VREND_DEBUG(dbg_shader, sub_ctx->parent, "Need to inject a TCS\n");
-      vrend_inject_tcs(sub_ctx, info->vertices_per_patch);
+      vrend_inject_tcs(sub_ctx, vertices_per_patch);
    }
    sub_ctx->drawing = true;
    vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
@@ -4875,7 +4875,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
 
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
        sub_ctx->convert_linear_to_srgb_on_write)
-      new_program = vrend_select_program(sub_ctx, info);
+      new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
 
    if (!sub_ctx->prog) {
       vrend_printf("dropping rendering due to missing shaders: %s\n", ctx->debug_name);
