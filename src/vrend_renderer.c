@@ -5008,12 +5008,13 @@ int vrend_draw_vbo(struct vrend_context *ctx,
             glMultiDrawArraysIndirect(mode, (GLvoid const *)(unsigned long)info->indirect.offset, info->indirect.draw_count, info->indirect.stride);
          else
             glDrawArraysIndirect(mode, (GLvoid const *)(unsigned long)info->indirect.offset);
-      } else if (info->instance_count <= 1)
+      } else if (info->instance_count > 0) {
+         if (info->start_instance > 0)
+            glDrawArraysInstancedBaseInstance(mode, start, count, info->instance_count, info->start_instance);
+         else
+            glDrawArraysInstancedARB(mode, start, count, info->instance_count);
+      } else
          glDrawArrays(mode, start, count);
-      else if (info->start_instance)
-         glDrawArraysInstancedBaseInstance(mode, start, count, info->instance_count, info->start_instance);
-      else
-         glDrawArraysInstancedARB(mode, start, count, info->instance_count);
    } else {
       GLenum elsz;
       GLenum mode = info->mode;
@@ -5039,9 +5040,15 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          else
             glDrawElementsIndirect(mode, elsz, (GLvoid const *)(unsigned long)info->indirect.offset);
       } else if (info->index_bias) {
-         if (info->instance_count > 1)
-            glDrawElementsInstancedBaseVertex(mode, info->count, elsz, (void *)(unsigned long)sub_ctx->ib.offset, info->instance_count, info->index_bias);
-         else if (info->min_index != 0 || info->max_index != (unsigned)-1)
+         if (info->instance_count > 0) {
+            if (info->start_instance > 0)
+               glDrawElementsInstancedBaseVertexBaseInstance(mode, info->count, elsz, (void *)(unsigned long)sub_ctx->ib.offset,
+                                                             info->instance_count, info->index_bias, info->start_instance);
+            else
+               glDrawElementsInstancedBaseVertex(mode, info->count, elsz, (void *)(unsigned long)sub_ctx->ib.offset, info->instance_count, info->index_bias);
+
+
+         } else if (info->min_index != 0 || info->max_index != (unsigned)-1)
             glDrawRangeElementsBaseVertex(mode, info->min_index, info->max_index, info->count, elsz, (void *)(unsigned long)sub_ctx->ib.offset, info->index_bias);
          else
             glDrawElementsBaseVertex(mode, info->count, elsz, (void *)(unsigned long)sub_ctx->ib.offset, info->index_bias);
