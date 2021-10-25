@@ -81,6 +81,7 @@ static const char *command_names[VIRGL_MAX_COMMANDS] = {
    "PIPE_RESOURCE_SET_TYPE",
    "GET_MEMORY_INFO",
    "SEND_STRING_MARKER",
+   "LINK_SHADER",
 };
 
 static const char *object_type_names[VIRGL_MAX_OBJECTS] = {

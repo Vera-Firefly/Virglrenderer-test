@@ -4798,6 +4798,35 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
    return new_program;
 }
 
+void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
+{
+   /* Pre-compiling compute shaders needs some additional work */
+   if (handles[PIPE_SHADER_COMPUTE])
+      return;
+
+   struct vrend_shader_selector *prev_handles[PIPE_SHADER_TYPES];
+   memset(prev_handles, 0, sizeof(prev_handles));
+   uint32_t prev_shader_ids[PIPE_SHADER_TYPES];
+   memcpy(prev_shader_ids, ctx->sub->prog_ids, PIPE_SHADER_TYPES * sizeof(uint32_t));
+   struct vrend_linked_shader_program *prev_prog = ctx->sub->prog;
+
+   for (uint32_t type = 0; type < PIPE_SHADER_TYPES; ++type) {
+      vrend_shader_state_reference(&prev_handles[type], ctx->sub->shaders[type]);
+      vrend_bind_shader(ctx, handles[type], type);
+   }
+
+   ctx->sub->shader_dirty = true;
+   ctx->sub->cs_shader_dirty = true;
+
+   /* undo state changes */
+   for (uint32_t type = 0; type < PIPE_SHADER_TYPES; ++type) {
+      vrend_shader_state_reference(&ctx->sub->shaders[type], prev_handles[type]);
+      vrend_shader_state_reference(&prev_handles[type], NULL);
+   }
+   memcpy(ctx->sub->prog_ids, prev_shader_ids, PIPE_SHADER_TYPES * sizeof(uint32_t));
+   ctx->sub->prog = prev_prog;
+}
+
 int vrend_draw_vbo(struct vrend_context *ctx,
                    const struct pipe_draw_info *info,
                    uint32_t cso, uint32_t indirect_handle,
@@ -10536,7 +10565,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 6;
+   caps->v2.host_feature_check_version = 7;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);

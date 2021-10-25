@@ -1155,6 +1155,23 @@ static int vrend_decode_destroy_sub_ctx(struct vrend_context *ctx, const uint32_
    return 0;
 }
 
+static int vrend_decode_link_shader(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
+{
+   if (length != VIRGL_LINK_SHADER_SIZE)
+      return EINVAL;
+
+   uint32_t handles[PIPE_SHADER_TYPES];
+   handles[PIPE_SHADER_VERTEX] = get_buf_entry(buf, VIRGL_LINK_SHADER_VERTEX_HANDLE);
+   handles[PIPE_SHADER_FRAGMENT] = get_buf_entry(buf, VIRGL_LINK_SHADER_FRAGMENT_HANDLE);
+   handles[PIPE_SHADER_GEOMETRY] = get_buf_entry(buf, VIRGL_LINK_SHADER_GEOMETRY_HANDLE);
+   handles[PIPE_SHADER_TESS_CTRL] = get_buf_entry(buf, VIRGL_LINK_SHADER_TESS_CTRL_HANDLE);
+   handles[PIPE_SHADER_TESS_EVAL] = get_buf_entry(buf, VIRGL_LINK_SHADER_TESS_EVAL_HANDLE);
+   handles[PIPE_SHADER_COMPUTE] = get_buf_entry(buf, VIRGL_LINK_SHADER_COMPUTE_HANDLE);
+
+   vrend_link_program(ctx, handles);
+   return 0;
+}
+
 static int vrend_decode_bind_shader(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
    uint32_t handle, type;
@@ -1654,6 +1671,7 @@ static const vrend_decode_callback decode_table[VIRGL_MAX_COMMANDS] = {
    [VIRGL_CCMD_PIPE_RESOURCE_SET_TYPE] = vrend_decode_pipe_resource_set_type,
    [VIRGL_CCMD_GET_MEMORY_INFO] = vrend_decode_get_memory_info,
    [VIRGL_CCMD_SEND_STRING_MARKER] = vrend_decode_send_string_marker,
+   [VIRGL_CCMD_LINK_SHADER] = vrend_decode_link_shader,
 };
 
 static int vrend_decode_ctx_submit_cmd(struct virgl_context *ctx,

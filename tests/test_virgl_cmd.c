@@ -372,6 +372,15 @@ START_TEST(virgl_test_render_simple)
         virgl_encode_bind_shader(&ctx, fs_handle, PIPE_SHADER_FRAGMENT);
     }
 
+    /* link shader */
+    {
+        uint32_t handles[PIPE_SHADER_TYPES];
+        memset(handles, 0, sizeof(handles));
+        handles[PIPE_SHADER_VERTEX] = vs_handle;
+        handles[PIPE_SHADER_FRAGMENT] = fs_handle;
+        virgl_encode_link_shader(&ctx, handles);
+    }
+
     /* set blend state */
     {
 	struct pipe_blend_state blend;

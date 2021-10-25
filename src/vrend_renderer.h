@@ -145,6 +145,8 @@ int vrend_create_shader(struct vrend_context *ctx,
                         const char *shd_text, uint32_t offlen, uint32_t num_tokens,
                         uint32_t type, uint32_t pkt_length);
 
+void vrend_link_program(struct vrend_context *ctx, uint32_t *handles);
+
 void vrend_bind_shader(struct vrend_context *ctx,
                        uint32_t type,
                        uint32_t handle);
