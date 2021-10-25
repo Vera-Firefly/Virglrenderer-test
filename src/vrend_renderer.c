@@ -1146,6 +1146,9 @@ vrend_so_target_reference(struct vrend_so_target **ptr, struct vrend_so_target *
 static void vrend_shader_dump(struct vrend_shader *shader)
 {
    const char *prefix = pipe_shader_to_prefix(shader->sel->type);
+   if (shader->sel->tmp_buf)
+      vrend_printf("%s: %d TGSI:\n%s\n", prefix, shader->id, shader->sel->tmp_buf);
+
    vrend_printf("%s: %d GLSL:\n", prefix, shader->id);
    strarray_dump_with_line_numbers(&shader->glsl_strings);
    vrend_printf("\n");
@@ -3811,10 +3814,10 @@ int vrend_create_shader(struct vrend_context *ctx,
          ret = EINVAL;
          goto error;
       } else {
-         if (!vrend_debug(ctx, dbg_shader_tgsi)) {
+#ifdef NDEBUG
             free(sel->tmp_buf);
             sel->tmp_buf = NULL;
-         }
+#endif
       }
       free(tokens);
       sub_ctx->long_shader_in_progress_handle[type] = 0;
