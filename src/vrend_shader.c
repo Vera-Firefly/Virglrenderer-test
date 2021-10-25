@@ -2302,9 +2302,13 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
 static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
                               struct vrend_glsl_strbufs *glsl_strbufs)
 {
+   int cbuf_id = 0;
    for (uint i = 0; i < ctx->num_outputs; i++) {
-      if (ctx->key->fs.swizzle_output_rgb_to_bgr & (1 << i)) {
-         emit_buff(glsl_strbufs, "fsout_c%d = fsout_c%d.zyxw;\n", i, i);
+      if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR) {
+         if (ctx->key->fs.swizzle_output_rgb_to_bgr & (1 << cbuf_id)) {
+            emit_buff(glsl_strbufs, "fsout_c%d = fsout_c%d.zyxw;\n", cbuf_id, cbuf_id);
+         }
+         ++cbuf_id;
       }
    }
 }
