@@ -418,6 +418,7 @@ struct vrend_linked_shader_program {
    GLint fs_stipple_loc;
 
    GLint fs_alpha_ref_val_loc;
+   GLint fs_alpha_func_loc;
 
    GLuint clip_locs[8];
 
@@ -1741,10 +1742,15 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       sprog->fs_stipple_loc = glGetUniformLocation(prog_id, "pstipple_sampler");
    else
       sprog->fs_stipple_loc = -1;
-   if (vrend_shader_needs_alpha_func(&fs->key))
-      sprog->fs_alpha_ref_val_loc = glGetUniformLocation(prog_id, "alpha_ref_val");
-   else
-      sprog->fs_alpha_ref_val_loc = -1;
+
+   if (vrend_state.use_core_profile) {
+       sprog->fs_alpha_ref_val_loc = glGetUniformLocation(prog_id, "alpha_ref_val");
+       sprog->fs_alpha_func_loc = glGetUniformLocation(prog_id, "alpha_func");
+   } else {
+       sprog->fs_alpha_ref_val_loc = -1;
+       sprog->fs_alpha_func_loc = -1;
+   }
+
    sprog->vs_ws_adjust_loc = glGetUniformLocation(prog_id, "winsys_adjust_y");
 
    vrend_use_program(sub_ctx, prog_id);
@@ -3534,7 +3540,6 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
 
    if (vrend_state.use_core_profile) {
       int i;
-      bool add_alpha_test = true;
 
       // Only use integer info when drawing to avoid stale info.
       if (vrend_state.use_integer && sub_ctx->drawing &&
@@ -3549,16 +3554,11 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
             if (vrend_format_is_emulated_alpha(sub_ctx->surf[i]->format))
                key->fs.cbufs_are_a8_bitmask |= (1 << i);
             if (util_format_is_pure_integer(sub_ctx->surf[i]->format)) {
-            add_alpha_test = false;
             UPDATE_INT_SIGN_MASK(sub_ctx->surf[i]->format, i,
                                  key->fs.cbufs_signed_int_bitmask,
                                  key->fs.cbufs_unsigned_int_bitmask);
             }
             key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
-         }
-         if (add_alpha_test) {
-            key->add_alpha_test = sub_ctx->dsa_state.alpha.enabled;
-            key->alpha_test = sub_ctx->dsa_state.alpha.func;
          }
       }
 
@@ -4625,7 +4625,16 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
       glUniform1i(sub_ctx->prog->fs_stipple_loc, next_sampler_id);
    }
 
-   if (vrend_state.use_core_profile && sub_ctx->prog->fs_alpha_ref_val_loc != -1) {
+   if (sub_ctx->prog->fs_alpha_ref_val_loc != -1) {
+      assert(sub_ctx->prog->fs_alpha_func_loc != -1);
+
+      /* If it's an integer format surface, alpha test shouldn't do anything. */
+      if (sub_ctx->dsa_state.alpha.enabled && sub_ctx->surf[0] &&
+          !util_format_is_pure_integer(sub_ctx->surf[0]->format))
+          glUniform1i(sub_ctx->prog->fs_alpha_func_loc, sub_ctx->dsa_state.alpha.func);
+      else
+          glUniform1i(sub_ctx->prog->fs_alpha_func_loc, PIPE_FUNC_ALWAYS);
+
       glUniform1f(sub_ctx->prog->fs_alpha_ref_val_loc, sub_ctx->dsa_state.alpha.ref_value);
    }
 }

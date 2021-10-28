@@ -259,6 +259,7 @@ struct dump_ctx {
    int num_in_clip_dist;
    int num_out_clip_dist;
    int fs_uses_clipdist_input;
+   bool fs_has_color_outputs;
    int glsl_ver_required;
    int color_in_mask;
    int color_out_mask;
@@ -1403,6 +1404,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                                             ctx->key->fs.cbufs_unsigned_int_bitmask,
                                             ctx->outputs[i].sid);
             name_prefix = ctx->key->fs.logicop_enabled ? "fsout_tmp" : "fsout";
+            ctx->fs_has_color_outputs = true;
          } else {
             if (ctx->glsl_ver_required < 140) {
                ctx->outputs[i].glsl_no_index = true;
@@ -1839,23 +1841,10 @@ static void emit_a8_swizzle(struct vrend_glsl_strbufs *glsl_strbufs)
    emit_buf(glsl_strbufs, "fsout_c0.x = fsout_c0.w;\n");
 }
 
-static const char *atests[PIPE_FUNC_ALWAYS + 1] = {
-   "false",
-   "<",
-   "==",
-   "<=",
-   ">",
-   "!=",
-   ">=",
-   "true"
-};
-
 static void emit_alpha_test(const struct dump_ctx *ctx,
                             struct vrend_glsl_strbufs *glsl_strbufs)
 {
-   char comp_buf[128];
-
-   if (!ctx->num_outputs)
+   if (!ctx->fs_has_color_outputs)
       return;
 
    if (!ctx->write_all_cbufs) {
@@ -1863,26 +1852,19 @@ static void emit_alpha_test(const struct dump_ctx *ctx,
       if (ctx->outputs[0].sid != 0)
          return;
    }
-   switch (ctx->key->alpha_test) {
-   case PIPE_FUNC_NEVER:
-   case PIPE_FUNC_ALWAYS:
-      snprintf(comp_buf, 128, "%s", atests[ctx->key->alpha_test]);
-      break;
-   case PIPE_FUNC_LESS:
-   case PIPE_FUNC_EQUAL:
-   case PIPE_FUNC_LEQUAL:
-   case PIPE_FUNC_GREATER:
-   case PIPE_FUNC_NOTEQUAL:
-   case PIPE_FUNC_GEQUAL:
-      snprintf(comp_buf, 128, "%s %s alpha_ref_val", "fsout_c0.w", atests[ctx->key->alpha_test]);
-      break;
-   default:
-      vrend_printf( "invalid alpha-test: %x\n", ctx->key->alpha_test);
-      set_buf_error(glsl_strbufs);
-      return;
-   }
 
-   emit_buff(glsl_strbufs, "if (!(%s)) {\n\tdiscard;\n}\n", comp_buf);
+   emit_buff(glsl_strbufs, "if (alpha_func != 7 /* PIPE_FUNC_ALWAYS */) {\n"
+                           "  switch (alpha_func) {\n"
+                           "  case 0: discard; break;\n"
+                           "  case 1: if (!(fsout_c0.w < alpha_ref_val)) discard; break;\n"
+                           "  case 2: if (!(fsout_c0.w == alpha_ref_val)) discard; break;\n"
+                           "  case 3: if (!(fsout_c0.w <= alpha_ref_val)) discard; break;\n"
+                           "  case 4: if (!(fsout_c0.w > alpha_ref_val)) discard; break;\n"
+                           "  case 5: if (!(fsout_c0.w != alpha_ref_val)) discard; break;\n"
+                           "  case 6: if (!(fsout_c0.w >= alpha_ref_val)) discard; break;\n"
+                           "  default: break;\n"
+                           "  }\n"
+                           "}\n");
 }
 
 static void emit_pstipple_pass(struct vrend_glsl_strbufs *glsl_strbufs)
@@ -2340,9 +2322,8 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
     if (ctx->key->fs.cbufs_are_a8_bitmask)
        emit_a8_swizzle(glsl_strbufs);
 
-    if (ctx->key->add_alpha_test)
-       emit_alpha_test(ctx, glsl_strbufs);
-
+    if (ctx->cfg->use_core_profile)
+        emit_alpha_test(ctx, glsl_strbufs);
 
     if (ctx->key->fs.logicop_enabled)
        emit_fragment_logicop(ctx, glsl_strbufs);
@@ -6653,8 +6634,9 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
       }
    }
 
-   if (vrend_shader_needs_alpha_func(ctx->key)) {
-      emit_hdr(glsl_strbufs, "uniform float alpha_ref_val;\n");
+   if (ctx->cfg->use_core_profile) {
+       emit_hdr(glsl_strbufs, "uniform float alpha_ref_val;\n");
+       emit_hdr(glsl_strbufs, "uniform int alpha_func;\n");
    }
 
    if (ctx->key->color_two_side) {
@@ -7733,18 +7715,3 @@ fail:
    return false;
 }
 
-bool vrend_shader_needs_alpha_func(const struct vrend_shader_key *key) {
-   if (!key->add_alpha_test)
-      return false;
-   switch (key->alpha_test) {
-   default:
-      return false;
-   case PIPE_FUNC_LESS:
-   case PIPE_FUNC_EQUAL:
-   case PIPE_FUNC_LEQUAL:
-   case PIPE_FUNC_GREATER:
-   case PIPE_FUNC_NOTEQUAL:
-   case PIPE_FUNC_GEQUAL:
-      return true;
-   }
-}

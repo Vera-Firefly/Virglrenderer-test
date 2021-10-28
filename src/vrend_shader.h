@@ -178,14 +178,12 @@ struct vrend_shader_key {
    uint32_t sampler_views_lower_swizzle_mask;
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
-   uint8_t alpha_test;
    uint8_t clip_plane_enable;
    uint8_t num_in_cull : 4;
    uint8_t num_in_clip : 4;
    uint8_t num_out_cull : 4;
    uint8_t num_out_clip : 4;
    uint8_t pstipple_tex : 1;
-   uint8_t add_alpha_test : 1;
    uint8_t color_two_side : 1;
    uint8_t gs_present : 1;
    uint8_t tcs_present : 1;
