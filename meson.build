@@ -246,6 +246,30 @@ if with_venus
    endif
 endif
 
+with_render_server = get_option('render-server')
+with_render_server_worker = get_option('render-server-worker')
+render_server_install_dir = get_option('prefix') / get_option('libexecdir')
+if with_render_server
+   if not with_venus
+      error('render server makes no sense without venus currently')
+   endif
+
+   conf_data.set('ENABLE_RENDER_SERVER', 1)
+   conf_data.set('RENDER_SERVER_EXEC_PATH',
+                 '"' + render_server_install_dir / 'virgl_render_server' + '"')
+
+   if with_render_server_worker == 'process'
+      conf_data.set('ENABLE_RENDER_SERVER_WORKER_PROCESS', 1)
+   elif with_render_server_worker == 'thread'
+      conf_data.set('ENABLE_RENDER_SERVER_WORKER_THREAD', 1)
+   elif with_render_server_worker == 'minijail'
+      conf_data.set('ENABLE_RENDER_SERVER_WORKER_MINIJAIL', 1)
+      minijail_dep = dependency('libminijail')
+   else
+     error('unknown render server worker ' + with_render_server_worker)
+   endif
+endif
+
 if cc.compiles('void __attribute__((hidden)) func() {}')
    conf_data.set('HAVE_FUNC_ATTRIBUTE_VISIBILITY', 1)
 endif
@@ -280,6 +304,10 @@ with_valgrind = get_option('valgrind')
 subdir('src')
 subdir('vtest')
 
+if with_render_server
+subdir('server')
+endif
+
 if with_tests
    assert(have_egl, 'Tests require EGL, but it is not available')
    subdir('tests')
@@ -300,6 +328,11 @@ lines += ''
 lines += 'minigbm_alloc: ' + (with_minigbm_allocation ? 'yes' : 'no' )
 lines += ''
 lines += 'venus:     ' + (with_venus ? 'yes' : 'no' )
+lines += ''
+lines += 'render server: ' + (with_render_server ? 'yes' : 'no')
+if with_render_server
+lines += 'render server worker: ' + with_render_server_worker
+endif
 lines += ''
 lines += 'tests:     ' + (with_tests ? 'yes' : 'no' )
 lines += 'fuzzer:    ' + (with_fuzzer ? 'yes' : 'no' )

@@ -1,0 +1,46 @@
+/*
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: MIT
+ */
+
+#ifndef RENDER_WORKER_H
+#define RENDER_WORKER_H
+
+#include "render_common.h"
+
+enum render_worker_jail_seccomp_filter {
+   /* seccomp_path is ignored and seccomp is disabled */
+   RENDER_WORKER_JAIL_SECCOMP_NONE,
+   /* seccomp_path is a file containing a BPF program */
+   RENDER_WORKER_JAIL_SECCOMP_BPF,
+   /* seccomp_path is a file containing a minijail policy */
+   RENDER_WORKER_JAIL_SECCOMP_MINIJAIL_POLICY,
+   RENDER_WORKER_JAIL_SECCOMP_MINIJAIL_POLICY_LOG,
+};
+
+struct render_worker_jail *
+render_worker_jail_create(enum render_worker_jail_seccomp_filter seccomp_filter,
+                          const char *seccomp_path);
+
+void
+render_worker_jail_destroy(struct render_worker_jail *jail);
+
+struct render_worker *
+render_worker_create(struct render_worker_jail *jail,
+                     int (*thread_func)(void *thread_data),
+                     void *thread_data,
+                     size_t thread_data_size);
+
+bool
+render_worker_is_record(const struct render_worker *worker);
+
+void
+render_worker_kill(struct render_worker *worker);
+
+bool
+render_worker_reap(struct render_worker *worker, bool wait);
+
+void
+render_worker_destroy(struct render_worker *worker);
+
+#endif /* RENDER_WORKER_H */
