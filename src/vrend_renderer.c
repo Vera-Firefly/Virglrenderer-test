@@ -7205,6 +7205,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
          glBindTexture(gr->target, 0);
          return EINVAL;
       }
+      gr->storage_bits |= VREND_STORAGE_EGL_IMAGE;
    } else {
       internalformat = tex_conv_table[format].internalformat;
       glformat = tex_conv_table[format].glformat;
@@ -8403,9 +8404,18 @@ int vrend_renderer_transfer_iov(struct vrend_context *ctx,
    struct vrend_resource *res;
 
    res = vrend_renderer_ctx_res_lookup(ctx, dst_handle);
-   if (!res || !check_transfer_iovec(res, info)) {
+   if (!res) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, dst_handle);
       return EINVAL;
+   }
+
+   if (!check_transfer_iovec(res, info)) {
+      if (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE))
+         return 0;
+      else {
+         vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, dst_handle);
+         return EINVAL;
+      }
    }
 
    return vrend_renderer_transfer_internal(ctx, res, info,
