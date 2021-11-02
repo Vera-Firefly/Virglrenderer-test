@@ -133,6 +133,15 @@ venus_codegen = custom_target(
    command : [prog_python, '@INPUT0@', '-o', '@OUTDIR@', '@INPUT1@'],
 )
 
+proxy_sources = [
+   'proxy/proxy_client.c',
+   'proxy/proxy_common.c',
+   'proxy/proxy_context.c',
+   'proxy/proxy_renderer.c',
+   'proxy/proxy_server.c',
+   'proxy/proxy_socket.c',
+]
+
 virgl_depends = [
    gallium_dep,
    epoxy_dep,
@@ -165,6 +174,10 @@ if with_venus
    virgl_sources += venus_sources
    virgl_sources += venus_codegen
    virgl_depends += [venus_dep]
+endif
+
+if with_render_server
+   virgl_sources += proxy_sources
 endif
 
 libvirgl = static_library(
