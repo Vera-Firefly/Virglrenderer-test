@@ -10852,6 +10852,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
       caps->v2.max_anisotropy = MIN2(max_aniso, 16.0);
    }
 
+   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
+   caps->v2.max_texture_image_units = max;
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
