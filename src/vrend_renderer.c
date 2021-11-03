@@ -420,6 +420,7 @@ struct vrend_linked_shader_program {
    GLint fs_alpha_ref_val_loc;
    GLint fs_alpha_func_loc;
 
+   GLint clip_enabled_loc;
    GLuint clip_locs[8];
 
    uint32_t images_used_mask[PIPE_SHADER_TYPES];
@@ -1780,11 +1781,10 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          sprog->attrib_locs = NULL;
    }
 
-   if (vs->var_sinfo.num_ucp) {
-      for (i = 0; i < vs->var_sinfo.num_ucp; i++) {
-         snprintf(name, 32, "clipp[%d]", i);
-         sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
-      }
+   sprog->clip_enabled_loc = glGetUniformLocation(prog_id, "clip_plane_enabled");
+   for (i = 0; i < VIRGL_NUM_CLIP_PLANES; i++) {
+      snprintf(name, 32, "clipp[%d]", i);
+      sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
    }
    return sprog;
 }
@@ -3565,7 +3565,6 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       key->pstipple_tex = sub_ctx->rs_state.poly_stipple_enable;
       key->color_two_side = sub_ctx->rs_state.light_twoside;
 
-      key->clip_plane_enable = sub_ctx->rs_state.clip_plane_enable;
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
    }
 
@@ -4949,9 +4948,12 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    if (sub_ctx->rs_state.clip_plane_enable) {
+      glUniform1i(sub_ctx->prog->clip_enabled_loc, 1);
       for (i = 0 ; i < 8; i++) {
          glUniform4fv(sub_ctx->prog->clip_locs[i], 1, (const GLfloat *)&sub_ctx->ucp_state.ucp[i]);
       }
+   } else {
+      glUniform1i(sub_ctx->prog->clip_enabled_loc, 0);
    }
 
    if (has_feature(feat_gles31_vertex_attrib_binding))

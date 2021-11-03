@@ -2060,14 +2060,13 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
 
    if (ctx->prog_type == PIPE_SHADER_TESS_CTRL)
       prefix = "gl_out[gl_InvocationID].";
-   if (ctx->num_out_clip_dist == 0 && ctx->key->clip_plane_enable) {
-      if (ctx->is_last_vertex_stage) {
-
-         for (i = 0; i < 8; i++) {
-            emit_buff(glsl_strbufs, "%sgl_ClipDistance[%d] = dot(%s, clipp[%d]);\n", prefix, i, ctx->has_clipvertex ? "clipv_tmp" : "gl_Position", i);
-         }
-         return;
+   if (ctx->num_out_clip_dist == 0 && ctx->is_last_vertex_stage) {
+      emit_buff(glsl_strbufs, "if (clip_plane_enabled) {\n");
+      for (i = 0; i < 8; i++) {
+         emit_buff(glsl_strbufs, "  %sgl_ClipDistance[%d] = dot(%s, clipp[%d]);\n",
+                   prefix, i, ctx->has_clipvertex ? "clipv_tmp" : "gl_Position", i);
       }
+      emit_buff(glsl_strbufs, "}\n");
    }
    ndists = ctx->num_out_clip_dist;
    if (has_prop)
@@ -5642,8 +5641,7 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
    if (ctx->cfg->use_gles) {
       emit_ver_extf(glsl_strbufs, "#version %d es\n", ctx->cfg->glsl_version);
 
-      if ((ctx->shader_req_bits & SHADER_REQ_CLIP_DISTANCE)||
-          (ctx->num_out_clip_dist == 0 && ctx->key->clip_plane_enable)) {
+      if ((ctx->shader_req_bits & SHADER_REQ_CLIP_DISTANCE) || ctx->num_out_clip_dist == 0) {
          emit_ext(glsl_strbufs, "EXT_clip_cull_distance", "require");
       }
 
@@ -6522,7 +6520,7 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    char cull_buf[64] = "";
    char clip_buf[64] = "";
 
-   if (ctx->num_out_clip_dist || (ctx->key->clip_plane_enable && ctx->is_last_vertex_stage)) {
+   if (ctx->num_out_clip_dist || ctx->is_last_vertex_stage) {
       int num_clip_dists = ctx->num_clip_dist_prop ? ctx->num_clip_dist_prop : 0;
       int num_cull_dists = ctx->num_cull_dist_prop ? ctx->num_cull_dist_prop : 0;
 
@@ -6535,11 +6533,13 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
       if (num_cull_dists)
          snprintf(cull_buf, 64, "out float gl_CullDistance[%d];\n", num_cull_dists);
 
-      if (ctx->key->clip_plane_enable && ctx->is_last_vertex_stage)
+      if (ctx->is_last_vertex_stage) {
+         emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
          emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
 
-      if (ctx->is_last_vertex_stage)
          emit_hdrf(glsl_strbufs, "%s%s", clip_buf, cull_buf);
+      }
+
       emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\n");      
    }
 
@@ -6862,10 +6862,8 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
       emit_hdrf(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
    }
 
-   if (ctx->key->clip_plane_enable) {
-      emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
-   }
-
+   emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
+   emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
 }
 
 
@@ -6955,7 +6953,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
    emit_ios_per_vertex_out(ctx, glsl_strbufs, "");
 
-   if (ctx->key->clip_plane_enable && !ctx->key->gs_present) {
+   if (ctx->is_last_vertex_stage) {
+      emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
       emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
    }
 
@@ -7114,7 +7113,7 @@ static boolean analyze_instruction(struct tgsi_iterate_context *iter,
 
 static void fill_var_sinfo(const struct dump_ctx *ctx, struct vrend_variable_shader_info *sinfo)
 {
-   sinfo->num_ucp = ctx->key->clip_plane_enable ? 8 : 0;
+   sinfo->num_ucp = ctx->is_last_vertex_stage ? VIRGL_NUM_CLIP_PLANES : 0;
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
    sinfo->fs_info.num_interps = ctx->num_interps;
    sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
