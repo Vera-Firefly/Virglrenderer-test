@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "vkr_renderer.h"
 #include "vrend_renderer.h"
+#include "proxy/proxy_renderer.h"
 #include "vrend_winsys.h"
 
 #include "virglrenderer.h"
@@ -58,6 +59,7 @@ struct global_state {
    bool winsys_initialized;
    bool vrend_initialized;
    bool vkr_initialized;
+   bool proxy_initialized;
 };
 
 static struct global_state state;
@@ -219,9 +221,12 @@ int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
       ctx = vrend_renderer_context_create(ctx_id, nlen, name);
       break;
    case VIRGL_RENDERER_CAPSET_VENUS:
-      if (!state.vkr_initialized)
+      if (state.proxy_initialized)
+         ctx = proxy_context_create(ctx_id, ctx_flags, nlen, name);
+      else if (state.vkr_initialized)
+         ctx = vkr_context_create(nlen, name);
+      else
          return EINVAL;
-      ctx = vkr_context_create(nlen, name);
       break;
    default:
       return EINVAL;
@@ -552,6 +557,19 @@ static const struct vrend_if_cbs vrend_cbs = {
    make_current,
 };
 
+static int
+proxy_renderer_cb_get_server_fd(uint32_t version)
+{
+   if (state.cbs && state.cbs->version >= 3 && state.cbs->get_server_fd)
+      return state.cbs->get_server_fd(state.cookie, version);
+   else
+      return -1;
+}
+
+static const struct proxy_renderer_cbs proxy_cbs = {
+   proxy_renderer_cb_get_server_fd,
+};
+
 void *virgl_renderer_get_cursor_data(uint32_t resource_id, uint32_t *width, uint32_t *height)
 {
    struct virgl_resource *res = virgl_resource_lookup(resource_id);
@@ -582,6 +600,9 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
 
    if (state.resource_initialized)
       virgl_resource_table_cleanup();
+
+   if (state.proxy_initialized)
+      proxy_renderer_fini();
 
    if (state.vkr_initialized)
       vkr_renderer_fini();
@@ -692,6 +713,13 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       state.vkr_initialized = true;
    }
 
+   if (!state.proxy_initialized && (flags & VIRGL_RENDERER_RENDER_SERVER)) {
+      ret = proxy_renderer_init(&proxy_cbs, flags | VIRGL_RENDERER_NO_VIRGL);
+      if (ret)
+         goto fail;
+      state.proxy_initialized = true;
+   }
+
    return 0;
 
 fail:
@@ -726,6 +754,9 @@ void virgl_renderer_reset(void)
 
    if (state.resource_initialized)
       virgl_resource_table_reset();
+
+   if (state.proxy_initialized)
+      proxy_renderer_reset();
 
    if (state.vkr_initialized)
       vkr_renderer_reset();

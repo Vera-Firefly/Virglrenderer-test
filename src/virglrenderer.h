@@ -64,6 +64,9 @@ struct virgl_renderer_callbacks {
 
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
    void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint64_t queue_id, void *fence_cookie);
+
+   /* version 0: a connected socket of type SOCK_SEQPACKET */
+   int (*get_server_fd)(void *cookie, uint32_t version);
 #endif
 };
 
@@ -104,6 +107,12 @@ struct virgl_renderer_callbacks {
  * virgl_renderer_get_poll_fd should not be used to watch for retired fences.
  */
 #define VIRGL_RENDERER_ASYNC_FENCE_CB (1 << 8)
+
+/* Start a render server and move GPU rendering to the render server.
+ *
+ * This is respected by the venus renderer but ignored by the virgl renderer.
+ */
+#define VIRGL_RENDERER_RENDER_SERVER (1 << 9)
 
 #endif /* VIRGL_RENDERER_UNSTABLE_APIS */
 
