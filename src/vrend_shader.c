@@ -2964,22 +2964,43 @@ static void translate_tex(struct dump_ctx *ctx,
                       dinfo->dst_override_no_wm[0] ? "" : writemask);
          }
       } else {
-         emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texelFetch%s(%s, %s(%s%s)%s%s)%s));\n",
-                   dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
+
+         /* To inject the swizzle for texturebufffers with emulated formats do
+          *
+          * {
+          *    vec4 val = texelFetch( )
+          *    val = vec4(0/1/swizzle_x, ...);
+          *    dest.writemask = val.writemask;
+          * }
+          *
+          */
+         emit_buff(&ctx->glsl_strbufs, "{\n  vec4 val = %s(texelFetch%s(%s, %s(%s%s)%s%s));\n",
+                   get_string(dtypeprefix),
                    tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
-                   get_wm_string(twm), bias, offset,
-                   dinfo->dst_override_no_wm[0] ? "" : writemask);
+                   get_wm_string(twm), bias, offset);
+
          if (ctx->key->sampler_views_lower_swizzle_mask & (1 << sinfo->sreg_index)) {
-            uint8_t swizzle_r = ctx->key->tex_swizzle[sinfo->sreg_index] & 7;
-            uint8_t swizzle_g = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 3)) >> 3;
-            uint8_t swizzle_b = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 6)) >> 6;
-            uint8_t swizzle_a = (ctx->key->tex_swizzle[sinfo->sreg_index] & (7 << 9)) >> 9;
-            emit_buff(&ctx->glsl_strbufs, "%s = vec4(%s%s, %s%s, %s%s, %s%s);\n", dst,
-               swizzle_r == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_r == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_r),
-               swizzle_g == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_g == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_g),
-               swizzle_b == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_b == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_b),
-               swizzle_a == PIPE_SWIZZLE_ZERO ? "0" : (swizzle_a == PIPE_SWIZZLE_ONE ? "1" : dst), get_swizzle_string(swizzle_a));
+            int16_t  packed_swizzles = ctx->key->tex_swizzle[sinfo->sreg_index];
+            emit_buff(&ctx->glsl_strbufs,  "   val = vec4(");
+
+            for (int i = 0; i < 4; ++i) {
+               if (i > 0)
+                  emit_buff(&ctx->glsl_strbufs,  ", ");
+
+               int swz = (packed_swizzles >> (i * 3)) & 7;
+               switch (swz) {
+               case PIPE_SWIZZLE_ZERO : emit_buf(&ctx->glsl_strbufs,  "0.0"); break;
+               case PIPE_SWIZZLE_ONE : emit_buf(&ctx->glsl_strbufs,  "1.0"); break;
+               default:
+                  emit_buff(&ctx->glsl_strbufs,  "val%s", get_swizzle_string(swz));
+               }
+            }
+
+            emit_buff(&ctx->glsl_strbufs,  ");\n");
          }
+
+         emit_buff(&ctx->glsl_strbufs, "  %s  = val%s;\n}\n",
+                   dst, dinfo->dst_override_no_wm[0] ? "" : writemask);
       }
    } else if (ctx->cfg->glsl_version < 140 && (ctx->shader_req_bits & SHADER_REQ_SAMPLER_RECT)) {
       /* rect is special in GLSL 1.30 */

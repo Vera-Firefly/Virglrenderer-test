@@ -483,12 +483,13 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
         entry = &rg_base_formats[0];
         swizzle[0] = swizzle[1] = swizzle[2] = PIPE_SWIZZLE_ZERO;
         swizzle[3] = PIPE_SWIZZLE_RED;
-
+        flags |= VIRGL_TEXTURE_NEED_SWIZZLE;
         break;
       case VIRGL_FORMAT_A16_UNORM:
         entry = &rg_base_formats[2];
         swizzle[0] = swizzle[1] = swizzle[2] = PIPE_SWIZZLE_ZERO;
         swizzle[3] = PIPE_SWIZZLE_RED;
+        flags |= VIRGL_TEXTURE_NEED_SWIZZLE;
         break;
       default:
         break;
