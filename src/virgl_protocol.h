@@ -608,12 +608,16 @@ enum virgl_context_cmd {
 #define VIRGL_TRANSFER3D_DATA_OFFSET 12
 #define VIRGL_TRANSFER3D_DIRECTION 13
 
-/* Copy transfer */
+/* Copy transfer to host and from host*/
 #define VIRGL_COPY_TRANSFER3D_SIZE 14
 /* The first 11 dwords are the same as VIRGL_RESOURCE_IW_*  */
 #define VIRGL_COPY_TRANSFER3D_SRC_RES_HANDLE 12
 #define VIRGL_COPY_TRANSFER3D_SRC_RES_OFFSET 13
-#define VIRGL_COPY_TRANSFER3D_SYNCHRONIZED 14
+#define VIRGL_COPY_TRANSFER3D_FLAGS 14
+#define VIRGL_COPY_TRANSFER3D_FLAGS_SYNCHRONIZED (1 << 0)
+/* 1 << 1 means transfer from host.
+   0 << 1 means transfer to host.*/
+#define VIRGL_COPY_TRANSFER3D_FLAGS_READ_FROM_HOST (1 << 1)
 
 /* set tweak flags */
 #define VIRGL_SET_TWEAKS_SIZE 2

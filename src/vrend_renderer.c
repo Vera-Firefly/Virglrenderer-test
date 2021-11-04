@@ -8574,6 +8574,45 @@ int vrend_renderer_copy_transfer3d(struct vrend_context *ctx,
                                            src_res->num_iovs, info);
 }
 
+int vrend_renderer_copy_transfer3d_from_host(struct vrend_context *ctx,
+                                   uint32_t dst_handle,
+                                   uint32_t src_handle,
+                                   const struct vrend_transfer_info *info)
+{
+   struct vrend_resource *src_res, *dst_res;
+
+   src_res = vrend_renderer_ctx_res_lookup(ctx, src_handle);
+   dst_res = vrend_renderer_ctx_res_lookup(ctx, dst_handle);
+
+   if (!src_res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, src_handle);
+      return EINVAL;
+   }
+
+   if (!dst_res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, dst_handle);
+      return EINVAL;
+   }
+
+   if (!dst_res->iov) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, dst_handle);
+      return EINVAL;
+   }
+
+   if (!check_transfer_bounds(src_res, info)) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, dst_handle);
+      return EINVAL;
+   }
+
+   if (!check_iov_bounds(src_res, info, dst_res->iov, dst_res->num_iovs)) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, dst_handle);
+      return EINVAL;
+   }
+
+   return vrend_renderer_transfer_send_iov(ctx, src_res, dst_res->iov,
+                                           dst_res->num_iovs, info);
+}
+
 void vrend_set_stencil_ref(struct vrend_context *ctx,
                            struct pipe_stencil_ref *ref)
 {
@@ -10887,6 +10926,14 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
+
+   // we use capability bits (not a version of protocol), because 
+   // we disable this on client side if virglrenderer is used under
+   // vtest. vtest can't support this, because size of resource
+   // is used to create shmem. On drm path, we can use this, because
+   // size of drm resource (bo) is not passed to virglrenderer and
+   // we can pass "1" as size on drm path, but not on vtest.
+   caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_COPY_TRANSFER_BOTH_DIRECTIONS;
 
    if (has_feature(feat_anisotropic_filter)) {
       float max_aniso;
