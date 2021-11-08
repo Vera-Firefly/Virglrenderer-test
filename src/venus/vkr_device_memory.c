@@ -37,19 +37,78 @@ vkr_get_fd_handle_type_from_virgl_fd_type(
    return true;
 }
 
+static bool
+vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
+                                   struct vkr_physical_device *physical_dev,
+                                   const VkImportMemoryResourceInfoMESA *res_info,
+                                   VkImportMemoryFdInfoKHR *out)
+{
+   struct vkr_resource_attachment *att = NULL;
+   enum virgl_resource_fd_type fd_type;
+   int fd = -1;
+   VkExternalMemoryHandleTypeFlagBits handle_type;
+
+   att = vkr_context_get_resource(ctx, res_info->resourceId);
+   if (!att) {
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      return false;
+   }
+
+   fd_type = virgl_resource_export_fd(att->resource, &fd);
+   if (fd_type == VIRGL_RESOURCE_FD_INVALID)
+      return false;
+
+   if (!vkr_get_fd_handle_type_from_virgl_fd_type(physical_dev, fd_type, &handle_type)) {
+      close(fd);
+      return false;
+   }
+
+   *out = (VkImportMemoryFdInfoKHR){
+      .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+      .pNext = res_info->pNext,
+      .fd = fd,
+      .handleType = handle_type,
+   };
+   return true;
+}
+
 static void
 vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkAllocateMemory *args)
 {
    struct vkr_context *ctx = dispatch->data;
-
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vkr_physical_device *physical_dev = dev->physical_device;
+   VkBaseInStructure *prev_of_res_info = NULL;
+   VkImportMemoryResourceInfoMESA *res_info = NULL;
+   VkImportMemoryFdInfoKHR local_import_info = { .fd = -1 };
+   VkExportMemoryAllocateInfo *export_info = NULL;
+   struct vkr_device_memory *mem = NULL;
+   const uint32_t mem_type_index = args->pAllocateInfo->memoryTypeIndex;
+   const uint32_t property_flags =
+      physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
+   uint32_t valid_fd_types = 0;
+
+   /* translate VkImportMemoryResourceInfoMESA into VkImportMemoryFdInfoKHR in place */
+   prev_of_res_info = vkr_find_prev_struct(
+      args->pAllocateInfo, VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA);
+   if (prev_of_res_info) {
+      res_info = (VkImportMemoryResourceInfoMESA *)prev_of_res_info->pNext;
+      if (!vkr_get_fd_info_from_resource_info(ctx, physical_dev, res_info,
+                                              &local_import_info)) {
+         args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
+         return;
+      }
+
+      prev_of_res_info->pNext = (const struct VkBaseInStructure *)&local_import_info;
+   }
+
+   export_info = vkr_find_struct(args->pAllocateInfo->pNext,
+                                 VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
 
 #ifdef FORCE_ENABLE_DMABUF
    VkExportMemoryAllocateInfo local_export_info;
    if (dev->physical_device->EXT_external_memory_dma_buf) {
-      VkExportMemoryAllocateInfo *export_info = vkr_find_struct(
-         args->pAllocateInfo->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
       if (export_info) {
          export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
       } else {
@@ -58,71 +117,23 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
             .pNext = args->pAllocateInfo->pNext,
             .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
          };
+         export_info = &local_export_info;
          ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
       }
    }
-#endif
+#endif /* FORCE_ENABLE_DMABUF */
 
-   /* translate VkImportMemoryResourceInfoMESA into VkImportMemoryFdInfoKHR */
-   VkImportMemoryResourceInfoMESA *import_resource_info = NULL;
-   VkImportMemoryFdInfoKHR import_fd_info = {
-      .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
-      .fd = -1,
-   };
-   VkBaseInStructure *pprev = (VkBaseInStructure *)args->pAllocateInfo;
-   while (pprev->pNext) {
-      if (pprev->pNext->sType == VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA) {
-         import_resource_info = (VkImportMemoryResourceInfoMESA *)pprev->pNext;
-         import_fd_info.pNext = pprev->pNext->pNext;
-         pprev->pNext = (const struct VkBaseInStructure *)&import_fd_info;
-         break;
-      }
-      pprev = (VkBaseInStructure *)pprev->pNext;
-   }
-   if (import_resource_info) {
-      uint32_t res_id = import_resource_info->resourceId;
-      struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res_id);
-      if (!att) {
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
-         return;
-      }
-
-      enum virgl_resource_fd_type fd_type =
-         virgl_resource_export_fd(att->resource, &import_fd_info.fd);
-      if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type,
-                                                     &import_fd_info.handleType)) {
-         close(import_fd_info.fd);
-         args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
-         return;
-      }
+   if (export_info) {
+      if (export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
+         valid_fd_types |= 1 << VIRGL_RESOURCE_FD_OPAQUE;
+      if (export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT)
+         valid_fd_types |= 1 << VIRGL_RESOURCE_FD_DMABUF;
    }
 
-   const VkPhysicalDeviceMemoryProperties *mem_props =
-      &dev->physical_device->memory_properties;
-   const uint32_t mt_index = args->pAllocateInfo->memoryTypeIndex;
-   const uint32_t property_flags = mem_props->memoryTypes[mt_index].propertyFlags;
-
-   /* get valid fd types */
-   uint32_t valid_fd_types = 0;
-   const VkBaseInStructure *pnext = args->pAllocateInfo->pNext;
-   while (pnext) {
-      if (pnext->sType == VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO) {
-         const VkExportMemoryAllocateInfo *export = (const void *)pnext;
-
-         if (export->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT)
-            valid_fd_types |= 1 << VIRGL_RESOURCE_FD_OPAQUE;
-         if (export->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT)
-            valid_fd_types |= 1 << VIRGL_RESOURCE_FD_DMABUF;
-
-         break;
-      }
-      pnext = pnext->pNext;
-   }
-
-   struct vkr_device_memory *mem = vkr_device_memory_create_and_add(ctx, args);
+   mem = vkr_device_memory_create_and_add(ctx, args);
    if (!mem) {
-      if (import_resource_info)
-         close(import_fd_info.fd);
+      if (local_import_info.fd >= 0)
+         close(local_import_info.fd);
       return;
    }
 
