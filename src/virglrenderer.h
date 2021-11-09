@@ -328,6 +328,18 @@ VIRGL_EXPORT int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint3
 VIRGL_EXPORT int
 virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd);
 
+struct virgl_renderer_resource_import_blob_args
+{
+   uint32_t res_handle;
+   uint32_t blob_mem;
+   uint32_t fd_type;
+   int fd;
+   uint64_t size;
+};
+
+VIRGL_EXPORT int
+virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_blob_args *args);
+
 VIRGL_EXPORT int
 virgl_renderer_export_fence(uint32_t client_fence_id, int *fd);
 

@@ -1003,6 +1003,57 @@ virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd)
 }
 
 int
+virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_blob_args *args)
+{
+   TRACE_FUNC();
+   struct virgl_resource *res;
+
+   /* user resource id must be greater than 0 */
+   if (args->res_handle == 0)
+      return -EINVAL;
+
+   switch (args->blob_mem) {
+   case VIRGL_RENDERER_BLOB_MEM_HOST3D:
+      break;
+   default:
+      return -EINVAL;
+   }
+
+   enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
+   switch (args->fd_type) {
+   case VIRGL_RENDERER_BLOB_FD_TYPE_DMABUF:
+      fd_type = VIRGL_RESOURCE_FD_DMABUF;
+      break;
+   case VIRGL_RENDERER_BLOB_FD_TYPE_OPAQUE:
+      fd_type = VIRGL_RESOURCE_FD_OPAQUE;
+      break;
+   case VIRGL_RENDERER_BLOB_FD_TYPE_SHM:
+      fd_type = VIRGL_RESOURCE_FD_SHM;
+      break;
+   default:
+      return -EINVAL;
+   }
+
+   if (args->fd < 0)
+      return -EINVAL;
+   if (args->size == 0)
+      return -EINVAL;
+
+   res = virgl_resource_create_from_fd(args->res_handle,
+                                       fd_type,
+                                       args->fd,
+                                       NULL,
+                                       0);
+   if (!res)
+      return -ENOMEM;
+
+   res->map_info = 0;
+   res->map_size = args->size;
+
+   return 0;
+}
+
+int
 virgl_renderer_export_fence(uint32_t client_fence_id, int *fd)
 {
    TRACE_FUNC();
