@@ -5,6 +5,8 @@
 
 #include "vkr_device_memory.h"
 
+#include <gbm.h>
+
 #include "venus-protocol/vn_protocol_renderer_transport.h"
 
 #include "vkr_device_memory_gen.h"
@@ -72,6 +74,55 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
    return true;
 }
 
+static VkResult
+vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
+                                     const VkMemoryAllocateInfo *alloc_info,
+                                     struct gbm_bo **out_gbm_bo,
+                                     VkImportMemoryFdInfoKHR *out_fd_info)
+{
+#ifdef MINIGBM
+   const uint32_t gbm_bo_use_flags =
+      GBM_BO_USE_LINEAR | GBM_BO_USE_SW_READ_RARELY | GBM_BO_USE_SW_WRITE_RARELY;
+#else
+   const uint32_t gbm_bo_use_flags = GBM_BO_USE_LINEAR;
+#endif
+
+   struct gbm_bo *gbm_bo;
+   int fd = -1;
+
+   assert(physical_dev->gbm_device);
+
+   /*
+    * Reject here for simplicity. Letting VkPhysicalDeviceVulkan11Properties return
+    * min(maxMemoryAllocationSize, UINT32_MAX) will affect unmappable scenarios.
+    */
+   if (alloc_info->allocationSize > UINT32_MAX)
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+
+   /* 4K alignment is used on all implementations we support. */
+   gbm_bo =
+      gbm_bo_create(physical_dev->gbm_device, align(alloc_info->allocationSize, 4096), 1,
+                    GBM_FORMAT_R8, gbm_bo_use_flags);
+   if (!gbm_bo)
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+
+   /* gbm_bo_get_fd returns negative error code on failure */
+   fd = gbm_bo_get_fd(gbm_bo);
+   if (fd < 0) {
+      gbm_bo_destroy(gbm_bo);
+      return fd == -EMFILE ? VK_ERROR_TOO_MANY_OBJECTS : VK_ERROR_OUT_OF_HOST_MEMORY;
+   }
+
+   *out_gbm_bo = gbm_bo;
+   *out_fd_info = (VkImportMemoryFdInfoKHR){
+      .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
+      .pNext = alloc_info->pNext,
+      .fd = fd,
+      .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+   };
+   return VK_SUCCESS;
+}
+
 static void
 vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkAllocateMemory *args)
@@ -89,6 +140,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    const uint32_t property_flags =
       physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
    uint32_t valid_fd_types = 0;
+   struct gbm_bo *gbm_bo = NULL;
 
    /* translate VkImportMemoryResourceInfoMESA into VkImportMemoryFdInfoKHR in place */
    prev_of_res_info = vkr_find_prev_struct(
@@ -104,7 +156,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       prev_of_res_info->pNext = (const struct VkBaseInStructure *)&local_import_info;
    }
 
-   /* XXX Force dma_buf export until:
+   /* XXX Force dma_buf export or gbm bo import until:
     * - a new extension that supports direct export from host visible memory
     * - client capable of consuming opaque fd
     *
@@ -128,6 +180,29 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
             export_info = &local_export_info;
             ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
          }
+      } else if (!res_info) {
+         /* For non-import case, we allocate gbm bo to force import. */
+         VkResult result;
+
+         if (export_info) {
+            /* Strip export info since valid_fd_types can only be dma_buf here. */
+            VkBaseInStructure *prev_of_export_info = vkr_find_prev_struct(
+               args->pAllocateInfo, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
+
+            prev_of_export_info->pNext = export_info->pNext;
+            export_info = NULL;
+         }
+
+         result = vkr_get_fd_info_from_allocation_info(physical_dev, args->pAllocateInfo,
+                                                       &gbm_bo, &local_import_info);
+         if (result != VK_SUCCESS) {
+            args->ret = result;
+            return;
+         }
+
+         ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_import_info;
+
+         valid_fd_types = 1 << VIRGL_RESOURCE_FD_DMABUF;
       }
    }
 
@@ -142,12 +217,15 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    if (!mem) {
       if (local_import_info.fd >= 0)
          close(local_import_info.fd);
+      if (gbm_bo)
+         gbm_bo_destroy(gbm_bo);
       return;
    }
 
    mem->device = dev;
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
+   mem->gbm_bo = gbm_bo;
    list_inithead(&mem->exported_head);
 }
 
@@ -256,6 +334,9 @@ void
 vkr_device_memory_release(struct vkr_device_memory *mem)
 {
    list_del(&mem->exported_head);
+
+   if (mem->gbm_bo)
+      gbm_bo_destroy(mem->gbm_bo);
 }
 
 int
@@ -263,19 +344,29 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
                             VkExternalMemoryHandleTypeFlagBits handle_type,
                             int *out_fd)
 {
-   VkDevice dev_handle = mem->device->base.handle.device;
-   VkDeviceMemory mem_handle = mem->base.handle.device_memory;
-   const VkMemoryGetFdInfoKHR fd_info = {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
-      .memory = mem_handle,
-      .handleType = handle_type,
-   };
-   VkResult result;
    int fd = -1;
 
-   result = mem->device->get_memory_fd(dev_handle, &fd_info, &fd);
-   if (result != VK_SUCCESS)
-      return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
+   if (mem->gbm_bo) {
+      /* mem->gbm_bo is a gbm bo backing non-external mappable memory */
+      assert((handle_type == VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) &&
+             (mem->valid_fd_types == 1 << VIRGL_RESOURCE_FD_DMABUF));
+
+      /* gbm_bo_get_fd returns negative error code on failure */
+      fd = gbm_bo_get_fd(mem->gbm_bo);
+      if (fd < 0)
+         return fd;
+   } else {
+      VkDevice dev_handle = mem->device->base.handle.device;
+      VkDeviceMemory mem_handle = mem->base.handle.device_memory;
+      const VkMemoryGetFdInfoKHR fd_info = {
+         .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
+         .memory = mem_handle,
+         .handleType = handle_type,
+      };
+      VkResult result = mem->device->get_memory_fd(dev_handle, &fd_info, &fd);
+      if (result != VK_SUCCESS)
+         return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
+   }
 
    *out_fd = fd;
    return 0;

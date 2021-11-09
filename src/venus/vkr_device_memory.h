@@ -8,12 +8,17 @@
 
 #include "vkr_common.h"
 
+struct gbm_bo;
+
 struct vkr_device_memory {
    struct vkr_object base;
 
    struct vkr_device *device;
    uint32_t property_flags;
    uint32_t valid_fd_types;
+
+   /* gbm bo backing non-external mappable memory */
+   struct gbm_bo *gbm_bo;
 
    bool exported;
    uint32_t exported_res_id;
