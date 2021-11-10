@@ -176,13 +176,13 @@ void
 object_array_fini(struct object_array *arr);
 
 static inline void *
-vkr_find_pnext(const void *chain, VkStructureType type)
+vkr_find_struct(const void *chain, VkStructureType type)
 {
-   VkBaseOutStructure *pnext = (VkBaseOutStructure *)chain;
-   while (pnext) {
-      if (pnext->sType == type)
-         return pnext;
-      pnext = pnext->pNext;
+   VkBaseOutStructure *s = (VkBaseOutStructure *)chain;
+   while (s) {
+      if (s->sType == type)
+         return s;
+      s = s->pNext;
    }
    return NULL;
 }

@@ -48,7 +48,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
 #ifdef FORCE_ENABLE_DMABUF
    VkExportMemoryAllocateInfo local_export_info;
    if (dev->physical_device->EXT_external_memory_dma_buf) {
-      VkExportMemoryAllocateInfo *export_info = vkr_find_pnext(
+      VkExportMemoryAllocateInfo *export_info = vkr_find_struct(
          args->pAllocateInfo->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
       if (export_info) {
          export_info->handleTypes |= VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
@@ -205,7 +205,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 
    args->pMemoryResourceProperties->memoryTypeBits = mem_fd_props.memoryTypeBits;
 
-   VkMemoryResourceAllocationSizeProperties100000MESA *alloc_size_props = vkr_find_pnext(
+   VkMemoryResourceAllocationSizeProperties100000MESA *alloc_size_props = vkr_find_struct(
       args->pMemoryResourceProperties->pNext,
       VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
    if (alloc_size_props)
