@@ -187,6 +187,21 @@ vkr_find_struct(const void *chain, VkStructureType type)
    return NULL;
 }
 
+/*
+ * Find struct in the pNext of chain and return its previous struct.
+ */
+static inline void *
+vkr_find_prev_struct(const void *chain, VkStructureType type)
+{
+   VkBaseOutStructure *prev = (VkBaseOutStructure *)chain;
+   while (prev->pNext) {
+      if (prev->pNext->sType == type)
+         return prev;
+      prev = prev->pNext;
+   }
+   return NULL;
+}
+
 static inline bool
 vkr_is_recognized_object_type(VkObjectType type)
 {
