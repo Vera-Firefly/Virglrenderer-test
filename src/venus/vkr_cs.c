@@ -15,6 +15,15 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
                           size_t offset,
                           size_t size)
 {
+   if (!att) {
+      memset(&enc->stream, 0, sizeof(enc->stream));
+      enc->remaining_size = 0;
+      enc->next_iov = 0;
+      enc->cur = NULL;
+      enc->end = NULL;
+      return;
+   }
+
    enc->stream.attachment = att;
    enc->stream.iov = att->iov;
    enc->stream.iov_count = att->iov_count;

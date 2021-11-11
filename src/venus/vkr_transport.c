@@ -268,7 +268,6 @@ vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   list_del(&ring->head);
    vkr_ring_destroy(ring);
 }
 

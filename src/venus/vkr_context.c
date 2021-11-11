@@ -528,6 +528,30 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
    struct vkr_context *ctx = (struct vkr_context *)base;
 
    mtx_lock(&ctx->mutex);
+
+   const struct vkr_resource_attachment *att = ctx->encoder.stream.attachment;
+   if (att && att->resource == res) {
+      /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset.
+       * Until then, and until we can ignore older guests, treat this as
+       * non-fatal
+       */
+      vkr_cs_encoder_set_stream(&ctx->encoder, NULL, 0, 0);
+   }
+
+   struct vkr_ring *ring, *ring_tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
+      if (ring->attachment->resource != res)
+         continue;
+
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      mtx_unlock(&ctx->mutex);
+
+      vkr_ring_stop(ring);
+
+      mtx_lock(&ctx->mutex);
+      vkr_ring_destroy(ring);
+   }
+
    vkr_context_remove_resource(ctx, res->res_id);
    mtx_unlock(&ctx->mutex);
 }

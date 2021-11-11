@@ -232,6 +232,8 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
 void
 vkr_ring_destroy(struct vkr_ring *ring)
 {
+   list_del(&ring->head);
+
    assert(!ring->started);
    mtx_destroy(&ring->mutex);
    cnd_destroy(&ring->cond);
