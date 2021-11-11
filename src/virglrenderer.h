@@ -323,6 +323,7 @@ VIRGL_EXPORT int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint3
 
 #define VIRGL_RENDERER_BLOB_FD_TYPE_DMABUF        0x0001
 #define VIRGL_RENDERER_BLOB_FD_TYPE_OPAQUE        0x0002
+#define VIRGL_RENDERER_BLOB_FD_TYPE_SHM           0x0003
 
 VIRGL_EXPORT int
 virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd);

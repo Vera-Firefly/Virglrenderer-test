@@ -925,6 +925,7 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
    } else {
       switch (res->fd_type) {
       case VIRGL_RESOURCE_FD_DMABUF:
+      case VIRGL_RESOURCE_FD_SHM:
          map = mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:
@@ -990,6 +991,9 @@ virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd)
       break;
    case VIRGL_RESOURCE_FD_OPAQUE:
       *fd_type = VIRGL_RENDERER_BLOB_FD_TYPE_OPAQUE;
+      break;
+   case VIRGL_RESOURCE_FD_SHM:
+      *fd_type = VIRGL_RENDERER_BLOB_FD_TYPE_SHM;
       break;
    default:
       return EINVAL;

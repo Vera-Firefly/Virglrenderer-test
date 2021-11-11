@@ -33,6 +33,8 @@ struct pipe_resource;
 enum virgl_resource_fd_type {
    VIRGL_RESOURCE_FD_DMABUF,
    VIRGL_RESOURCE_FD_OPAQUE,
+   /* mmap()-able, usually memfd or shm */
+   VIRGL_RESOURCE_FD_SHM,
 
    VIRGL_RESOURCE_FD_INVALID = -1,
 };
