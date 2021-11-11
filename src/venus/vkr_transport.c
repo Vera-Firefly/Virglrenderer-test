@@ -26,8 +26,8 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
       return;
    }
 
-   vkr_cs_encoder_set_stream(&ctx->encoder, att->iov, att->iov_count,
-                             args->pStream->offset, args->pStream->size);
+   vkr_cs_encoder_set_stream(&ctx->encoder, att, args->pStream->offset,
+                             args->pStream->size);
 }
 
 static void

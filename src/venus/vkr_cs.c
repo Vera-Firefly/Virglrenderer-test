@@ -7,15 +7,17 @@
 
 #include "vrend_iov.h"
 
+#include "vkr_context.h"
+
 void
 vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
-                          const struct iovec *iov,
-                          int iov_count,
+                          const struct vkr_resource_attachment *att,
                           size_t offset,
                           size_t size)
 {
-   enc->stream.iov = iov;
-   enc->stream.iov_count = iov_count;
+   enc->stream.attachment = att;
+   enc->stream.iov = att->iov;
+   enc->stream.iov_count = att->iov_count;
    enc->stream.offset = offset;
    enc->stream.size = size;
    /* clear cache */

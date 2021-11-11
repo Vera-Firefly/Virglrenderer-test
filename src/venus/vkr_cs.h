@@ -16,6 +16,7 @@ struct vkr_cs_encoder {
    bool *fatal_error;
 
    struct {
+      const struct vkr_resource_attachment *attachment;
       const struct iovec *iov;
       int iov_count;
       size_t offset;
@@ -79,8 +80,7 @@ vkr_cs_encoder_set_fatal(const struct vkr_cs_encoder *enc)
 
 void
 vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
-                          const struct iovec *iov,
-                          int iov_count,
+                          const struct vkr_resource_attachment *att,
                           size_t offset,
                           size_t size);
 
