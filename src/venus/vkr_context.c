@@ -5,10 +5,15 @@
 
 #include "vkr_context.h"
 
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "pipe/p_state.h"
+#include "util/anon_file.h"
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
 #include "virgl_protocol.h" /* for transfer_mode */
-#include "vrend_iov.h"
 
 #define XXH_INLINE_ALL
 #include "util/xxhash.h"
@@ -267,7 +272,7 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
 static int
 vkr_context_get_blob_locked(struct virgl_context *base,
                             uint64_t blob_id,
-                            UNUSED uint64_t blob_size,
+                            uint64_t blob_size,
                             uint32_t flags,
                             struct virgl_context_blob *blob)
 {
@@ -275,6 +280,28 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    struct vkr_device_memory *mem;
    enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
    int fd = -1;
+
+   /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
+    * shm allocation.  It serves a similar purpose as iov does, but it is
+    * logically contiguous and it can be exported.
+    */
+   if (!blob_id && flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+      fd = os_create_anonymous_file(blob_size, "vkr-shmem");
+      if (fd < 0)
+         return -ENOMEM;
+
+      int ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
+      if (ret) {
+         close(fd);
+         return -ENOMEM;
+      }
+
+      blob->type = VIRGL_RESOURCE_FD_SHM;
+      blob->u.fd = fd;
+      blob->map_info = VIRGL_RENDERER_MAP_CACHE_CACHED;
+      blob->renderer_data = NULL;
+      return 0;
+   }
 
    mem = vkr_context_get_object(ctx, blob_id);
    if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
@@ -381,9 +408,12 @@ vkr_context_get_blob_done(struct virgl_context *base,
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem = blob->renderer_data;
 
-   mem->exported = true;
-   mem->exported_res_id = res_id;
-   list_add(&mem->exported_head, &ctx->newly_exported_memories);
+   /* when blob_id is 0, there is no associated mem */
+   if (mem) {
+      mem->exported = true;
+      mem->exported_res_id = res_id;
+      list_add(&mem->exported_head, &ctx->newly_exported_memories);
+   }
 
    /* XXX locked in vkr_context_get_blob */
    mtx_unlock(&ctx->mutex);
@@ -487,6 +517,16 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
    if (!att)
       return;
 
+   void *mmap_ptr = NULL;
+   if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
+      mmap_ptr =
+         mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+      if (mmap_ptr == MAP_FAILED) {
+         free(att);
+         return;
+      }
+   }
+
    /* TODO When in multi-process mode, we cannot share a virgl_resource as-is
     * to another process.  The resource must have a valid fd, and only the fd
     * and the iov can be sent the other process.
@@ -507,8 +547,15 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
       }
    }
 
-   att->iov = res->iov;
-   att->iov_count = res->iov_count;
+   if (mmap_ptr) {
+      att->shm_iov.iov_base = mmap_ptr;
+      att->shm_iov.iov_len = res->map_size;
+      att->iov = &att->shm_iov;
+      att->iov_count = 1;
+   } else {
+      att->iov = res->iov;
+      att->iov_count = res->iov_count;
+   }
 
    vkr_context_add_resource(ctx, att);
 }
@@ -552,7 +599,14 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
       vkr_ring_destroy(ring);
    }
 
+   if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
+      struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res->res_id);
+      if (att)
+         munmap(att->shm_iov.iov_base, att->shm_iov.iov_len);
+   }
+
    vkr_context_remove_resource(ctx, res->res_id);
+
    mtx_unlock(&ctx->mutex);
 }
 

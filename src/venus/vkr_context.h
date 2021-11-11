@@ -10,6 +10,7 @@
 
 #include "venus-protocol/vn_protocol_renderer_defines.h"
 #include "virgl_context.h"
+#include "vrend_iov.h"
 
 #include "vkr_cs.h"
 
@@ -28,6 +29,11 @@ struct virgl_resource;
 struct vkr_resource_attachment {
    struct virgl_resource *resource;
    struct list_head memories;
+
+   /* if VIRGL_RESOURCE_FD_SHM, this is the mapping of the shm and iov below
+    * points to this
+    */
+   struct iovec shm_iov;
 
    const struct iovec *iov;
    int iov_count;

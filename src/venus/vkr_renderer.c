@@ -29,6 +29,7 @@ vkr_get_capset(void *capset)
          vn_info_extension_spec_version("VK_EXT_command_serialization");
       c->vk_mesa_venus_protocol_spec_version =
          vn_info_extension_spec_version("VK_MESA_venus_protocol");
+      c->supports_blob_id_0 = true;
    }
 
    return sizeof(*c);
