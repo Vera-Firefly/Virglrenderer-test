@@ -95,6 +95,31 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
     * filter out VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT here if a memory type is
     * not always exportable.
     */
+
+   /* XXX is_memory_export_supported needs to be filled with a new extension
+    * which supports query fd export against the raw memory types. Currently,
+    * we workaround by checking external buffer properties before forcing
+    * enable dma_buf path of device memory allocation.
+    */
+   if (!physical_dev->EXT_external_memory_dma_buf)
+      return;
+
+   const VkPhysicalDeviceExternalBufferInfo info = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_BUFFER_INFO,
+      .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT,
+   };
+   VkExternalBufferProperties props = {
+      .sType = VK_STRUCTURE_TYPE_EXTERNAL_BUFFER_PROPERTIES,
+   };
+   vkGetPhysicalDeviceExternalBufferProperties(handle, &info, &props);
+   physical_dev->is_memory_export_supported =
+      (props.externalMemoryProperties.externalMemoryFeatures &
+       VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT) &&
+      (props.externalMemoryProperties.exportFromImportedHandleTypes &
+       VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) &&
+      (props.externalMemoryProperties.exportFromImportedHandleTypes &
+       VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
 }
 
 static void

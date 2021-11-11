@@ -33,16 +33,6 @@
 
 #include "vkr_renderer.h"
 
-/*
- * TODO what extensions do we need from the host driver?
- *
- * We don't check vkGetPhysicalDeviceExternalBufferProperties, etc. yet.  Even
- * if we did, silently adding external memory info to vkCreateBuffer or
- * vkCreateImage could change the results of vkGetBufferMemoryRequirements or
- * vkGetImageMemoryRequirements and confuse the guest.
- */
-#define FORCE_ENABLE_DMABUF
-
 #define VKR_DEBUG(category) (unlikely(vkr_debug_flags & VKR_DEBUG_##category))
 
 /* define a type-safe cast function */
