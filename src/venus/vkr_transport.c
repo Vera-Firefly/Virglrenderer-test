@@ -26,7 +26,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
       return;
    }
 
-   vkr_cs_encoder_set_stream(&ctx->encoder, att->resource->iov, att->resource->iov_count,
+   vkr_cs_encoder_set_stream(&ctx->encoder, att->iov, att->iov_count,
                              args->pStream->offset, args->pStream->size);
 }
 
@@ -43,22 +43,20 @@ static void *
 copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMESA *stream)
 {
    struct vkr_resource_attachment *att;
-   struct virgl_resource *res;
 
    att = vkr_context_get_resource(ctx, stream->resourceId);
    if (!att)
       return NULL;
-   res = att->resource;
 
    /* seek to offset */
    size_t iov_offset = stream->offset;
    const struct iovec *iov = NULL;
-   for (int i = 0; i < res->iov_count; i++) {
-      if (iov_offset < res->iov[i].iov_len) {
-         iov = &res->iov[i];
+   for (int i = 0; i < att->iov_count; i++) {
+      if (iov_offset < att->iov[i].iov_len) {
+         iov = &att->iov[i];
          break;
       }
-      iov_offset -= res->iov[i].iov_len;
+      iov_offset -= att->iov[i].iov_len;
    }
    if (!iov)
       return NULL;
@@ -79,7 +77,7 @@ copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMES
       copied += s;
       if (copied == stream->size) {
          break;
-      } else if (iov == &res->iov[res->iov_count - 1]) {
+      } else if (iov == &att->iov[att->iov_count - 1]) {
          free(data);
          return NULL;
       }
@@ -153,12 +151,12 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 
 static bool
 vkr_ring_layout_init(struct vkr_ring_layout *layout,
-                     struct virgl_resource *res,
+                     const struct vkr_resource_attachment *att,
                      const VkRingCreateInfoMESA *info)
 {
    /* clang-format off */
    *layout = (struct vkr_ring_layout){
-      .resource = res,
+      .attachment = att,
       .head   = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
       .tail   = VKR_REGION_INIT(info->offset + info->tailOffset, sizeof(uint32_t)),
       .status = VKR_REGION_INIT(info->offset + info->statusOffset, sizeof(uint32_t)),
@@ -177,7 +175,7 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    /* clang-format on */
 
    const struct vkr_region res_size =
-      VKR_REGION_INIT(0, vrend_get_iovec_size(res->iov, res->iov_count));
+      VKR_REGION_INIT(0, vrend_get_iovec_size(att->iov, att->iov_count));
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
       return false;
 
@@ -241,7 +239,7 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    }
 
    struct vkr_ring_layout layout;
-   if (!vkr_ring_layout_init(&layout, att->resource, info)) {
+   if (!vkr_ring_layout_init(&layout, att, info)) {
       vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;

@@ -28,6 +28,9 @@ struct virgl_resource;
 struct vkr_resource_attachment {
    struct virgl_resource *resource;
    struct list_head memories;
+
+   const struct iovec *iov;
+   int iov_count;
 };
 
 enum vkr_context_validate_level {

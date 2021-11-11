@@ -507,6 +507,9 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
       }
    }
 
+   att->iov = res->iov;
+   att->iov_count = res->iov_count;
+
    vkr_context_add_resource(ctx, att);
 }
 
