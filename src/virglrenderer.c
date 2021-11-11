@@ -877,7 +877,7 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    if (!ctx)
       return -EINVAL;
 
-   ret = ctx->get_blob(ctx, args->blob_id, args->blob_flags, &blob);
+   ret = ctx->get_blob(ctx, args->blob_id, args->size, args->blob_flags, &blob);
    if (ret)
       return ret;
 

@@ -267,6 +267,7 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
 static int
 vkr_context_get_blob_locked(struct virgl_context *base,
                             uint64_t blob_id,
+                            UNUSED uint64_t blob_size,
                             uint32_t flags,
                             struct virgl_context_blob *blob)
 {
@@ -356,6 +357,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
 static int
 vkr_context_get_blob(struct virgl_context *base,
                      uint64_t blob_id,
+                     uint64_t blob_size,
                      uint32_t flags,
                      struct virgl_context_blob *blob)
 {
@@ -363,7 +365,7 @@ vkr_context_get_blob(struct virgl_context *base,
    int ret;
 
    mtx_lock(&ctx->mutex);
-   ret = vkr_context_get_blob_locked(base, blob_id, flags, blob);
+   ret = vkr_context_get_blob_locked(base, blob_id, blob_size, flags, blob);
    /* XXX unlock in vkr_context_get_blob_done on success */
    if (ret)
       mtx_unlock(&ctx->mutex);

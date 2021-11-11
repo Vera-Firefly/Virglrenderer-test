@@ -96,6 +96,7 @@ struct virgl_context {
     */
    int (*get_blob)(struct virgl_context *ctx,
                    uint64_t blob_id,
+                   uint64_t blob_size,
                    uint32_t blob_flags,
                    struct virgl_context_blob *blob);
    void (*get_blob_done)(struct virgl_context *ctx,

@@ -1579,6 +1579,7 @@ static int vrend_decode_ctx_transfer_3d(struct virgl_context *ctx,
 
 static int vrend_decode_ctx_get_blob(struct virgl_context *ctx,
                                      uint64_t blob_id,
+                                     UNUSED uint64_t blob_size,
                                      UNUSED uint32_t blob_flags,
                                      struct virgl_context_blob *blob)
 {
