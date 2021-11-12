@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "util/os_file.h"
 #include "util/u_hash_table.h"
 #include "util/u_pointer.h"
 #include "virgl_util.h"
@@ -219,13 +220,7 @@ enum virgl_resource_fd_type
 virgl_resource_export_fd(struct virgl_resource *res, int *fd)
 {
    if (res->fd_type != VIRGL_RESOURCE_FD_INVALID) {
-#ifdef F_DUPFD_CLOEXEC
-      *fd = fcntl(res->fd, F_DUPFD_CLOEXEC, 0);
-      if (*fd < 0)
-         *fd = dup(res->fd);
-#else
-      *fd = dup(res->fd);
-#endif
+      *fd = os_dupfd_cloexec(res->fd);
       return *fd >= 0 ? res->fd_type : VIRGL_RESOURCE_FD_INVALID;
    } else if (res->pipe_resource) {
       return pipe_callbacks.export_fd(res->pipe_resource,
