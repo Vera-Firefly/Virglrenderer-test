@@ -244,7 +244,7 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
    /* CS error is considered fatal (destroy the context?) */
    if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
       mtx_unlock(&ctx->mutex);
-      return EINVAL;
+      return -EINVAL;
    }
 
    vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
@@ -252,7 +252,7 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
       if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
-         ret = EINVAL;
+         ret = -EINVAL;
          break;
       }
    }
@@ -276,26 +276,26 @@ vkr_context_get_blob_locked(struct virgl_context *base,
 
    mem = vkr_context_get_object(ctx, blob_id);
    if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
-      return EINVAL;
+      return -EINVAL;
 
    /* a memory can only be exported once; we don't want two resources to point
     * to the same storage.
     */
    if (mem->exported)
-      return EINVAL;
+      return -EINVAL;
 
    if (!mem->valid_fd_types)
-      return EINVAL;
+      return -EINVAL;
 
    if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       const bool host_visible = mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
       if (!host_visible)
-         return EINVAL;
+         return -EINVAL;
    }
 
    if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
       if (!(mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_DMABUF)))
-         return EINVAL;
+         return -EINVAL;
 
       fd_type = VIRGL_RESOURCE_FD_DMABUF;
    }
@@ -319,7 +319,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
          break;
       default:
-         return EINVAL;
+         return -EINVAL;
       }
 
       VkResult result = ctx->instance->get_memory_fd(
@@ -331,7 +331,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          },
          &fd);
       if (result != VK_SUCCESS)
-         return EINVAL;
+         return -EINVAL;
    }
 
    blob->type = fd_type;
@@ -404,7 +404,7 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
    int iov_count;
 
    if (info->level || info->stride || info->layer_stride)
-      return EINVAL;
+      return -EINVAL;
 
    if (info->iovec) {
       iov = info->iovec;
@@ -419,14 +419,14 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
 
    att = vkr_context_get_resource(ctx, res->res_id);
    if (!att)
-      return EINVAL;
+      return -EINVAL;
 
    assert(att->resource == res);
 
    /* TODO transfer via dmabuf (and find a solution to coherency issues) */
    if (LIST_IS_EMPTY(&att->memories)) {
       vkr_log("unable to transfer without VkDeviceMemory (TODO)");
-      return EINVAL;
+      return -EINVAL;
    }
 
    struct vkr_device_memory *mem =
@@ -442,7 +442,7 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
    VkResult result =
       vkMapMemory(mem->device, range.memory, range.offset, range.size, 0, &ptr);
    if (result != VK_SUCCESS)
-      return EINVAL;
+      return -EINVAL;
 
    if (transfer_mode == VIRGL_TRANSFER_TO_HOST) {
       vrend_read_from_iovec(iov, iov_count, range.offset, ptr, range.size);
