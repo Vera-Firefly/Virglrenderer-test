@@ -7,10 +7,35 @@
 
 #include "venus-protocol/vn_protocol_renderer_device.h"
 #include "venus-protocol/vn_protocol_renderer_info.h"
+#include "vrend_winsys_gbm.h"
 
 #include "vkr_context.h"
 #include "vkr_device.h"
 #include "vkr_instance.h"
+
+/* TODO open render node and create gbm_device per vkr_physical_device */
+static struct gbm_device *vkr_gbm_dev;
+
+static void
+vkr_gbm_device_init_once()
+{
+   struct virgl_gbm *vkr_gbm = virgl_gbm_init(-1);
+   if (!vkr_gbm) {
+      vkr_log("virgl_gbm_init failed");
+      exit(-1);
+   }
+
+   vkr_gbm_dev = vkr_gbm->device;
+}
+
+static struct gbm_device *
+vkr_physical_device_get_gbm_device(UNUSED struct vkr_physical_device *physical_dev)
+{
+   static once_flag gbm_once_flag = ONCE_FLAG_INIT;
+   call_once(&gbm_once_flag, vkr_gbm_device_init_once);
+
+   return vkr_gbm_dev;
+}
 
 void
 vkr_physical_device_destroy(struct vkr_context *ctx,
@@ -120,6 +145,9 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) &&
       (props.externalMemoryProperties.exportFromImportedHandleTypes &
        VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
+
+   if (!physical_dev->is_memory_export_supported)
+      physical_dev->gbm_device = vkr_physical_device_get_gbm_device(physical_dev);
 }
 
 static void

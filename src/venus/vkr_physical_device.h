@@ -8,6 +8,8 @@
 
 #include "vkr_common.h"
 
+struct gbm_device;
+
 struct vkr_physical_device {
    struct vkr_object base;
 
@@ -24,6 +26,7 @@ struct vkr_physical_device {
 
    VkPhysicalDeviceMemoryProperties memory_properties;
    bool is_memory_export_supported;
+   struct gbm_device *gbm_device;
 
    struct list_head devices;
 };
