@@ -28,8 +28,7 @@ vkr_dispatch_vkDestroyCommandPool(struct vn_dispatch_context *dispatch,
    if (!pool)
       return;
 
-   vkr_context_remove_objects(ctx, &pool->command_buffers);
-
+   vkr_command_pool_release(ctx, pool);
    vkr_command_pool_destroy_and_remove(ctx, args);
 }
 

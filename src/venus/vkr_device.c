@@ -295,13 +295,9 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       vkDestroyFramebuffer(device, obj->handle.framebuffer, NULL);
       break;
    case VK_OBJECT_TYPE_COMMAND_POOL: {
-      /* Destroying VkCommandPool frees all VkCommandBuffer objects that were allocated
-       * from it.
-       */
+      /* Destroying VkCommandPool frees all VkCommandBuffer allocated inside. */
       vkDestroyCommandPool(device, obj->handle.command_pool, NULL);
-
-      struct vkr_command_pool *pool = (struct vkr_command_pool *)obj;
-      vkr_context_remove_objects(ctx, &pool->command_buffers);
+      vkr_command_pool_release(ctx, (struct vkr_command_pool *)obj);
       break;
    }
    case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
