@@ -24,4 +24,7 @@ VKR_DEFINE_OBJECT_CAST(device_memory, VK_OBJECT_TYPE_DEVICE_MEMORY, VkDeviceMemo
 void
 vkr_context_init_device_memory_dispatch(struct vkr_context *ctx);
 
+void
+vkr_device_memory_release(struct vkr_device_memory *mem);
+
 #endif /* VKR_DEVICE_MEMORY_H */

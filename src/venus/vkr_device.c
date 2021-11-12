@@ -238,9 +238,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       break;
    case VK_OBJECT_TYPE_DEVICE_MEMORY:
       vkFreeMemory(device, obj->handle.device_memory, NULL);
-
-      /* remove device memory from exported or attachment list */
-      list_del(&((struct vkr_device_memory *)obj)->exported_head);
+      vkr_device_memory_release((struct vkr_device_memory *)obj);
       break;
    case VK_OBJECT_TYPE_BUFFER:
       vkDestroyBuffer(device, obj->handle.buffer, NULL);

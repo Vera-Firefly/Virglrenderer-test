@@ -151,8 +151,7 @@ vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
    if (!mem)
       return;
 
-   list_del(&mem->exported_head);
-
+   vkr_device_memory_release(mem);
    vkr_device_memory_destroy_and_remove(dispatch->data, args);
 }
 
@@ -243,4 +242,10 @@ vkr_context_init_device_memory_dispatch(struct vkr_context *ctx)
 
    dispatch->dispatch_vkGetMemoryResourcePropertiesMESA =
       vkr_dispatch_vkGetMemoryResourcePropertiesMESA;
+}
+
+void
+vkr_device_memory_release(struct vkr_device_memory *mem)
+{
+   list_del(&mem->exported_head);
 }
