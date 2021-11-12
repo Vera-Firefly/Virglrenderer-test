@@ -282,13 +282,9 @@ vkr_device_object_destroy(struct vkr_context *ctx,
       vkDestroySampler(device, obj->handle.sampler, NULL);
       break;
    case VK_OBJECT_TYPE_DESCRIPTOR_POOL: {
-      /* Destroying VkDescriptorPool frees all VkDescriptorSet objects that were allocated
-       * from it.
-       */
+      /* Destroying VkDescriptorPool frees all VkDescriptorSet allocated inside. */
       vkDestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
-
-      struct vkr_descriptor_pool *pool = (struct vkr_descriptor_pool *)obj;
-      vkr_context_remove_objects(ctx, &pool->descriptor_sets);
+      vkr_descriptor_pool_release(ctx, (struct vkr_descriptor_pool *)obj);
       break;
    }
    case VK_OBJECT_TYPE_FRAMEBUFFER:

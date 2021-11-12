@@ -57,8 +57,7 @@ vkr_dispatch_vkDestroyDescriptorPool(struct vn_dispatch_context *dispatch,
    if (!pool)
       return;
 
-   vkr_context_remove_objects(ctx, &pool->descriptor_sets);
-
+   vkr_descriptor_pool_release(ctx, pool);
    vkr_descriptor_pool_destroy_and_remove(ctx, args);
 }
 
@@ -78,7 +77,7 @@ vkr_dispatch_vkResetDescriptorPool(struct vn_dispatch_context *dispatch,
    vn_replace_vkResetDescriptorPool_args_handle(args);
    args->ret = vkResetDescriptorPool(args->device, args->descriptorPool, args->flags);
 
-   vkr_context_remove_objects(ctx, &pool->descriptor_sets);
+   vkr_descriptor_pool_release(ctx, pool);
    list_inithead(&pool->descriptor_sets);
 }
 
