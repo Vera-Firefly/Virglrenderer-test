@@ -137,7 +137,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   mem->device = args->device;
+   mem->device = dev;
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
    list_inithead(&mem->exported_head);

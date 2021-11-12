@@ -323,7 +323,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
       }
 
       VkResult result = ctx->instance->get_memory_fd(
-         mem->device,
+         mem->device->base.handle.device,
          &(VkMemoryGetFdInfoKHR){
             .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
             .memory = mem->base.handle.device_memory,
@@ -439,20 +439,21 @@ vkr_context_transfer_3d_locked(struct virgl_context *base,
    };
 
    void *ptr;
+   VkDevice dev_handle = mem->device->base.handle.device;
    VkResult result =
-      vkMapMemory(mem->device, range.memory, range.offset, range.size, 0, &ptr);
+      vkMapMemory(dev_handle, range.memory, range.offset, range.size, 0, &ptr);
    if (result != VK_SUCCESS)
       return -EINVAL;
 
    if (transfer_mode == VIRGL_TRANSFER_TO_HOST) {
       vrend_read_from_iovec(iov, iov_count, range.offset, ptr, range.size);
-      vkFlushMappedMemoryRanges(mem->device, 1, &range);
+      vkFlushMappedMemoryRanges(dev_handle, 1, &range);
    } else {
-      vkInvalidateMappedMemoryRanges(mem->device, 1, &range);
+      vkInvalidateMappedMemoryRanges(dev_handle, 1, &range);
       vrend_write_to_iovec(iov, iov_count, range.offset, ptr, range.size);
    }
 
-   vkUnmapMemory(mem->device, range.memory);
+   vkUnmapMemory(dev_handle, range.memory);
 
    return 0;
 }

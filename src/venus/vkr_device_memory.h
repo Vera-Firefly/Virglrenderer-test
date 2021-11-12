@@ -11,7 +11,7 @@
 struct vkr_device_memory {
    struct vkr_object base;
 
-   VkDevice device;
+   struct vkr_device *device;
    uint32_t property_flags;
    uint32_t valid_fd_types;
 
