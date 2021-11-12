@@ -322,14 +322,14 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          return -EINVAL;
       }
 
-      VkResult result = ctx->instance->get_memory_fd(
-         mem->device->base.handle.device,
-         &(VkMemoryGetFdInfoKHR){
-            .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
-            .memory = mem->base.handle.device_memory,
-            .handleType = handle_type,
-         },
-         &fd);
+      VkResult result =
+         mem->device->get_memory_fd(mem->device->base.handle.device,
+                                    &(VkMemoryGetFdInfoKHR){
+                                       .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
+                                       .memory = mem->base.handle.device_memory,
+                                       .handleType = handle_type,
+                                    },
+                                    &fd);
       if (result != VK_SUCCESS)
          return -EINVAL;
    }

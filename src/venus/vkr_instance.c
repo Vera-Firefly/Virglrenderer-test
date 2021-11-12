@@ -196,8 +196,6 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   instance->get_memory_fd = (PFN_vkGetMemoryFdKHR)vkGetInstanceProcAddr(
-      instance->base.handle.instance, "vkGetMemoryFdKHR");
    instance->get_fence_fd = (PFN_vkGetFenceFdKHR)vkGetInstanceProcAddr(
       instance->base.handle.instance, "vkGetFenceFdKHR");
 

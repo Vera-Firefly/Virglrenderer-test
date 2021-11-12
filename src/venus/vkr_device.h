@@ -39,6 +39,7 @@ struct vkr_device {
 
    PFN_vkGetImageDrmFormatModifierPropertiesEXT get_image_drm_format_modifier_properties;
 
+   PFN_vkGetMemoryFdKHR get_memory_fd;
    PFN_vkGetMemoryFdPropertiesKHR get_memory_fd_properties;
 
    struct list_head queues;

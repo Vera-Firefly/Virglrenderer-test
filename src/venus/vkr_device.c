@@ -139,6 +139,8 @@ vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
       (PFN_vkGetImageDrmFormatModifierPropertiesEXT)vkGetDeviceProcAddr(
          handle, "vkGetImageDrmFormatModifierPropertiesEXT");
 
+   dev->get_memory_fd =
+      (PFN_vkGetMemoryFdKHR)vkGetDeviceProcAddr(handle, "vkGetMemoryFdKHR");
    dev->get_memory_fd_properties = (PFN_vkGetMemoryFdPropertiesKHR)vkGetDeviceProcAddr(
       handle, "vkGetMemoryFdPropertiesKHR");
 }
