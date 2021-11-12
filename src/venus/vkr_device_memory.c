@@ -249,3 +249,26 @@ vkr_device_memory_release(struct vkr_device_memory *mem)
 {
    list_del(&mem->exported_head);
 }
+
+int
+vkr_device_memory_export_fd(struct vkr_device_memory *mem,
+                            VkExternalMemoryHandleTypeFlagBits handle_type,
+                            int *out_fd)
+{
+   VkDevice dev_handle = mem->device->base.handle.device;
+   VkDeviceMemory mem_handle = mem->base.handle.device_memory;
+   const VkMemoryGetFdInfoKHR fd_info = {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
+      .memory = mem_handle,
+      .handleType = handle_type,
+   };
+   VkResult result;
+   int fd = -1;
+
+   result = mem->device->get_memory_fd(dev_handle, &fd_info, &fd);
+   if (result != VK_SUCCESS)
+      return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
+
+   *out_fd = fd;
+   return 0;
+}

@@ -273,6 +273,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem;
    enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
+   int fd = -1;
 
    mem = vkr_context_get_object(ctx, blob_id);
    if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
@@ -308,9 +309,10 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          fd_type = VIRGL_RESOURCE_FD_OPAQUE;
    }
 
-   int fd = -1;
    if (fd_type != VIRGL_RESOURCE_FD_INVALID) {
       VkExternalMemoryHandleTypeFlagBits handle_type;
+      int ret;
+
       switch (fd_type) {
       case VIRGL_RESOURCE_FD_DMABUF:
          handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
@@ -322,16 +324,9 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          return -EINVAL;
       }
 
-      VkResult result =
-         mem->device->get_memory_fd(mem->device->base.handle.device,
-                                    &(VkMemoryGetFdInfoKHR){
-                                       .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
-                                       .memory = mem->base.handle.device_memory,
-                                       .handleType = handle_type,
-                                    },
-                                    &fd);
-      if (result != VK_SUCCESS)
-         return -EINVAL;
+      ret = vkr_device_memory_export_fd(mem, handle_type, &fd);
+      if (ret)
+         return ret;
    }
 
    blob->type = fd_type;
