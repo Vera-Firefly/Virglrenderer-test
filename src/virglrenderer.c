@@ -1044,6 +1044,7 @@ virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_
 
    switch (args->blob_mem) {
    case VIRGL_RENDERER_BLOB_MEM_HOST3D:
+   case VIRGL_RENDERER_BLOB_MEM_GUEST_VRAM:
       break;
    default:
       return -EINVAL;
