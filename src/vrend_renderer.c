@@ -7063,7 +7063,7 @@ vrend_resource_alloc_buffer(struct vrend_resource *gr, uint32_t flags)
    if (bind == VIRGL_BIND_CUSTOM) {
       /* use iovec directly when attached */
       gr->storage_bits |= VREND_STORAGE_HOST_SYSTEM_MEMORY;
-      gr->ptr = malloc(size);
+      gr->ptr = calloc(1, size);
       if (!gr->ptr)
          return -ENOMEM;
    } else if (bind == VIRGL_BIND_STAGING) {
