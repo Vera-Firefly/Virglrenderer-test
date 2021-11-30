@@ -7833,8 +7833,11 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
                                           info->box->height) * elsize;
       if (res->target == GL_TEXTURE_3D ||
           res->target == GL_TEXTURE_2D_ARRAY ||
+          res->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY ||
           res->target == GL_TEXTURE_CUBE_MAP_ARRAY)
           send_size *= info->box->depth;
+      else if (need_temp && info->box->depth != 1)
+         return EINVAL;
 
       if (need_temp) {
          data = malloc(send_size);

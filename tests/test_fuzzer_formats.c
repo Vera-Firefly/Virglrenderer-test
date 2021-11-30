@@ -957,6 +957,48 @@ static void test_vrend_set_signle_abo_heap_overflow() {
     virgl_renderer_submit_cmd((void *) cmd, ctx_id, 0xde);
 }
 
+/* Test adapted from yaojun8558363@gmail.com:
+ * https://gitlab.freedesktop.org/virgl/virglrenderer/-/issues/250
+*/
+static void test_vrend_3d_resource_overflow() {
+
+    struct virgl_renderer_resource_create_args resource;
+    resource.handle = 0x4c474572;
+    resource.target = PIPE_TEXTURE_2D_ARRAY;
+    resource.format = VIRGL_FORMAT_Z24X8_UNORM;
+    resource.nr_samples = 2;
+    resource.last_level = 0;
+    resource.array_size = 3;
+    resource.bind = VIRGL_BIND_SAMPLER_VIEW;
+    resource.depth = 1;
+    resource.width = 8;
+    resource.height = 4;
+    resource.flags = 0;
+
+    virgl_renderer_resource_create(&resource, NULL, 0);
+    virgl_renderer_ctx_attach_resource(ctx_id, resource.handle);
+
+    uint32_t size = 0x400;
+    uint32_t cmd[size];
+    int i = 0;
+    cmd[i++] = (size - 1) << 16 | 0 << 8 | VIRGL_CCMD_RESOURCE_INLINE_WRITE;
+    cmd[i++] = resource.handle;
+    cmd[i++] = 0; // level
+    cmd[i++] = 0; // usage
+    cmd[i++] = 0; // stride
+    cmd[i++] = 0; // layer_stride
+    cmd[i++] = 0; // x
+    cmd[i++] = 0; // y
+    cmd[i++] = 0; // z
+    cmd[i++] = 8; // w
+    cmd[i++] = 4; // h
+    cmd[i++] = 3; // d
+    memset(&cmd[i], 0, size - i);
+
+    virgl_renderer_submit_cmd((void *) cmd, ctx_id, size);
+}
+
+
 int main()
 {
    initialize_environment();
@@ -979,6 +1021,7 @@ int main()
    test_cs_nullpointer_deference();
    test_vrend_set_signle_abo_heap_overflow();
 
+   test_vrend_3d_resource_overflow();
 
    virgl_renderer_context_destroy(ctx_id);
    virgl_renderer_cleanup(&cookie);
