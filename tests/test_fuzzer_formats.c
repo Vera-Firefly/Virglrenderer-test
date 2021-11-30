@@ -957,6 +957,19 @@ static void test_vrend_set_signle_abo_heap_overflow() {
     virgl_renderer_submit_cmd((void *) cmd, ctx_id, 0xde);
 }
 
+static void test_vrend_set_shader_images_overflow()
+{
+    uint32_t num_shaders = PIPE_MAX_SHADER_IMAGES + 1;
+    uint32_t size = num_shaders * VIRGL_SET_SHADER_IMAGE_ELEMENT_SIZE + 3;
+    uint32_t cmd[size];
+    int i = 0;
+    cmd[i++] = ((size - 1)<< 16) | 0 << 8 | VIRGL_CCMD_SET_SHADER_IMAGES;
+    cmd[i++] = PIPE_SHADER_FRAGMENT;
+    memset(&cmd[i], 0, size - i);
+
+    virgl_renderer_submit_cmd((void *) cmd, ctx_id, size);
+}
+
 /* Test adapted from yaojun8558363@gmail.com:
  * https://gitlab.freedesktop.org/virgl/virglrenderer/-/issues/250
 */
@@ -1021,6 +1034,7 @@ int main()
    test_cs_nullpointer_deference();
    test_vrend_set_signle_abo_heap_overflow();
 
+   test_vrend_set_shader_images_overflow();
    test_vrend_3d_resource_overflow();
 
    virgl_renderer_context_destroy(ctx_id);
