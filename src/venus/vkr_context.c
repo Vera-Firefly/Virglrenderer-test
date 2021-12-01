@@ -138,7 +138,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    struct vkr_device *dev = queue->device;
 
    struct vkr_queue_sync *sync =
-      vkr_device_alloc_queue_sync(dev, flags, queue->base.id, fence_cookie);
+      vkr_device_alloc_queue_sync(dev, flags, queue_id, fence_cookie);
    if (!sync)
       return -ENOMEM;
 
