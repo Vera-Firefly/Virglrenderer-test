@@ -4815,6 +4815,8 @@ void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
       vrend_bind_shader(ctx, handles[type], type);
    }
 
+   vrend_select_program(ctx->sub, 1);
+
    ctx->sub->shader_dirty = true;
    ctx->sub->cs_shader_dirty = true;
 
