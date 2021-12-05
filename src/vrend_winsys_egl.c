@@ -496,7 +496,7 @@ int virgl_egl_get_fourcc_for_texture(struct virgl_egl *egl, uint32_t tex_id, uin
    }
 
    image = eglCreateImageKHR(egl->egl_display, eglGetCurrentContext(), EGL_GL_TEXTURE_2D_KHR,
-                            (EGLClientBuffer)(unsigned long)tex_id, NULL);
+                            (EGLClientBuffer)(uintptr_t)tex_id, NULL);
 
    if (!image)
       return EINVAL;
@@ -521,7 +521,7 @@ int virgl_egl_get_fd_for_texture2(struct virgl_egl *egl, uint32_t tex_id, int *f
    int ret = EINVAL;
    EGLImageKHR image = eglCreateImageKHR(egl->egl_display, eglGetCurrentContext(),
                                          EGL_GL_TEXTURE_2D_KHR,
-                                         (EGLClientBuffer)(unsigned long)tex_id, NULL);
+                                         (EGLClientBuffer)(uintptr_t)tex_id, NULL);
    if (!image)
       return EINVAL;
    if (!has_bit(egl->extension_bits, EGL_MESA_IMAGE_DMA_BUF_EXPORT))
@@ -546,7 +546,7 @@ int virgl_egl_get_fd_for_texture(struct virgl_egl *egl, uint32_t tex_id, int *fd
    EGLBoolean success;
    int ret;
    image = eglCreateImageKHR(egl->egl_display, eglGetCurrentContext(), EGL_GL_TEXTURE_2D_KHR,
-                            (EGLClientBuffer)(unsigned long)tex_id, NULL);
+                            (EGLClientBuffer)(uintptr_t)tex_id, NULL);
 
    if (!image)
       return EINVAL;
