@@ -88,7 +88,7 @@ struct vrend_resource {
    uint64_t mipmap_offsets[VR_MAX_TEXTURE_2D_LEVELS];
    void *gbm_bo, *egl_image;
    void *aux_plane_egl_image[VIRGL_GBM_MAX_PLANES];
-   
+
    uint64_t size;
    GLbitfield buffer_storage_flags;
    GLuint memobj;
