@@ -175,8 +175,6 @@ struct vrend_shader_key {
       } vs;
    };
 
-   uint32_t compiled_fs_uid;
-
    uint32_t sampler_views_lower_swizzle_mask;
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
