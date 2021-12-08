@@ -3557,7 +3557,10 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
                                  key->fs.cbufs_signed_int_bitmask,
                                  key->fs.cbufs_unsigned_int_bitmask);
             }
-            key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+            /* Currently we only use this information if logicop_enable is set */
+            if (sub_ctx->blend_state.logicop_enable) {
+                key->fs.surface_component_bits[i] = util_format_get_component_bits(sub_ctx->surf[i]->format, UTIL_FORMAT_COLORSPACE_RGB, 0);
+            }
          }
       }
 
