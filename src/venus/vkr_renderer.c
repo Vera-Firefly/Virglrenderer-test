@@ -29,7 +29,8 @@ vkr_get_capset(void *capset)
          vn_info_extension_spec_version("VK_EXT_command_serialization");
       c->vk_mesa_venus_protocol_spec_version =
          vn_info_extension_spec_version("VK_MESA_venus_protocol");
-      c->supports_blob_id_0 = true;
+      /* TODO always true once Mesa resolves its performance issue */
+      c->supports_blob_id_0 = (bool)(vkr_renderer_flags & VKR_RENDERER_RENDER_SERVER);
    }
 
    return sizeof(*c);
@@ -38,8 +39,6 @@ vkr_get_capset(void *capset)
 int
 vkr_renderer_init(uint32_t flags)
 {
-   /* TODO VKR_RENDERER_MULTI_PROCESS hint */
-
    if ((vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) &&
        !(vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC))
       return -EINVAL;

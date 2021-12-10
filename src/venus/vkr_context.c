@@ -527,13 +527,6 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
       }
    }
 
-   /* TODO When in multi-process mode, we cannot share a virgl_resource as-is
-    * to another process.  The resource must have a valid fd, and only the fd
-    * and the iov can be sent the other process.
-    *
-    * For vrend-to-vkr sharing, we can get the fd from pipe_resource.
-    */
-
    att->resource = res;
    list_inithead(&att->memories);
 
@@ -699,8 +692,6 @@ struct virgl_context *
 vkr_context_create(size_t debug_len, const char *debug_name)
 {
    struct vkr_context *ctx;
-
-   /* TODO inject a proxy context when multi-process */
 
    ctx = calloc(1, sizeof(*ctx));
    if (!ctx)

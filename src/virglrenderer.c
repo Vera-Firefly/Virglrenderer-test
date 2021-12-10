@@ -706,6 +706,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          vkr_flags |= VKR_RENDERER_THREAD_SYNC;
       if (flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
          vkr_flags |= VKR_RENDERER_ASYNC_FENCE_CB;
+      if (flags & VIRGL_RENDERER_RENDER_SERVER)
+         vkr_flags |= VKR_RENDERER_RENDER_SERVER;
 
       ret = vkr_renderer_init(vkr_flags);
       if (ret)
