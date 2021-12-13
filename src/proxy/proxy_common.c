@@ -14,12 +14,7 @@ void
 proxy_log(const char *fmt, ...)
 {
    va_list va;
-
    va_start(va, fmt);
-
-   fprintf(stderr, "proxy: ");
-   vfprintf(stderr, fmt, va);
-   fprintf(stderr, "\n");
-
+   virgl_logv(fmt, va);
    va_end(va);
 }
