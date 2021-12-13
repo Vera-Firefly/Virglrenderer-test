@@ -60,6 +60,14 @@ render_virgl_lookup_context(uint32_t ctx_id)
 }
 
 static void
+render_virgl_debug_callback(const char *fmt, va_list ap)
+{
+   char buf[1024];
+   vsnprintf(buf, sizeof(buf), fmt, ap);
+   render_log(buf);
+}
+
+static void
 render_virgl_cb_write_context_fence(UNUSED void *cookie,
                                     uint32_t ctx_id,
                                     uint64_t queue_id,
@@ -130,6 +138,7 @@ render_virgl_init(uint32_t init_flags)
       }
    } else {
       render_virgl_lock_dispatch();
+      virgl_set_debug_callback(render_virgl_debug_callback);
       int ret = virgl_renderer_init(virgl, init_flags,
                                     (struct virgl_renderer_callbacks *)&render_virgl_cbs);
       render_virgl_unlock_dispatch();
