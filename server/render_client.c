@@ -6,6 +6,7 @@
 #include "render_client.h"
 
 #include <unistd.h>
+#include <vulkan/vulkan.h>
 
 #include "render_context.h"
 #include "render_server.h"
@@ -235,13 +236,16 @@ render_client_dispatch_init(struct render_client *client,
 {
    client->init_flags = req->init.flags;
 
-   /* init now to avoid doing it in each worker
-    *
-    * TODO this does very little, and might confuse perfetto.  It might be
-    * more interesting to preload Vulkan ICDs, by calling
-    * vkEnumerateInstanceExtensionProperties.
+   /* init now to avoid doing it in each worker, but only when tracing is
+    * disabled because perfetto can get confused
     */
+#ifndef ENABLE_TRACING
    render_virgl_init(client->init_flags);
+#endif
+
+   /* this makes the Vulkan loader loads ICDs */
+   uint32_t unused_count;
+   vkEnumerateInstanceExtensionProperties(NULL, &unused_count, NULL);
 
    return true;
 }
@@ -320,7 +324,10 @@ render_client_destroy(struct render_client *client)
       render_client_kill_all_records(client);
       render_client_reap_all_records(client, true /* wait */);
 
+      /* see render_client_dispatch_init */
+#ifndef ENABLE_TRACING
       render_virgl_fini();
+#endif
    }
 
    render_socket_fini(&client->socket);
