@@ -938,9 +938,6 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    res->map_info = blob.map_info;
    res->map_size = args->size;
 
-   if (ctx->get_blob_done)
-      ctx->get_blob_done(ctx, args->res_handle, &blob);
-
    return 0;
 }
 

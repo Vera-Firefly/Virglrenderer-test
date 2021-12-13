@@ -481,7 +481,6 @@ proxy_context_init_base(struct proxy_context *ctx)
    ctx->base.detach_resource = proxy_context_detach_resource;
    ctx->base.transfer_3d = proxy_context_transfer_3d;
    ctx->base.get_blob = proxy_context_get_blob;
-   ctx->base.get_blob_done = NULL;
    ctx->base.submit_cmd = proxy_context_submit_cmd;
 
    ctx->base.get_fencing_fd = proxy_context_get_fencing_fd;

@@ -1786,7 +1786,6 @@ static void vrend_decode_ctx_init_base(struct vrend_decode_ctx *dctx,
    ctx->detach_resource = vrend_decode_ctx_detach_resource;
    ctx->transfer_3d = vrend_decode_ctx_transfer_3d;
    ctx->get_blob = vrend_decode_ctx_get_blob;
-   ctx->get_blob_done = NULL;
    ctx->submit_cmd = vrend_decode_ctx_submit_cmd;
 
    ctx->get_fencing_fd = vrend_decode_ctx_get_fencing_fd;

@@ -354,6 +354,8 @@ vkr_context_get_blob_locked(struct virgl_context *base,
       ret = vkr_device_memory_export_fd(mem, handle_type, &fd);
       if (ret)
          return ret;
+
+      mem->exported = true;
    }
 
    blob->type = fd_type;
@@ -392,26 +394,9 @@ vkr_context_get_blob(struct virgl_context *base,
 
    mtx_lock(&ctx->mutex);
    ret = vkr_context_get_blob_locked(base, blob_id, blob_size, flags, blob);
-   /* XXX unlock in vkr_context_get_blob_done on success */
-   if (ret)
-      mtx_unlock(&ctx->mutex);
+   mtx_unlock(&ctx->mutex);
 
    return ret;
-}
-
-static void
-vkr_context_get_blob_done(struct virgl_context *base,
-                          uint32_t res_id,
-                          struct virgl_context_blob *blob)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   struct vkr_device_memory *mem = blob->renderer_data;
-
-   if (mem)
-      mem->exported = true;
-
-   /* XXX locked in vkr_context_get_blob */
-   mtx_unlock(&ctx->mutex);
 }
 
 static int
@@ -563,7 +548,6 @@ vkr_context_init_base(struct vkr_context *ctx)
    ctx->base.detach_resource = vkr_context_detach_resource;
    ctx->base.transfer_3d = vkr_context_transfer_3d;
    ctx->base.get_blob = vkr_context_get_blob;
-   ctx->base.get_blob_done = vkr_context_get_blob_done;
    ctx->base.submit_cmd = vkr_context_submit_cmd;
 
    ctx->base.get_fencing_fd = vkr_context_get_fencing_fd;
