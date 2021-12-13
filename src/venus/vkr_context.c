@@ -13,7 +13,6 @@
 #include "pipe/p_state.h"
 #include "util/anon_file.h"
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
-#include "virgl_protocol.h" /* for transfer_mode */
 
 #define XXH_INLINE_ALL
 #include "util/xxhash.h"
@@ -408,97 +407,23 @@ vkr_context_get_blob_done(struct virgl_context *base,
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem = blob->renderer_data;
 
-   /* when blob_id is 0, there is no associated mem */
-   if (mem) {
+   if (mem)
       mem->exported = true;
-      mem->exported_res_id = res_id;
-      list_add(&mem->exported_head, &ctx->newly_exported_memories);
-   }
 
    /* XXX locked in vkr_context_get_blob */
    mtx_unlock(&ctx->mutex);
 }
 
 static int
-vkr_context_transfer_3d_locked(struct virgl_context *base,
-                               struct virgl_resource *res,
-                               const struct vrend_transfer_info *info,
-                               int transfer_mode)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   struct vkr_resource_attachment *att;
-   const struct iovec *iov;
-   int iov_count;
-
-   if (info->level || info->stride || info->layer_stride)
-      return -EINVAL;
-
-   if (info->iovec) {
-      iov = info->iovec;
-      iov_count = info->iovec_cnt;
-   } else {
-      iov = res->iov;
-      iov_count = res->iov_count;
-   }
-
-   if (!iov || !iov_count)
-      return 0;
-
-   att = vkr_context_get_resource(ctx, res->res_id);
-   if (!att)
-      return -EINVAL;
-
-   assert(att->resource == res);
-
-   /* TODO transfer via dmabuf (and find a solution to coherency issues) */
-   if (LIST_IS_EMPTY(&att->memories)) {
-      vkr_log("unable to transfer without VkDeviceMemory (TODO)");
-      return -EINVAL;
-   }
-
-   struct vkr_device_memory *mem =
-      LIST_ENTRY(struct vkr_device_memory, att->memories.next, exported_head);
-   const VkMappedMemoryRange range = {
-      .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
-      .memory = mem->base.handle.device_memory,
-      .offset = info->box->x,
-      .size = info->box->width,
-   };
-
-   void *ptr;
-   VkDevice dev_handle = mem->device->base.handle.device;
-   VkResult result =
-      vkMapMemory(dev_handle, range.memory, range.offset, range.size, 0, &ptr);
-   if (result != VK_SUCCESS)
-      return -EINVAL;
-
-   if (transfer_mode == VIRGL_TRANSFER_TO_HOST) {
-      vrend_read_from_iovec(iov, iov_count, range.offset, ptr, range.size);
-      vkFlushMappedMemoryRanges(dev_handle, 1, &range);
-   } else {
-      vkInvalidateMappedMemoryRanges(dev_handle, 1, &range);
-      vrend_write_to_iovec(iov, iov_count, range.offset, ptr, range.size);
-   }
-
-   vkUnmapMemory(dev_handle, range.memory);
-
-   return 0;
-}
-
-static int
 vkr_context_transfer_3d(struct virgl_context *base,
                         struct virgl_resource *res,
-                        const struct vrend_transfer_info *info,
-                        int transfer_mode)
+                        UNUSED const struct vrend_transfer_info *info,
+                        UNUSED int transfer_mode)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
-   int ret;
 
-   mtx_lock(&ctx->mutex);
-   ret = vkr_context_transfer_3d_locked(base, res, info, transfer_mode);
-   mtx_unlock(&ctx->mutex);
-
-   return ret;
+   vkr_log("no transfer support for ctx %d and res %d", ctx->base.ctx_id, res->res_id);
+   return -1;
 }
 
 static void
@@ -528,17 +453,6 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
    }
 
    att->resource = res;
-   list_inithead(&att->memories);
-
-   /* associate a memory with the resource, if any */
-   struct vkr_device_memory *mem;
-   LIST_FOR_EACH_ENTRY (mem, &ctx->newly_exported_memories, exported_head) {
-      if (mem->exported_res_id == res->res_id) {
-         list_del(&mem->exported_head);
-         list_addtail(&mem->exported_head, &att->memories);
-         break;
-      }
-   }
 
    if (mmap_ptr) {
       att->shm_iov.iov_base = mmap_ptr;
@@ -680,11 +594,6 @@ void
 vkr_context_free_resource(struct hash_entry *entry)
 {
    struct vkr_resource_attachment *att = entry->data;
-   struct vkr_device_memory *mem, *tmp;
-
-   LIST_FOR_EACH_ENTRY_SAFE (mem, tmp, &att->memories, exported_head)
-      list_delinit(&mem->exported_head);
-
    free(att);
 }
 
@@ -729,8 +638,6 @@ vkr_context_create(size_t debug_len, const char *debug_name)
       _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
    if (!ctx->object_table || !ctx->resource_table)
       goto fail;
-
-   list_inithead(&ctx->newly_exported_memories);
 
    vkr_cs_decoder_init(&ctx->decoder, ctx->object_table);
    vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error);

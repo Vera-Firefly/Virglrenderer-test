@@ -226,7 +226,6 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
    mem->gbm_bo = gbm_bo;
-   list_inithead(&mem->exported_head);
 }
 
 static void
@@ -333,8 +332,6 @@ vkr_context_init_device_memory_dispatch(struct vkr_context *ctx)
 void
 vkr_device_memory_release(struct vkr_device_memory *mem)
 {
-   list_del(&mem->exported_head);
-
    if (mem->gbm_bo)
       gbm_bo_destroy(mem->gbm_bo);
 }

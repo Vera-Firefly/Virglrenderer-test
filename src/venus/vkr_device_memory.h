@@ -21,8 +21,6 @@ struct vkr_device_memory {
    struct gbm_bo *gbm_bo;
 
    bool exported;
-   uint32_t exported_res_id;
-   struct list_head exported_head;
 };
 VKR_DEFINE_OBJECT_CAST(device_memory, VK_OBJECT_TYPE_DEVICE_MEMORY, VkDeviceMemory)
 

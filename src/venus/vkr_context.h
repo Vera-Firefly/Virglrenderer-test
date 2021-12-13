@@ -20,15 +20,9 @@ struct virgl_resource;
  * When a virgl_resource is attached in vkr_context_attach_resource, a
  * vkr_resource_attachment is created.  A vkr_resource_attachment is valid
  * until the resource it tracks is detached.
- *
- * To support transfers to resources not backed by coherent dma-bufs, we
- * associate a vkr_resource_attachment with a (list of) vkr_device_memory.
- * This way, we can find a vkr_device_memory from a vkr_resource_attachment
- * and do transfers using VkDeviceMemory.
  */
 struct vkr_resource_attachment {
    struct virgl_resource *resource;
-   struct list_head memories;
 
    /* if VIRGL_RESOURCE_FD_SHM, this is the mapping of the shm and iov below
     * points to this
@@ -60,7 +54,6 @@ struct vkr_context {
    struct list_head rings;
    struct hash_table *object_table;
    struct hash_table *resource_table;
-   struct list_head newly_exported_memories;
 
    struct vkr_cs_encoder encoder;
    struct vkr_cs_decoder decoder;
