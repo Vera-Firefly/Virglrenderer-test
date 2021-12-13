@@ -7,6 +7,13 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <syslog.h>
+
+void
+render_log_init(void)
+{
+   openlog(NULL, LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_USER);
+}
 
 void
 render_log(const char *fmt, ...)
@@ -14,10 +21,6 @@ render_log(const char *fmt, ...)
    va_list va;
 
    va_start(va, fmt);
-
-   fprintf(stderr, "render: ");
-   vfprintf(stderr, fmt, va);
-   fprintf(stderr, "\n");
-
+   vsyslog(LOG_DEBUG, fmt, va);
    va_end(va);
 }

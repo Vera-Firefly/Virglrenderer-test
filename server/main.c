@@ -27,8 +27,9 @@
 int
 main(int argc, char **argv)
 {
-   struct render_context_args ctx_args;
+   render_log_init();
 
+   struct render_context_args ctx_args;
    bool ok = render_server_main(argc, argv, &ctx_args);
 
    /* this is a subprocess */

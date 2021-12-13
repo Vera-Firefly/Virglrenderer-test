@@ -30,6 +30,9 @@ struct render_worker;
 struct render_worker_jail;
 
 void
+render_log_init(void);
+
+void
 render_log(const char *fmt, ...);
 
 #endif /* RENDER_COMMON_H */
