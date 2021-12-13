@@ -4818,6 +4818,10 @@ void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
    if (handles[PIPE_SHADER_COMPUTE])
       return;
 
+   /* If we can't force linking, exit early */
+   if (!handles[PIPE_SHADER_VERTEX] || !handles[PIPE_SHADER_FRAGMENT])
+       return;
+
    struct vrend_shader_selector *prev_handles[PIPE_SHADER_TYPES];
    memset(prev_handles, 0, sizeof(prev_handles));
    uint32_t prev_shader_ids[PIPE_SHADER_TYPES];
