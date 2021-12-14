@@ -301,6 +301,7 @@ render_context_dispatch_attach_resource(struct render_context *ctx,
       return false;
    }
 
+   /* classic 3d resource with valid size reuses the blob import path here */
    struct render_context_resource *res =
       render_context_resource_import(res_id, fd_type, fds[0], size);
    if (!res) {

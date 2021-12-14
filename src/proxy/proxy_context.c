@@ -400,11 +400,6 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
 
-   if (res->iov_count) {
-      proxy_log("failed to attach resource with iov");
-      return;
-   }
-
    enum virgl_resource_fd_type res_fd_type = res->fd_type;
    int res_fd = res->fd;
    bool close_res_fd = false;
@@ -418,11 +413,12 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
       close_res_fd = true;
    }
 
+   /* the proxy ignores iovs since transfer_3d is not supported */
    const struct render_context_op_attach_resource_request req = {
       .header.op = RENDER_CONTEXT_OP_ATTACH_RESOURCE,
       .res_id = res->res_id,
       .fd_type = res_fd_type,
-      .size = res->map_size,
+      .size = virgl_resource_get_size(res),
    };
    if (!proxy_socket_send_request_with_fds(&ctx->socket, &req, sizeof(req), &res_fd, 1))
       proxy_log("failed to attach res %d", res->res_id);
