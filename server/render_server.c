@@ -5,7 +5,9 @@
 
 #include "render_server.h"
 
+#include <errno.h>
 #include <getopt.h>
+#include <poll.h>
 #include <unistd.h>
 
 #include "render_client.h"
@@ -13,16 +15,70 @@
 
 #define RENDER_SERVER_MAX_WORKER_COUNT 256
 
+enum render_server_poll_type {
+   RENDER_SERVER_POLL_SOCKET = 0,
+   RENDER_SERVER_POLL_SIGCHLD /* optional */,
+   RENDER_SERVER_POLL_COUNT,
+};
+
+static int
+render_server_init_poll_fds(struct render_server *srv,
+                            struct pollfd poll_fds[static RENDER_SERVER_POLL_COUNT])
+{
+   const int socket_fd = srv->client->socket.fd;
+   const int sigchld_fd = render_worker_jail_get_sigchld_fd(srv->worker_jail);
+
+   poll_fds[RENDER_SERVER_POLL_SOCKET] = (const struct pollfd){
+      .fd = socket_fd,
+      .events = POLLIN,
+   };
+   poll_fds[RENDER_SERVER_POLL_SIGCHLD] = (const struct pollfd){
+      .fd = sigchld_fd,
+      .events = POLLIN,
+   };
+
+   return sigchld_fd >= 0 ? 2 : 1;
+}
+
+static bool
+render_server_poll(UNUSED struct render_server *srv,
+                   struct pollfd *poll_fds,
+                   int poll_fd_count)
+{
+   int ret;
+   do {
+      ret = poll(poll_fds, poll_fd_count, -1);
+   } while (ret < 0 && (errno == EINTR || errno == EAGAIN));
+
+   if (ret <= 0) {
+      render_log("failed to poll in the main loop");
+      return false;
+   }
+
+   return true;
+}
+
 static bool
 render_server_run(struct render_server *srv)
 {
+   struct render_client *client = srv->client;
+
+   struct pollfd poll_fds[RENDER_SERVER_POLL_COUNT];
+   const int poll_fd_count = render_server_init_poll_fds(srv, poll_fds);
+
    while (srv->state == RENDER_SERVER_STATE_RUN) {
-      struct render_client *client = srv->client;
-      if (!render_client_dispatch(client))
+      if (!render_server_poll(srv, poll_fds, poll_fd_count))
          return false;
 
-      /* TODO this should be triggered by SIGCHLD */
-      render_worker_jail_reap_workers(srv->worker_jail);
+      if (poll_fds[RENDER_SERVER_POLL_SOCKET].revents) {
+         if (!render_client_dispatch(client))
+            return false;
+      }
+
+      if (poll_fds[RENDER_SERVER_POLL_SIGCHLD].revents) {
+         if (!render_worker_jail_reap_workers(srv->worker_jail))
+            return false;
+      }
    }
 
    return true;

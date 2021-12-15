@@ -21,8 +21,10 @@
 #error "no worker defined"
 #endif
 
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/signalfd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <threads.h>
@@ -33,6 +35,7 @@ struct minijail;
 struct render_worker_jail {
    int max_worker_count;
 
+   int sigchld_fd;
    struct minijail *minijail;
 
    struct list_head workers;
@@ -156,6 +159,36 @@ fork_minijail(const struct minijail *template)
 
 #endif /* ENABLE_RENDER_SERVER_WORKER_MINIJAIL */
 
+#ifndef ENABLE_RENDER_SERVER_WORKER_THREAD
+
+static int
+create_sigchld_fd(void)
+{
+   const int signum = SIGCHLD;
+
+   sigset_t set;
+   if (sigemptyset(&set) || sigaddset(&set, signum)) {
+      render_log("failed to initialize sigset_t");
+      return -1;
+   }
+
+   int fd = signalfd(-1, &set, SFD_NONBLOCK | SFD_CLOEXEC);
+   if (fd < 0) {
+      render_log("failed to create signalfd");
+      return -1;
+   }
+
+   if (sigprocmask(SIG_BLOCK, &set, NULL)) {
+      render_log("failed to call sigprocmask");
+      close(fd);
+      return -1;
+   }
+
+   return fd;
+}
+
+#endif /* !ENABLE_RENDER_SERVER_WORKER_THREAD */
+
 static void
 render_worker_jail_add_worker(struct render_worker_jail *jail,
                               struct render_worker *worker)
@@ -211,7 +244,14 @@ render_worker_jail_create(int max_worker_count,
       return NULL;
 
    jail->max_worker_count = max_worker_count;
+   jail->sigchld_fd = -1;
    list_inithead(&jail->workers);
+
+#ifndef ENABLE_RENDER_SERVER_WORKER_THREAD
+   jail->sigchld_fd = create_sigchld_fd();
+   if (jail->sigchld_fd < 0)
+      goto fail;
+#endif
 
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    jail->minijail = create_minijail(seccomp_filter, seccomp_path);
@@ -253,12 +293,45 @@ render_worker_jail_destroy(struct render_worker_jail *jail)
    minijail_destroy(jail->minijail);
 #endif
 
+   if (jail->sigchld_fd >= 0)
+      close(jail->sigchld_fd);
+
    free(jail);
 }
 
-void
+int
+render_worker_jail_get_sigchld_fd(const struct render_worker_jail *jail)
+{
+   return jail->sigchld_fd;
+}
+
+static bool
+render_worker_jail_drain_sigchld_fd(struct render_worker_jail *jail)
+{
+   if (jail->sigchld_fd < 0)
+      return true;
+
+   do {
+      struct signalfd_siginfo siginfos[8];
+      const ssize_t r = read(jail->sigchld_fd, siginfos, sizeof(siginfos));
+      if (r == sizeof(siginfos))
+         continue;
+      if (r > 0 || (r < 0 && errno == EAGAIN))
+         break;
+
+      render_log("failed to read signalfd");
+      return false;
+   } while (true);
+
+   return true;
+}
+
+bool
 render_worker_jail_reap_workers(struct render_worker_jail *jail)
 {
+   if (!render_worker_jail_drain_sigchld_fd(jail))
+      return false;
+
    do {
       struct render_worker *worker =
          render_worker_jail_reap_any_worker(jail, false /* block */);
@@ -269,6 +342,8 @@ render_worker_jail_reap_workers(struct render_worker_jail *jail)
       if (worker->destroyed)
          render_worker_jail_remove_worker(jail, worker);
    } while (true);
+
+   return true;
 }
 
 void

@@ -26,7 +26,10 @@ render_worker_jail_create(int max_worker_count,
 void
 render_worker_jail_destroy(struct render_worker_jail *jail);
 
-void
+int
+render_worker_jail_get_sigchld_fd(const struct render_worker_jail *jail);
+
+bool
 render_worker_jail_reap_workers(struct render_worker_jail *jail);
 
 void
