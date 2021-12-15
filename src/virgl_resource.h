@@ -90,6 +90,8 @@ struct virgl_resource_pipe_callbacks {
    enum virgl_resource_fd_type (*export_fd)(struct pipe_resource *pres,
                                             int *fd,
                                             void *data);
+
+   uint64_t (*get_size)(struct pipe_resource *pres, void *data);
 };
 
 int
@@ -135,5 +137,8 @@ virgl_resource_detach_iov(struct virgl_resource *res);
 
 enum virgl_resource_fd_type
 virgl_resource_export_fd(struct virgl_resource *res, int *fd);
+
+uint64_t
+virgl_resource_get_size(struct virgl_resource *res);
 
 #endif /* VIRGL_RESOURCE_H */

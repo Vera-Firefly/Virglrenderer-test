@@ -230,3 +230,15 @@ virgl_resource_export_fd(struct virgl_resource *res, int *fd)
 
    return VIRGL_RESOURCE_FD_INVALID;
 }
+
+uint64_t
+virgl_resource_get_size(struct virgl_resource *res)
+{
+   if (res->map_size)
+      return res->map_size;
+
+   if (res->pipe_resource)
+      return pipe_callbacks.get_size(res->pipe_resource, pipe_callbacks.data);
+
+   return 0;
+}
