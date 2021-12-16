@@ -2146,7 +2146,8 @@ static void handle_vertex_proc_exit(const struct dump_ctx *ctx,
     if (ctx->so && !ctx->key->gs_present && !ctx->key->tes_present)
        emit_so_movs(ctx, glsl_strbufs, has_clipvertex_so);
 
-    emit_clip_dist_movs(ctx, glsl_strbufs);
+    if (ctx->cfg->has_cull_distance)
+       emit_clip_dist_movs(ctx, glsl_strbufs);
 
     if (!ctx->key->gs_present && !ctx->key->tes_present)
        emit_prescale(glsl_strbufs);
@@ -5391,9 +5392,9 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_END:
       if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
          handle_vertex_proc_exit(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
-      } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL) {
+      } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL && ctx->cfg->has_cull_distance) {
          emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
-      } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_EVAL) {
+      } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_EVAL && ctx->cfg->has_cull_distance) {
 	 if (ctx->so && !ctx->key->gs_present)
             emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
          emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
@@ -5437,7 +5438,8 @@ iter_instruction(struct tgsi_iterate_context *iter,
       struct immed *imd = &ctx->imm[(inst->Src[0].Register.Index)];
       if (ctx->so && ctx->key->gs_present)
          emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
-      emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
+      if (ctx->cfg->has_cull_distance)
+         emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
       emit_prescale(&ctx->glsl_strbufs);
       if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
          ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
@@ -5641,7 +5643,8 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
    if (ctx->cfg->use_gles) {
       emit_ver_extf(glsl_strbufs, "#version %d es\n", ctx->cfg->glsl_version);
 
-      if ((ctx->shader_req_bits & SHADER_REQ_CLIP_DISTANCE) || ctx->num_out_clip_dist == 0) {
+      if ((ctx->shader_req_bits & SHADER_REQ_CLIP_DISTANCE) ||
+          (ctx->cfg->has_cull_distance && ctx->num_out_clip_dist == 0)) {
          emit_ext(glsl_strbufs, "EXT_clip_cull_distance", "require");
       }
 
@@ -6520,7 +6523,7 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    char cull_buf[64] = "";
    char clip_buf[64] = "";
 
-   if (ctx->num_out_clip_dist || ctx->is_last_vertex_stage) {
+   if (ctx->cfg->has_cull_distance && (ctx->num_out_clip_dist || ctx->is_last_vertex_stage)) {
       int num_clip_dists = ctx->num_clip_dist_prop ? ctx->num_clip_dist_prop : 0;
       int num_cull_dists = ctx->num_cull_dist_prop ? ctx->num_cull_dist_prop : 0;
 
@@ -6862,8 +6865,10 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
       emit_hdrf(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
    }
 
-   emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
-   emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
+   if (ctx->cfg->has_cull_distance) {
+       emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
+       emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
+   }
 }
 
 
@@ -6953,7 +6958,7 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
    emit_ios_per_vertex_out(ctx, glsl_strbufs, "");
 
-   if (ctx->is_last_vertex_stage) {
+   if (ctx->cfg->has_cull_distance && ctx->is_last_vertex_stage) {
       emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
       emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
    }

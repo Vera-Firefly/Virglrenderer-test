@@ -1781,10 +1781,12 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          sprog->attrib_locs = NULL;
    }
 
-   sprog->clip_enabled_loc = glGetUniformLocation(prog_id, "clip_plane_enabled");
-   for (i = 0; i < VIRGL_NUM_CLIP_PLANES; i++) {
-      snprintf(name, 32, "clipp[%d]", i);
-      sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
+   if (has_feature(feat_cull_distance)) {
+      sprog->clip_enabled_loc = glGetUniformLocation(prog_id, "clip_plane_enabled");
+      for (i = 0; i < VIRGL_NUM_CLIP_PLANES; i++) {
+         snprintf(name, 32, "clipp[%d]", i);
+         sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
+      }
    }
    return sprog;
 }
@@ -4949,13 +4951,15 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       sub_ctx->prog->viewport_neg_val = viewport_neg_val;
    }
 
-   if (sub_ctx->rs_state.clip_plane_enable) {
-      glUniform1i(sub_ctx->prog->clip_enabled_loc, 1);
-      for (i = 0 ; i < 8; i++) {
-         glUniform4fv(sub_ctx->prog->clip_locs[i], 1, (const GLfloat *)&sub_ctx->ucp_state.ucp[i]);
+   if (has_feature(feat_cull_distance)) {
+      if (sub_ctx->rs_state.clip_plane_enable) {
+         glUniform1i(sub_ctx->prog->clip_enabled_loc, 1);
+         for (i = 0 ; i < 8; i++) {
+            glUniform4fv(sub_ctx->prog->clip_locs[i], 1, (const GLfloat *)&sub_ctx->ucp_state.ucp[i]);
+         }
+      } else {
+         glUniform1i(sub_ctx->prog->clip_enabled_loc, 0);
       }
-   } else {
-      glUniform1i(sub_ctx->prog->clip_enabled_loc, 0);
    }
 
    if (has_feature(feat_gles31_vertex_attrib_binding))
@@ -6743,6 +6747,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->shader_cfg.use_integer = vrend_state.use_integer;
    grctx->shader_cfg.has_dual_src_blend = has_feature(feat_dual_src_blend);
    grctx->shader_cfg.has_fbfetch_coherent = has_feature(feat_framebuffer_fetch);
+   grctx->shader_cfg.has_cull_distance = has_feature(feat_cull_distance);
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
