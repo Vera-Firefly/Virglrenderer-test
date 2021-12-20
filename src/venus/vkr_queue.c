@@ -202,7 +202,7 @@ vkr_queue_thread(void *arg)
       mtx_unlock(&queue->mutex);
 
       VkResult result =
-         vkWaitForFences(dev->base.handle.device, 1, &sync->fence, false, ns_per_sec * 3);
+         vkWaitForFences(dev->base.handle.device, 1, &sync->fence, true, ns_per_sec * 3);
 
       mtx_lock(&queue->mutex);
 
