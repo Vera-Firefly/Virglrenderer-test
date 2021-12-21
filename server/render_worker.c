@@ -110,7 +110,7 @@ create_minijail(enum render_worker_jail_seccomp_filter seccomp_filter,
          minijail_set_seccomp_filters(j, &prog);
          free(prog.filter);
       } else {
-         if (seccomp_filter == RENDER_WORKER_JAIL_SECCOMP_POLICY_LOG)
+         if (seccomp_filter == RENDER_WORKER_JAIL_SECCOMP_MINIJAIL_POLICY_LOG)
             minijail_log_seccomp_filter_failures(j);
          minijail_parse_seccomp_filters(j, seccomp_path);
       }
