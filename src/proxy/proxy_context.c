@@ -92,8 +92,7 @@ proxy_context_retire_timeline_fences_locked(struct proxy_context *ctx,
    timeline->cur_seqno = cur_seqno;
    timeline->cur_seqno_stall_count = 0;
 
-   list_for_each_entry_safe(struct proxy_fence, fence, &timeline->fences, head)
-   {
+   list_for_each_entry_safe (struct proxy_fence, fence, &timeline->fences, head) {
       if (!proxy_fence_is_signaled(fence, timeline->cur_seqno) && !force_retire_all)
          return false;
 
@@ -444,13 +443,13 @@ proxy_context_destroy(struct virgl_context *base)
    if (ctx->timeline_seqnos) {
       for (uint32_t i = 0; i < PROXY_CONTEXT_TIMELINE_COUNT; i++) {
          struct proxy_timeline *timeline = &ctx->timelines[i];
-         list_for_each_entry_safe(struct proxy_fence, fence, &timeline->fences, head)
+         list_for_each_entry_safe (struct proxy_fence, fence, &timeline->fences, head)
             free(fence);
       }
    }
    mtx_destroy(&ctx->timeline_mutex);
 
-   list_for_each_entry_safe(struct proxy_fence, fence, &ctx->free_fences, head)
+   list_for_each_entry_safe (struct proxy_fence, fence, &ctx->free_fences, head)
       free(fence);
    mtx_destroy(&ctx->free_fences_mutex);
 
