@@ -35,6 +35,7 @@ struct render_worker_jail {
 
    struct minijail *minijail;
 
+   struct list_head workers;
    int worker_count;
 };
 
@@ -45,6 +46,8 @@ struct render_worker {
    pid_t pid;
 #endif
    bool reaped;
+
+   struct list_head head;
 
    char thread_data[];
 };
@@ -154,8 +157,9 @@ fork_minijail(const struct minijail *template)
 
 static void
 render_worker_jail_add_worker(struct render_worker_jail *jail,
-                              UNUSED struct render_worker *worker)
+                              struct render_worker *worker)
 {
+   list_add(&worker->head, &jail->workers);
    jail->worker_count++;
 }
 
@@ -163,6 +167,7 @@ static void
 render_worker_jail_remove_worker(struct render_worker_jail *jail,
                                  struct render_worker *worker)
 {
+   list_del(&worker->head);
    jail->worker_count--;
 
    free(worker);
@@ -178,6 +183,7 @@ render_worker_jail_create(int max_worker_count,
       return NULL;
 
    jail->max_worker_count = max_worker_count;
+   list_inithead(&jail->workers);
 
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    jail->minijail = create_minijail(seccomp_filter, seccomp_path);
