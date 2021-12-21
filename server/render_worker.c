@@ -28,6 +28,12 @@
 #include <threads.h>
 #include <unistd.h>
 
+struct minijail;
+
+struct render_worker_jail {
+   struct minijail *minijail;
+};
+
 struct render_worker {
 #ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
    thrd_t thread;
@@ -90,7 +96,7 @@ fail:
    return false;
 }
 
-static struct render_worker_jail *
+static struct minijail *
 create_minijail(enum render_worker_jail_seccomp_filter seccomp_filter,
                 const char *seccomp_path)
 {
@@ -118,18 +124,18 @@ create_minijail(enum render_worker_jail_seccomp_filter seccomp_filter,
       minijail_use_seccomp_filter(j);
    }
 
-   return (struct render_worker_jail *)j;
+   return j;
 }
 
 static pid_t
-fork_minijail(const struct render_worker_jail *jail)
+fork_minijail(const struct minijail *template)
 {
    struct minijail *j = minijail_new();
    if (!j)
       return -1;
 
    /* is this faster? */
-   if (minijail_copy_jail((const struct minijail *)jail, j)) {
+   if (minijail_copy_jail(template, j)) {
       minijail_destroy(j);
       return -1;
    }
@@ -146,25 +152,36 @@ struct render_worker_jail *
 render_worker_jail_create(enum render_worker_jail_seccomp_filter seccomp_filter,
                           const char *seccomp_path)
 {
+   struct render_worker_jail *jail = calloc(1, sizeof(*jail));
+   if (!jail)
+      return NULL;
+
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
-   return create_minijail(seccomp_filter, seccomp_path);
+   jail->minijail = create_minijail(seccomp_filter, seccomp_path);
+   if (!jail->minijail)
+      goto fail;
 #else
    /* TODO RENDER_WORKER_JAIL_SECCOMP_BPF */
    if (seccomp_filter != RENDER_WORKER_JAIL_SECCOMP_NONE)
-      return NULL;
+      goto fail;
    (void)seccomp_path;
-   return (void *)1;
 #endif
+
+   return jail;
+
+fail:
+   free(jail);
+   return NULL;
 }
 
 void
 render_worker_jail_destroy(struct render_worker_jail *jail)
 {
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
-   minijail_destroy((struct minijail *)jail);
-#else
-   (void)jail;
+   minijail_destroy(jail->minijail);
 #endif
+
+   free(jail);
 }
 
 struct render_worker *
@@ -189,7 +206,7 @@ render_worker_create(struct render_worker_jail *jail,
    ok = thrd_create(&worker->thread, thread_func, worker->thread_data) == thrd_success;
    (void)jail;
 #elif defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
-   worker->pid = fork_minijail(jail);
+   worker->pid = fork_minijail(jail->minijail);
    ok = worker->pid >= 0;
    (void)thread_func;
 #endif
