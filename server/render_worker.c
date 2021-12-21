@@ -31,7 +31,11 @@
 struct minijail;
 
 struct render_worker_jail {
+   int max_worker_count;
+
    struct minijail *minijail;
+
+   int worker_count;
 };
 
 struct render_worker {
@@ -148,13 +152,32 @@ fork_minijail(const struct minijail *template)
 
 #endif /* ENABLE_RENDER_SERVER_WORKER_MINIJAIL */
 
+static void
+render_worker_jail_add_worker(struct render_worker_jail *jail,
+                              UNUSED struct render_worker *worker)
+{
+   jail->worker_count++;
+}
+
+static void
+render_worker_jail_remove_worker(struct render_worker_jail *jail,
+                                 struct render_worker *worker)
+{
+   jail->worker_count--;
+
+   free(worker);
+}
+
 struct render_worker_jail *
-render_worker_jail_create(enum render_worker_jail_seccomp_filter seccomp_filter,
+render_worker_jail_create(int max_worker_count,
+                          enum render_worker_jail_seccomp_filter seccomp_filter,
                           const char *seccomp_path)
 {
    struct render_worker_jail *jail = calloc(1, sizeof(*jail));
    if (!jail)
       return NULL;
+
+   jail->max_worker_count = max_worker_count;
 
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    jail->minijail = create_minijail(seccomp_filter, seccomp_path);
@@ -177,6 +200,8 @@ fail:
 void
 render_worker_jail_destroy(struct render_worker_jail *jail)
 {
+   assert(!jail->worker_count);
+
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    minijail_destroy(jail->minijail);
 #endif
@@ -190,6 +215,11 @@ render_worker_create(struct render_worker_jail *jail,
                      void *thread_data,
                      size_t thread_data_size)
 {
+   if (jail->worker_count >= jail->max_worker_count) {
+      render_log("too many workers");
+      return NULL;
+   }
+
    struct render_worker *worker = calloc(1, sizeof(*worker) + thread_data_size);
    if (!worker)
       return NULL;
@@ -200,11 +230,9 @@ render_worker_create(struct render_worker_jail *jail,
 #if defined(ENABLE_RENDER_SERVER_WORKER_PROCESS)
    worker->pid = fork();
    ok = worker->pid >= 0;
-   (void)jail;
    (void)thread_func;
 #elif defined(ENABLE_RENDER_SERVER_WORKER_THREAD)
    ok = thrd_create(&worker->thread, thread_func, worker->thread_data) == thrd_success;
-   (void)jail;
 #elif defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    worker->pid = fork_minijail(jail->minijail);
    ok = worker->pid >= 0;
@@ -214,6 +242,8 @@ render_worker_create(struct render_worker_jail *jail,
       free(worker);
       return NULL;
    }
+
+   render_worker_jail_add_worker(jail, worker);
 
    return worker;
 }
@@ -265,7 +295,7 @@ render_worker_reap(struct render_worker *worker, bool wait)
 }
 
 void
-render_worker_destroy(struct render_worker *worker)
+render_worker_destroy(struct render_worker_jail *jail, struct render_worker *worker)
 {
-   free(worker);
+   render_worker_jail_remove_worker(jail, worker);
 }

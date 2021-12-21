@@ -31,7 +31,6 @@ render_server_fini(struct render_server *srv)
 {
    if (srv->client)
       render_client_destroy(srv->client);
-   assert(srv->current_worker_count == 0);
 
    if (srv->worker_jail)
       render_worker_jail_destroy(srv->worker_jail);
@@ -109,7 +108,6 @@ render_server_init(struct render_server *srv,
    srv->state = RENDER_SERVER_STATE_RUN;
    srv->context_args = ctx_args;
    srv->client_fd = -1;
-   srv->max_worker_count = RENDER_SERVER_MAX_WORKER_COUNT;
 
    if (!render_server_parse_options(srv, argc, argv))
       return false;
@@ -128,7 +126,8 @@ render_server_init(struct render_server *srv,
       seccomp_path = srv->worker_seccomp_minijail_policy;
    }
 
-   srv->worker_jail = render_worker_jail_create(seccomp_filter, seccomp_path);
+   srv->worker_jail = render_worker_jail_create(RENDER_SERVER_MAX_WORKER_COUNT,
+                                                seccomp_filter, seccomp_path);
    if (!srv->worker_jail) {
       render_log("failed to create worker jail");
       goto fail;

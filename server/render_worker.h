@@ -19,7 +19,8 @@ enum render_worker_jail_seccomp_filter {
 };
 
 struct render_worker_jail *
-render_worker_jail_create(enum render_worker_jail_seccomp_filter seccomp_filter,
+render_worker_jail_create(int max_worker_count,
+                          enum render_worker_jail_seccomp_filter seccomp_filter,
                           const char *seccomp_path);
 
 void
@@ -41,6 +42,6 @@ bool
 render_worker_reap(struct render_worker *worker, bool wait);
 
 void
-render_worker_destroy(struct render_worker *worker);
+render_worker_destroy(struct render_worker_jail *jail, struct render_worker *worker);
 
 #endif /* RENDER_WORKER_H */

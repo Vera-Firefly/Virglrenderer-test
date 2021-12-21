@@ -26,8 +26,6 @@ struct render_server {
    bool worker_seccomp_minijail_log;
 
    struct render_worker_jail *worker_jail;
-   int max_worker_count;
-   int current_worker_count;
 
    /* only one client in the current design */
    struct render_client *client;

@@ -51,9 +51,8 @@ render_client_detach_all_records(struct render_client *client)
    list_splicetail(&client->context_records, &client->reap_records);
    list_for_each_entry_safe (struct render_context_record, rec, &client->reap_records,
                              head) {
-      render_worker_destroy(rec->worker);
+      render_worker_destroy(srv->worker_jail, rec->worker);
       free(rec);
-      srv->current_worker_count--;
    }
 
    list_inithead(&client->context_records);
@@ -90,11 +89,9 @@ render_client_reap_all_records(struct render_client *client, bool wait)
       if (!render_worker_reap(rec->worker, wait))
          continue;
 
-      render_worker_destroy(rec->worker);
+      render_worker_destroy(srv->worker_jail, rec->worker);
       list_del(&rec->head);
       free(rec);
-
-      srv->current_worker_count--;
    }
 }
 
@@ -133,11 +130,6 @@ render_client_create_context(struct render_client *client,
 {
    struct render_server *srv = client->server;
 
-   if (srv->current_worker_count >= srv->max_worker_count) {
-      render_log("too many context workers");
-      return false;
-   }
-
    struct render_context_record *rec = calloc(1, sizeof(*rec));
    if (!rec)
       return false;
@@ -171,7 +163,6 @@ render_client_create_context(struct render_client *client,
 
    rec->ctx_id = req->ctx_id;
    list_addtail(&rec->head, &client->context_records);
-   srv->current_worker_count++;
 
    if (!render_worker_is_record(rec->worker)) {
       /* this is the child process */
