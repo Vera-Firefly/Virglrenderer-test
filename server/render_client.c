@@ -43,6 +43,24 @@ render_client_find_record(struct render_client *client, uint32_t ctx_id)
 }
 
 static void
+render_client_detach_all_records(struct render_client *client)
+{
+   struct render_server *srv = client->server;
+
+   /* destroy all records without killing nor reaping */
+   list_splicetail(&client->context_records, &client->reap_records);
+   list_for_each_entry_safe (struct render_context_record, rec, &client->reap_records,
+                             head) {
+      render_worker_destroy(rec->worker);
+      free(rec);
+      srv->current_worker_count--;
+   }
+
+   list_inithead(&client->context_records);
+   list_inithead(&client->reap_records);
+}
+
+static void
 render_client_kill_one_record(struct render_client *client,
                               struct render_context_record *rec)
 {
@@ -151,13 +169,16 @@ render_client_create_context(struct render_client *client,
       return false;
    }
 
+   rec->ctx_id = req->ctx_id;
+   list_addtail(&rec->head, &client->context_records);
+   srv->current_worker_count++;
+
    if (!render_worker_is_record(rec->worker)) {
       /* this is the child process */
-      render_worker_destroy(rec->worker);
-      free(rec);
-
       srv->state = RENDER_SERVER_STATE_SUBPROCESS;
       *srv->context_args = ctx_args;
+
+      render_client_detach_all_records(client);
 
       /* ctx_fd ownership transferred */
       assert(srv->context_args->ctx_fd == ctx_fd);
@@ -169,10 +190,6 @@ render_client_create_context(struct render_client *client,
    }
 
    /* this is the parent process */
-   rec->ctx_id = req->ctx_id;
-   list_addtail(&rec->head, &client->context_records);
-   srv->current_worker_count++;
-
    if (ctx_fd >= 0)
       close(ctx_fd);
    *out_remote_fd = remote_fd;
@@ -312,14 +329,8 @@ render_client_destroy(struct render_client *client)
    struct render_server *srv = client->server;
 
    if (srv->state == RENDER_SERVER_STATE_SUBPROCESS) {
-      /* destroy all records without killing nor reaping */
-      list_splicetail(&client->context_records, &client->reap_records);
-      list_for_each_entry_safe (struct render_context_record, rec, &client->reap_records,
-                                head) {
-         render_worker_destroy(rec->worker);
-         free(rec);
-         srv->current_worker_count--;
-      }
+      assert(list_is_empty(&client->context_records) &&
+             list_is_empty(&client->reap_records));
    } else {
       render_client_kill_all_records(client);
       render_client_reap_all_records(client, true /* wait */);
