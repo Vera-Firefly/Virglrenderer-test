@@ -17,10 +17,12 @@ static bool
 render_server_run(struct render_server *srv)
 {
    while (srv->state == RENDER_SERVER_STATE_RUN) {
-      /* TODO handle SIGCHLD */
       struct render_client *client = srv->client;
       if (!render_client_dispatch(client))
          return false;
+
+      /* TODO this should be triggered by SIGCHLD */
+      render_worker_jail_reap_workers(srv->worker_jail);
    }
 
    return true;

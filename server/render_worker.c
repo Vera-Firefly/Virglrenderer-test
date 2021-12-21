@@ -45,6 +45,7 @@ struct render_worker {
 #else
    pid_t pid;
 #endif
+   bool destroyed;
    bool reaped;
 
    struct list_head head;
@@ -173,6 +174,33 @@ render_worker_jail_remove_worker(struct render_worker_jail *jail,
    free(worker);
 }
 
+static struct render_worker *
+render_worker_jail_reap_any_worker(struct render_worker_jail *jail, bool block)
+{
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   (void)jail;
+   (void)block;
+   return NULL;
+#else
+   const int options = WEXITED | (block ? 0 : WNOHANG);
+   siginfo_t siginfo = { 0 };
+   const int ret = waitid(P_ALL, 0, &siginfo, options);
+   const pid_t pid = ret ? 0 : siginfo.si_pid;
+   if (!pid)
+      return NULL;
+
+   list_for_each_entry (struct render_worker, worker, &jail->workers, head) {
+      if (worker->pid == pid) {
+         worker->reaped = true;
+         return worker;
+      }
+   }
+
+   render_log("unknown child process %d", pid);
+   return NULL;
+#endif
+}
+
 struct render_worker_jail *
 render_worker_jail_create(int max_worker_count,
                           enum render_worker_jail_seccomp_filter seccomp_filter,
@@ -203,16 +231,52 @@ fail:
    return NULL;
 }
 
+static void
+render_worker_jail_wait_workers(struct render_worker_jail *jail)
+{
+   while (jail->worker_count) {
+      struct render_worker *worker =
+         render_worker_jail_reap_any_worker(jail, true /* block */);
+      if (worker) {
+         assert(worker->destroyed && worker->reaped);
+         render_worker_jail_remove_worker(jail, worker);
+      }
+   }
+}
+
 void
 render_worker_jail_destroy(struct render_worker_jail *jail)
 {
-   assert(!jail->worker_count);
+   render_worker_jail_wait_workers(jail);
 
 #if defined(ENABLE_RENDER_SERVER_WORKER_MINIJAIL)
    minijail_destroy(jail->minijail);
 #endif
 
    free(jail);
+}
+
+void
+render_worker_jail_reap_workers(struct render_worker_jail *jail)
+{
+   do {
+      struct render_worker *worker =
+         render_worker_jail_reap_any_worker(jail, false /* block */);
+      if (!worker)
+         break;
+
+      assert(worker->reaped);
+      if (worker->destroyed)
+         render_worker_jail_remove_worker(jail, worker);
+   } while (true);
+}
+
+void
+render_worker_jail_detach_workers(struct render_worker_jail *jail)
+{
+   /* free workers without killing nor reaping */
+   list_for_each_entry_safe (struct render_worker, worker, &jail->workers, head)
+      render_worker_jail_remove_worker(jail, worker);
 }
 
 struct render_worker *
@@ -254,6 +318,27 @@ render_worker_create(struct render_worker_jail *jail,
    return worker;
 }
 
+void
+render_worker_destroy(struct render_worker_jail *jail, struct render_worker *worker)
+{
+   assert(render_worker_is_record(worker));
+
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   /* we trust the thread to clean up and exit in finite time */
+   thrd_join(worker->thread, NULL);
+   worker->reaped = true;
+#else
+   /* kill to make sure the worker exits in finite time */
+   if (!worker->reaped)
+      kill(worker->pid, SIGKILL);
+#endif
+
+   worker->destroyed = true;
+
+   if (worker->reaped)
+      render_worker_jail_remove_worker(jail, worker);
+}
+
 bool
 render_worker_is_record(const struct render_worker *worker)
 {
@@ -263,45 +348,4 @@ render_worker_is_record(const struct render_worker *worker)
 #else
    return worker->pid > 0;
 #endif
-}
-
-void
-render_worker_kill(struct render_worker *worker)
-{
-   assert(render_worker_is_record(worker));
-
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   /* we trust the thread to clean up and exit in finite time */
-#else
-   kill(worker->pid, SIGKILL);
-#endif
-}
-
-bool
-render_worker_reap(struct render_worker *worker, bool wait)
-{
-   assert(render_worker_is_record(worker));
-
-   if (worker->reaped)
-      return true;
-
-   bool ok;
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   (void)wait;
-   ok = thrd_join(worker->thread, NULL) == thrd_success;
-#else
-   const int options = WEXITED | (wait ? 0 : WNOHANG);
-   siginfo_t siginfo = { 0 };
-   const int ret = waitid(P_PID, worker->pid, &siginfo, options);
-   ok = !ret && siginfo.si_pid == worker->pid;
-#endif
-
-   worker->reaped = ok;
-   return ok;
-}
-
-void
-render_worker_destroy(struct render_worker_jail *jail, struct render_worker *worker)
-{
-   render_worker_jail_remove_worker(jail, worker);
 }

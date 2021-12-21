@@ -15,7 +15,6 @@ struct render_client {
    uint32_t init_flags;
 
    struct list_head context_records;
-   struct list_head reap_records;
 };
 
 struct render_client *

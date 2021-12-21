@@ -20,9 +20,6 @@
  * RENDER_CLIENT_OP_DESTROY_CONTEXT to us to remove the record.  Because we
  * are responsible for cleaning up the worker, we don't care if the worker has
  * terminated or not.  We always kill, reap, and remove the record.
- *
- * TODO We reap with WNOHANG in render_client_dispatch currently.  We should
- * use SIGCHLD instead.
  */
 struct render_context_record {
    uint32_t ctx_id;
@@ -47,52 +44,33 @@ render_client_detach_all_records(struct render_client *client)
 {
    struct render_server *srv = client->server;
 
-   /* destroy all records without killing nor reaping */
-   list_splicetail(&client->context_records, &client->reap_records);
-   list_for_each_entry_safe (struct render_context_record, rec, &client->reap_records,
-                             head) {
-      render_worker_destroy(srv->worker_jail, rec->worker);
+   /* free all render_workers without killing nor reaping */
+   render_worker_jail_detach_workers(srv->worker_jail);
+
+   list_for_each_entry_safe (struct render_context_record, rec, &client->context_records,
+                             head)
       free(rec);
-   }
-
-   list_inithead(&client->context_records);
-   list_inithead(&client->reap_records);
-}
-
-static void
-render_client_kill_one_record(struct render_client *client,
-                              struct render_context_record *rec)
-{
-   render_worker_kill(rec->worker);
-
-   list_del(&rec->head);
-   list_addtail(&rec->head, &client->reap_records);
-}
-
-static void
-render_client_kill_all_records(struct render_client *client)
-{
-   list_for_each_entry (struct render_context_record, rec, &client->context_records, head)
-      render_worker_kill(rec->worker);
-
-   list_splicetail(&client->context_records, &client->reap_records);
    list_inithead(&client->context_records);
 }
 
 static void
-render_client_reap_all_records(struct render_client *client, bool wait)
+render_client_remove_record(struct render_client *client,
+                            struct render_context_record *rec)
 {
    struct render_server *srv = client->server;
 
-   list_for_each_entry_safe (struct render_context_record, rec, &client->reap_records,
-                             head) {
-      if (!render_worker_reap(rec->worker, wait))
-         continue;
+   render_worker_destroy(srv->worker_jail, rec->worker);
 
-      render_worker_destroy(srv->worker_jail, rec->worker);
-      list_del(&rec->head);
-      free(rec);
-   }
+   list_del(&rec->head);
+   free(rec);
+}
+
+static void
+render_client_clear_records(struct render_client *client)
+{
+   list_for_each_entry_safe (struct render_context_record, rec, &client->context_records,
+                             head)
+      render_client_remove_record(client, rec);
 }
 
 static void
@@ -195,7 +173,7 @@ render_client_dispatch_destroy_context(struct render_client *client,
    const uint32_t ctx_id = req->destroy_context.ctx_id;
    struct render_context_record *rec = render_client_find_record(client, ctx_id);
    if (rec)
-      render_client_kill_one_record(client, rec);
+      render_client_remove_record(client, rec);
 
    return true;
 }
@@ -233,8 +211,7 @@ static bool
 render_client_dispatch_reset(struct render_client *client,
                              UNUSED const union render_client_op_request *req)
 {
-   render_client_kill_all_records(client);
-   render_client_reap_all_records(client, true /* wait */);
+   render_client_clear_records(client);
    return true;
 }
 
@@ -308,9 +285,6 @@ render_client_dispatch(struct render_client *client)
    if (!entry->dispatch(client, &req))
       render_log("failed to dispatch client op %d", req.header.op);
 
-   /* TODO this should be triggered by SIGCHLD */
-   render_client_reap_all_records(client, false /* wait */);
-
    return true;
 }
 
@@ -320,11 +294,9 @@ render_client_destroy(struct render_client *client)
    struct render_server *srv = client->server;
 
    if (srv->state == RENDER_SERVER_STATE_SUBPROCESS) {
-      assert(list_is_empty(&client->context_records) &&
-             list_is_empty(&client->reap_records));
+      assert(list_is_empty(&client->context_records));
    } else {
-      render_client_kill_all_records(client);
-      render_client_reap_all_records(client, true /* wait */);
+      render_client_clear_records(client);
 
       /* see render_client_dispatch_init */
 #ifndef ENABLE_TRACING
@@ -348,7 +320,6 @@ render_client_create(struct render_server *srv, int client_fd)
    render_socket_init(&client->socket, client_fd);
 
    list_inithead(&client->context_records);
-   list_inithead(&client->reap_records);
 
    return client;
 }

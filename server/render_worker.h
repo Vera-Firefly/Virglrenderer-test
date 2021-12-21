@@ -26,22 +26,22 @@ render_worker_jail_create(int max_worker_count,
 void
 render_worker_jail_destroy(struct render_worker_jail *jail);
 
+void
+render_worker_jail_reap_workers(struct render_worker_jail *jail);
+
+void
+render_worker_jail_detach_workers(struct render_worker_jail *jail);
+
 struct render_worker *
 render_worker_create(struct render_worker_jail *jail,
                      int (*thread_func)(void *thread_data),
                      void *thread_data,
                      size_t thread_data_size);
 
-bool
-render_worker_is_record(const struct render_worker *worker);
-
-void
-render_worker_kill(struct render_worker *worker);
-
-bool
-render_worker_reap(struct render_worker *worker, bool wait);
-
 void
 render_worker_destroy(struct render_worker_jail *jail, struct render_worker *worker);
+
+bool
+render_worker_is_record(const struct render_worker *worker);
 
 #endif /* RENDER_WORKER_H */
