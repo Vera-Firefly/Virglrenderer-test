@@ -1,0 +1,31 @@
+glx@.*
+
+# Skip because we don't care for fp64 for now
+spec@arb_gpu_shader_fp64@.*
+
+# Skip TS tests for now
+spec@arb_tessellation_shader@.*
+
+# Skip, this is expected
+# Refer to src/mesa/main/drawpix.c:100
+spec@ext_texture_integer@fbo-integer
+
+# Fails on iris too
+spec@arb_direct_state_access@gettextureimage-formats
+
+spec@arb_texture_buffer_object@formats (fs- arb)*
+spec@arb_texture_buffer_object@formats (vs- arb)*
+spec@nv_primitive_restart@primitive-restart-draw-mode-polygon
+spec@nv_primitive_restart@primitive-restart-draw-mode-quad_strip
+spec@nv_primitive_restart@primitive-restart-draw-mode-quads
+spec@ext_framebuffer_multisample@clip-and-scissor-blit.*
+
+# Skip because they crash crosvm/virglrenderer
+spec@arb_shader_image_load_store@max-size
+spec@glsl-1.50@execution@interface-blocks-api-access-members
+
+# Skip slow tests on crosvm/virglrenderer (90-250 s)
+spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-flat-distance
+spec@glsl-1.30@execution@interpolation@interpolation-smooth-gl_backsecondarycolor-flat-fixed
+spec@glsl-1.50@execution@built-in-functions@gs-op-bitor-neg-int-ivec3
+spec@glsl-4.30@execution@built-in-functions@cs-op-selection-bool-vec4-vec4
