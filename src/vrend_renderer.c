@@ -3542,8 +3542,10 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    if (vrend_state.use_core_profile) {
       int i;
 
-      // Only use integer info when drawing to avoid stale info.
-      if (vrend_state.use_integer && sub_ctx->drawing &&
+      /* Only use integer info when drawing to avoid stale info.
+       * Since we can get here from link_shaders before actually drawing anything,
+       * we may have no vertex element array */
+      if (vrend_state.use_integer && sub_ctx->drawing && sub_ctx->ve &&
           type == PIPE_SHADER_VERTEX) {
          key->vs.attrib_signed_int_bitmask = sub_ctx->ve->signed_int_bitmask;
          key->vs.attrib_unsigned_int_bitmask = sub_ctx->ve->unsigned_int_bitmask;
