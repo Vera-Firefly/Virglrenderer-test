@@ -4688,7 +4688,6 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
    sub_ctx->shader_dirty = false;
 
    if (!shaders[PIPE_SHADER_VERTEX] || !shaders[PIPE_SHADER_FRAGMENT]) {
-      vrend_printf("dropping rendering due to missing shaders: %s\n", sub_ctx->parent->debug_name);
       return false;
    }
 
@@ -4697,6 +4696,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
    // buffer formats when the shader is created, we only know it here.
    // Set it to true so the underlying code knows to use the buffer formats
    // now.
+
    sub_ctx->drawing = true;
    vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
    sub_ctx->drawing = false;
