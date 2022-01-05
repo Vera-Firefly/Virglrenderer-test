@@ -1421,25 +1421,23 @@ static int vrend_decode_copy_transfer3d(struct vrend_context *ctx, const uint32_
    uint32_t dst_handle;
    uint32_t src_handle;
 
-   memset(&info, 0, sizeof(info));
-   info.box = &box;
-
    if (length != VIRGL_COPY_TRANSFER3D_SIZE)
       return EINVAL;
+
+   memset(&info, 0, sizeof(info));
+   info.box = &box;
 
    // synchronized is set either to 1 or 0. This means that we can use other bits
    // to identify the direction of copy transfer
    uint32_t flags = get_buf_entry(buf, VIRGL_COPY_TRANSFER3D_FLAGS);
-   bool read_from_host = flags & (1 << 1);
-   bool synchronized = flags & (1 << 0);
+   bool read_from_host = (flags & VIRGL_COPY_TRANSFER3D_FLAGS_READ_FROM_HOST) != 0;
+   info.synchronized = (flags & VIRGL_COPY_TRANSFER3D_FLAGS_SYNCHRONIZED) != 0;
 
    if (!read_from_host) {
       // this means that guest would like to make transfer to host
       // it can also mean that guest is using legacy copy transfer path
       vrend_decode_transfer_common(buf, &dst_handle, &info);
       info.offset = get_buf_entry(buf, VIRGL_COPY_TRANSFER3D_SRC_RES_OFFSET);
-      info.synchronized = (synchronized != 0);
-
       src_handle = get_buf_entry(buf, VIRGL_COPY_TRANSFER3D_SRC_RES_HANDLE);
 
       return vrend_renderer_copy_transfer3d(ctx, dst_handle, src_handle,
@@ -1447,8 +1445,6 @@ static int vrend_decode_copy_transfer3d(struct vrend_context *ctx, const uint32_
    } else {
       vrend_decode_transfer_common(buf, &src_handle, &info);
       info.offset = get_buf_entry(buf, VIRGL_COPY_TRANSFER3D_SRC_RES_OFFSET);
-      info.synchronized = (synchronized != 0);
-
       dst_handle = get_buf_entry(buf, VIRGL_COPY_TRANSFER3D_SRC_RES_HANDLE);
 
       return vrend_renderer_copy_transfer3d_from_host(ctx, dst_handle, src_handle,
