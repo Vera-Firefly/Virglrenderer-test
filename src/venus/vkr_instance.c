@@ -196,9 +196,6 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   instance->get_fence_fd = (PFN_vkGetFenceFdKHR)vkGetInstanceProcAddr(
-      instance->base.handle.instance, "vkGetFenceFdKHR");
-
    if (ctx->validate_level != VKR_CONTEXT_VALIDATE_NONE) {
       instance->create_debug_utils_messenger =
          (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
