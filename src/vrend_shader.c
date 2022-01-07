@@ -1731,6 +1731,7 @@ iter_property(struct tgsi_iterate_context *iter,
       break;
    case TGSI_PROPERTY_GS_INVOCATIONS:
       ctx->gs_num_invocations = prop->u[0].Data;
+      ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
       break;
    case TGSI_PROPERTY_NUM_CLIPDIST_ENABLED:
       ctx->shader_req_bits |= SHADER_REQ_CLIP_DISTANCE;
