@@ -173,6 +173,10 @@ struct vrend_shader_key {
          uint32_t attrib_unsigned_int_bitmask;
          uint32_t fog_fixup_mask;
       } vs;
+
+      struct {
+         uint32_t emit_clip_distance : 1;
+      } gs;
    };
 
    uint32_t sampler_views_lower_swizzle_mask;

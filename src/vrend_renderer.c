@@ -3581,6 +3581,9 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
    if (type != PIPE_SHADER_COMPUTE)
       vrend_sync_shader_io(sub_ctx, sel, key);
 
+   if (type == PIPE_SHADER_GEOMETRY)
+      key->gs.emit_clip_distance = sub_ctx->rs_state.clip_plane_enable != 0;
+
    for (int i = 0; i < sub_ctx->views[type].num_views; i++) {
       struct vrend_sampler_view *view = sub_ctx->views[type].views[i];
       if (view && view->texture->target == GL_TEXTURE_BUFFER &&

@@ -5438,7 +5438,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       struct immed *imd = &ctx->imm[(inst->Src[0].Register.Index)];
       if (ctx->so && ctx->key->gs_present)
          emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
-      if (ctx->cfg->has_cull_distance)
+      if (ctx->cfg->has_cull_distance && ctx->key->gs.emit_clip_distance)
          emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
       emit_prescale(&ctx->glsl_strbufs);
       if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
