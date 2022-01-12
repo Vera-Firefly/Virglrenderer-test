@@ -8440,7 +8440,8 @@ static int vrend_renderer_transfer_internal(struct vrend_context *ctx,
    if (!info->box)
       return EINVAL;
 
-   vrend_hw_switch_context(ctx, true);
+   if (!vrend_hw_switch_context(ctx, true))
+      return EINVAL;
 
    assert(check_transfer_iovec(res, info));
    if (info->iovec && info->iovec_cnt) {

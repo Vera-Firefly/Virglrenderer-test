@@ -348,12 +348,6 @@ spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/full barrier test/64
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/16x16,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/4x4,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/64x64,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/full barrier test/16x16,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/full barrier test/4x4,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/full barrier test/64x64,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/16x16,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/4x4,Fail
-spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/64x64,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/16x16,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/4x4,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/64x64,Fail
