@@ -3433,8 +3433,9 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
       }
    }
 
-   struct vrend_shader_selector *prev = sub_ctx->shaders[prev_type];
-   if (prev_type != -1 && prev) {
+
+   struct vrend_shader_selector *prev = prev_type != -1  ? sub_ctx->shaders[prev_type] : NULL;
+   if (prev) {
       key->input = prev->sinfo.out;
       key->force_invariant_inputs = prev->sinfo.invariant_outputs;
 
@@ -3462,15 +3463,18 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
       int fs_prim_mode = sub_ctx->prim_mode; // inherit draw-call's mode
 
       // Only use coord_replace if frag shader receives GL_POINTS
-      switch (prev_type) {
+      if (prev) {
+         switch (prev->type) {
          case PIPE_SHADER_TESS_EVAL:
-            if (sub_ctx->shaders[PIPE_SHADER_TESS_EVAL]->sinfo.tes_point_mode)
+            if (prev->sinfo.tes_point_mode)
                fs_prim_mode = PIPE_PRIM_POINTS;
             break;
          case PIPE_SHADER_GEOMETRY:
-            fs_prim_mode = sub_ctx->shaders[PIPE_SHADER_GEOMETRY]->sinfo.gs_out_prim;
-            break;
+            fs_prim_mode = prev->sinfo.gs_out_prim;
+         break;
+         }
       }
+
       key->fs.prim_is_points = (fs_prim_mode == PIPE_PRIM_POINTS);
       key->fs.coord_replace = sub_ctx->rs_state.point_quad_rasterization
          && key->fs.prim_is_points
