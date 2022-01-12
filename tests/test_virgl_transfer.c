@@ -879,7 +879,7 @@ START_TEST(virgl_test_copy_transfer_to_staging_without_iov_fails)
   virgl_encoder_copy_transfer(&ctx, &dst_res, 0, 0, &box, &src_res, 0, synchronized);
 
   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
-  ck_assert_int_eq(ret, 0);
+  ck_assert_int_eq(ret, EINVAL);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, src_res.handle);
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, dst_res.handle);

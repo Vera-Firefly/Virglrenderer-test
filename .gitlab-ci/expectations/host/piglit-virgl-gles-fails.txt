@@ -3391,12 +3391,12 @@ spec@!opengl 1.4@gl-1.4-tex1d-2dborder,Fail
 spec@!opengl 1.4@tex-miplevel-selection-lod-bias,Fail
 spec@!opengl 1.5@depth-tex-compare,Fail
 spec@!opengl 1.5@draw-elements-user,Fail
-spec@!opengl 1.5@draw-vertices,Fail
-spec@!opengl 1.5@draw-vertices-user,Fail
+spec@!opengl 1.5@draw-vertices,Crash
+spec@!opengl 1.5@draw-vertices-user,Crash
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@gl-2.0-large-point-fs,Fail
-spec@!opengl 2.0@gl-2.0-vertexattribpointer,Fail
+spec@!opengl 2.0@gl-2.0-vertexattribpointer,Crash
 spec@!opengl 2.0@occlusion-query-discard,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2@vs and fs,Fail

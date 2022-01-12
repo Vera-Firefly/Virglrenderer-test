@@ -3473,7 +3473,6 @@ spec@!opengl 1.5@draw-vertices-user,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@gl-2.0-large-point-fs,Fail
-spec@!opengl 2.0@gl-2.0-vertexattribpointer,Fail
 spec@!opengl 2.0@occlusion-query-discard,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2@vs and fs,Fail

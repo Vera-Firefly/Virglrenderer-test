@@ -6452,6 +6452,22 @@ static uint64_t vrend_pipe_resource_get_size(struct pipe_resource *pres,
    return res->size;
 }
 
+bool vrend_check_no_error(struct vrend_context *ctx)
+{
+   GLenum err;
+
+   err = glGetError();
+   if (err == GL_NO_ERROR)
+      return true;
+
+   while (err != GL_NO_ERROR) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNKNOWN, err);
+      err = glGetError();
+   }
+
+   return false;
+}
+
 const struct virgl_resource_pipe_callbacks *
 vrend_renderer_get_pipe_callbacks(void)
 {
@@ -6610,6 +6626,11 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    if (vrend_state.use_gles)
       vrend_state.use_egl_fence = virgl_egl_supports_fences(egl);
 #endif
+
+   if (!vrend_check_no_error(vrend_state.ctx0)) {
+      vrend_renderer_fini();
+      return EINVAL;
+   }
 
    return 0;
 }

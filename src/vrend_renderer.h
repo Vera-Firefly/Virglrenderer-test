@@ -128,6 +128,8 @@ struct vrend_if_cbs {
 #define VREND_USE_EXTERNAL_BLOB (1 << 1)
 #define VREND_USE_ASYNC_FENCE_CB (1 << 2)
 
+bool vrend_check_no_error(struct vrend_context *ctx);
+
 const struct virgl_resource_pipe_callbacks *
 vrend_renderer_get_pipe_callbacks(void);
 
