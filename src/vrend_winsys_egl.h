@@ -37,6 +37,8 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
 
 void virgl_egl_destroy(struct virgl_egl *egl);
 
+struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display);
+
 virgl_renderer_gl_context virgl_egl_create_context(struct virgl_egl *egl,
                                                    struct virgl_gl_ctx_param *vparams);
 

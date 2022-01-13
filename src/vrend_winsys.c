@@ -33,7 +33,8 @@
 enum {
    CONTEXT_NONE,
    CONTEXT_EGL,
-   CONTEXT_GLX
+   CONTEXT_GLX,
+   CONTEXT_EGL_EXTERNAL
 };
 
 static int use_context = CONTEXT_NONE;
@@ -102,6 +103,10 @@ void vrend_winsys_cleanup(void)
          virgl_gbm_fini(gbm);
          gbm = NULL;
       }
+   } else if (use_context == CONTEXT_EGL_EXTERNAL) {
+      free(egl);
+      egl = NULL;
+      use_context = CONTEXT_NONE;
    }
 #endif
 #ifdef HAVE_EPOXY_GLX_H
@@ -111,6 +116,23 @@ void vrend_winsys_cleanup(void)
       use_context = CONTEXT_NONE;
    }
 #endif
+}
+
+int vrend_winsys_init_external(void *egl_display)
+{
+#ifdef HAVE_EPOXY_EGL_H
+      egl = virgl_egl_init_external(egl_display);
+      if (!egl)
+         return -1;
+
+      use_context = CONTEXT_EGL_EXTERNAL;
+#else
+   (void)egl_display;
+   vrend_printf( "EGL is not supported on this platform\n");
+   return -1;
+#endif
+
+   return 0;
 }
 
 virgl_renderer_gl_context vrend_winsys_create_context(struct virgl_gl_ctx_param *param)

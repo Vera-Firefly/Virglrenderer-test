@@ -60,6 +60,7 @@ struct global_state {
    bool vrend_initialized;
    bool vkr_initialized;
    bool proxy_initialized;
+   bool external_winsys_initialized;
 };
 
 static struct global_state state;
@@ -610,7 +611,7 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
    if (state.vrend_initialized)
       vrend_renderer_fini();
 
-   if (state.winsys_initialized)
+   if (state.winsys_initialized || state.external_winsys_initialized)
       vrend_winsys_cleanup();
 
    memset(&state, 0, sizeof(state));
@@ -677,6 +678,27 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          goto fail;
       }
       state.winsys_initialized = true;
+   }
+
+   if (!state.winsys_initialized && !state.external_winsys_initialized &&
+       state.cbs && state.cbs->version >= 4 && state.cbs->get_egl_display) {
+      void *egl_display = NULL;
+
+      if (!cbs->create_gl_context || !cbs->destroy_gl_context ||
+          !cbs->make_current)
+         goto fail;
+
+      egl_display = state.cbs->get_egl_display(cookie);
+
+      if (!egl_display)
+         goto fail;
+
+      ret = vrend_winsys_init_external(egl_display);
+
+      if (ret)
+         goto fail;
+
+      state.external_winsys_initialized = true;
    }
 
    if (!state.vrend_initialized && !(flags & VIRGL_RENDERER_NO_VIRGL)) {

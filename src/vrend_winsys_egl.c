@@ -419,6 +419,34 @@ void virgl_egl_destroy(struct virgl_egl *egl)
    free(egl);
 }
 
+struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
+{
+   const char *extensions;
+   struct virgl_egl *egl;
+
+   egl = calloc(1, sizeof(struct virgl_egl));
+   if (!egl)
+      return NULL;
+
+   egl->egl_display = egl_display;
+
+   extensions = eglQueryString(egl->egl_display, EGL_EXTENSIONS);
+#ifdef VIRGL_EGL_DEBUG
+   vrend_printf( "EGL version: %s\n",
+           eglQueryString(egl->egl_display, EGL_VERSION));
+   vrend_printf( "EGL vendor: %s\n",
+           eglQueryString(egl->egl_display, EGL_VENDOR));
+   vrend_printf( "EGL extensions: %s\n", extensions);
+#endif
+
+   if (virgl_egl_init_extensions(egl, extensions)) {
+      free(egl);
+      return NULL;
+   }
+
+   return egl;
+}
+
 virgl_renderer_gl_context virgl_egl_create_context(struct virgl_egl *egl, struct virgl_gl_ctx_param *vparams)
 {
    EGLContext egl_ctx;

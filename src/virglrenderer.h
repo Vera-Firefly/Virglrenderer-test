@@ -46,7 +46,7 @@ struct virgl_renderer_gl_ctx_param {
 };
 
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
-#define VIRGL_RENDERER_CALLBACKS_VERSION 3
+#define VIRGL_RENDERER_CALLBACKS_VERSION 4
 #else
 #define VIRGL_RENDERER_CALLBACKS_VERSION 2
 #endif
@@ -55,18 +55,37 @@ struct virgl_renderer_callbacks {
    int version;
    void (*write_fence)(void *cookie, uint32_t fence);
 
-   /* interact with GL implementation */
+   /*
+    * The following 3 callbacks allows virglrenderer to
+    * use winsys from caller, instead of initializing it's own
+    * winsys (flag VIRGL_RENDERER_USE_EGL or VIRGL_RENDERER_USE_GLX).
+    */
+
+   /* create a GL/GLES context */
    virgl_renderer_gl_context (*create_gl_context)(void *cookie, int scanout_idx, struct virgl_renderer_gl_ctx_param *param);
+   /* destroy a GL/GLES context */
    void (*destroy_gl_context)(void *cookie, virgl_renderer_gl_context ctx);
+   /* make a context current */
    int (*make_current)(void *cookie, int scanout_idx, virgl_renderer_gl_context ctx);
 
-   int (*get_drm_fd)(void *cookie); /* v2, used with flags & VIRGL_RENDERER_USE_EGL */
+   /*
+    * v2, used with flags & VIRGL_RENDERER_USE_EGL
+    * Chose the drm fd, that will be used by virglrenderer
+    * for winsys initialization.
+    */
+   int (*get_drm_fd)(void *cookie);
 
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
    void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint64_t queue_id, void *fence_cookie);
 
    /* version 0: a connected socket of type SOCK_SEQPACKET */
    int (*get_server_fd)(void *cookie, uint32_t version);
+
+   /*
+    * Get the EGLDisplay from caller. It requires create_gl_context,
+    * destroy_gl_context, make_current to be implemented by caller.
+    */
+   void *(*get_egl_display)(void *cookie);
 #endif
 };
 
