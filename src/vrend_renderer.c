@@ -1667,19 +1667,16 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          } else {
             vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND, 0);
          }
-      } else if (has_feature(feat_dual_src_blend)) {
+      } else if (!vrend_state.use_gles && has_feature(feat_dual_src_blend)) {
+         /* On GLES without dual source blending we emit the layout directly in the shader
+          * so there is no need to define the binding here */
          for (int i = 0; i < fs->sel->sinfo.num_outputs; ++i) {
             if (fs->sel->sinfo.fs_output_layout[i] >= 0) {
                char buf[64];
                snprintf(buf, sizeof(buf), "fsout_c%d", fs->sel->sinfo.fs_output_layout[i]);
-               if (!vrend_state.use_gles)
-                  glBindFragDataLocationIndexed(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
-               else
-                  glBindFragDataLocationIndexedEXT(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
+               glBindFragDataLocationIndexed(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
             }
          }
-      } else {
-         vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION, 0);
       }
    } else
       sprog->dual_src_linked = false;
