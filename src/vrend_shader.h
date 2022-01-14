@@ -147,7 +147,7 @@ struct vrend_variable_shader_info {
 struct vrend_shader_key {
    uint64_t force_invariant_inputs;
 
-   struct vrend_fs_shader_info *fs_info;
+   struct vrend_fs_shader_info fs_info;
    struct vrend_shader_info_out input;
    struct vrend_shader_info_in output;
    struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];

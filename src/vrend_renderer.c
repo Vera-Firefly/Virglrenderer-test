@@ -3482,7 +3482,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
       if (sub_ctx->shaders[PIPE_SHADER_FRAGMENT]) {
          struct vrend_shader *fs =
                sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
-         key->fs_info = &fs->var_sinfo.fs_info;
+         key->fs_info = fs->var_sinfo.fs_info;
          next_type = PIPE_SHADER_FRAGMENT;
       }
   }

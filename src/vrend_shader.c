@@ -7371,21 +7371,21 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
       vrend_patch_vertex_shader_interpolants(cfg,
                                              shader,
                                              sinfo,
-                                             key->fs_info, "gso",
+                                             &key->fs_info, "gso",
                                              key->flatshade);
    } else if (!key->gs_present &&
               ctx.prog_type == TGSI_PROCESSOR_TESS_EVAL) {
       vrend_patch_vertex_shader_interpolants(cfg,
                                              shader,
                                              sinfo,
-                                             key->fs_info, "teo",
+                                             &key->fs_info, "teo",
                                              key->flatshade);
    } else if (!key->gs_present && !key->tes_present &&
               ctx.prog_type == TGSI_PROCESSOR_VERTEX) {
       vrend_patch_vertex_shader_interpolants(cfg,
                                              shader,
                                              sinfo,
-                                             key->fs_info, "vso",
+                                             &key->fs_info, "vso",
                                              key->flatshade);
    }
 
