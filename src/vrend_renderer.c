@@ -10983,6 +10983,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
 
+#ifndef ENABLE_MINIGBM_ALLOCATION
    // we use capability bits (not a version of protocol), because 
    // we disable this on client side if virglrenderer is used under
    // vtest. vtest can't support this, because size of resource
@@ -10990,6 +10991,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    // size of drm resource (bo) is not passed to virglrenderer and
    // we can pass "1" as size on drm path, but not on vtest.
    caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_COPY_TRANSFER_BOTH_DIRECTIONS;
+#endif
 
    if (has_feature(feat_anisotropic_filter)) {
       float max_aniso;
