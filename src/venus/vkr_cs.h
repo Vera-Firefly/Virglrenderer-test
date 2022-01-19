@@ -40,6 +40,14 @@ struct vkr_cs_decoder_saved_state {
    uint8_t *pool_reset_to;
 };
 
+/*
+ * We usually need many small allocations during decoding.  Those allocations
+ * are suballocated from the temp pool.
+ *
+ * After a command is decoded, vkr_cs_decoder_reset_temp_pool is called to
+ * reset pool->cur.  After an entire command stream is decoded,
+ * vkr_cs_decoder_gc_temp_pool is called to garbage collect pool->buffers.
+ */
 struct vkr_cs_decoder_temp_pool {
    uint8_t **buffers;
    uint32_t buffer_count;
