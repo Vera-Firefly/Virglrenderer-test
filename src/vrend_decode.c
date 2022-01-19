@@ -1741,6 +1741,8 @@ static int vrend_decode_ctx_submit_cmd(struct virgl_context *ctx,
 
       ret = decode_table[cmd](gdctx->grctx, buf, len);
       if (ret) {
+         vrend_printf("context %d failed to dispatch %s: %d\n",
+               gdctx->base.ctx_id, vrend_get_comand_name(cmd), ret);
          if (ret == EINVAL)
             vrend_report_buffer_error(gdctx->grctx, *buf);
          return ret;
