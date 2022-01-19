@@ -8,7 +8,12 @@
 
 #include "vkr_common.h"
 
-#define VKR_CS_DECODER_TEMP_POOL_MAX_SIZE (64u * 1024 * 1024)
+/* This is to avoid integer overflows and to catch bogus allocations (e.g.,
+ * the guest driver encodes an uninitialized value).  In practice, the largest
+ * allocations we've seen are from vkGetPipelineCacheData and are dozens of
+ * MBs.
+ */
+#define VKR_CS_DECODER_TEMP_POOL_MAX_SIZE (1u * 1024 * 1024 * 1024)
 
 struct iovec;
 
@@ -245,7 +250,7 @@ vkr_cs_decoder_alloc_temp(struct vkr_cs_decoder *dec, size_t size)
    /* align to 64-bit after we know size is at most
     * VKR_CS_DECODER_TEMP_POOL_MAX_SIZE and cannot overflow
     */
-   size = (size + 7) & ~7;
+   size = align64(size, 8);
    assert(size <= (size_t)(pool->end - pool->cur));
 
    void *ptr = pool->cur;
