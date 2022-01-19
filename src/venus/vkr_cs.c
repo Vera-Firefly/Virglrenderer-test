@@ -99,6 +99,7 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
    size_t iov_offset;
    if (pos > enc->stream.size ||
        !vkr_cs_encoder_translate_stream_offset(enc, offset, &iov_index, &iov_offset)) {
+      vkr_log("failed to seek the reply stream to %zu", pos);
       vkr_cs_encoder_set_fatal(enc);
       return;
    }
@@ -158,6 +159,7 @@ vkr_cs_encoder_write_internal(struct vkr_cs_encoder *enc,
       size_t ptr_size;
       uint8_t *ptr = vkr_cs_encoder_get_ptr(enc, val_size, &ptr_size);
       if (unlikely(!ptr)) {
+         vkr_log("failed to write value to the reply stream");
          vkr_cs_encoder_set_fatal(enc);
          return;
       }
@@ -171,6 +173,7 @@ vkr_cs_encoder_write_internal(struct vkr_cs_encoder *enc,
       size_t ptr_size;
       const void *ptr = vkr_cs_encoder_get_ptr(enc, pad_size, &ptr_size);
       if (unlikely(!ptr)) {
+         vkr_log("failed to write padding to the reply stream");
          vkr_cs_encoder_set_fatal(enc);
          return;
       }

@@ -160,6 +160,7 @@ vkr_cs_decoder_peek_internal(const struct vkr_cs_decoder *dec,
    assert(val_size <= size);
 
    if (unlikely(size > (size_t)(dec->end - dec->cur))) {
+      vkr_log("failed to peek %zu bytes", size);
       vkr_cs_decoder_set_fatal(dec);
       memset(val, 0, val_size);
       return false;
@@ -199,8 +200,13 @@ vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
    const struct hash_entry *entry =
       _mesa_hash_table_search((struct hash_table *)dec->object_table, &id);
    obj = likely(entry) ? entry->data : NULL;
-   if (!obj || obj->type != type)
+   if (unlikely(!obj || obj->type != type)) {
+      if (obj)
+         vkr_log("object " PRIu64 " has type %d, not %d", id, obj->type, type);
+      else
+         vkr_log("failed to look up object " PRIu64, id);
       vkr_cs_decoder_set_fatal(dec);
+   }
 
    return obj;
 }
@@ -222,6 +228,7 @@ vkr_cs_decoder_alloc_temp(struct vkr_cs_decoder *dec, size_t size)
 
    if (unlikely(size > (size_t)(pool->end - pool->cur))) {
       if (!vkr_cs_decoder_alloc_temp_internal(dec, size)) {
+         vkr_log("failed to suballocate %zu bytes from the temp pool", size);
          vkr_cs_decoder_set_fatal(dec);
          return NULL;
       }
