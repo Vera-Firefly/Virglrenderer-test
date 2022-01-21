@@ -591,10 +591,8 @@ vkr_context_create(size_t debug_len, const char *debug_name)
       return NULL;
 
    ctx->debug_name = malloc(debug_len + 1);
-   if (!ctx->debug_name) {
-      free(ctx);
-      return NULL;
-   }
+   if (!ctx->debug_name)
+      goto err_debug_name;
 
    memcpy(ctx->debug_name, debug_name, debug_len);
    ctx->debug_name[debug_len] = '\0';
@@ -609,19 +607,17 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    if (VKR_DEBUG(VALIDATE))
       ctx->validate_level = VKR_CONTEXT_VALIDATE_FULL;
 
-   if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success) {
-      free(ctx->debug_name);
-      free(ctx);
-      return NULL;
-   }
-
-   list_inithead(&ctx->rings);
+   if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success)
+      goto err_mtx_init;
 
    ctx->object_table = _mesa_hash_table_create(NULL, vkr_hash_u64, vkr_key_u64_equal);
+   if (!ctx->object_table)
+      goto err_ctx_object_table;
+
    ctx->resource_table =
       _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
-   if (!ctx->object_table || !ctx->resource_table)
-      goto fail;
+   if (!ctx->resource_table)
+      goto err_ctx_resource_table;
 
    vkr_cs_decoder_init(&ctx->decoder, ctx->object_table);
    vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error);
@@ -633,23 +629,26 @@ vkr_context_create(size_t debug_len, const char *debug_name)
        !(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)) {
       ctx->fence_eventfd = create_eventfd(0);
       if (ctx->fence_eventfd < 0)
-         goto fail;
+         goto err_eventfd;
    } else {
       ctx->fence_eventfd = -1;
    }
 
+   list_inithead(&ctx->rings);
    list_inithead(&ctx->busy_queues);
    list_inithead(&ctx->signaled_syncs);
 
    return &ctx->base;
 
-fail:
-   if (ctx->object_table)
-      _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
-   if (ctx->resource_table)
-      _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
+err_eventfd:
+   _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
+err_ctx_resource_table:
+   _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
+err_ctx_object_table:
    mtx_destroy(&ctx->mutex);
+err_mtx_init:
    free(ctx->debug_name);
+err_debug_name:
    free(ctx);
    return NULL;
 }
