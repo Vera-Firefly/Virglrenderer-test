@@ -3,7 +3,10 @@ piglit.spec@arb_gpu_shader5@texturegatheroffset@fs-r-0-float-2drect
 piglit.spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontcolor-flat-fixed
 piglit.spec@glsl-1.50@execution@built-in-functions@gs-op-assign-mult-vec2-mat2
 piglit.spec@glsl-1.50@execution@texelfetchoffset@gs-texelfetch-usampler3d
+shaders@glsl-max-varyings
+shaders@glsl-max-varyings >max_varying_components
 shaders@glsl-uniform-interstage-limits@subdivide 5
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
 spec@arb_compute_shader@local-id-explosion
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8I
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8UI
@@ -49,4 +52,12 @@ spec@!opengl 1.1@read-front samples=2
 spec@!opengl 1.1@read-front samples=4
 spec@!opengl 1.1@texsubimage-unpack
 spec@!opengl 2.0@tex3d-npot
+spec@!opengl 2.0@vertex-program-two-side front back back2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back back2@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front back front2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back front2@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front back@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic

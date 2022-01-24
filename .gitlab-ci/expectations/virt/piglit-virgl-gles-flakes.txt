@@ -3,6 +3,10 @@ hiz@hiz-depth-read-window-stencil0
 hiz@hiz-stencil-read-window-depth0
 hiz@hiz-stencil-read-window-depth1
 shaders@glsl-fs-sampler-numbering
+shaders@glsl-max-varyings
+shaders@glsl-max-varyings >max_varying_components
+shaders@glsl-uniform-interstage-limits@subdivide 5
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
 spec@amd_shader_trinary_minmax@execution@built-in-functions@gs-max3-vec3-vec3-vec3
 spec@amd_shader_trinary_minmax@execution@built-in-functions@tcs-mid3-uvec2-uvec2-uvec2
 spec@amd_shader_trinary_minmax@execution@built-in-functions@vs-max3-vec3-vec3-vec3
@@ -35,6 +39,16 @@ spec@arb_shader_image_load_store@atomicity@imageAtomicMax
 spec@arb_shader_image_load_store@atomicity@imageAtomicMin
 spec@arb_shader_image_load_store@atomicity@imageAtomicOr
 spec@arb_shader_image_load_store@atomicity@imageAtomicXor
+spec@arb_shader_image_load_store@host-mem-barrier@Atomic counter/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Atomic counter/RaW/one bit barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Element array/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Image/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Image/RaW/one bit barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Indirect/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Indirect/RaW/one bit barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Uniform buffer/RaW/full barrier test/4x4
+spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier test/4x4
 spec@arb_shader_precision@fs-op-assign-div-vec3-float
 spec@arb_texture_cube_map@copyteximage cube samples=4
 spec@arb_texture_multisample@texelfetch fs sampler2dms 4 1x71-501x71
@@ -120,4 +134,12 @@ spec@!opengl 1.1@read-front clear-front-first samples=2
 spec@!opengl 1.1@read-front clear-front-first samples=4
 spec@!opengl 1.1@read-front samples=2
 spec@!opengl 1.1@stencil-drawpixels
+spec@!opengl 2.0@vertex-program-two-side front back back2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back back2@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front back front2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back front2@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front back@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front back@vs- gs and fs
+spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs
+spec@!opengl 2.0@vertex-program-two-side front front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic

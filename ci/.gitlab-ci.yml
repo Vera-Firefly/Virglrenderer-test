@@ -222,13 +222,7 @@ debian/x86_test/piglit-gles-host:
 
 # Virt runners (virgl/crosvm)
 
-#
-# FIXME: Although functional, all jobs below are currently disabled (hidden)
-# since they require some updates on the expectation files and probably some
-# performance optimizations.
-#
-
-.debian/x86_test/deqp-gl-virt:
+debian/x86_test/deqp-gl-virt:
   extends:
     - .deqp-virt
   variables:
@@ -236,7 +230,7 @@ debian/x86_test/piglit-gles-host:
     GPU_VERSION: virgl-gl
     CROSVM_GPU_ARGS: &deqp-gl-crosvm-gpu-args "gles=false,backend=virglrenderer,egl=true,surfaceless=true,width=1024,height=768"
 
-.debian/x86_test/deqp-gles-virt:
+debian/x86_test/deqp-gles-virt:
   extends:
     - .deqp-virt
   variables:
@@ -245,15 +239,14 @@ debian/x86_test/piglit-gles-host:
     GPU_VERSION: virgl-gles
     CROSVM_GPU_ARGS: &deqp-gles-crosvm-gpu-args "gles=true,backend=virglrenderer,egl=true,surfaceless=true,width=1024,height=768"
 
-.debian/x86_test/piglit-gl-virt:
+debian/x86_test/piglit-gl-virt:
   extends:
     - .piglit-virt
   variables:
     GPU_VERSION: virgl-gl
     CROSVM_GPU_ARGS: *deqp-gl-crosvm-gpu-args
 
-# FIXME: This is quite unstable because (new) flaky tests continue to show up
-.debian/x86_test/piglit-gles-virt:
+debian/x86_test/piglit-gles-virt:
   extends:
     - .piglit-virt
   variables:

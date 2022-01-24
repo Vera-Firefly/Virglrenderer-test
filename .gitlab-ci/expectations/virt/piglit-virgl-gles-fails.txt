@@ -184,7 +184,6 @@ spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled@GL_RGB565- swizzled- border color only,Fail
-spec@arb_fragment_program_shadow@tex-shadow1d,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@Basic,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@discard,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query,Fail
@@ -205,6 +204,7 @@ spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
 spec@arb_gpu_shader5@linker@stream-different-zero-gs-fs,Fail
 spec@arb_gpu_shader5@linker@stream-invalid-prim-output,Fail
 spec@arb_occlusion_query@occlusion_query_conform,Fail
+spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi2,Fail
 spec@arb_occlusion_query@occlusion_query,Fail
 spec@arb_occlusion_query@occlusion_query_meta_fragments,Fail
 spec@arb_occlusion_query@occlusion_query_meta_no_fragments,Fail
@@ -637,6 +637,8 @@ spec@ext_framebuffer_multisample@unaligned-blit 2 color downsample,Fail
 spec@ext_framebuffer_multisample@unaligned-blit 2 color msaa,Fail
 spec@ext_framebuffer_multisample@upsample 2 stencil,Fail
 spec@ext_framebuffer_multisample@upsample 4 stencil,Fail
+spec@ext_framebuffer_object@fbo-alphatest-nocolor,Fail
+spec@ext_framebuffer_object@fbo-alphatest-nocolor-ff,Fail
 spec@ext_framebuffer_object@fbo-blending-format-quirks,Fail
 spec@ext_framebuffer_object@fbo-blending-formats,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA12,Fail
@@ -654,8 +656,6 @@ spec@ext_framebuffer_object@fbo-colormask-formats,Fail
 spec@ext_framebuffer_object@fbo-colormask-formats@GL_ALPHA12,Fail
 spec@ext_framebuffer_object@fbo-colormask-formats@GL_ALPHA16,Fail
 spec@ext_framebuffer_object@fbo-fast-clear,Fail
-spec@ext_framebuffer_object@fbo-generatemipmap-formats,Fail
-spec@ext_framebuffer_object@fbo-generatemipmap-formats@GL_ALPHA4 NPOT,Fail
 spec@ext_framebuffer_object@fbo-readpixels-depth-formats,Fail
 spec@ext_framebuffer_object@fbo-readpixels-depth-formats@GL_DEPTH_COMPONENT24/GL_FLOAT,Fail
 spec@ext_framebuffer_object@fbo-readpixels-depth-formats@GL_DEPTH_COMPONENT32/GL_UNSIGNED_INT,Fail
@@ -990,6 +990,7 @@ spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 1darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 1d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 1dshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2darray,Fail
+spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2dshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 3d,Fail
@@ -1049,6 +1050,8 @@ spec@glsl-1.50@execution@geometry@tri-strip-ordering-with-prim-restart gl_triang
 spec@glsl-1.50@execution@geometry@tri-strip-ordering-with-prim-restart gl_triangle_strip other,Fail
 spec@glsl-1.50@execution@gs-also-uses-smooth-flat-noperspective,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-first-vertex,Fail
+spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
+spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-strip-first-vertex,Fail
 spec@glsl-1.50@gs-max-output,Fail
 spec@glsl-3.30@built-in constants,Fail
@@ -2630,6 +2633,9 @@ spec@!opengl 1.0@gl-1.0-logicop@GL_OR_REVERSE_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-logicop@GL_XOR_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-spot-light,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,ExpectedFail
+spec@!opengl 1.0@rasterpos,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@clipflat,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center bottom PV: FIRST,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center middle PV: FIRST,Fail
@@ -3428,6 +3434,10 @@ spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@gl-2.0-large-point-fs,Fail
 spec@!opengl 2.0@gl-2.0-vertexattribpointer,Fail
 spec@!opengl 2.0@occlusion-query-discard,Fail
+spec@!opengl 2.0@vertex-program-two-side back front2 back2,Fail
+spec@!opengl 2.0@vertex-program-two-side back front2 back2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side back front2,Fail
+spec@!opengl 2.0@vertex-program-two-side back front2@gs-out and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back back2,Fail
@@ -3440,6 +3450,8 @@ spec@!opengl 2.0@vertex-program-two-side enabled back front2@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front2 back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front2 back2@vs and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side enabled front2,Fail
+spec@!opengl 2.0@vertex-program-two-side enabled front2@vs- gs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front back2@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front back back2,Fail
@@ -3452,6 +3464,16 @@ spec@!opengl 2.0@vertex-program-two-side enabled front back front2@vs and fs,Fai
 spec@!opengl 2.0@vertex-program-two-side enabled front back@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front front2 back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front front2 back2@vs and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front2 back2,Fail
+spec@!opengl 2.0@vertex-program-two-side front2 back2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front back2,Fail
+spec@!opengl 2.0@vertex-program-two-side front back2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front back back2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front back front2 back2,Fail
+spec@!opengl 2.0@vertex-program-two-side front back front2 back2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front back front2@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front back@gs-out and fs,Fail
+spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs,Fail
 spec@!opengl 3.0@required-texture-attachment-formats,Fail
 spec@!opengl 3.0@sampler-cube-shadow,Fail
 spec@!opengl 3.2@gl-3.2-adj-prims cull-back pv-first,ExpectedFail
