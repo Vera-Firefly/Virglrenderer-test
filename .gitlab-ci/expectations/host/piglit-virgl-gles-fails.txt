@@ -207,45 +207,31 @@ spec@arb_program_interface_query@arb_program_interface_query-getprogramresourcei
 spec@arb_provoking_vertex@arb-provoking-vertex-render,Fail
 spec@arb_provoking_vertex@clipped-strip-first,Fail
 spec@arb_sample_shading@samplemask 2@0.500000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2@0.500000 partition,Fail
 spec@arb_sample_shading@samplemask 2@1.000000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2@1.000000 partition,Fail
 spec@arb_sample_shading@samplemask 2 all@0.500000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2 all@0.500000 partition,Fail
 spec@arb_sample_shading@samplemask 2 all@1.000000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2 all@1.000000 partition,Fail
 spec@arb_sample_shading@samplemask 2 all,Fail
 spec@arb_sample_shading@samplemask 2 all@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 2 all@noms partition,Fail
 spec@arb_sample_shading@samplemask 2 all@sample mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2 all@sample partition,Fail
 spec@arb_sample_shading@samplemask 2,Fail
 spec@arb_sample_shading@samplemask 2@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 2@noms partition,Fail
 spec@arb_sample_shading@samplemask 2@sample mask_in_one,Fail
-spec@arb_sample_shading@samplemask 2@sample partition,Fail
 spec@arb_sample_shading@samplemask 4@0.250000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4@0.250000 partition,Fail
 spec@arb_sample_shading@samplemask 4@0.500000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4@0.500000 partition,Fail
 spec@arb_sample_shading@samplemask 4@1.000000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4@1.000000 partition,Fail
 spec@arb_sample_shading@samplemask 4 all@0.250000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4 all@0.250000 partition,Fail
 spec@arb_sample_shading@samplemask 4 all@0.500000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4 all@0.500000 partition,Fail
 spec@arb_sample_shading@samplemask 4 all@1.000000 mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4 all@1.000000 partition,Fail
 spec@arb_sample_shading@samplemask 4 all,Fail
 spec@arb_sample_shading@samplemask 4 all@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4 all@noms partition,Fail
 spec@arb_sample_shading@samplemask 4 all@sample mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4 all@sample partition,Fail
 spec@arb_sample_shading@samplemask 4,Fail
 spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
-spec@arb_sample_shading@samplemask 4@sample partition,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
 spec@arb_shader_atomic_counter_ops@execution@add,Fail
 spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail

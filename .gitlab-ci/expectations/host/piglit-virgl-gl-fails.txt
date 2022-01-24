@@ -131,24 +131,6 @@ spec@arb_point_sprite@arb_point_sprite-mipmap,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex@'vs_input2[1][0]' on GL_PROGRAM_INPUT,Fail
 spec@arb_sample_shading@builtin-gl-sample-position 2,Fail
-spec@arb_sample_shading@samplemask 2@0.500000 partition,Fail
-spec@arb_sample_shading@samplemask 2@1.000000 partition,Fail
-spec@arb_sample_shading@samplemask 2 all@0.500000 partition,Fail
-spec@arb_sample_shading@samplemask 2 all@1.000000 partition,Fail
-spec@arb_sample_shading@samplemask 2 all,Fail
-spec@arb_sample_shading@samplemask 2 all@sample partition,Fail
-spec@arb_sample_shading@samplemask 2,Fail
-spec@arb_sample_shading@samplemask 2@sample partition,Fail
-spec@arb_sample_shading@samplemask 4@0.250000 partition,Fail
-spec@arb_sample_shading@samplemask 4@0.500000 partition,Fail
-spec@arb_sample_shading@samplemask 4@1.000000 partition,Fail
-spec@arb_sample_shading@samplemask 4 all@0.250000 partition,Fail
-spec@arb_sample_shading@samplemask 4 all@0.500000 partition,Fail
-spec@arb_sample_shading@samplemask 4 all@1.000000 partition,Fail
-spec@arb_sample_shading@samplemask 4 all,Fail
-spec@arb_sample_shading@samplemask 4 all@sample partition,Fail
-spec@arb_sample_shading@samplemask 4,Fail
-spec@arb_sample_shading@samplemask 4@sample partition,Fail
 spec@arb_shader_image_load_store@early-z,Fail
 spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,Fail
 spec@arb_shader_image_load_store@layer,Fail

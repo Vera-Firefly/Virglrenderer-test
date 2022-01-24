@@ -4532,12 +4532,15 @@ get_source_info(struct dump_ctx *ctx,
                   sinfo->override_no_cast[i] = true;
                } else if (ctx->system_values[j].name == TGSI_SEMANTIC_SAMPLEMASK) {
                   const char *vec_type = "ivec4";
-                  if (ctx->cfg->use_gles &&
-                      (inst->Instruction.Opcode == TGSI_OPCODE_AND) &&
-                      (stype == TGSI_TYPE_UNSIGNED))
+                  enum vrend_type_qualifier srcstypeprefix = TYPE_CONVERSION_NONE;
+                  if (stypeprefix == TYPE_CONVERSION_NONE)
+                     srcstypeprefix = INT_BITS_TO_FLOAT;
+                  else if (stype == TGSI_TYPE_UNSIGNED)
                      vec_type = "uvec4";
+
                   ctx->shader_req_bits |= SHADER_REQ_SAMPLE_SHADING | SHADER_REQ_INTS;
-                  strbuf_fmt(src_buf, "%s(%s, %s, %s, %s)",
+                  strbuf_fmt(src_buf, "%s(%s(%s, %s, %s, %s))",
+                     get_string(srcstypeprefix),
                      vec_type,
                      src->Register.SwizzleX == TGSI_SWIZZLE_X ? ctx->system_values[j].glsl_name : "0",
                      src->Register.SwizzleY == TGSI_SWIZZLE_X ? ctx->system_values[j].glsl_name : "0",
