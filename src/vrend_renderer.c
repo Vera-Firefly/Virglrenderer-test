@@ -8665,6 +8665,44 @@ int vrend_renderer_copy_transfer3d_from_host(struct vrend_context *ctx,
       return EINVAL;
    }
 
+#ifdef ENABLE_MINIGBM_ALLOCATION
+   if (src_res->gbm_bo) {
+      bool use_gbm = true;
+
+      /* The guest uses copy transfers against busy resources to avoid
+       * waiting. The host GL driver is usually smart enough to avoid
+       * blocking by putting the data in a staging buffer and doing a
+       * pipelined copy.  But when there is a GBM bo, we can only do
+       * that if the format is renderable, because we use glReadPixels,
+       * or on OpenGL glGetTexImage.
+       * Otherwise, if the format has a gbm bo we glFinish and use GBM.
+       * Also, EGL images with BGRX format are not compatible with this
+       * transfer type since they are stored with only 3bpp, so gbm transfer
+       * is required.
+       * For now the guest can knows than a texture is backed by a gbm buffer
+       * if it was created with the VIRGL_BIND_SCANOUT flag,
+       */
+      if (info->synchronized) {
+         bool can_readpixels = vrend_format_can_render(src_res->base.format) ||
+               vrend_format_is_ds(src_res->base.format);
+
+         if ((can_readpixels || !vrend_state.use_gles) &&
+             src_res->base.format != VIRGL_FORMAT_B8G8R8X8_UNORM)
+            use_gbm = false;
+         else
+            glFinish();
+      }
+
+      if (use_gbm) {
+         return virgl_gbm_transfer(src_res->gbm_bo,
+                                   VIRGL_TRANSFER_FROM_HOST,
+                                   dst_res->iov,
+                                   dst_res->num_iovs,
+                                   info);
+      }
+   }
+#endif
+
    return vrend_renderer_transfer_send_iov(ctx, src_res, dst_res->iov,
                                            dst_res->num_iovs, info);
 }
@@ -10949,10 +10987,13 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    }
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
-   if (gbm && has_feature(feat_memory_object) && has_feature(feat_memory_object_fd)) {
+   if (gbm) {
+      if (has_feature(feat_memory_object) && has_feature(feat_memory_object_fd)) {
          if (!strcmp(gbm_device_get_backend_name(gbm->device), "i915") &&
              !vrend_winsys_different_gpu())
             caps->v2.capability_bits |= VIRGL_CAP_ARB_BUFFER_STORAGE;
+      }
+      caps->v2.capability_bits |= VIRGL_CAP_V2_SCANOUT_USES_GBM;
    }
 #endif
 
@@ -10983,7 +11024,6 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
 
-#ifndef ENABLE_MINIGBM_ALLOCATION
    // we use capability bits (not a version of protocol), because 
    // we disable this on client side if virglrenderer is used under
    // vtest. vtest can't support this, because size of resource
@@ -10991,7 +11031,6 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    // size of drm resource (bo) is not passed to virglrenderer and
    // we can pass "1" as size on drm path, but not on vtest.
    caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_COPY_TRANSFER_BOTH_DIRECTIONS;
-#endif
 
    if (has_feature(feat_anisotropic_filter)) {
       float max_aniso;
