@@ -95,7 +95,7 @@ else
     fi
 
     RET=$?
-    mv -f results ${CI_PROJECT_DIR}/
 fi
 
+mv -f results ${CI_PROJECT_DIR}/
 exit ${RET}
