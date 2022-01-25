@@ -4,7 +4,7 @@ set -ex
 
 #
 # Copy platform dependent <TEST_TYPE>-*.txt files and remove test type prefix.
-# Additionally, deploy *.toml and *.yml files.
+# Additionally, deploy the *.toml files.
 #
 # arg1: test platform (host, virt)
 #
@@ -16,9 +16,7 @@ deploy_expectations() {
         cp -a ${file} install/$(printf "%s" "${file##*/}" | sed "s/^${tt}-//")
     done
 
-    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/${tp}/*.toml \
-        ${CI_PROJECT_DIR}/.gitlab-ci/expectations/${tp}/*.yml \
-        install/
+    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/${tp}/*.toml install/
 }
 
 if [ ${MESA_PROJECT_PATH} = "mesa/mesa" ]; then
