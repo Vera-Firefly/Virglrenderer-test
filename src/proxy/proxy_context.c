@@ -435,6 +435,16 @@ proxy_context_destroy(struct virgl_context *base)
    if (!proxy_client_destroy_context(ctx->client, ctx->base.ctx_id))
       proxy_log("failed to destroy ctx %d", ctx->base.ctx_id);
 
+   if (ctx->sync_thread.fence_eventfd >= 0) {
+      if (ctx->sync_thread.created) {
+         ctx->sync_thread.stop = true;
+         write_eventfd(ctx->sync_thread.fence_eventfd, 1);
+         thrd_join(ctx->sync_thread.thread, NULL);
+      }
+
+      close(ctx->sync_thread.fence_eventfd);
+   }
+
    if (ctx->shmem.ptr)
       munmap(ctx->shmem.ptr, ctx->shmem.size);
    if (ctx->shmem.fd >= 0)
@@ -452,16 +462,6 @@ proxy_context_destroy(struct virgl_context *base)
    list_for_each_entry_safe (struct proxy_fence, fence, &ctx->free_fences, head)
       free(fence);
    mtx_destroy(&ctx->free_fences_mutex);
-
-   if (ctx->sync_thread.fence_eventfd >= 0) {
-      if (ctx->sync_thread.created) {
-         ctx->sync_thread.stop = true;
-         write_eventfd(ctx->sync_thread.fence_eventfd, 1);
-         thrd_join(ctx->sync_thread.thread, NULL);
-      }
-
-      close(ctx->sync_thread.fence_eventfd);
-   }
 
    proxy_socket_fini(&ctx->socket);
 
