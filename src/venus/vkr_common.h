@@ -34,6 +34,9 @@
 
 #include "vkr_renderer.h"
 
+/* cap instance and device api versions to this */
+#define VKR_MAX_API_VERSION VK_API_VERSION_1_2
+
 #define VKR_DEBUG(category) (unlikely(vkr_debug_flags & VKR_DEBUG_##category))
 
 /* define a type-safe cast function */
@@ -153,6 +156,15 @@ extern uint32_t vkr_debug_flags;
 
 void
 vkr_log(const char *fmt, ...);
+
+static inline uint32_t
+vkr_api_version_cap_minor(uint32_t version, uint32_t cap)
+{
+   assert(VK_API_VERSION_MAJOR(version) == VK_API_VERSION_MAJOR(cap));
+   if (VK_API_VERSION_MINOR(version) > VK_API_VERSION_MINOR(cap))
+      version = cap - VK_API_VERSION_PATCH(cap) + VK_API_VERSION_PATCH(version);
+   return version;
+}
 
 bool
 object_array_init(struct vkr_context *ctx,

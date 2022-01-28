@@ -16,7 +16,13 @@ vkr_dispatch_vkEnumerateInstanceVersion(UNUSED struct vn_dispatch_context *dispa
                                         struct vn_command_vkEnumerateInstanceVersion *args)
 {
    vn_replace_vkEnumerateInstanceVersion_args_handle(args);
-   args->ret = vkEnumerateInstanceVersion(args->pApiVersion);
+
+   uint32_t version = 0;
+   args->ret = vkEnumerateInstanceVersion(&version);
+   if (args->ret == VK_SUCCESS)
+      version = vkr_api_version_cap_minor(version, VKR_MAX_API_VERSION);
+
+   *args->pApiVersion = version;
 }
 
 static void

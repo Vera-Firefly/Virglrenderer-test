@@ -219,6 +219,7 @@ vkr_physical_device_init_properties(struct vkr_physical_device *physical_dev)
    vkGetPhysicalDeviceProperties(handle, &physical_dev->properties);
 
    VkPhysicalDeviceProperties *props = &physical_dev->properties;
+   props->apiVersion = vkr_api_version_cap_minor(props->apiVersion, VKR_MAX_API_VERSION);
    props->driverVersion = 0;
 
    /* TODO lie about props->pipelineCacheUUID and patch cache header */
