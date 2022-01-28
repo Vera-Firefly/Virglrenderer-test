@@ -244,6 +244,80 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetBufferOpaqueCaptureAddressKHR_EXT = 176,
     VK_COMMAND_TYPE_vkGetDeviceMemoryOpaqueCaptureAddress_EXT = 177,
     VK_COMMAND_TYPE_vkGetDeviceMemoryOpaqueCaptureAddressKHR_EXT = 177,
+    VK_COMMAND_TYPE_vkGetPhysicalDeviceToolProperties_EXT = 196,
+    VK_COMMAND_TYPE_vkGetPhysicalDeviceToolPropertiesEXT_EXT = 196,
+    VK_COMMAND_TYPE_vkCreatePrivateDataSlot_EXT = 197,
+    VK_COMMAND_TYPE_vkCreatePrivateDataSlotEXT_EXT = 197,
+    VK_COMMAND_TYPE_vkDestroyPrivateDataSlot_EXT = 198,
+    VK_COMMAND_TYPE_vkDestroyPrivateDataSlotEXT_EXT = 198,
+    VK_COMMAND_TYPE_vkSetPrivateData_EXT = 199,
+    VK_COMMAND_TYPE_vkSetPrivateDataEXT_EXT = 199,
+    VK_COMMAND_TYPE_vkGetPrivateData_EXT = 200,
+    VK_COMMAND_TYPE_vkGetPrivateDataEXT_EXT = 200,
+    VK_COMMAND_TYPE_vkCmdSetEvent2_EXT = 201,
+    VK_COMMAND_TYPE_vkCmdSetEvent2KHR_EXT = 201,
+    VK_COMMAND_TYPE_vkCmdResetEvent2_EXT = 202,
+    VK_COMMAND_TYPE_vkCmdResetEvent2KHR_EXT = 202,
+    VK_COMMAND_TYPE_vkCmdWaitEvents2_EXT = 203,
+    VK_COMMAND_TYPE_vkCmdWaitEvents2KHR_EXT = 203,
+    VK_COMMAND_TYPE_vkCmdPipelineBarrier2_EXT = 204,
+    VK_COMMAND_TYPE_vkCmdPipelineBarrier2KHR_EXT = 204,
+    VK_COMMAND_TYPE_vkCmdWriteTimestamp2_EXT = 205,
+    VK_COMMAND_TYPE_vkCmdWriteTimestamp2KHR_EXT = 205,
+    VK_COMMAND_TYPE_vkQueueSubmit2_EXT = 206,
+    VK_COMMAND_TYPE_vkQueueSubmit2KHR_EXT = 206,
+    VK_COMMAND_TYPE_vkCmdCopyBuffer2_EXT = 207,
+    VK_COMMAND_TYPE_vkCmdCopyBuffer2KHR_EXT = 207,
+    VK_COMMAND_TYPE_vkCmdCopyImage2_EXT = 208,
+    VK_COMMAND_TYPE_vkCmdCopyImage2KHR_EXT = 208,
+    VK_COMMAND_TYPE_vkCmdCopyBufferToImage2_EXT = 209,
+    VK_COMMAND_TYPE_vkCmdCopyBufferToImage2KHR_EXT = 209,
+    VK_COMMAND_TYPE_vkCmdCopyImageToBuffer2_EXT = 210,
+    VK_COMMAND_TYPE_vkCmdCopyImageToBuffer2KHR_EXT = 210,
+    VK_COMMAND_TYPE_vkCmdBlitImage2_EXT = 211,
+    VK_COMMAND_TYPE_vkCmdBlitImage2KHR_EXT = 211,
+    VK_COMMAND_TYPE_vkCmdResolveImage2_EXT = 212,
+    VK_COMMAND_TYPE_vkCmdResolveImage2KHR_EXT = 212,
+    VK_COMMAND_TYPE_vkCmdBeginRendering_EXT = 213,
+    VK_COMMAND_TYPE_vkCmdBeginRenderingKHR_EXT = 213,
+    VK_COMMAND_TYPE_vkCmdEndRendering_EXT = 214,
+    VK_COMMAND_TYPE_vkCmdEndRenderingKHR_EXT = 214,
+    VK_COMMAND_TYPE_vkCmdSetCullMode_EXT = 215,
+    VK_COMMAND_TYPE_vkCmdSetCullModeEXT_EXT = 215,
+    VK_COMMAND_TYPE_vkCmdSetFrontFace_EXT = 216,
+    VK_COMMAND_TYPE_vkCmdSetFrontFaceEXT_EXT = 216,
+    VK_COMMAND_TYPE_vkCmdSetPrimitiveTopology_EXT = 217,
+    VK_COMMAND_TYPE_vkCmdSetPrimitiveTopologyEXT_EXT = 217,
+    VK_COMMAND_TYPE_vkCmdSetViewportWithCount_EXT = 218,
+    VK_COMMAND_TYPE_vkCmdSetViewportWithCountEXT_EXT = 218,
+    VK_COMMAND_TYPE_vkCmdSetScissorWithCount_EXT = 219,
+    VK_COMMAND_TYPE_vkCmdSetScissorWithCountEXT_EXT = 219,
+    VK_COMMAND_TYPE_vkCmdBindVertexBuffers2_EXT = 220,
+    VK_COMMAND_TYPE_vkCmdBindVertexBuffers2EXT_EXT = 220,
+    VK_COMMAND_TYPE_vkCmdSetDepthTestEnable_EXT = 221,
+    VK_COMMAND_TYPE_vkCmdSetDepthTestEnableEXT_EXT = 221,
+    VK_COMMAND_TYPE_vkCmdSetDepthWriteEnable_EXT = 222,
+    VK_COMMAND_TYPE_vkCmdSetDepthWriteEnableEXT_EXT = 222,
+    VK_COMMAND_TYPE_vkCmdSetDepthCompareOp_EXT = 223,
+    VK_COMMAND_TYPE_vkCmdSetDepthCompareOpEXT_EXT = 223,
+    VK_COMMAND_TYPE_vkCmdSetDepthBoundsTestEnable_EXT = 224,
+    VK_COMMAND_TYPE_vkCmdSetDepthBoundsTestEnableEXT_EXT = 224,
+    VK_COMMAND_TYPE_vkCmdSetStencilTestEnable_EXT = 225,
+    VK_COMMAND_TYPE_vkCmdSetStencilTestEnableEXT_EXT = 225,
+    VK_COMMAND_TYPE_vkCmdSetStencilOp_EXT = 226,
+    VK_COMMAND_TYPE_vkCmdSetStencilOpEXT_EXT = 226,
+    VK_COMMAND_TYPE_vkCmdSetRasterizerDiscardEnable_EXT = 227,
+    VK_COMMAND_TYPE_vkCmdSetRasterizerDiscardEnableEXT_EXT = 227,
+    VK_COMMAND_TYPE_vkCmdSetDepthBiasEnable_EXT = 228,
+    VK_COMMAND_TYPE_vkCmdSetDepthBiasEnableEXT_EXT = 228,
+    VK_COMMAND_TYPE_vkCmdSetPrimitiveRestartEnable_EXT = 229,
+    VK_COMMAND_TYPE_vkCmdSetPrimitiveRestartEnableEXT_EXT = 229,
+    VK_COMMAND_TYPE_vkGetDeviceBufferMemoryRequirements_EXT = 230,
+    VK_COMMAND_TYPE_vkGetDeviceBufferMemoryRequirementsKHR_EXT = 230,
+    VK_COMMAND_TYPE_vkGetDeviceImageMemoryRequirements_EXT = 231,
+    VK_COMMAND_TYPE_vkGetDeviceImageMemoryRequirementsKHR_EXT = 231,
+    VK_COMMAND_TYPE_vkGetDeviceImageSparseMemoryRequirements_EXT = 232,
+    VK_COMMAND_TYPE_vkGetDeviceImageSparseMemoryRequirementsKHR_EXT = 232,
     VK_COMMAND_TYPE_vkCmdBindTransformFeedbackBuffersEXT_EXT = 181,
     VK_COMMAND_TYPE_vkCmdBeginTransformFeedbackEXT_EXT = 182,
     VK_COMMAND_TYPE_vkCmdEndTransformFeedbackEXT_EXT = 183,
@@ -253,6 +327,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT = 193,
     VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
+    VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
+    VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
     VK_COMMAND_TYPE_vkExecuteCommandStreamsMESA_EXT = 180,
@@ -1558,6 +1634,25 @@ struct vn_command_vkGetImageSparseMemoryRequirements2 {
     VkSparseImageMemoryRequirements2* pSparseMemoryRequirements;
 };
 
+struct vn_command_vkGetDeviceBufferMemoryRequirements {
+    VkDevice device;
+    const VkDeviceBufferMemoryRequirements* pInfo;
+    VkMemoryRequirements2* pMemoryRequirements;
+};
+
+struct vn_command_vkGetDeviceImageMemoryRequirements {
+    VkDevice device;
+    const VkDeviceImageMemoryRequirements* pInfo;
+    VkMemoryRequirements2* pMemoryRequirements;
+};
+
+struct vn_command_vkGetDeviceImageSparseMemoryRequirements {
+    VkDevice device;
+    const VkDeviceImageMemoryRequirements* pInfo;
+    uint32_t* pSparseMemoryRequirementCount;
+    VkSparseImageMemoryRequirements2* pSparseMemoryRequirements;
+};
+
 struct vn_command_vkCreateSamplerYcbcrConversion {
     VkDevice device;
     const VkSamplerYcbcrConversionCreateInfo* pCreateInfo;
@@ -1731,6 +1826,222 @@ struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress {
     const VkDeviceMemoryOpaqueCaptureAddressInfo* pInfo;
 
     uint64_t ret;
+};
+
+struct vn_command_vkGetPhysicalDeviceToolProperties {
+    VkPhysicalDevice physicalDevice;
+    uint32_t* pToolCount;
+    VkPhysicalDeviceToolProperties* pToolProperties;
+
+    VkResult ret;
+};
+
+struct vn_command_vkCmdSetCullMode {
+    VkCommandBuffer commandBuffer;
+    VkCullModeFlags cullMode;
+};
+
+struct vn_command_vkCmdSetFrontFace {
+    VkCommandBuffer commandBuffer;
+    VkFrontFace frontFace;
+};
+
+struct vn_command_vkCmdSetPrimitiveTopology {
+    VkCommandBuffer commandBuffer;
+    VkPrimitiveTopology primitiveTopology;
+};
+
+struct vn_command_vkCmdSetViewportWithCount {
+    VkCommandBuffer commandBuffer;
+    uint32_t viewportCount;
+    const VkViewport* pViewports;
+};
+
+struct vn_command_vkCmdSetScissorWithCount {
+    VkCommandBuffer commandBuffer;
+    uint32_t scissorCount;
+    const VkRect2D* pScissors;
+};
+
+struct vn_command_vkCmdBindVertexBuffers2 {
+    VkCommandBuffer commandBuffer;
+    uint32_t firstBinding;
+    uint32_t bindingCount;
+    const VkBuffer* pBuffers;
+    const VkDeviceSize* pOffsets;
+    const VkDeviceSize* pSizes;
+    const VkDeviceSize* pStrides;
+};
+
+struct vn_command_vkCmdSetDepthTestEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthTestEnable;
+};
+
+struct vn_command_vkCmdSetDepthWriteEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthWriteEnable;
+};
+
+struct vn_command_vkCmdSetDepthCompareOp {
+    VkCommandBuffer commandBuffer;
+    VkCompareOp depthCompareOp;
+};
+
+struct vn_command_vkCmdSetDepthBoundsTestEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthBoundsTestEnable;
+};
+
+struct vn_command_vkCmdSetStencilTestEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 stencilTestEnable;
+};
+
+struct vn_command_vkCmdSetStencilOp {
+    VkCommandBuffer commandBuffer;
+    VkStencilFaceFlags faceMask;
+    VkStencilOp failOp;
+    VkStencilOp passOp;
+    VkStencilOp depthFailOp;
+    VkCompareOp compareOp;
+};
+
+struct vn_command_vkCmdSetPatchControlPointsEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t patchControlPoints;
+};
+
+struct vn_command_vkCmdSetRasterizerDiscardEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 rasterizerDiscardEnable;
+};
+
+struct vn_command_vkCmdSetDepthBiasEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthBiasEnable;
+};
+
+struct vn_command_vkCmdSetLogicOpEXT {
+    VkCommandBuffer commandBuffer;
+    VkLogicOp logicOp;
+};
+
+struct vn_command_vkCmdSetPrimitiveRestartEnable {
+    VkCommandBuffer commandBuffer;
+    VkBool32 primitiveRestartEnable;
+};
+
+struct vn_command_vkCreatePrivateDataSlot {
+    VkDevice device;
+    const VkPrivateDataSlotCreateInfo* pCreateInfo;
+    const VkAllocationCallbacks* pAllocator;
+    VkPrivateDataSlot* pPrivateDataSlot;
+
+    VkResult ret;
+};
+
+struct vn_command_vkDestroyPrivateDataSlot {
+    VkDevice device;
+    VkPrivateDataSlot privateDataSlot;
+    const VkAllocationCallbacks* pAllocator;
+};
+
+struct vn_command_vkSetPrivateData {
+    VkDevice device;
+    VkObjectType objectType;
+    uint64_t objectHandle;
+    VkPrivateDataSlot privateDataSlot;
+    uint64_t data;
+
+    VkResult ret;
+};
+
+struct vn_command_vkGetPrivateData {
+    VkDevice device;
+    VkObjectType objectType;
+    uint64_t objectHandle;
+    VkPrivateDataSlot privateDataSlot;
+    uint64_t* pData;
+};
+
+struct vn_command_vkCmdCopyBuffer2 {
+    VkCommandBuffer commandBuffer;
+    const VkCopyBufferInfo2* pCopyBufferInfo;
+};
+
+struct vn_command_vkCmdCopyImage2 {
+    VkCommandBuffer commandBuffer;
+    const VkCopyImageInfo2* pCopyImageInfo;
+};
+
+struct vn_command_vkCmdBlitImage2 {
+    VkCommandBuffer commandBuffer;
+    const VkBlitImageInfo2* pBlitImageInfo;
+};
+
+struct vn_command_vkCmdCopyBufferToImage2 {
+    VkCommandBuffer commandBuffer;
+    const VkCopyBufferToImageInfo2* pCopyBufferToImageInfo;
+};
+
+struct vn_command_vkCmdCopyImageToBuffer2 {
+    VkCommandBuffer commandBuffer;
+    const VkCopyImageToBufferInfo2* pCopyImageToBufferInfo;
+};
+
+struct vn_command_vkCmdResolveImage2 {
+    VkCommandBuffer commandBuffer;
+    const VkResolveImageInfo2* pResolveImageInfo;
+};
+
+struct vn_command_vkCmdSetEvent2 {
+    VkCommandBuffer commandBuffer;
+    VkEvent event;
+    const VkDependencyInfo* pDependencyInfo;
+};
+
+struct vn_command_vkCmdResetEvent2 {
+    VkCommandBuffer commandBuffer;
+    VkEvent event;
+    VkPipelineStageFlags2 stageMask;
+};
+
+struct vn_command_vkCmdWaitEvents2 {
+    VkCommandBuffer commandBuffer;
+    uint32_t eventCount;
+    const VkEvent* pEvents;
+    const VkDependencyInfo* pDependencyInfos;
+};
+
+struct vn_command_vkCmdPipelineBarrier2 {
+    VkCommandBuffer commandBuffer;
+    const VkDependencyInfo* pDependencyInfo;
+};
+
+struct vn_command_vkQueueSubmit2 {
+    VkQueue queue;
+    uint32_t submitCount;
+    const VkSubmitInfo2* pSubmits;
+    VkFence fence;
+
+    VkResult ret;
+};
+
+struct vn_command_vkCmdWriteTimestamp2 {
+    VkCommandBuffer commandBuffer;
+    VkPipelineStageFlags2 stage;
+    VkQueryPool queryPool;
+    uint32_t query;
+};
+
+struct vn_command_vkCmdBeginRendering {
+    VkCommandBuffer commandBuffer;
+    const VkRenderingInfo* pRenderingInfo;
+};
+
+struct vn_command_vkCmdEndRendering {
+    VkCommandBuffer commandBuffer;
 };
 
 struct vn_command_vkSetReplyCommandStreamMESA {
@@ -1955,6 +2266,9 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetBufferMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferMemoryRequirements2 *args);
     void (*dispatch_vkGetImageMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetImageMemoryRequirements2 *args);
     void (*dispatch_vkGetImageSparseMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetImageSparseMemoryRequirements2 *args);
+    void (*dispatch_vkGetDeviceBufferMemoryRequirements)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceBufferMemoryRequirements *args);
+    void (*dispatch_vkGetDeviceImageMemoryRequirements)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceImageMemoryRequirements *args);
+    void (*dispatch_vkGetDeviceImageSparseMemoryRequirements)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceImageSparseMemoryRequirements *args);
     void (*dispatch_vkCreateSamplerYcbcrConversion)(struct vn_dispatch_context *ctx, struct vn_command_vkCreateSamplerYcbcrConversion *args);
     void (*dispatch_vkDestroySamplerYcbcrConversion)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroySamplerYcbcrConversion *args);
     void (*dispatch_vkGetDeviceQueue2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceQueue2 *args);
@@ -1978,6 +2292,42 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetBufferOpaqueCaptureAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferOpaqueCaptureAddress *args);
     void (*dispatch_vkGetBufferDeviceAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferDeviceAddress *args);
     void (*dispatch_vkGetDeviceMemoryOpaqueCaptureAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args);
+    void (*dispatch_vkGetPhysicalDeviceToolProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceToolProperties *args);
+    void (*dispatch_vkCmdSetCullMode)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetCullMode *args);
+    void (*dispatch_vkCmdSetFrontFace)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetFrontFace *args);
+    void (*dispatch_vkCmdSetPrimitiveTopology)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetPrimitiveTopology *args);
+    void (*dispatch_vkCmdSetViewportWithCount)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetViewportWithCount *args);
+    void (*dispatch_vkCmdSetScissorWithCount)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetScissorWithCount *args);
+    void (*dispatch_vkCmdBindVertexBuffers2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBindVertexBuffers2 *args);
+    void (*dispatch_vkCmdSetDepthTestEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthTestEnable *args);
+    void (*dispatch_vkCmdSetDepthWriteEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthWriteEnable *args);
+    void (*dispatch_vkCmdSetDepthCompareOp)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthCompareOp *args);
+    void (*dispatch_vkCmdSetDepthBoundsTestEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthBoundsTestEnable *args);
+    void (*dispatch_vkCmdSetStencilTestEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetStencilTestEnable *args);
+    void (*dispatch_vkCmdSetStencilOp)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetStencilOp *args);
+    void (*dispatch_vkCmdSetPatchControlPointsEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetPatchControlPointsEXT *args);
+    void (*dispatch_vkCmdSetRasterizerDiscardEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetRasterizerDiscardEnable *args);
+    void (*dispatch_vkCmdSetDepthBiasEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthBiasEnable *args);
+    void (*dispatch_vkCmdSetLogicOpEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLogicOpEXT *args);
+    void (*dispatch_vkCmdSetPrimitiveRestartEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetPrimitiveRestartEnable *args);
+    void (*dispatch_vkCreatePrivateDataSlot)(struct vn_dispatch_context *ctx, struct vn_command_vkCreatePrivateDataSlot *args);
+    void (*dispatch_vkDestroyPrivateDataSlot)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroyPrivateDataSlot *args);
+    void (*dispatch_vkSetPrivateData)(struct vn_dispatch_context *ctx, struct vn_command_vkSetPrivateData *args);
+    void (*dispatch_vkGetPrivateData)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPrivateData *args);
+    void (*dispatch_vkCmdCopyBuffer2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyBuffer2 *args);
+    void (*dispatch_vkCmdCopyImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyImage2 *args);
+    void (*dispatch_vkCmdBlitImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBlitImage2 *args);
+    void (*dispatch_vkCmdCopyBufferToImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyBufferToImage2 *args);
+    void (*dispatch_vkCmdCopyImageToBuffer2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyImageToBuffer2 *args);
+    void (*dispatch_vkCmdResolveImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdResolveImage2 *args);
+    void (*dispatch_vkCmdSetEvent2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetEvent2 *args);
+    void (*dispatch_vkCmdResetEvent2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdResetEvent2 *args);
+    void (*dispatch_vkCmdWaitEvents2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdWaitEvents2 *args);
+    void (*dispatch_vkCmdPipelineBarrier2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdPipelineBarrier2 *args);
+    void (*dispatch_vkQueueSubmit2)(struct vn_dispatch_context *ctx, struct vn_command_vkQueueSubmit2 *args);
+    void (*dispatch_vkCmdWriteTimestamp2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdWriteTimestamp2 *args);
+    void (*dispatch_vkCmdBeginRendering)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginRendering *args);
+    void (*dispatch_vkCmdEndRendering)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdEndRendering *args);
     void (*dispatch_vkSetReplyCommandStreamMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkSetReplyCommandStreamMESA *args);
     void (*dispatch_vkSeekReplyCommandStreamMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkSeekReplyCommandStreamMESA *args);
     void (*dispatch_vkExecuteCommandStreamsMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkExecuteCommandStreamsMESA *args);

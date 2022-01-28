@@ -243,6 +243,35 @@ vn_replace_VkSemaphoreTypeCreateInfo_handle(VkSemaphoreTypeCreateInfo *val)
 
 /* struct VkImageFormatListCreateInfo chain */
 
+static inline void
+vn_encode_VkImageFormatListCreateInfo_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkImageFormatListCreateInfo_self(struct vn_cs_encoder *enc, const VkImageFormatListCreateInfo *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_uint32_t(enc, &val->viewFormatCount);
+    if (val->pViewFormats) {
+        vn_encode_array_size(enc, val->viewFormatCount);
+        vn_encode_VkFormat_array(enc, val->pViewFormats, val->viewFormatCount);
+    } else {
+        vn_encode_array_size(enc, 0);
+    }
+}
+
+static inline void
+vn_encode_VkImageFormatListCreateInfo(struct vn_cs_encoder *enc, const VkImageFormatListCreateInfo *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO });
+    vn_encode_VkImageFormatListCreateInfo_pnext(enc, val->pNext);
+    vn_encode_VkImageFormatListCreateInfo_self(enc, val);
+}
+
 static inline void *
 vn_decode_VkImageFormatListCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
 {
@@ -309,6 +338,29 @@ vn_replace_VkImageFormatListCreateInfo_handle(VkImageFormatListCreateInfo *val)
 }
 
 /* struct VkImageStencilUsageCreateInfo chain */
+
+static inline void
+vn_encode_VkImageStencilUsageCreateInfo_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkImageStencilUsageCreateInfo_self(struct vn_cs_encoder *enc, const VkImageStencilUsageCreateInfo *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkFlags(enc, &val->stencilUsage);
+}
+
+static inline void
+vn_encode_VkImageStencilUsageCreateInfo(struct vn_cs_encoder *enc, const VkImageStencilUsageCreateInfo *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_IMAGE_STENCIL_USAGE_CREATE_INFO });
+    vn_encode_VkImageStencilUsageCreateInfo_pnext(enc, val->pNext);
+    vn_encode_VkImageStencilUsageCreateInfo_self(enc, val);
+}
 
 static inline void *
 vn_decode_VkImageStencilUsageCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
@@ -751,6 +803,69 @@ vn_decode_VkMemoryRequirements2_partial_temp(struct vn_cs_decoder *dec, VkMemory
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryRequirements2_pnext_partial_temp(dec);
     vn_decode_VkMemoryRequirements2_self_partial_temp(dec, val);
+}
+
+/* struct VkMemoryBarrier2 chain */
+
+static inline void *
+vn_decode_VkMemoryBarrier2_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkMemoryBarrier2_self_temp(struct vn_cs_decoder *dec, VkMemoryBarrier2 *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkFlags64(dec, &val->srcStageMask);
+    vn_decode_VkFlags64(dec, &val->srcAccessMask);
+    vn_decode_VkFlags64(dec, &val->dstStageMask);
+    vn_decode_VkFlags64(dec, &val->dstAccessMask);
+}
+
+static inline void
+vn_decode_VkMemoryBarrier2_temp(struct vn_cs_decoder *dec, VkMemoryBarrier2 *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_MEMORY_BARRIER_2)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkMemoryBarrier2_pnext_temp(dec);
+    vn_decode_VkMemoryBarrier2_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkMemoryBarrier2_handle_self(VkMemoryBarrier2 *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->srcStageMask */
+    /* skip val->srcAccessMask */
+    /* skip val->dstStageMask */
+    /* skip val->dstAccessMask */
+}
+
+static inline void
+vn_replace_VkMemoryBarrier2_handle(VkMemoryBarrier2 *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_MEMORY_BARRIER_2:
+            vn_replace_VkMemoryBarrier2_handle_self((VkMemoryBarrier2 *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
 }
 
 #pragma GCC diagnostic pop

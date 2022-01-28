@@ -872,4 +872,35 @@ vn_replace_VkSamplerYcbcrConversion_handle(VkSamplerYcbcrConversion *val)
     *val = (VkSamplerYcbcrConversion)vn_cs_get_object_handle((const void **)val, VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION);
 }
 
+/* VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkPrivateDataSlot) */
+
+static inline void
+vn_encode_VkPrivateDataSlot(struct vn_cs_encoder *enc, const VkPrivateDataSlot *val)
+{
+    const uint64_t id = vn_cs_handle_load_id((const void **)val, VK_OBJECT_TYPE_PRIVATE_DATA_SLOT);
+    vn_encode_uint64_t(enc, &id);
+}
+
+static inline void
+vn_decode_VkPrivateDataSlot(struct vn_cs_decoder *dec, VkPrivateDataSlot *val)
+{
+    uint64_t id;
+    vn_decode_uint64_t(dec, &id);
+    vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_PRIVATE_DATA_SLOT);
+}
+
+static inline void
+vn_decode_VkPrivateDataSlot_lookup(struct vn_cs_decoder *dec, VkPrivateDataSlot *val)
+{
+    uint64_t id;
+    vn_decode_uint64_t(dec, &id);
+    *val = (VkPrivateDataSlot)(uintptr_t)vn_cs_decoder_lookup_object(dec, id, VK_OBJECT_TYPE_PRIVATE_DATA_SLOT);
+}
+
+static inline void
+vn_replace_VkPrivateDataSlot_handle(VkPrivateDataSlot *val)
+{
+    *val = (VkPrivateDataSlot)vn_cs_get_object_handle((const void **)val, VK_OBJECT_TYPE_PRIVATE_DATA_SLOT);
+}
+
 #endif /* VN_PROTOCOL_RENDERER_HANDLES_H */

@@ -12,23 +12,38 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[54];
+      bool enabled[77];
       struct {
+         bool EXT_4444_formats;
          bool EXT_command_serialization;
          bool EXT_descriptor_indexing;
+         bool EXT_extended_dynamic_state;
+         bool EXT_extended_dynamic_state2;
          bool EXT_external_memory_dma_buf;
          bool EXT_host_query_reset;
          bool EXT_image_drm_format_modifier;
+         bool EXT_image_robustness;
+         bool EXT_inline_uniform_block;
+         bool EXT_pipeline_creation_cache_control;
+         bool EXT_pipeline_creation_feedback;
+         bool EXT_private_data;
          bool EXT_queue_family_foreign;
          bool EXT_sampler_filter_minmax;
          bool EXT_scalar_block_layout;
          bool EXT_separate_stencil_usage;
+         bool EXT_shader_demote_to_helper_invocation;
          bool EXT_shader_viewport_index_layer;
+         bool EXT_subgroup_size_control;
+         bool EXT_texel_buffer_alignment;
+         bool EXT_texture_compression_astc_hdr;
+         bool EXT_tooling_info;
          bool EXT_transform_feedback;
+         bool EXT_ycbcr_2plane_444_formats;
          bool KHR_16bit_storage;
          bool KHR_8bit_storage;
          bool KHR_bind_memory2;
          bool KHR_buffer_device_address;
+         bool KHR_copy_commands2;
          bool KHR_create_renderpass2;
          bool KHR_dedicated_allocation;
          bool KHR_depth_stencil_resolve;
@@ -37,6 +52,7 @@ struct vn_info_extension_table {
          bool KHR_device_group_creation;
          bool KHR_draw_indirect_count;
          bool KHR_driver_properties;
+         bool KHR_dynamic_rendering;
          bool KHR_external_fence;
          bool KHR_external_fence_capabilities;
          bool KHR_external_memory;
@@ -44,6 +60,7 @@ struct vn_info_extension_table {
          bool KHR_external_memory_fd;
          bool KHR_external_semaphore;
          bool KHR_external_semaphore_capabilities;
+         bool KHR_format_feature_flags2;
          bool KHR_get_memory_requirements2;
          bool KHR_get_physical_device_properties2;
          bool KHR_image_format_list;
@@ -51,6 +68,7 @@ struct vn_info_extension_table {
          bool KHR_maintenance1;
          bool KHR_maintenance2;
          bool KHR_maintenance3;
+         bool KHR_maintenance4;
          bool KHR_multiview;
          bool KHR_relaxed_block_layout;
          bool KHR_sampler_mirror_clamp_to_edge;
@@ -60,13 +78,18 @@ struct vn_info_extension_table {
          bool KHR_shader_draw_parameters;
          bool KHR_shader_float16_int8;
          bool KHR_shader_float_controls;
+         bool KHR_shader_integer_dot_product;
+         bool KHR_shader_non_semantic_info;
          bool KHR_shader_subgroup_extended_types;
+         bool KHR_shader_terminate_invocation;
          bool KHR_spirv_1_4;
          bool KHR_storage_buffer_storage_class;
+         bool KHR_synchronization2;
          bool KHR_timeline_semaphore;
          bool KHR_uniform_buffer_standard_layout;
          bool KHR_variable_pointers;
          bool KHR_vulkan_memory_model;
+         bool KHR_zero_initialize_workgroup_memory;
          bool MESA_venus_protocol;
       };
    };
@@ -88,7 +111,7 @@ vn_info_wire_format_version(void)
 static inline uint32_t
 vn_info_vk_xml_version(void)
 {
-    return VK_MAKE_API_VERSION(0, 1, 2, 182);
+    return VK_MAKE_API_VERSION(0, 1, 3, 204);
 }
 
 static inline int
@@ -100,64 +123,87 @@ vn_info_extension_compare(const void *name, const void *ext)
 static inline const struct vn_info_extension *
 vn_info_extension_get(const char *name)
 {
-   static const struct vn_info_extension vn_info_extensions[54] = {
-      { 0, "VK_EXT_command_serialization", 0 },
-      { 1, "VK_EXT_descriptor_indexing", 2 },
-      { 2, "VK_EXT_external_memory_dma_buf", 1 },
-      { 3, "VK_EXT_host_query_reset", 1 },
-      { 4, "VK_EXT_image_drm_format_modifier", 1 },
-      { 5, "VK_EXT_queue_family_foreign", 1 },
-      { 6, "VK_EXT_sampler_filter_minmax", 2 },
-      { 7, "VK_EXT_scalar_block_layout", 1 },
-      { 8, "VK_EXT_separate_stencil_usage", 1 },
-      { 9, "VK_EXT_shader_viewport_index_layer", 1 },
-      { 10, "VK_EXT_transform_feedback", 1 },
-      { 11, "VK_KHR_16bit_storage", 1 },
-      { 12, "VK_KHR_8bit_storage", 1 },
-      { 13, "VK_KHR_bind_memory2", 1 },
-      { 14, "VK_KHR_buffer_device_address", 1 },
-      { 15, "VK_KHR_create_renderpass2", 1 },
-      { 16, "VK_KHR_dedicated_allocation", 3 },
-      { 17, "VK_KHR_depth_stencil_resolve", 1 },
-      { 18, "VK_KHR_descriptor_update_template", 1 },
-      { 19, "VK_KHR_device_group", 4 },
-      { 20, "VK_KHR_device_group_creation", 1 },
-      { 21, "VK_KHR_draw_indirect_count", 1 },
-      { 22, "VK_KHR_driver_properties", 1 },
-      { 23, "VK_KHR_external_fence", 1 },
-      { 24, "VK_KHR_external_fence_capabilities", 1 },
-      { 25, "VK_KHR_external_memory", 1 },
-      { 26, "VK_KHR_external_memory_capabilities", 1 },
-      { 27, "VK_KHR_external_memory_fd", 1 },
-      { 28, "VK_KHR_external_semaphore", 1 },
-      { 29, "VK_KHR_external_semaphore_capabilities", 1 },
-      { 30, "VK_KHR_get_memory_requirements2", 1 },
-      { 31, "VK_KHR_get_physical_device_properties2", 2 },
-      { 32, "VK_KHR_image_format_list", 1 },
-      { 33, "VK_KHR_imageless_framebuffer", 1 },
-      { 34, "VK_KHR_maintenance1", 2 },
-      { 35, "VK_KHR_maintenance2", 1 },
-      { 36, "VK_KHR_maintenance3", 1 },
-      { 37, "VK_KHR_multiview", 1 },
-      { 38, "VK_KHR_relaxed_block_layout", 1 },
-      { 39, "VK_KHR_sampler_mirror_clamp_to_edge", 3 },
-      { 40, "VK_KHR_sampler_ycbcr_conversion", 14 },
-      { 41, "VK_KHR_separate_depth_stencil_layouts", 1 },
-      { 42, "VK_KHR_shader_atomic_int64", 1 },
-      { 43, "VK_KHR_shader_draw_parameters", 1 },
-      { 44, "VK_KHR_shader_float16_int8", 1 },
-      { 45, "VK_KHR_shader_float_controls", 4 },
-      { 46, "VK_KHR_shader_subgroup_extended_types", 1 },
-      { 47, "VK_KHR_spirv_1_4", 1 },
-      { 48, "VK_KHR_storage_buffer_storage_class", 1 },
-      { 49, "VK_KHR_timeline_semaphore", 2 },
-      { 50, "VK_KHR_uniform_buffer_standard_layout", 1 },
-      { 51, "VK_KHR_variable_pointers", 1 },
-      { 52, "VK_KHR_vulkan_memory_model", 3 },
-      { 53, "VK_MESA_venus_protocol", 100000 },
+   static const struct vn_info_extension vn_info_extensions[77] = {
+      { 0, "VK_EXT_4444_formats", 1 },
+      { 1, "VK_EXT_command_serialization", 0 },
+      { 2, "VK_EXT_descriptor_indexing", 2 },
+      { 3, "VK_EXT_extended_dynamic_state", 1 },
+      { 4, "VK_EXT_extended_dynamic_state2", 1 },
+      { 5, "VK_EXT_external_memory_dma_buf", 1 },
+      { 6, "VK_EXT_host_query_reset", 1 },
+      { 7, "VK_EXT_image_drm_format_modifier", 2 },
+      { 8, "VK_EXT_image_robustness", 1 },
+      { 9, "VK_EXT_inline_uniform_block", 1 },
+      { 10, "VK_EXT_pipeline_creation_cache_control", 3 },
+      { 11, "VK_EXT_pipeline_creation_feedback", 1 },
+      { 12, "VK_EXT_private_data", 1 },
+      { 13, "VK_EXT_queue_family_foreign", 1 },
+      { 14, "VK_EXT_sampler_filter_minmax", 2 },
+      { 15, "VK_EXT_scalar_block_layout", 1 },
+      { 16, "VK_EXT_separate_stencil_usage", 1 },
+      { 17, "VK_EXT_shader_demote_to_helper_invocation", 1 },
+      { 18, "VK_EXT_shader_viewport_index_layer", 1 },
+      { 19, "VK_EXT_subgroup_size_control", 2 },
+      { 20, "VK_EXT_texel_buffer_alignment", 1 },
+      { 21, "VK_EXT_texture_compression_astc_hdr", 1 },
+      { 22, "VK_EXT_tooling_info", 1 },
+      { 23, "VK_EXT_transform_feedback", 1 },
+      { 24, "VK_EXT_ycbcr_2plane_444_formats", 1 },
+      { 25, "VK_KHR_16bit_storage", 1 },
+      { 26, "VK_KHR_8bit_storage", 1 },
+      { 27, "VK_KHR_bind_memory2", 1 },
+      { 28, "VK_KHR_buffer_device_address", 1 },
+      { 29, "VK_KHR_copy_commands2", 1 },
+      { 30, "VK_KHR_create_renderpass2", 1 },
+      { 31, "VK_KHR_dedicated_allocation", 3 },
+      { 32, "VK_KHR_depth_stencil_resolve", 1 },
+      { 33, "VK_KHR_descriptor_update_template", 1 },
+      { 34, "VK_KHR_device_group", 4 },
+      { 35, "VK_KHR_device_group_creation", 1 },
+      { 36, "VK_KHR_draw_indirect_count", 1 },
+      { 37, "VK_KHR_driver_properties", 1 },
+      { 38, "VK_KHR_dynamic_rendering", 1 },
+      { 39, "VK_KHR_external_fence", 1 },
+      { 40, "VK_KHR_external_fence_capabilities", 1 },
+      { 41, "VK_KHR_external_memory", 1 },
+      { 42, "VK_KHR_external_memory_capabilities", 1 },
+      { 43, "VK_KHR_external_memory_fd", 1 },
+      { 44, "VK_KHR_external_semaphore", 1 },
+      { 45, "VK_KHR_external_semaphore_capabilities", 1 },
+      { 46, "VK_KHR_format_feature_flags2", 1 },
+      { 47, "VK_KHR_get_memory_requirements2", 1 },
+      { 48, "VK_KHR_get_physical_device_properties2", 2 },
+      { 49, "VK_KHR_image_format_list", 1 },
+      { 50, "VK_KHR_imageless_framebuffer", 1 },
+      { 51, "VK_KHR_maintenance1", 2 },
+      { 52, "VK_KHR_maintenance2", 1 },
+      { 53, "VK_KHR_maintenance3", 1 },
+      { 54, "VK_KHR_maintenance4", 2 },
+      { 55, "VK_KHR_multiview", 1 },
+      { 56, "VK_KHR_relaxed_block_layout", 1 },
+      { 57, "VK_KHR_sampler_mirror_clamp_to_edge", 3 },
+      { 58, "VK_KHR_sampler_ycbcr_conversion", 14 },
+      { 59, "VK_KHR_separate_depth_stencil_layouts", 1 },
+      { 60, "VK_KHR_shader_atomic_int64", 1 },
+      { 61, "VK_KHR_shader_draw_parameters", 1 },
+      { 62, "VK_KHR_shader_float16_int8", 1 },
+      { 63, "VK_KHR_shader_float_controls", 4 },
+      { 64, "VK_KHR_shader_integer_dot_product", 1 },
+      { 65, "VK_KHR_shader_non_semantic_info", 1 },
+      { 66, "VK_KHR_shader_subgroup_extended_types", 1 },
+      { 67, "VK_KHR_shader_terminate_invocation", 1 },
+      { 68, "VK_KHR_spirv_1_4", 1 },
+      { 69, "VK_KHR_storage_buffer_storage_class", 1 },
+      { 70, "VK_KHR_synchronization2", 1 },
+      { 71, "VK_KHR_timeline_semaphore", 2 },
+      { 72, "VK_KHR_uniform_buffer_standard_layout", 1 },
+      { 73, "VK_KHR_variable_pointers", 1 },
+      { 74, "VK_KHR_vulkan_memory_model", 3 },
+      { 75, "VK_KHR_zero_initialize_workgroup_memory", 1 },
+      { 76, "VK_MESA_venus_protocol", 100000 },
    };
 
-   return bsearch(name, vn_info_extensions, 54,
+   return bsearch(name, vn_info_extensions, 77,
          sizeof(*vn_info_extensions), vn_info_extension_compare);
 }
 
