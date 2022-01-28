@@ -166,6 +166,9 @@ vkr_api_version_cap_minor(uint32_t version, uint32_t cap)
    return version;
 }
 
+uint32_t
+vkr_extension_get_spec_version(const char *name);
+
 bool
 object_array_init(struct vkr_context *ctx,
                   struct object_array *arr,

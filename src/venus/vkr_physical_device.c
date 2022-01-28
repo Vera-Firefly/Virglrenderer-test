@@ -6,7 +6,6 @@
 #include "vkr_physical_device.h"
 
 #include "venus-protocol/vn_protocol_renderer_device.h"
-#include "venus-protocol/vn_protocol_renderer_info.h"
 #include "vrend_winsys_gbm.h"
 
 #include "vkr_context.h"
@@ -183,7 +182,7 @@ vkr_physical_device_init_extensions(struct vkr_physical_device *physical_dev,
       else if (!strcmp(props->extensionName, "VK_KHR_external_fence_fd"))
          physical_dev->KHR_external_fence_fd = true;
 
-      const uint32_t spec_ver = vn_info_extension_spec_version(props->extensionName);
+      const uint32_t spec_ver = vkr_extension_get_spec_version(props->extensionName);
       if (spec_ver) {
          if (props->specVersion > spec_ver)
             props->specVersion = spec_ver;

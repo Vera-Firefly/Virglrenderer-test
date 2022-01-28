@@ -5,7 +5,6 @@
 
 #include "vkr_instance.h"
 
-#include "venus-protocol/vn_protocol_renderer_info.h"
 #include "venus-protocol/vn_protocol_renderer_instance.h"
 
 #include "vkr_context.h"
@@ -47,7 +46,7 @@ vkr_dispatch_vkEnumerateInstanceExtensionProperties(
 
    for (uint32_t i = 0; i < ARRAY_SIZE(private_extensions); i++) {
       VkExtensionProperties *props = &private_extensions[i];
-      props->specVersion = vn_info_extension_spec_version(props->extensionName);
+      props->specVersion = vkr_extension_get_spec_version(props->extensionName);
    }
 
    const uint32_t count = MIN2(*args->pPropertyCount, ARRAY_SIZE(private_extensions));

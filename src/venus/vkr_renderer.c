@@ -26,9 +26,9 @@ vkr_get_capset(void *capset)
       c->wire_format_version = vn_info_wire_format_version();
       c->vk_xml_version = vn_info_vk_xml_version();
       c->vk_ext_command_serialization_spec_version =
-         vn_info_extension_spec_version("VK_EXT_command_serialization");
+         vkr_extension_get_spec_version("VK_EXT_command_serialization");
       c->vk_mesa_venus_protocol_spec_version =
-         vn_info_extension_spec_version("VK_MESA_venus_protocol");
+         vkr_extension_get_spec_version("VK_MESA_venus_protocol");
       /* TODO always true once Mesa resolves its performance issue */
       c->supports_blob_id_0 = (bool)(vkr_renderer_flags & VKR_RENDERER_RENDER_SERVER);
    }
