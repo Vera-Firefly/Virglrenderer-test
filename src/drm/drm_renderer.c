@@ -16,14 +16,26 @@
 #include "drm_hw.h"
 #include "drm_renderer.h"
 
+#ifdef ENABLE_DRM_MSM
+#  include "msm/msm_renderer.h"
+#endif
+
 static struct virgl_renderer_capset_drm capset;
 
-struct backend {
+static const struct backend {
    uint32_t context_type;
    const char *name;
    int (*probe)(int fd, struct virgl_renderer_capset_drm *capset);
    struct virgl_context *(*create)(int fd);
 } backends[] = {
+#ifdef ENABLE_DRM_MSM
+   {
+      .context_type = VIRTGPU_DRM_CONTEXT_MSM,
+      .name = "msm",
+      .probe = msm_renderer_probe,
+      .create = msm_renderer_create,
+   },
+#endif
 };
 
 int

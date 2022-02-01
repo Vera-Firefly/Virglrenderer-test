@@ -250,7 +250,15 @@ if with_venus
    endif
 endif
 
-with_drm = false
+have_vla = not cc.has_header_symbol('stdlib.h', '__STDC_NO_VLA__')
+
+# drm/msm support requires the compiler to support VLA:
+with_drm_msm = have_vla and get_option('drm-msm-experimental')
+if with_drm_msm
+  conf_data.set('ENABLE_DRM', 1)
+  conf_data.set('ENABLE_DRM_MSM', 1)
+endif
+with_drm = with_drm_msm
 
 with_render_server = get_option('render-server')
 with_render_server_worker = get_option('render-server-worker')
@@ -334,6 +342,7 @@ lines += ''
 lines += 'minigbm_alloc: ' + (with_minigbm_allocation ? 'yes' : 'no' )
 lines += ''
 lines += 'venus:     ' + (with_venus ? 'yes' : 'no' )
+lines += 'drm-msm:   ' + (with_drm_msm ? 'yes' : 'no' )
 lines += ''
 lines += 'render server: ' + (with_render_server ? 'yes' : 'no')
 if with_render_server

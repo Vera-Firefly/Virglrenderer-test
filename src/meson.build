@@ -144,6 +144,13 @@ drm_sources = [
    'drm/drm_util.h',
 ]
 
+drm_msm_sources = [
+   'drm/drm-uapi/msm_drm.h',
+   'drm/msm/msm_proto.h',
+   'drm/msm/msm_renderer.c',
+   'drm/msm/msm_renderer.h',
+]
+
 proxy_sources = [
    'proxy/proxy_client.c',
    'proxy/proxy_common.c',
@@ -191,6 +198,10 @@ if with_drm
    virgl_sources += drm_sources
 endif
 
+if with_drm_msm
+   virgl_sources += drm_msm_sources
+endif
+
 if with_render_server
    virgl_sources += proxy_sources
 endif
@@ -198,7 +209,7 @@ endif
 libvirgl = static_library(
    'virgl',
    virgl_sources,
-   include_directories: [inc_gallium, inc_configuration, 'venus', 'drm'],
+   include_directories: [inc_gallium, inc_configuration, 'venus', 'drm', 'drm/drm-uapi'],
    dependencies : virgl_depends,
 )
 

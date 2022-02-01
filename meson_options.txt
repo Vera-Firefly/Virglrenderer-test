@@ -52,6 +52,16 @@ option(
   description : 'enable the validation layer for venus'
 )
 
+# NOTE: expecting some slight fencing changes between host and guest
+# once ring_idx is plumbed through crosvm (ie. synchronizing between
+# host CPU and guest CPU will be a separate fence timeline)
+option(
+  'drm-msm-experimental',
+  type : 'boolean',
+  value : 'false',
+  description : 'enable support for msm drm native context'
+)
+
 option(
   'render-server',
   type : 'boolean',
