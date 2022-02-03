@@ -158,6 +158,7 @@ struct render_context_op_detach_resource_request {
  */
 struct render_context_op_get_blob_request {
    struct render_context_op_header header;
+   uint32_t res_id;
    uint64_t blob_id;
    uint64_t blob_size;
    uint32_t blob_flags; /* VIRGL_RENDERER_BLOB_FLAG_* */

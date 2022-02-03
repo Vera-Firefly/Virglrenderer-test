@@ -295,7 +295,7 @@ fail:
 
 static int
 proxy_context_get_blob(struct virgl_context *base,
-                       UNUSED uint32_t res_id,
+                       uint32_t res_id,
                        uint64_t blob_id,
                        uint64_t blob_size,
                        uint32_t blob_flags,
@@ -317,6 +317,7 @@ proxy_context_get_blob(struct virgl_context *base,
 
    const struct render_context_op_get_blob_request req = {
       .header.op = RENDER_CONTEXT_OP_GET_BLOB,
+      .res_id = res_id,
       .blob_id = blob_id,
       .blob_size = blob_size,
       .blob_flags = blob_flags,

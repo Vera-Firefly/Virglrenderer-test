@@ -14,13 +14,6 @@
 
 #include "render_virgl.h"
 
-/* XXX we need a unique res_id to export a blob
- *
- * virglrenderer.h does not have the right APIs for us.  We should use vkr
- * (and vrend, if that makes sense) directly.
- */
-#define BLOB_RES_ID (~0u)
-
 static int
 render_context_import_blob(uint32_t res_id,
                            enum virgl_resource_fd_type fd_type,
@@ -105,7 +98,7 @@ render_context_export_blob(struct render_context *ctx,
                            uint32_t *out_map_info,
                            int *out_res_fd)
 {
-   const uint32_t res_id = BLOB_RES_ID;
+   const uint32_t res_id = req->res_id;
    const struct virgl_renderer_resource_create_blob_args blob_args = {
       .res_handle = res_id,
       .ctx_id = ctx->ctx_id,
@@ -253,10 +246,6 @@ render_context_dispatch_attach_resource(struct render_context *ctx,
    const enum virgl_resource_fd_type fd_type = req->attach_resource.fd_type;
    const uint64_t size = req->attach_resource.size;
 
-   if (res_id == BLOB_RES_ID) {
-      render_log("XXX res_id is %u, which is reserved for blob export", res_id);
-      return false;
-   }
    if (fd_type == VIRGL_RESOURCE_FD_INVALID || !size || fd_count != 1) {
       render_log("failed to attach invalid resource %d", res_id);
       return false;
