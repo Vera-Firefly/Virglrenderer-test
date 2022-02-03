@@ -14,11 +14,6 @@
 
 #include "render_virgl.h"
 
-struct render_context_resource {
-   uint32_t res_id;
-   struct list_head head;
-};
-
 /* XXX we need a unique res_id to export a blob
  *
  * virglrenderer.h does not have the right APIs for us.  We should use vkr
@@ -26,28 +21,12 @@ struct render_context_resource {
  */
 #define BLOB_RES_ID (~0u)
 
-static void
-render_context_resource_destroy(struct render_context_resource *res)
+static int
+render_context_import_blob(uint32_t res_id,
+                           enum virgl_resource_fd_type fd_type,
+                           int res_fd,
+                           uint64_t size)
 {
-   list_del(&res->head);
-
-   virgl_renderer_resource_unref(res->res_id);
-   free(res);
-}
-
-static struct render_context_resource *
-render_context_resource_import(uint32_t res_id,
-                               enum virgl_resource_fd_type fd_type,
-                               int res_fd,
-                               uint64_t size)
-{
-   /* TODO pool alloc if resources come and go frequently */
-   struct render_context_resource *res = calloc(1, sizeof(*res));
-   if (!res)
-      return NULL;
-
-   res->res_id = res_id;
-
    uint32_t import_fd_type;
    switch (fd_type) {
    case VIRGL_RESOURCE_FD_DMABUF:
@@ -64,20 +43,14 @@ render_context_resource_import(uint32_t res_id,
       break;
    }
    const struct virgl_renderer_resource_import_blob_args import_args = {
-      .res_handle = res->res_id,
+      .res_handle = res_id,
       .blob_mem = VIRGL_RENDERER_BLOB_MEM_HOST3D,
       .fd_type = import_fd_type,
       .fd = res_fd,
       .size = size,
    };
 
-   int ret = virgl_renderer_resource_import_blob(&import_args);
-   if (ret) {
-      free(res);
-      return NULL;
-   }
-
-   return res;
+   return virgl_renderer_resource_import_blob(&import_args);
 }
 
 void
@@ -89,17 +62,6 @@ render_context_update_timeline(struct render_context *ctx,
    atomic_store(&ctx->shmem_timelines[ring_idx], seqno);
    if (ctx->fence_eventfd >= 0)
       write_eventfd(ctx->fence_eventfd, 1);
-}
-
-static struct render_context_resource *
-render_context_find_resource(struct render_context *ctx, uint32_t res_id)
-{
-   list_for_each_entry (struct render_context_resource, res, &ctx->resources, head) {
-      if (res->res_id == res_id)
-         return res;
-   }
-
-   return NULL;
 }
 
 static bool
@@ -272,17 +234,12 @@ render_context_dispatch_get_blob(struct render_context *ctx,
 }
 
 static bool
-render_context_dispatch_detach_resource(struct render_context *ctx,
+render_context_dispatch_detach_resource(UNUSED struct render_context *ctx,
                                         const union render_context_op_request *req,
                                         UNUSED const int *fds,
                                         UNUSED int fd_count)
 {
-   const uint32_t res_id = req->detach_resource.res_id;
-
-   struct render_context_resource *res = render_context_find_resource(ctx, res_id);
-   if (res)
-      render_context_resource_destroy(res);
-
+   virgl_renderer_resource_unref(req->detach_resource.res_id);
    return true;
 }
 
@@ -306,14 +263,12 @@ render_context_dispatch_attach_resource(struct render_context *ctx,
    }
 
    /* classic 3d resource with valid size reuses the blob import path here */
-   struct render_context_resource *res =
-      render_context_resource_import(res_id, fd_type, fds[0], size);
-   if (!res) {
-      render_log("failed to import resource %d", res_id);
+   int ret = render_context_import_blob(res_id, fd_type, fds[0], size);
+   if (ret) {
+      render_log("failed to import resource %d (%d)", res_id, ret);
       return false;
    }
 
-   list_addtail(&res->head, &ctx->resources);
    virgl_renderer_ctx_attach_resource(ctx->ctx_id, res_id);
 
    return true;
@@ -426,13 +381,8 @@ static void
 render_context_fini(struct render_context *ctx)
 {
    render_virgl_lock_dispatch();
-
    /* destroy the context first to join its sync threads and ring threads */
    virgl_renderer_context_destroy(ctx->ctx_id);
-
-   list_for_each_entry_safe (struct render_context_resource, res, &ctx->resources, head)
-      render_context_resource_destroy(res);
-
    render_virgl_unlock_dispatch();
 
    render_virgl_remove_context(ctx);
@@ -476,7 +426,6 @@ render_context_init(struct render_context *ctx, const struct render_context_args
    memset(ctx, 0, sizeof(*ctx));
    ctx->ctx_id = args->ctx_id;
    render_socket_init(&ctx->socket, args->ctx_fd);
-   list_inithead(&ctx->resources);
    ctx->shmem_fd = -1;
    ctx->fence_eventfd = -1;
 

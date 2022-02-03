@@ -18,8 +18,6 @@ struct render_context {
    char *name;
    size_t name_len;
 
-   struct list_head resources;
-
    int shmem_fd;
    size_t shmem_size;
    void *shmem_ptr;
