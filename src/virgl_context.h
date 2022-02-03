@@ -92,6 +92,7 @@ struct virgl_context {
     * destroyed or reject subsequent get_blob calls.
     */
    int (*get_blob)(struct virgl_context *ctx,
+                   uint32_t res_id,
                    uint64_t blob_id,
                    uint64_t blob_size,
                    uint32_t blob_flags,

@@ -381,6 +381,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
 
 static int
 vkr_context_get_blob(struct virgl_context *base,
+                     UNUSED uint32_t res_id,
                      uint64_t blob_id,
                      uint64_t blob_size,
                      uint32_t flags,

@@ -295,6 +295,7 @@ fail:
 
 static int
 proxy_context_get_blob(struct virgl_context *base,
+                       UNUSED uint32_t res_id,
                        uint64_t blob_id,
                        uint64_t blob_size,
                        uint32_t blob_flags,
