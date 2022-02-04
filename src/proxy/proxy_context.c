@@ -299,30 +299,31 @@ proxy_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t 
    return reply.ok ? 0 : -1;
 }
 
-static int
-alloc_memfd(const char *name, size_t size, void **out_ptr)
+static bool
+validate_resource_fd_shm(int fd, uint64_t expected_size)
 {
-   int fd = os_create_anonymous_file(size, name);
-   if (fd < 0)
-      return -1;
+   static const int required_seals = F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW;
+   static const int blocked_seals = F_SEAL_WRITE;
 
-   int ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
-   if (ret)
-      goto fail;
+   const int seals = fcntl(fd, F_GET_SEALS);
+   if ((seals & required_seals) != required_seals) {
+      proxy_log("failed to validate shm seals(%d): required(%d)", seals, required_seals);
+      return false;
+   }
 
-   if (!out_ptr)
-      return fd;
+   if (seals & blocked_seals) {
+      proxy_log("failed to validate shm seals(%d): blocked(%d)", seals, blocked_seals);
+      return false;
+   }
 
-   void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-   if (ptr == MAP_FAILED)
-      goto fail;
+   const uint64_t size = lseek64(fd, 0, SEEK_END);
+   if (size != expected_size) {
+      proxy_log("failed to validate shm size(%" PRIu64 ") expected(%" PRIu64 ")", size,
+                expected_size);
+      return false;
+   }
 
-   *out_ptr = ptr;
-   return fd;
-
-fail:
-   close(fd);
-   return -1;
+   return true;
 }
 
 static int
@@ -334,18 +335,6 @@ proxy_context_get_blob(struct virgl_context *base,
                        struct virgl_context_blob *blob)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
-
-   /* hijack blob_id == 0 && blob_flags == MMAPABLE to save roundtrips */
-   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      int fd = alloc_memfd("proxy-blob", blob_size, NULL);
-      if (fd < 0)
-         return -ENOMEM;
-
-      blob->type = VIRGL_RESOURCE_FD_SHM;
-      blob->u.fd = fd;
-      blob->map_info = VIRGL_RENDERER_MAP_CACHE_CACHED;
-      return 0;
-   }
 
    const struct render_context_op_get_blob_request req = {
       .header.op = RENDER_CONTEXT_OP_GET_BLOB,
@@ -384,8 +373,8 @@ proxy_context_get_blob(struct virgl_context *base,
       reply_fd_valid = true;
       break;
    case VIRGL_RESOURCE_FD_SHM:
-      /* we don't expect shm, otherwise we should validate seals and size */
-      reply_fd_valid = false;
+      /* validate the seals and size here */
+      reply_fd_valid = validate_resource_fd_shm(reply_fd, blob_size);
       break;
    default:
       break;
@@ -579,6 +568,32 @@ proxy_context_init_timelines(struct proxy_context *ctx)
    ctx->timeline_seqnos = timeline_seqnos;
 
    return true;
+}
+
+static int
+alloc_memfd(const char *name, size_t size, void **out_ptr)
+{
+   int fd = os_create_anonymous_file(size, name);
+   if (fd < 0)
+      return -1;
+
+   int ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
+   if (ret)
+      goto fail;
+
+   if (!out_ptr)
+      return fd;
+
+   void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+   if (ptr == MAP_FAILED)
+      goto fail;
+
+   *out_ptr = ptr;
+   return fd;
+
+fail:
+   close(fd);
+   return -1;
 }
 
 static bool
