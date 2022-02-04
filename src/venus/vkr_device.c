@@ -125,6 +125,66 @@ vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
             handle, "vkCmdDrawIndexedIndirectCountKHR");
    }
 
+   if (api_version >= VK_API_VERSION_1_3) {
+      dev->cmd_bind_vertex_buffers_2 = (PFN_vkCmdBindVertexBuffers2)vkGetDeviceProcAddr(
+         handle, "vkCmdBindVertexBuffers2");
+      dev->cmd_set_cull_mode =
+         (PFN_vkCmdSetCullMode)vkGetDeviceProcAddr(handle, "vkCmdSetCullMode");
+      dev->cmd_set_depth_bounds_test_enable =
+         (PFN_vkCmdSetDepthBoundsTestEnable)vkGetDeviceProcAddr(
+            handle, "vkCmdSetDepthBoundsTestEnable");
+      dev->cmd_set_depth_compare_op = (PFN_vkCmdSetDepthCompareOp)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthCompareOp");
+      dev->cmd_set_depth_test_enable = (PFN_vkCmdSetDepthTestEnable)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthTestEnable");
+      dev->cmd_set_depth_write_enable = (PFN_vkCmdSetDepthWriteEnable)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthWriteEnable");
+      dev->cmd_set_front_face =
+         (PFN_vkCmdSetFrontFace)vkGetDeviceProcAddr(handle, "vkCmdSetFrontFace");
+      dev->cmd_set_primitive_topology =
+         (PFN_vkCmdSetPrimitiveTopology)vkGetDeviceProcAddr(handle,
+                                                            "vkCmdSetPrimitiveTopology");
+      dev->cmd_set_scissor_with_count = (PFN_vkCmdSetScissorWithCount)vkGetDeviceProcAddr(
+         handle, "vkCmdSetScissorWithCount");
+      dev->cmd_set_stencil_op =
+         (PFN_vkCmdSetStencilOp)vkGetDeviceProcAddr(handle, "vkCmdSetStencilOp");
+      dev->cmd_set_stencil_test_enable =
+         (PFN_vkCmdSetStencilTestEnable)vkGetDeviceProcAddr(handle,
+                                                            "vkCmdSetStencilTestEnable");
+      dev->cmd_set_viewport_with_count =
+         (PFN_vkCmdSetViewportWithCount)vkGetDeviceProcAddr(handle,
+                                                            "vkCmdSetViewportWithCount");
+   } else {
+      dev->cmd_bind_vertex_buffers_2 = (PFN_vkCmdBindVertexBuffers2)vkGetDeviceProcAddr(
+         handle, "vkCmdBindVertexBuffers2EXT");
+      dev->cmd_set_cull_mode =
+         (PFN_vkCmdSetCullMode)vkGetDeviceProcAddr(handle, "vkCmdSetCullModeEXT");
+      dev->cmd_set_depth_bounds_test_enable =
+         (PFN_vkCmdSetDepthBoundsTestEnable)vkGetDeviceProcAddr(
+            handle, "vkCmdSetDepthBoundsTestEnableEXT");
+      dev->cmd_set_depth_compare_op = (PFN_vkCmdSetDepthCompareOp)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthCompareOpEXT");
+      dev->cmd_set_depth_test_enable = (PFN_vkCmdSetDepthTestEnable)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthTestEnableEXT");
+      dev->cmd_set_depth_write_enable = (PFN_vkCmdSetDepthWriteEnable)vkGetDeviceProcAddr(
+         handle, "vkCmdSetDepthWriteEnableEXT");
+      dev->cmd_set_front_face =
+         (PFN_vkCmdSetFrontFace)vkGetDeviceProcAddr(handle, "vkCmdSetFrontFaceEXT");
+      dev->cmd_set_primitive_topology =
+         (PFN_vkCmdSetPrimitiveTopology)vkGetDeviceProcAddr(
+            handle, "vkCmdSetPrimitiveTopologyEXT");
+      dev->cmd_set_scissor_with_count = (PFN_vkCmdSetScissorWithCount)vkGetDeviceProcAddr(
+         handle, "vkCmdSetScissorWithCountEXT");
+      dev->cmd_set_stencil_op =
+         (PFN_vkCmdSetStencilOp)vkGetDeviceProcAddr(handle, "vkCmdSetStencilOpEXT");
+      dev->cmd_set_stencil_test_enable =
+         (PFN_vkCmdSetStencilTestEnable)vkGetDeviceProcAddr(
+            handle, "vkCmdSetStencilTestEnableEXT");
+      dev->cmd_set_viewport_with_count =
+         (PFN_vkCmdSetViewportWithCount)vkGetDeviceProcAddr(
+            handle, "vkCmdSetViewportWithCountEXT");
+   }
+
    dev->cmd_bind_transform_feedback_buffers =
       (PFN_vkCmdBindTransformFeedbackBuffersEXT)vkGetDeviceProcAddr(
          handle, "vkCmdBindTransformFeedbackBuffersEXT");

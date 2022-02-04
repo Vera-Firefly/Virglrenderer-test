@@ -30,6 +30,20 @@ struct vkr_device {
    PFN_vkCmdDrawIndirectCount CmdDrawIndirectCount;
    PFN_vkCmdDrawIndexedIndirectCount CmdDrawIndexedIndirectCount;
 
+   /* Vulkan 1.3 */
+   PFN_vkCmdBindVertexBuffers2 cmd_bind_vertex_buffers_2;
+   PFN_vkCmdSetCullMode cmd_set_cull_mode;
+   PFN_vkCmdSetDepthBoundsTestEnable cmd_set_depth_bounds_test_enable;
+   PFN_vkCmdSetDepthCompareOp cmd_set_depth_compare_op;
+   PFN_vkCmdSetDepthTestEnable cmd_set_depth_test_enable;
+   PFN_vkCmdSetDepthWriteEnable cmd_set_depth_write_enable;
+   PFN_vkCmdSetFrontFace cmd_set_front_face;
+   PFN_vkCmdSetPrimitiveTopology cmd_set_primitive_topology;
+   PFN_vkCmdSetScissorWithCount cmd_set_scissor_with_count;
+   PFN_vkCmdSetStencilOp cmd_set_stencil_op;
+   PFN_vkCmdSetStencilTestEnable cmd_set_stencil_test_enable;
+   PFN_vkCmdSetViewportWithCount cmd_set_viewport_with_count;
+
    PFN_vkCmdBindTransformFeedbackBuffersEXT cmd_bind_transform_feedback_buffers;
    PFN_vkCmdBeginTransformFeedbackEXT cmd_begin_transform_feedback;
    PFN_vkCmdEndTransformFeedbackEXT cmd_end_transform_feedback;

@@ -652,6 +652,133 @@ vkr_dispatch_vkCmdDrawIndirectByteCountEXT(
       args->counterBufferOffset, args->counterOffset, args->vertexStride);
 }
 
+static void
+vkr_dispatch_vkCmdBindVertexBuffers2(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdBindVertexBuffers2 *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdBindVertexBuffers2_args_handle(args);
+   cmd->device->cmd_bind_vertex_buffers_2(args->commandBuffer, args->firstBinding,
+                                          args->bindingCount, args->pBuffers,
+                                          args->pOffsets, args->pSizes, args->pStrides);
+}
+
+static void
+vkr_dispatch_vkCmdSetCullMode(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCmdSetCullMode *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetCullMode_args_handle(args);
+   cmd->device->cmd_set_cull_mode(args->commandBuffer, args->cullMode);
+}
+
+static void
+vkr_dispatch_vkCmdSetDepthBoundsTestEnable(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdSetDepthBoundsTestEnable *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetDepthBoundsTestEnable_args_handle(args);
+   cmd->device->cmd_set_depth_bounds_test_enable(args->commandBuffer,
+                                                 args->depthBoundsTestEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetDepthCompareOp(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdSetDepthCompareOp *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetDepthCompareOp_args_handle(args);
+   cmd->device->cmd_set_depth_compare_op(args->commandBuffer, args->depthCompareOp);
+}
+
+static void
+vkr_dispatch_vkCmdSetDepthTestEnable(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdSetDepthTestEnable *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetDepthTestEnable_args_handle(args);
+   cmd->device->cmd_set_depth_test_enable(args->commandBuffer, args->depthTestEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetDepthWriteEnable(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdSetDepthWriteEnable *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetDepthWriteEnable_args_handle(args);
+   cmd->device->cmd_set_depth_write_enable(args->commandBuffer, args->depthWriteEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetFrontFace(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdSetFrontFace *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetFrontFace_args_handle(args);
+   cmd->device->cmd_set_front_face(args->commandBuffer, args->frontFace);
+}
+
+static void
+vkr_dispatch_vkCmdSetPrimitiveTopology(UNUSED struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdSetPrimitiveTopology *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetPrimitiveTopology_args_handle(args);
+   cmd->device->cmd_set_primitive_topology(args->commandBuffer, args->primitiveTopology);
+}
+
+static void
+vkr_dispatch_vkCmdSetScissorWithCount(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdSetScissorWithCount *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetScissorWithCount_args_handle(args);
+   cmd->device->cmd_set_scissor_with_count(args->commandBuffer, args->scissorCount,
+                                           args->pScissors);
+}
+
+static void
+vkr_dispatch_vkCmdSetStencilOp(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdSetStencilOp *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetStencilOp_args_handle(args);
+   cmd->device->cmd_set_stencil_op(args->commandBuffer, args->faceMask, args->failOp,
+                                   args->passOp, args->depthFailOp, args->compareOp);
+}
+
+static void
+vkr_dispatch_vkCmdSetStencilTestEnable(UNUSED struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdSetStencilTestEnable *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetStencilTestEnable_args_handle(args);
+   cmd->device->cmd_set_stencil_test_enable(args->commandBuffer, args->stencilTestEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetViewportWithCount(UNUSED struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdSetViewportWithCount *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetViewportWithCount_args_handle(args);
+   cmd->device->cmd_set_viewport_with_count(args->commandBuffer, args->viewportCount,
+                                            args->pViewports);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -739,4 +866,18 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdEndQueryIndexedEXT = vkr_dispatch_vkCmdEndQueryIndexedEXT;
    dispatch->dispatch_vkCmdDrawIndirectByteCountEXT =
       vkr_dispatch_vkCmdDrawIndirectByteCountEXT;
+
+   dispatch->dispatch_vkCmdBindVertexBuffers2 = vkr_dispatch_vkCmdBindVertexBuffers2;
+   dispatch->dispatch_vkCmdSetCullMode = vkr_dispatch_vkCmdSetCullMode;
+   dispatch->dispatch_vkCmdSetDepthBoundsTestEnable =
+      vkr_dispatch_vkCmdSetDepthBoundsTestEnable;
+   dispatch->dispatch_vkCmdSetDepthCompareOp = vkr_dispatch_vkCmdSetDepthCompareOp;
+   dispatch->dispatch_vkCmdSetDepthTestEnable = vkr_dispatch_vkCmdSetDepthTestEnable;
+   dispatch->dispatch_vkCmdSetDepthWriteEnable = vkr_dispatch_vkCmdSetDepthWriteEnable;
+   dispatch->dispatch_vkCmdSetFrontFace = vkr_dispatch_vkCmdSetFrontFace;
+   dispatch->dispatch_vkCmdSetPrimitiveTopology = vkr_dispatch_vkCmdSetPrimitiveTopology;
+   dispatch->dispatch_vkCmdSetScissorWithCount = vkr_dispatch_vkCmdSetScissorWithCount;
+   dispatch->dispatch_vkCmdSetStencilOp = vkr_dispatch_vkCmdSetStencilOp;
+   dispatch->dispatch_vkCmdSetStencilTestEnable = vkr_dispatch_vkCmdSetStencilTestEnable;
+   dispatch->dispatch_vkCmdSetViewportWithCount = vkr_dispatch_vkCmdSetViewportWithCount;
 }
