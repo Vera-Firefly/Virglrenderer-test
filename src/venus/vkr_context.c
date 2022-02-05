@@ -298,7 +298,6 @@ vkr_context_get_blob_locked(struct virgl_context *base,
       blob->type = VIRGL_RESOURCE_FD_SHM;
       blob->u.fd = fd;
       blob->map_info = VIRGL_RENDERER_MAP_CACHE_CACHED;
-      blob->renderer_data = NULL;
       return 0;
    }
 
@@ -376,8 +375,6 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    } else {
       blob->map_info = VIRGL_RENDERER_MAP_CACHE_NONE;
    }
-
-   blob->renderer_data = mem;
 
    return 0;
 }

@@ -44,8 +44,6 @@ struct virgl_context_blob {
    } u;
 
    uint32_t map_info;
-
-   void *renderer_data;
 };
 
 struct virgl_context;
