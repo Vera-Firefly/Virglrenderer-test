@@ -159,7 +159,11 @@ render_context_export_blob(struct render_context *ctx,
    }
 
    uint32_t map_info;
-   virgl_renderer_resource_get_map_info(res_id, &map_info);
+   ret = virgl_renderer_resource_get_map_info(res_id, &map_info);
+   if (ret) {
+      /* properly set map_info when the resource has no map cache info */
+      map_info = VIRGL_RENDERER_MAP_CACHE_NONE;
+   }
 
    uint32_t fd_type;
    int res_fd;
