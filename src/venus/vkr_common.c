@@ -93,6 +93,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    /* KHR extensions */
    .KHR_external_memory_fd = true,
    /* EXT extensions */
+   .EXT_custom_border_color = true,
    .EXT_external_memory_dma_buf = true,
    .EXT_image_drm_format_modifier = true,
    .EXT_queue_family_foreign = true,
