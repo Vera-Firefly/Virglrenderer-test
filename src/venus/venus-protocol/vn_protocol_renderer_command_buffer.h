@@ -644,38 +644,6 @@ vn_replace_VkBufferImageCopy_handle(VkBufferImageCopy *val)
     vn_replace_VkExtent3D_handle(&val->imageExtent);
 }
 
-/* union VkClearColorValue */
-
-static inline void
-vn_decode_VkClearColorValue_temp(struct vn_cs_decoder *dec, VkClearColorValue *val)
-{
-    uint32_t tag;
-    vn_decode_uint32_t(dec, &tag);
-    switch (tag) {
-    case 0:
-        {
-        const size_t array_size = vn_decode_array_size(dec, 4);
-        vn_decode_float_array(dec, val->float32, array_size);
-    }
-        break;
-    case 1:
-        {
-        const size_t array_size = vn_decode_array_size(dec, 4);
-        vn_decode_int32_t_array(dec, val->int32, array_size);
-    }
-        break;
-    case 2:
-        {
-        const size_t array_size = vn_decode_array_size(dec, 4);
-        vn_decode_uint32_t_array(dec, val->uint32, array_size);
-    }
-        break;
-    default:
-        vn_cs_decoder_set_fatal(dec);
-        break;
-    }
-}
-
 /* struct VkClearDepthStencilValue */
 
 static inline void

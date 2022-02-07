@@ -4605,6 +4605,119 @@ vn_replace_VkPhysicalDeviceVulkan13Features_handle(VkPhysicalDeviceVulkan13Featu
     } while (pnext);
 }
 
+/* struct VkPhysicalDeviceCustomBorderColorFeaturesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkBool32(enc, &val->customBorderColors);
+    vn_encode_VkBool32(enc, &val->customBorderColorWithoutFormat);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT(struct vn_cs_encoder *enc, const VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT });
+    vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkBool32(dec, &val->customBorderColors);
+    vn_decode_VkBool32(dec, &val->customBorderColorWithoutFormat);
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext_temp(dec);
+    vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_temp(dec, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->customBorderColors */
+    /* skip val->customBorderColorWithoutFormat */
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_partial_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceCustomBorderColorFeaturesEXT_handle_self(VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->customBorderColors */
+    /* skip val->customBorderColorWithoutFormat */
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceCustomBorderColorFeaturesEXT_handle(VkPhysicalDeviceCustomBorderColorFeaturesEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceCustomBorderColorFeaturesEXT_handle_self((VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
 /* struct VkPhysicalDeviceExtendedDynamicStateFeaturesEXT chain */
 
 static inline void
@@ -5902,6 +6015,12 @@ vn_encode_VkPhysicalDeviceFeatures2_pnext(struct vn_cs_encoder *enc, const void 
             vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDeviceVulkan13Features_self(enc, (const VkPhysicalDeviceVulkan13Features *)pnext);
             return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self(enc, (const VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
             vn_encode_simple_pointer(enc, pnext);
             vn_encode_VkStructureType(enc, &pnext->sType);
@@ -6245,6 +6364,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(struct vn_cs_decoder *dec)
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
             vn_decode_VkPhysicalDeviceVulkan13Features_self_temp(dec, (VkPhysicalDeviceVulkan13Features *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceCustomBorderColorFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_temp(dec, (VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
@@ -6616,6 +6743,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(struct vn_cs_decoder *dec
             vn_decode_VkPhysicalDeviceVulkan13Features_self_partial_temp(dec, (VkPhysicalDeviceVulkan13Features *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceCustomBorderColorFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_partial_temp(dec, (VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceExtendedDynamicStateFeaturesEXT));
         if (pnext) {
@@ -6836,6 +6971,9 @@ vn_replace_VkPhysicalDeviceFeatures2_handle(VkPhysicalDeviceFeatures2 *val)
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
             vn_replace_VkPhysicalDeviceVulkan13Features_handle_self((VkPhysicalDeviceVulkan13Features *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceCustomBorderColorFeaturesEXT_handle_self((VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
             vn_replace_VkPhysicalDeviceExtendedDynamicStateFeaturesEXT_handle_self((VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *)pnext);
@@ -7231,6 +7369,14 @@ vn_decode_VkDeviceCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkPhysicalDeviceVulkan13Features_self_temp(dec, (VkPhysicalDeviceVulkan13Features *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceCustomBorderColorFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkDeviceCreateInfo_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceCustomBorderColorFeaturesEXT_self_temp(dec, (VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceExtendedDynamicStateFeaturesEXT));
         if (pnext) {
@@ -7519,6 +7665,9 @@ vn_replace_VkDeviceCreateInfo_handle(VkDeviceCreateInfo *val)
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
             vn_replace_VkPhysicalDeviceVulkan13Features_handle_self((VkPhysicalDeviceVulkan13Features *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceCustomBorderColorFeaturesEXT_handle_self((VkPhysicalDeviceCustomBorderColorFeaturesEXT *)pnext);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
             vn_replace_VkPhysicalDeviceExtendedDynamicStateFeaturesEXT_handle_self((VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *)pnext);
@@ -9032,6 +9181,60 @@ vn_decode_VkPhysicalDeviceVulkan13Properties_partial_temp(struct vn_cs_decoder *
     vn_decode_VkPhysicalDeviceVulkan13Properties_self_partial_temp(dec, val);
 }
 
+/* struct VkPhysicalDeviceCustomBorderColorPropertiesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDeviceCustomBorderColorPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_uint32_t(enc, &val->maxCustomBorderColorSamplers);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT(struct vn_cs_encoder *enc, const VkPhysicalDeviceCustomBorderColorPropertiesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT });
+    vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->maxCustomBorderColorSamplers */
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceCustomBorderColorPropertiesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self_partial_temp(dec, val);
+}
+
 /* struct VkPhysicalDeviceShaderIntegerDotProductProperties chain */
 
 static inline void
@@ -9273,6 +9476,12 @@ vn_encode_VkPhysicalDeviceProperties2_pnext(struct vn_cs_encoder *enc, const voi
             vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDeviceVulkan13Properties_self(enc, (const VkPhysicalDeviceVulkan13Properties *)pnext);
             return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self(enc, (const VkPhysicalDeviceCustomBorderColorPropertiesEXT *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES:
             vn_encode_simple_pointer(enc, pnext);
             vn_encode_VkStructureType(enc, &pnext->sType);
@@ -9474,6 +9683,14 @@ vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(struct vn_cs_decoder *d
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
             vn_decode_VkPhysicalDeviceVulkan13Properties_self_partial_temp(dec, (VkPhysicalDeviceVulkan13Properties *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceCustomBorderColorPropertiesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDeviceCustomBorderColorPropertiesEXT_self_partial_temp(dec, (VkPhysicalDeviceCustomBorderColorPropertiesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES:
