@@ -884,6 +884,10 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    if (args->res_handle == 0)
       return -EINVAL;
 
+   /* user resource id must be unique */
+   if (virgl_resource_lookup(args->res_handle))
+      return -EINVAL;
+
    if (args->size == 0)
       return -EINVAL;
    if (has_guest_storage) {
@@ -1040,6 +1044,10 @@ virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_
 
    /* user resource id must be greater than 0 */
    if (args->res_handle == 0)
+      return -EINVAL;
+
+   /* user resource id must be unique */
+   if (virgl_resource_lookup(args->res_handle))
       return -EINVAL;
 
    switch (args->blob_mem) {
