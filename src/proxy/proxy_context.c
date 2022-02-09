@@ -23,6 +23,38 @@ struct proxy_fence {
    struct list_head head;
 };
 
+static inline void
+proxy_context_resource_add(struct proxy_context *ctx, uint32_t res_id)
+{
+   assert(!_mesa_hash_table_search(ctx->resource_table, (void *)res_id));
+   _mesa_hash_table_insert(ctx->resource_table, (void *)res_id, NULL);
+}
+
+static inline bool
+proxy_context_resource_find(struct proxy_context *ctx, uint32_t res_id)
+{
+   return _mesa_hash_table_search(ctx->resource_table, (void *)res_id);
+}
+
+static inline void
+proxy_context_resource_remove(struct proxy_context *ctx, uint32_t res_id)
+{
+   _mesa_hash_table_remove_key(ctx->resource_table, (void *)res_id);
+}
+
+static inline bool
+proxy_context_resource_table_init(struct proxy_context *ctx)
+{
+   ctx->resource_table = _mesa_hash_table_create_u32_keys(NULL);
+   return ctx->resource_table;
+}
+
+static inline void
+proxy_context_resource_table_fini(struct proxy_context *ctx)
+{
+   _mesa_hash_table_destroy(ctx->resource_table, NULL);
+}
+
 static bool
 proxy_fence_is_signaled(const struct proxy_fence *fence, uint32_t cur_seqno)
 {
@@ -465,6 +497,8 @@ proxy_context_destroy(struct virgl_context *base)
       free(fence);
    mtx_destroy(&ctx->free_fences_mutex);
 
+   proxy_context_resource_table_fini(ctx);
+
    proxy_socket_fini(&ctx->socket);
 
    free(ctx);
@@ -552,7 +586,7 @@ static bool
 proxy_context_init(struct proxy_context *ctx, uint32_t ctx_flags)
 {
    if (!proxy_context_init_shmem(ctx) || !proxy_context_init_timelines(ctx) ||
-       !proxy_context_init_fencing(ctx))
+       !proxy_context_init_fencing(ctx) || !proxy_context_resource_table_init(ctx))
       return false;
 
    const struct render_context_op_init_request req = {

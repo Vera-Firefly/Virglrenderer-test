@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util/hash_table.h"
 #include "util/list.h"
 #include "util/macros.h"
 #include "virgl_util.h"

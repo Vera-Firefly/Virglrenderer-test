@@ -30,6 +30,9 @@ struct proxy_context {
    struct proxy_client *client;
    struct proxy_socket socket;
 
+   /* this tracks resources early attached in get_blob */
+   struct hash_table *resource_table;
+
    /* this is shared with the render worker */
    struct {
       int fd;
