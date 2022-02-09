@@ -400,6 +400,8 @@ proxy_context_get_blob(struct virgl_context *base,
    blob->u.fd = reply_fd;
    blob->map_info = reply.map_info;
 
+   proxy_context_resource_add(ctx, res_id);
+
    return 0;
 }
 
@@ -419,19 +421,27 @@ static void
 proxy_context_detach_resource(struct virgl_context *base, struct virgl_resource *res)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
+   const uint32_t res_id = res->res_id;
 
    const struct render_context_op_detach_resource_request req = {
       .header.op = RENDER_CONTEXT_OP_DETACH_RESOURCE,
-      .res_id = res->res_id,
+      .res_id = res_id,
    };
    if (!proxy_socket_send_request(&ctx->socket, &req, sizeof(req)))
-      proxy_log("failed to detach res %d", res->res_id);
+      proxy_log("failed to detach res %d", res_id);
+
+   proxy_context_resource_remove(ctx, res_id);
 }
 
 static void
 proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource *res)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
+   const uint32_t res_id = res->res_id;
+
+   /* skip for exported blob resources since they are already attached */
+   if (proxy_context_resource_find(ctx, res_id))
+      return;
 
    enum virgl_resource_fd_type res_fd_type = res->fd_type;
    int res_fd = res->fd;
@@ -439,7 +449,7 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
    if (res_fd_type == VIRGL_RESOURCE_FD_INVALID) {
       res_fd_type = virgl_resource_export_fd(res, &res_fd);
       if (res_fd_type == VIRGL_RESOURCE_FD_INVALID) {
-         proxy_log("failed to export res %d", res->res_id);
+         proxy_log("failed to export res %d", res_id);
          return;
       }
 
@@ -449,15 +459,17 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
    /* the proxy ignores iovs since transfer_3d is not supported */
    const struct render_context_op_attach_resource_request req = {
       .header.op = RENDER_CONTEXT_OP_ATTACH_RESOURCE,
-      .res_id = res->res_id,
+      .res_id = res_id,
       .fd_type = res_fd_type,
       .size = virgl_resource_get_size(res),
    };
    if (!proxy_socket_send_request_with_fds(&ctx->socket, &req, sizeof(req), &res_fd, 1))
-      proxy_log("failed to attach res %d", res->res_id);
+      proxy_log("failed to attach res %d", res_id);
 
    if (res_fd >= 0 && close_res_fd)
       close(res_fd);
+
+   proxy_context_resource_add(ctx, res_id);
 }
 
 static void

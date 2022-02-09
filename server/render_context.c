@@ -139,10 +139,12 @@ render_context_export_blob(struct render_context *ctx,
    uint32_t fd_type;
    int res_fd;
    ret = virgl_renderer_resource_export_blob(res_id, &fd_type, &res_fd);
-   virgl_renderer_resource_unref(res_id);
-
-   if (ret)
+   if (ret) {
+      virgl_renderer_resource_unref(res_id);
       return false;
+   }
+
+   virgl_renderer_ctx_attach_resource(ctx->ctx_id, res_id);
 
    switch (fd_type) {
    case VIRGL_RENDERER_BLOB_FD_TYPE_DMABUF:
