@@ -14,12 +14,20 @@
 
 #include "render_virgl.h"
 
-static int
-render_context_import_blob(uint32_t res_id,
-                           enum virgl_resource_fd_type fd_type,
-                           int res_fd,
-                           uint64_t size)
+static bool
+render_context_import_blob(struct render_context *ctx,
+                           const struct render_context_op_attach_resource_request *req,
+                           int res_fd)
 {
+   const uint32_t res_id = req->res_id;
+   const enum virgl_resource_fd_type fd_type = req->fd_type;
+   const uint64_t size = req->size;
+
+   if (fd_type == VIRGL_RESOURCE_FD_INVALID || !size) {
+      render_log("failed to attach invalid resource %d", res_id);
+      return false;
+   }
+
    uint32_t import_fd_type;
    switch (fd_type) {
    case VIRGL_RESOURCE_FD_DMABUF:
@@ -43,7 +51,15 @@ render_context_import_blob(uint32_t res_id,
       .size = size,
    };
 
-   return virgl_renderer_resource_import_blob(&import_args);
+   int ret = virgl_renderer_resource_import_blob(&import_args);
+   if (ret) {
+      render_log("failed to import blob resource %d (%d)", res_id, ret);
+      return false;
+   }
+
+   virgl_renderer_ctx_attach_resource(ctx->ctx_id, res_id);
+
+   return true;
 }
 
 void
@@ -242,25 +258,13 @@ render_context_dispatch_attach_resource(struct render_context *ctx,
                                         const int *fds,
                                         int fd_count)
 {
-   const uint32_t res_id = req->attach_resource.res_id;
-   const enum virgl_resource_fd_type fd_type = req->attach_resource.fd_type;
-   const uint64_t size = req->attach_resource.size;
-
-   if (fd_type == VIRGL_RESOURCE_FD_INVALID || !size || fd_count != 1) {
-      render_log("failed to attach invalid resource %d", res_id);
+   if (fd_count != 1) {
+      render_log("failed to attach resource with fd_count %d", fd_count);
       return false;
    }
 
    /* classic 3d resource with valid size reuses the blob import path here */
-   int ret = render_context_import_blob(res_id, fd_type, fds[0], size);
-   if (ret) {
-      render_log("failed to import resource %d (%d)", res_id, ret);
-      return false;
-   }
-
-   virgl_renderer_ctx_attach_resource(ctx->ctx_id, res_id);
-
-   return true;
+   return render_context_import_blob(ctx, &req->attach_resource, fds[0]);
 }
 
 static bool
