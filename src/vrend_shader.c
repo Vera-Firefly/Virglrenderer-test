@@ -6206,7 +6206,7 @@ static void emit_ios_streamout(const struct dump_ctx *ctx,
             const struct vrend_shader_io *output = get_io_slot(&ctx->outputs[0], ctx->num_outputs,
                   ctx->so->output[i].register_index);
             if (ctx->so->output[i].need_temp || output->name == TGSI_SEMANTIC_CLIPDIST ||
-                output->glsl_predefined_no_emit) {
+                ctx->prog_type == TGSI_PROCESSOR_GEOMETRY || output->glsl_predefined_no_emit) {
 
                if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL)
                   emit_hdrf(glsl_strbufs, "out %s tfout%d[];\n", outtype, i);
