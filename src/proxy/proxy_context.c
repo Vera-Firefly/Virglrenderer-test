@@ -334,10 +334,14 @@ proxy_context_get_blob(struct virgl_context *base,
                        uint32_t blob_flags,
                        struct virgl_context_blob *blob)
 {
+   /* RENDER_CONTEXT_OP_CREATE_RESOURCE implies resource attach, thus proxy tracks
+    * resources created here to avoid double attaching the same resource when proxy is on
+    * attach_resource callback.
+    */
    struct proxy_context *ctx = (struct proxy_context *)base;
 
-   const struct render_context_op_get_blob_request req = {
-      .header.op = RENDER_CONTEXT_OP_GET_BLOB,
+   const struct render_context_op_create_resource_request req = {
+      .header.op = RENDER_CONTEXT_OP_CREATE_RESOURCE,
       .res_id = res_id,
       .blob_id = blob_id,
       .blob_size = blob_size,
@@ -348,7 +352,7 @@ proxy_context_get_blob(struct virgl_context *base,
       return -1;
    }
 
-   struct render_context_op_get_blob_reply reply;
+   struct render_context_op_create_resource_reply reply;
    int reply_fd;
    int reply_fd_count;
    if (!proxy_socket_receive_reply_with_fds(&ctx->socket, &reply, sizeof(reply),
@@ -412,8 +416,8 @@ proxy_context_detach_resource(struct virgl_context *base, struct virgl_resource 
    struct proxy_context *ctx = (struct proxy_context *)base;
    const uint32_t res_id = res->res_id;
 
-   const struct render_context_op_detach_resource_request req = {
-      .header.op = RENDER_CONTEXT_OP_DETACH_RESOURCE,
+   const struct render_context_op_destroy_resource_request req = {
+      .header.op = RENDER_CONTEXT_OP_DESTROY_RESOURCE,
       .res_id = res_id,
    };
    if (!proxy_socket_send_request(&ctx->socket, &req, sizeof(req)))
@@ -428,7 +432,7 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
    struct proxy_context *ctx = (struct proxy_context *)base;
    const uint32_t res_id = res->res_id;
 
-   /* skip for exported blob resources since they are already attached */
+   /* avoid importing resources created from RENDER_CONTEXT_OP_CREATE_RESOURCE */
    if (proxy_context_resource_find(ctx, res_id))
       return;
 
@@ -446,8 +450,8 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
    }
 
    /* the proxy ignores iovs since transfer_3d is not supported */
-   const struct render_context_op_attach_resource_request req = {
-      .header.op = RENDER_CONTEXT_OP_ATTACH_RESOURCE,
+   const struct render_context_op_import_resource_request req = {
+      .header.op = RENDER_CONTEXT_OP_IMPORT_RESOURCE,
       .res_id = res_id,
       .fd_type = res_fd_type,
       .size = virgl_resource_get_size(res),

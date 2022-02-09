@@ -15,9 +15,9 @@
 #include "render_virgl.h"
 
 static bool
-render_context_import_blob(struct render_context *ctx,
-                           const struct render_context_op_attach_resource_request *req,
-                           int res_fd)
+render_context_import_resource(struct render_context *ctx,
+                               const struct render_context_op_import_resource_request *req,
+                               int res_fd)
 {
    const uint32_t res_id = req->res_id;
    const enum virgl_resource_fd_type fd_type = req->fd_type;
@@ -108,11 +108,11 @@ render_context_init_virgl_context(struct render_context *ctx,
 }
 
 static bool
-render_context_export_blob(struct render_context *ctx,
-                           const struct render_context_op_get_blob_request *req,
-                           enum virgl_resource_fd_type *out_fd_type,
-                           uint32_t *out_map_info,
-                           int *out_res_fd)
+render_context_create_resource(struct render_context *ctx,
+                               const struct render_context_op_create_resource_request *req,
+                               enum virgl_resource_fd_type *out_fd_type,
+                               uint32_t *out_map_info,
+                               int *out_res_fd)
 {
    const uint32_t res_id = req->res_id;
    const struct virgl_renderer_resource_create_blob_args blob_args = {
@@ -144,6 +144,9 @@ render_context_export_blob(struct render_context *ctx,
       return false;
    }
 
+   /* RENDER_CONTEXT_OP_CREATE_RESOURCE implies attach and proxy will not send
+    * RENDER_CONTEXT_OP_IMPORT_RESOURCE to attach the resource again.
+    */
    virgl_renderer_ctx_attach_resource(ctx->ctx_id, res_id);
 
    switch (fd_type) {
@@ -223,17 +226,17 @@ render_context_dispatch_submit_cmd(struct render_context *ctx,
 }
 
 static bool
-render_context_dispatch_get_blob(struct render_context *ctx,
-                                 const union render_context_op_request *req,
-                                 UNUSED const int *fds,
-                                 UNUSED int fd_count)
+render_context_dispatch_create_resource(struct render_context *ctx,
+                                        const union render_context_op_request *req,
+                                        UNUSED const int *fds,
+                                        UNUSED int fd_count)
 {
-   struct render_context_op_get_blob_reply reply = {
+   struct render_context_op_create_resource_reply reply = {
       .fd_type = VIRGL_RESOURCE_FD_INVALID,
    };
    int res_fd;
-   bool ok = render_context_export_blob(ctx, &req->get_blob, &reply.fd_type,
-                                        &reply.map_info, &res_fd);
+   bool ok = render_context_create_resource(ctx, &req->create_resource, &reply.fd_type,
+                                            &reply.map_info, &res_fd);
    if (!ok)
       return render_socket_send_reply(&ctx->socket, &reply, sizeof(reply));
 
@@ -245,17 +248,17 @@ render_context_dispatch_get_blob(struct render_context *ctx,
 }
 
 static bool
-render_context_dispatch_detach_resource(UNUSED struct render_context *ctx,
-                                        const union render_context_op_request *req,
-                                        UNUSED const int *fds,
-                                        UNUSED int fd_count)
+render_context_dispatch_destroy_resource(UNUSED struct render_context *ctx,
+                                         const union render_context_op_request *req,
+                                         UNUSED const int *fds,
+                                         UNUSED int fd_count)
 {
-   virgl_renderer_resource_unref(req->detach_resource.res_id);
+   virgl_renderer_resource_unref(req->destroy_resource.res_id);
    return true;
 }
 
 static bool
-render_context_dispatch_attach_resource(struct render_context *ctx,
+render_context_dispatch_import_resource(struct render_context *ctx,
                                         const union render_context_op_request *req,
                                         const int *fds,
                                         int fd_count)
@@ -266,7 +269,7 @@ render_context_dispatch_attach_resource(struct render_context *ctx,
    }
 
    /* classic 3d resource with valid size reuses the blob import path here */
-   return render_context_import_blob(ctx, &req->attach_resource, fds[0]);
+   return render_context_import_resource(ctx, &req->import_resource, fds[0]);
 }
 
 static bool
@@ -310,9 +313,9 @@ static const struct render_context_dispatch_entry
                 .dispatch = render_context_dispatch_##name }
       RENDER_CONTEXT_DISPATCH(NOP, nop, 0),
       RENDER_CONTEXT_DISPATCH(INIT, init, 2),
-      RENDER_CONTEXT_DISPATCH(ATTACH_RESOURCE, attach_resource, 1),
-      RENDER_CONTEXT_DISPATCH(DETACH_RESOURCE, detach_resource, 0),
-      RENDER_CONTEXT_DISPATCH(GET_BLOB, get_blob, 0),
+      RENDER_CONTEXT_DISPATCH(CREATE_RESOURCE, create_resource, 0),
+      RENDER_CONTEXT_DISPATCH(IMPORT_RESOURCE, import_resource, 1),
+      RENDER_CONTEXT_DISPATCH(DESTROY_RESOURCE, destroy_resource, 0),
       RENDER_CONTEXT_DISPATCH(SUBMIT_CMD, submit_cmd, 0),
       RENDER_CONTEXT_DISPATCH(SUBMIT_FENCE, submit_fence, 0),
 #undef RENDER_CONTEXT_DISPATCH

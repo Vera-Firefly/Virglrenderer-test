@@ -36,9 +36,9 @@ enum render_client_op {
 enum render_context_op {
    RENDER_CONTEXT_OP_NOP = 0,
    RENDER_CONTEXT_OP_INIT,
-   RENDER_CONTEXT_OP_ATTACH_RESOURCE,
-   RENDER_CONTEXT_OP_DETACH_RESOURCE,
-   RENDER_CONTEXT_OP_GET_BLOB,
+   RENDER_CONTEXT_OP_CREATE_RESOURCE,
+   RENDER_CONTEXT_OP_IMPORT_RESOURCE,
+   RENDER_CONTEXT_OP_DESTROY_RESOURCE,
    RENDER_CONTEXT_OP_SUBMIT_CMD,
    RENDER_CONTEXT_OP_SUBMIT_FENCE,
 
@@ -131,32 +131,15 @@ struct render_context_op_init_request {
    /* followed by 1 shmem fd and optionally 1 eventfd */
 };
 
-/* Attach a resource to the context.
+/* Export a blob resource from the context
  *
- * This roughly corresponds to virgl_renderer_ctx_attach_resource.
+ * This roughly corresponds to:
+ * - virgl_renderer_resource_create_blob
+ * - virgl_renderer_resource_get_map_info
+ * - virgl_renderer_resource_export_blob
+ * - virgl_renderer_ctx_attach_resource
  */
-struct render_context_op_attach_resource_request {
-   struct render_context_op_header header;
-   uint32_t res_id;
-   enum virgl_resource_fd_type fd_type;
-   uint64_t size;
-   /* followed by 1 fd */
-};
-
-/* Detach a resource from the context.
- *
- * This roughly corresponds to virgl_renderer_ctx_detach_resource.
- */
-struct render_context_op_detach_resource_request {
-   struct render_context_op_header header;
-   uint32_t res_id;
-};
-
-/* Export a blob from the context.
- *
- * This roughly corresponds to virgl_renderer_resource_create_blob.
- */
-struct render_context_op_get_blob_request {
+struct render_context_op_create_resource_request {
    struct render_context_op_header header;
    uint32_t res_id;
    uint64_t blob_id;
@@ -164,10 +147,34 @@ struct render_context_op_get_blob_request {
    uint32_t blob_flags; /* VIRGL_RENDERER_BLOB_FLAG_* */
 };
 
-struct render_context_op_get_blob_reply {
+struct render_context_op_create_resource_reply {
    enum virgl_resource_fd_type fd_type;
    uint32_t map_info; /* VIRGL_RENDERER_MAP_* */
    /* followed by 1 fd if not VIRGL_RESOURCE_FD_INVALID */
+};
+
+/* Import a blob resource to the context
+ *
+ * This roughly corresponds to:
+ * - virgl_renderer_resource_import_blob
+ * - virgl_renderer_ctx_attach_resource
+ */
+struct render_context_op_import_resource_request {
+   struct render_context_op_header header;
+   uint32_t res_id;
+   enum virgl_resource_fd_type fd_type;
+   uint64_t size;
+   /* followed by 1 fd */
+};
+
+/* Free a blob resource from the context
+ *
+ * This roughly corresponds to:
+ * - virgl_renderer_resource_unref
+ */
+struct render_context_op_destroy_resource_request {
+   struct render_context_op_header header;
+   uint32_t res_id;
 };
 
 /* Submit a small command stream to the context.
@@ -209,9 +216,9 @@ union render_context_op_request {
    struct render_context_op_header header;
    struct render_context_op_nop_request nop;
    struct render_context_op_init_request init;
-   struct render_context_op_attach_resource_request attach_resource;
-   struct render_context_op_detach_resource_request detach_resource;
-   struct render_context_op_get_blob_request get_blob;
+   struct render_context_op_create_resource_request create_resource;
+   struct render_context_op_import_resource_request import_resource;
+   struct render_context_op_destroy_resource_request destroy_resource;
    struct render_context_op_submit_cmd_request submit_cmd;
    struct render_context_op_submit_fence_request submit_fence;
 };
