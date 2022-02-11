@@ -215,9 +215,9 @@ vkr_cs_decoder_lookup_object(const struct vkr_cs_decoder *dec,
    obj = likely(entry) ? entry->data : NULL;
    if (unlikely(!obj || obj->type != type)) {
       if (obj)
-         vkr_log("object " PRIu64 " has type %d, not %d", id, obj->type, type);
+         vkr_log("object %" PRIu64 " has type %d, not %d", id, obj->type, type);
       else
-         vkr_log("failed to look up object " PRIu64, id);
+         vkr_log("failed to look up object %" PRIu64, id);
       vkr_cs_decoder_set_fatal(dec);
    }
 
