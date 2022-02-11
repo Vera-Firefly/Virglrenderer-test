@@ -3575,9 +3575,9 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
    }
 
-   key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY];
-   key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL];
-   key->tes_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_EVAL];
+   key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY] || type == PIPE_SHADER_GEOMETRY;
+   key->tcs_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_CTRL] || type == PIPE_SHADER_TESS_CTRL;
+   key->tes_present = !!sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] || type == PIPE_SHADER_TESS_EVAL;
 
    if (type != PIPE_SHADER_COMPUTE)
       vrend_sync_shader_io(sub_ctx, sel, key);
