@@ -302,15 +302,9 @@ proxy_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t 
 static bool
 validate_resource_fd_shm(int fd, uint64_t expected_size)
 {
-   static const int required_seals = F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW;
    static const int blocked_seals = F_SEAL_WRITE;
 
    const int seals = fcntl(fd, F_GET_SEALS);
-   if ((seals & required_seals) != required_seals) {
-      proxy_log("failed to validate shm seals(%d): required(%d)", seals, required_seals);
-      return false;
-   }
-
    if (seals & blocked_seals) {
       proxy_log("failed to validate shm seals(%d): blocked(%d)", seals, blocked_seals);
       return false;
@@ -324,6 +318,12 @@ validate_resource_fd_shm(int fd, uint64_t expected_size)
    }
 
    return true;
+}
+
+static inline int
+add_required_seals_to_fd(int fd)
+{
+   return fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
 }
 
 static int
@@ -378,7 +378,8 @@ proxy_context_get_blob(struct virgl_context *base,
       break;
    case VIRGL_RESOURCE_FD_SHM:
       /* validate the seals and size here */
-      reply_fd_valid = validate_resource_fd_shm(reply_fd, blob_size);
+      reply_fd_valid = !add_required_seals_to_fd(reply_fd) &&
+                       validate_resource_fd_shm(reply_fd, blob_size);
       break;
    default:
       break;
@@ -581,7 +582,7 @@ alloc_memfd(const char *name, size_t size, void **out_ptr)
    if (fd < 0)
       return -1;
 
-   int ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
+   int ret = add_required_seals_to_fd(fd);
    if (ret)
       goto fail;
 

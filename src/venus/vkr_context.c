@@ -5,7 +5,6 @@
 
 #include "vkr_context.h"
 
-#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -288,12 +287,6 @@ vkr_context_get_blob_locked(struct virgl_context *base,
       fd = os_create_anonymous_file(blob_size, "vkr-shmem");
       if (fd < 0)
          return -ENOMEM;
-
-      int ret = fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL | F_SEAL_SHRINK | F_SEAL_GROW);
-      if (ret) {
-         close(fd);
-         return -ENOMEM;
-      }
 
       blob->type = VIRGL_RESOURCE_FD_SHM;
       blob->u.fd = fd;
