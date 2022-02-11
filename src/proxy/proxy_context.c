@@ -26,20 +26,20 @@ struct proxy_fence {
 static inline void
 proxy_context_resource_add(struct proxy_context *ctx, uint32_t res_id)
 {
-   assert(!_mesa_hash_table_search(ctx->resource_table, (void *)res_id));
-   _mesa_hash_table_insert(ctx->resource_table, (void *)res_id, NULL);
+   assert(!_mesa_hash_table_search(ctx->resource_table, (void *)(uintptr_t)res_id));
+   _mesa_hash_table_insert(ctx->resource_table, (void *)(uintptr_t)res_id, NULL);
 }
 
 static inline bool
 proxy_context_resource_find(struct proxy_context *ctx, uint32_t res_id)
 {
-   return _mesa_hash_table_search(ctx->resource_table, (void *)res_id);
+   return _mesa_hash_table_search(ctx->resource_table, (void *)(uintptr_t)res_id);
 }
 
 static inline void
 proxy_context_resource_remove(struct proxy_context *ctx, uint32_t res_id)
 {
-   _mesa_hash_table_remove_key(ctx->resource_table, (void *)res_id);
+   _mesa_hash_table_remove_key(ctx->resource_table, (void *)(uintptr_t)res_id);
 }
 
 static inline bool
