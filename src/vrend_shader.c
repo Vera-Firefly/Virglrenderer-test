@@ -6837,6 +6837,8 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
       }
    }
 
+   emit_ios_indirect_generics_output(ctx, glsl_strbufs, "");
+
    emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags,
                             force_color_two_side, num_interps, can_emit_generic_geom);
 
@@ -6951,6 +6953,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
              get_spacing_string(ctx->tes_spacing),
              ctx->tes_vertex_order ? "cw" : "ccw",
              ctx->tes_point_mode ? ", point_mode" : "");
+
+   emit_ios_indirect_generics_output(ctx, glsl_strbufs, "");
 
    emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags,
                             force_color_two_side, num_interps, can_emit_generic_default);
