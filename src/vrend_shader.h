@@ -171,6 +171,7 @@ struct vrend_shader_key {
       struct {
          uint32_t attrib_signed_int_bitmask;
          uint32_t attrib_unsigned_int_bitmask;
+         uint32_t attrib_zyxw_bitmask;
          uint32_t fog_fixup_mask;
       } vs;
 

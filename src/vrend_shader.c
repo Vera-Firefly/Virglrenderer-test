@@ -4096,12 +4096,28 @@ static void get_tesslevel_as_source(struct vrend_strbuf *src_buf, const char *pr
               name, reg->SwizzleW);
 }
 
+static void get_source_swizzle(const struct tgsi_full_src_register *src, char swizzle[8])
+{
+   if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
+       src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
+       src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
+       src->Register.SwizzleW != TGSI_SWIZZLE_W) {
+      *swizzle++ = '.';
+      *swizzle++ = get_swiz_char(src->Register.SwizzleX);
+      *swizzle++ = get_swiz_char(src->Register.SwizzleY);
+      *swizzle++ = get_swiz_char(src->Register.SwizzleZ);
+      *swizzle++ = get_swiz_char(src->Register.SwizzleW);
+   }
+
+   *swizzle++ = 0;
+}
+
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static bool
 get_source_info(struct dump_ctx *ctx,
                 const struct tgsi_full_instruction *inst,
                 struct source_info *sinfo,
-                struct vrend_strbuf srcs[4], char src_swizzle0[10])
+                struct vrend_strbuf srcs[4], char src_swizzle0[16])
 {
    bool stprefix = false;
 
@@ -4136,7 +4152,7 @@ get_source_info(struct dump_ctx *ctx,
    for (uint32_t i = 0; i < inst->Instruction.NumSrcRegs; i++) {
       const struct tgsi_full_src_register *src = &inst->Src[i];
       struct vrend_strbuf *src_buf = &srcs[i];
-      char swizzle[8] = "";
+      char swizzle[16] = "";
       int usage_mask = 0;
       char *swizzle_writer = swizzle;
       char prefix[6] = "";
@@ -4178,23 +4194,24 @@ get_source_info(struct dump_ctx *ctx,
       usage_mask |= 1 << src->Register.SwizzleZ;
       usage_mask |= 1 << src->Register.SwizzleW;
 
-      if (src->Register.SwizzleX != TGSI_SWIZZLE_X ||
-          src->Register.SwizzleY != TGSI_SWIZZLE_Y ||
-          src->Register.SwizzleZ != TGSI_SWIZZLE_Z ||
-          src->Register.SwizzleW != TGSI_SWIZZLE_W) {
-         swizzle_writer[swz_idx++] = '.';
-         swizzle_writer[swz_idx++] = get_swiz_char(src->Register.SwizzleX);
-         swizzle_writer[swz_idx++] = get_swiz_char(src->Register.SwizzleY);
-         swizzle_writer[swz_idx++] = get_swiz_char(src->Register.SwizzleZ);
-         swizzle_writer[swz_idx++] = get_swiz_char(src->Register.SwizzleW);
-      }
-      swizzle_writer[swz_idx] = 0;
+      get_source_swizzle(src, swizzle_writer + swz_idx);
 
       if (src->Register.File == TGSI_FILE_INPUT) {
          for (uint32_t j = 0; j < ctx->num_inputs; j++)
             if (ctx->inputs[j].first <= src->Register.Index &&
                 ctx->inputs[j].last >= src->Register.Index &&
                 (ctx->inputs[j].usage_mask & usage_mask)) {
+               if (ctx->prog_type == TGSI_PROCESSOR_VERTEX) {
+                  if (ctx->key->vs.attrib_zyxw_bitmask & (1 << ctx->inputs[j].first)) {
+                     swizzle_writer[swz_idx++] = '.';
+                     swizzle_writer[swz_idx++] = 'z';
+                     swizzle_writer[swz_idx++] = 'y';
+                     swizzle_writer[swz_idx++] = 'x';
+                     swizzle_writer[swz_idx++] = 'w';
+                  }
+                  get_source_swizzle(src, swizzle_writer + swz_idx);
+               }
+
                if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
                    ctx->key->color_two_side && ctx->inputs[j].name == TGSI_SEMANTIC_COLOR)
                   strbuf_fmt(src_buf, "%s(%s%s%d%s%s)", get_string(stypeprefix), prefix, "realcolor", ctx->inputs[j].sid, arrayname, swizzle);
@@ -5054,7 +5071,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
    char fp64_dsts[3][255];
    uint instno = ctx->instno++;
    char writemask[6] = "";
-   char src_swizzle0[10];
+   char src_swizzle0[16];
 
    sinfo.svec4 = VEC4;
 

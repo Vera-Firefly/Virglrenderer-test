@@ -553,6 +553,7 @@ struct vrend_vertex_element_array {
    GLuint id;
    uint32_t signed_int_bitmask;
    uint32_t unsigned_int_bitmask;
+   uint32_t zyxw_bitmask;
    struct vrend_sub_context *owning_sub;
 };
 
@@ -2912,12 +2913,13 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
       v->elements[i].type = type;
       if (desc->channel[0].normalized)
          v->elements[i].norm = GL_TRUE;
-      if (desc->nr_channels == 4 && desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z)
-         v->elements[i].nr_chan = GL_BGRA;
-      else if (elements[i].src_format == PIPE_FORMAT_R11G11B10_FLOAT)
+      if (elements[i].src_format == PIPE_FORMAT_R11G11B10_FLOAT)
          v->elements[i].nr_chan = 3;
       else
          v->elements[i].nr_chan = desc->nr_channels;
+
+      if (desc->nr_channels == 4 && desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z)
+         v->zyxw_bitmask |= 1 << i;
    }
 
    if (has_feature(feat_gles31_vertex_attrib_binding)) {
@@ -2925,15 +2927,16 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
       glBindVertexArray(v->id);
       for (i = 0; i < num_elements; i++) {
          struct vrend_vertex_element *ve = &v->elements[i];
+         GLint size = !vrend_state.use_gles && (v->zyxw_bitmask & (1 << i)) ? GL_BGRA : ve->nr_chan;
 
          if (util_format_is_pure_integer(ve->base.src_format)) {
             UPDATE_INT_SIGN_MASK(ve->base.src_format, i,
                                  v->signed_int_bitmask,
                                  v->unsigned_int_bitmask);
-            glVertexAttribIFormat(i, ve->nr_chan, ve->type, ve->base.src_offset);
+            glVertexAttribIFormat(i, size, ve->type, ve->base.src_offset);
          }
          else
-            glVertexAttribFormat(i, ve->nr_chan, ve->type, ve->norm, ve->base.src_offset);
+            glVertexAttribFormat(i, size, ve->type, ve->norm, ve->base.src_offset);
          glVertexAttribBinding(i, ve->base.vertex_buffer_index);
          glVertexBindingDivisor(i, ve->base.instance_divisor);
          glEnableVertexAttribArray(i);
@@ -3573,6 +3576,10 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       key->color_two_side = sub_ctx->rs_state.light_twoside;
 
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
+   }
+
+   if (vrend_state.use_gles && sub_ctx->ve && type == PIPE_SHADER_VERTEX) {
+      key->vs.attrib_zyxw_bitmask = sub_ctx->ve->zyxw_bitmask;
    }
 
    key->gs_present = !!sub_ctx->shaders[PIPE_SHADER_GEOMETRY] || type == PIPE_SHADER_GEOMETRY;
@@ -4280,18 +4287,19 @@ static void vrend_draw_bind_vertex_legacy(struct vrend_context *ctx,
             glVertexAttrib3fv(loc, data);
             break;
          case 4:
-         default:
             glVertexAttrib4fv(loc, data);
             break;
          }
          glUnmapBuffer(GL_ARRAY_BUFFER);
          disable_bitmask |= (1 << loc);
       } else {
+         GLint size = !vrend_state.use_gles && (va->zyxw_bitmask & (1 << i)) ? GL_BGRA : ve->nr_chan;
+
          enable_bitmask |= (1 << loc);
          if (util_format_is_pure_integer(ve->base.src_format)) {
-            glVertexAttribIPointer(loc, ve->nr_chan, ve->type, vbo->base.stride, (void *)(unsigned long)(ve->base.src_offset + vbo->base.buffer_offset));
+            glVertexAttribIPointer(loc, size, ve->type, vbo->base.stride, (void *)(unsigned long)(ve->base.src_offset + vbo->base.buffer_offset));
          } else {
-            glVertexAttribPointer(loc, ve->nr_chan, ve->type, ve->norm, vbo->base.stride, (void *)(unsigned long)(ve->base.src_offset + vbo->base.buffer_offset));
+            glVertexAttribPointer(loc, size, ve->type, ve->norm, vbo->base.stride, (void *)(unsigned long)(ve->base.src_offset + vbo->base.buffer_offset));
          }
          glVertexAttribDivisorARB(loc, ve->base.instance_divisor);
       }
