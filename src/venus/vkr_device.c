@@ -319,6 +319,20 @@ vkr_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *dispatch,
    vkr_cs_decoder_set_fatal(&ctx->decoder);
 }
 
+static void
+vkr_dispatch_vkGetCalibratedTimestampsEXT(
+   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_command_vkGetCalibratedTimestampsEXT *args)
+{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
+   vn_replace_vkGetCalibratedTimestampsEXT_args_handle(args);
+   args->ret = vk->GetCalibratedTimestampsEXT(args->device, args->timestampCount,
+                                              args->pTimestampInfos, args->pTimestamps,
+                                              args->pMaxDeviation);
+}
+
 void
 vkr_context_init_device_dispatch(struct vkr_context *ctx)
 {
@@ -330,4 +344,6 @@ vkr_context_init_device_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkGetDeviceGroupPeerMemoryFeatures =
       vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures;
    dispatch->dispatch_vkDeviceWaitIdle = vkr_dispatch_vkDeviceWaitIdle;
+   dispatch->dispatch_vkGetCalibratedTimestampsEXT =
+      vkr_dispatch_vkGetCalibratedTimestampsEXT;
 }

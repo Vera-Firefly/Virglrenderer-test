@@ -94,6 +94,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .KHR_external_fence_fd = false,
    .KHR_external_memory_fd = true,
    /* EXT extensions */
+   .EXT_calibrated_timestamps = true,
    .EXT_conservative_rasterization = true,
    .EXT_custom_border_color = true,
    .EXT_depth_clip_enable = true,
