@@ -159,7 +159,7 @@ make check venus:
   variables:
     GALLIUM_DRIVER: virgl
     CROSVM_GALLIUM_DRIVER: llvmpipe
-    GALLIVM_PERF: nopt
+    GALLIVM_PERF: "nopt,no_quad_lod"
 
 .deqp-host:
   extends:
@@ -179,16 +179,19 @@ make check venus:
   extends:
     - .gl-virt-test
   variables:
-    TEST_SCRIPT: "install/deqp-runner.sh"
+    # There will be FDO_CI_CONCURRENT Crosvm processes, so each should use a single thread
+    LP_NUM_THREADS: 1
   parallel: 3
 
 .piglit-virt:
   extends:
-    - .deqp-virt
+    - .gl-virt-test
   variables:
     <<: *piglit-host-variables
-    TEST_SCRIPT: "install/piglit/piglit-runner.sh"
-  parallel: 2
+    # Use all threads for rendering and only run one job at a time
+    LP_NUM_THREADS: ${FDO_CI_CONCURRENT}
+    FORCE_FDO_CI_CONCURRENT: 1
+  parallel: 4
 
 # Host runners (virpipe/vtest)
 

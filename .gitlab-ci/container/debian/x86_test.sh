@@ -57,13 +57,15 @@ if [ "${GALLIUM_DRIVER}" = "virgl" ]; then
     mkdir ${CI_PROJECT_DIR}/install
     mount --bind install ${CI_PROJECT_DIR}/install
 
+    export LD_LIBRARY_PATH="${CI_PROJECT_DIR}/install/lib"
     set +e
 
-    # Use all threads for rendering and only run one job at a time
-    LP_NUM_THREADS=${FDO_CI_CONCURRENT} \
-    FDO_CI_CONCURRENT=1 \
-    LD_LIBRARY_PATH=${CI_PROJECT_DIR}/install/lib \
-        install/crosvm-runner.sh "${TEST_SCRIPT}"
+    if [ -z "${DEQP_SUITE}" ]; then
+        FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-FDO_CI_CONCURRENT} \
+            install/crosvm-runner.sh install/piglit/piglit-runner.sh
+    else
+        install/deqp-runner.sh
+    fi
 
     RET=$?
 
