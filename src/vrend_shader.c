@@ -1003,7 +1003,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
    int i;
    int color_offset = 0;
-   const char *name_prefix = "";
+   const char *name_prefix;
    bool add_two_side = false;
    unsigned mask_temp;
 
@@ -1053,6 +1053,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
 
       if (ctx->inputs[i].first != ctx->inputs[i].last)
          ctx->glsl_ver_required = require_glsl_ver(ctx, 150);
+
+      name_prefix = get_stage_input_name_prefix(ctx, iter->processor.Processor);
 
       switch (ctx->inputs[i].name) {
       case TGSI_SEMANTIC_COLOR:
@@ -1105,11 +1107,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
                }
                name_prefix = "ex";
             }
-         } else {
-            name_prefix = get_stage_input_name_prefix(ctx, iter->processor.Processor);
          }
          break;
-         /* fallthrough */
       case TGSI_SEMANTIC_PRIMID:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
             name_prefix = "gl_PrimitiveIDIn";
@@ -1117,16 +1116,14 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_no_index = true;
             ctx->inputs[i].override_no_wm = true;
             ctx->shader_req_bits |= SHADER_REQ_INTS;
-            break;
          } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             name_prefix = "gl_PrimitiveID";
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
             ctx->glsl_ver_required = require_glsl_ver(ctx, 150);
             ctx->shader_req_bits |= SHADER_REQ_GEOMETRY_SHADER;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_VIEWPORT_INDEX:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             ctx->inputs[i].glsl_predefined_no_emit = true;
@@ -1139,9 +1136,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
                ctx->shader_req_bits |= SHADER_REQ_LAYER;
             if (ctx->cfg->use_gles)
                ctx->shader_req_bits |= SHADER_REQ_VIEWPORT_IDX;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_LAYER:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             name_prefix = "gl_Layer";
@@ -1151,9 +1147,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].type = VEC_INT;
             ctx->inputs[i].override_no_wm = true;
             ctx->shader_req_bits |= SHADER_REQ_LAYER;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PSIZE:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
              iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL ||
@@ -1165,9 +1160,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_gl_block = true;
             ctx->shader_req_bits |= SHADER_REQ_PSIZE;
             ctx->has_pointsize_input = true;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_CLIPDIST:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
              iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL ||
@@ -1180,7 +1174,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->shader_req_bits |= SHADER_REQ_CLIP_DISTANCE;
             if (ctx->inputs[i].last != ctx->inputs[i].first)
                ctx->guest_sent_io_arrays = true;
-            break;
          } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             name_prefix = "gl_ClipDistance";
             ctx->inputs[i].glsl_predefined_no_emit = true;
@@ -1189,9 +1182,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->shader_req_bits |= SHADER_REQ_CLIP_DISTANCE;
             if (ctx->inputs[i].last != ctx->inputs[i].first)
                ctx->guest_sent_io_arrays = true;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_POSITION:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
              iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL ||
@@ -1200,7 +1192,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
             ctx->inputs[i].glsl_gl_block = true;
-            break;
          } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             if (ctx->cfg->use_gles && ctx->fs_pixel_center) {
                name_prefix = "(gl_FragCoord - vec4(0.5, 0.5, 0.0, 0.0))";
@@ -1208,9 +1199,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
                name_prefix = "gl_FragCoord";
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_FACE:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             if (ctx->front_face_emitted) {
@@ -1221,9 +1211,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
             ctx->front_face_emitted = true;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             if (ctx->cfg->use_gles)
@@ -1235,9 +1224,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].num_components = 4;
             ctx->inputs[i].swizzle_offset = 0;
             ctx->inputs[i].usage_mask = 0xf;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
       case TGSI_SEMANTIC_TEXCOORD:
@@ -1267,10 +1255,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
                ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
             }
          }
-
-         /* fallthrough */
-      default:
-         name_prefix = get_stage_input_name_prefix(ctx, iter->processor.Processor);
          break;
       }
 
@@ -1336,6 +1320,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->outputs[i].override_no_wm = ctx->outputs[i].num_components == 1;
       ctx->outputs[i].is_int = false;
       ctx->outputs[i].fbfetch_used = false;
+
+      name_prefix = get_stage_output_name_prefix(iter->processor.Processor);
 
       switch (ctx->outputs[i].name) {
       case TGSI_SEMANTIC_POSITION:
@@ -1425,7 +1411,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          ctx->outputs[i].override_no_wm = false;
          break;
-         /* fallthrough */
       case TGSI_SEMANTIC_BCOLOR:
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
             if (ctx->glsl_ver_required < 140) {
@@ -1434,14 +1419,12 @@ iter_declaration(struct tgsi_iterate_context *iter,
                   name_prefix = "gl_BackColor";
                else if (ctx->outputs[i].sid == 1)
                   name_prefix = "gl_BackSecondaryColor";
-               break;
             } else {
                ctx->outputs[i].override_no_wm = false;
                ctx->color_out_mask |= (1 << decl->Semantic.Index) << 2;
             }
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PSIZE:
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX ||
              iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
@@ -1455,9 +1438,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->has_pointsize_output = true;
             if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL)
                ctx->outputs[i].glsl_gl_block = true;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_LAYER:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
@@ -1465,9 +1447,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->outputs[i].override_no_wm = true;
             ctx->outputs[i].is_int = true;
             name_prefix = "gl_Layer";
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PRIMID:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
@@ -1475,9 +1456,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->outputs[i].override_no_wm = true;
             ctx->outputs[i].is_int = true;
             name_prefix = "gl_PrimitiveID";
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_VIEWPORT_INDEX:
          if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
@@ -1487,27 +1467,24 @@ iter_declaration(struct tgsi_iterate_context *iter,
             name_prefix = "gl_ViewportIndex";
             if (ctx->glsl_ver_required >= 140 || ctx->cfg->use_gles)
                ctx->shader_req_bits |= SHADER_REQ_VIEWPORT_IDX;
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_TESSOUTER:
          if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
             ctx->outputs[i].glsl_no_index = true;
             ctx->outputs[i].override_no_wm = true;
             name_prefix = "gl_TessLevelOuter";
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_TESSINNER:
          if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
             ctx->outputs[i].glsl_no_index = true;
             ctx->outputs[i].override_no_wm = true;
             name_prefix = "gl_TessLevelInner";
-            break;
          }
-         /* fallthrough */
+         break;
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
       case TGSI_SEMANTIC_TEXCOORD:
@@ -1528,9 +1505,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
                ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
             }
          }
-         /* fallthrough */
-      default:
-         name_prefix = get_stage_output_name_prefix(iter->processor.Processor);
          break;
       }
 

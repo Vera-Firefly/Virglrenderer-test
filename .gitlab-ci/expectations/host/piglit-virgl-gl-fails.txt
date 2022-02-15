@@ -723,10 +723,6 @@ spec@!opengl 1.5@depth-tex-compare,Fail
 spec@!opengl 1.5@draw-elements-user,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
-spec@!opengl 2.0@vertex-program-two-side back front2 back2,Fail
-spec@!opengl 2.0@vertex-program-two-side back front2 back2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side back front2,Fail
-spec@!opengl 2.0@vertex-program-two-side back front2@gs-out and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back2@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled back back2,Fail
@@ -753,18 +749,6 @@ spec@!opengl 2.0@vertex-program-two-side enabled front front2 back2,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front front2 back2@vs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side enabled front front2@vs- gs and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side front2 back2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front back2,Fail
-spec@!opengl 2.0@vertex-program-two-side front back2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front back back2,Fail
-spec@!opengl 2.0@vertex-program-two-side front back back2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front back,Fail
-spec@!opengl 2.0@vertex-program-two-side front back front2 back2,Fail
-spec@!opengl 2.0@vertex-program-two-side front back front2 back2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front back front2,Fail
-spec@!opengl 2.0@vertex-program-two-side front back front2@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front back@gs-out and fs,Fail
-spec@!opengl 2.0@vertex-program-two-side front front2 back2,Fail
-spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs,Fail
 spec@!opengl 3.2@gl-3.2-adj-prims cull-back pv-first,Fail
 spec@!opengl 3.2@gl-3.2-adj-prims cull-front pv-first,Fail
 spec@!opengl 3.2@gl-3.2-adj-prims line cull-back pv-first,Fail
