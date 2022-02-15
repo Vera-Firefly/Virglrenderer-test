@@ -9,7 +9,7 @@ variables:
   # If multiple pipeline runs are available, please choose the one having
   # at least the 'debian-testing' job in 'Build-x86_64' stage completed.
   #
-  MESA_PIPELINE_ID: 487328
+  MESA_PIPELINE_ID: 502781
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
   # Per-pipeline artifact storage on MinIO
@@ -28,7 +28,7 @@ include:
       - '/templates/fedora.yml'
   - project: 'mesa/mesa'
     # IMPORTANT: Use a recent Mesa Git revision
-    ref: 51f6288a2d2fa78e723b99a90133f5ebd782bc4a
+    ref: fa4390f7bf6c2bff7ee6799b67accdf2e2db475c
     file:
       - '/.gitlab-ci/image-tags.yml'
 
