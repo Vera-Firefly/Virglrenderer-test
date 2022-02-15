@@ -266,6 +266,8 @@ struct dump_ctx {
    int fs_depth_layout;
    uint32_t fs_blend_equation_advanced;
 
+   bool separable_program;
+
    int gs_in_prim, gs_out_prim, gs_max_out_verts;
    int gs_num_invocations;
 
@@ -1963,6 +1965,9 @@ iter_property(struct tgsi_iterate_context *iter,
          ctx->glsl_ver_required = require_glsl_ver(ctx, 150);
          ctx->shader_req_bits |= SHADER_REQ_BLEND_EQUATION_ADVANCED;
       }
+      break;
+   case TGSI_PROPERTY_SEPARABLE_PROGRAM:
+      ctx->separable_program = prop->u[0].Data;
       break;
    default:
       vrend_printf("unhandled property: %x\n", prop->Property.PropertyName);
@@ -7341,6 +7346,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->tes_prim = ctx->tes_prim_mode;
    sinfo->tes_point_mode = ctx->tes_point_mode;
    sinfo->fs_blend_equation_advanced = ctx->fs_blend_equation_advanced;
+   sinfo->separable_program = ctx->separable_program;
 
    if (sinfo->so_names || ctx->so_names) {
       if (sinfo->so_names) {

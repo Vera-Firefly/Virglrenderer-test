@@ -135,6 +135,7 @@ struct vrend_shader_info {
    uint8_t ubo_indirect : 1;
    uint8_t tes_point_mode : 1;
    uint8_t gles_use_tex_query_level : 1;
+   uint8_t separable_program : 1;
 };
 
 struct vrend_variable_shader_info {
