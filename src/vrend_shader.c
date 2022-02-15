@@ -1240,6 +1240,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          /* fallthrough */
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
+      case TGSI_SEMANTIC_TEXCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             if (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid)) {
                if (ctx->cfg->use_gles)
@@ -1254,7 +1255,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
                break;
             }
          }
-
+         /* fallthrough */
+      case TGSI_SEMANTIC_TESSCOORD:
          if (ctx->inputs[i].first != ctx->inputs[i].last ||
              ctx->inputs[i].array_id > 0) {
             ctx->guest_sent_io_arrays = true;
@@ -1287,6 +1289,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_g%dA%d", name_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_p%dA%d", name_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
+         else if (ctx->inputs[i].name == TGSI_SEMANTIC_TEXCOORD)
+            snprintf(ctx->inputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->inputs[i].sid);
          else
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_%d", name_prefix, ctx->inputs[i].first);
       }
@@ -1504,6 +1508,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
          /* fallthrough */
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
+      case TGSI_SEMANTIC_TEXCOORD:
+      case TGSI_SEMANTIC_TESSCOORD:
+
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX)
             if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
                color_offset = -1;
@@ -1542,6 +1549,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%dA%d", name_prefix, ctx->outputs[i].sid, ctx->outputs[i].array_id);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%dA%d", name_prefix, ctx->outputs[i].sid, ctx->outputs[i].array_id);
+         else if (ctx->outputs[i].name == TGSI_SEMANTIC_TEXCOORD)
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->outputs[i].sid);
          else
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_%d", name_prefix, ctx->outputs[i].first + color_offset);
 
@@ -1940,7 +1949,9 @@ get_blockvarname(char outvar[64], const char *stage_prefix, const struct vrend_s
 
 static void get_so_name(const struct dump_ctx *ctx, bool from_block, const struct vrend_shader_io *output, int index, char out_var[255], char *wm)
 {
-   if (output->first == output->last || output->name != TGSI_SEMANTIC_GENERIC)
+   if (output->first == output->last ||
+       (output->name != TGSI_SEMANTIC_GENERIC &&
+        output->name != TGSI_SEMANTIC_TEXCOORD))
       snprintf(out_var, 255, "%s%s", output->glsl_name, wm);
    else {
       if ((output->name == TGSI_SEMANTIC_GENERIC) && prefer_generic_io_block(ctx, io_out)) {
@@ -3855,6 +3866,9 @@ get_destination_info(struct dump_ctx *ctx,
                      struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : &ctx->outputs[j];
                      get_destination_info_generic(ctx, dst_reg, io, writemask, dsts[i]);
                      dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
+                  } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TEXCOORD) {
+                     get_destination_info_generic(ctx, dst_reg, &ctx->outputs[j], writemask, dsts[i]);
+                     dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
                   } else if (ctx->outputs[j].name == TGSI_SEMANTIC_PATCH) {
                      struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
                      char reswizzled[6] = "";
@@ -4180,7 +4194,8 @@ get_source_info(struct dump_ctx *ctx,
             if (ctx->inputs[j].first <= src->Register.Index &&
                 ctx->inputs[j].last >= src->Register.Index &&
                 (ctx->inputs[j].usage_mask & usage_mask)) {
-               if (ctx->key->color_two_side && ctx->inputs[j].name == TGSI_SEMANTIC_COLOR)
+               if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
+                   ctx->key->color_two_side && ctx->inputs[j].name == TGSI_SEMANTIC_COLOR)
                   strbuf_fmt(src_buf, "%s(%s%s%d%s%s)", get_string(stypeprefix), prefix, "realcolor", ctx->inputs[j].sid, arrayname, swizzle);
                else if (ctx->inputs[j].glsl_gl_block) {
                   /* GS input clipdist requires a conversion */
@@ -4220,6 +4235,8 @@ get_source_info(struct dump_ctx *ctx,
                   } else if (ctx->inputs[j].name == TGSI_SEMANTIC_GENERIC) {
                      struct vrend_shader_io *io = ctx->generic_ios.input_range.used ? &ctx->generic_ios.input_range.io : &ctx->inputs[j];
                      get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+                  } else if (ctx->inputs[j].name == TGSI_SEMANTIC_TEXCOORD) {
+                     get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, &ctx->inputs[j], arrayname, swizzle, src_buf);
                   } else if (ctx->inputs[j].name == TGSI_SEMANTIC_PATCH) {
                      struct vrend_shader_io *io = ctx->patch_ios.input_range.used ? &ctx->patch_ios.input_range.io : &ctx->inputs[j];
                      get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
@@ -7580,6 +7597,7 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
 
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
+      case TGSI_SEMANTIC_TESSCOORD:
          if (ctx->inputs[i].first != ctx->inputs[i].last ||
              ctx->inputs[i].array_id > 0) {
             ctx->guest_sent_io_arrays = true;
