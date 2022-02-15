@@ -6632,7 +6632,8 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
       }
 
       if (ctx->cfg->use_gles && !ctx->winsys_adjust_y_emitted &&
-          (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid))) {
+          (ctx->inputs[i].name == TGSI_SEMANTIC_PCOORD ||
+          (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid)))){
          *winsys_adjust_y_emitted = true;
          emit_hdr(glsl_strbufs, "uniform float winsys_adjust_y;\n");
       }
