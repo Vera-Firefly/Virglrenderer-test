@@ -404,7 +404,11 @@ static inline void clear_feature(enum features_id feature_id)
 struct vrend_linked_shader_program {
    struct list_head head;
    struct list_head sl[PIPE_SHADER_TYPES];
-   GLuint id;
+   bool is_pipeline;
+   union {
+       GLuint program;
+       GLuint pipeline;
+   } id;
 
    bool dual_src_linked;
    struct vrend_shader *ss[PIPE_SHADER_TYPES];
@@ -421,9 +425,9 @@ struct vrend_linked_shader_program {
    GLuint *attrib_locs;
    uint32_t shadow_samp_mask[PIPE_SHADER_TYPES];
 
-   GLuint virgl_block_id;
-   GLuint virgl_block_bind;
-   GLuint ubo_sysval_buffer_id;
+   GLuint separate_virgl_block_id[PIPE_SHADER_TYPES];
+   GLint virgl_block_bind;
+   GLint ubo_sysval_buffer_id;
 
    GLint fs_stipple_loc;
 
@@ -447,8 +451,10 @@ struct vrend_shader {
 
    struct vrend_strarray glsl_strings;
    GLuint id;
+   GLuint program_id; /* only used for separable shaders */
    uint32_t uid;
    bool is_compiled;
+   bool is_linked; /* only used for separable shaders */
    struct vrend_shader_key key;
    struct list_head programs;
 };
@@ -1007,6 +1013,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS]   = "IOV data size exceeds resource capacity",
    [VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND]= "Dual source blend not supported",
    [VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION]  = "Unsupported host function called",
+   [VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE] = "Illegal shader program pipeline",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -1196,6 +1203,8 @@ static void vrend_shader_destroy(struct vrend_shader *shader)
       vrend_destroy_program(ent);
    }
 
+   if (shader->sel->sinfo.separable_program)
+       glDeleteProgram(shader->program_id);
    glDeleteShader(shader->id);
    strarray_free(&shader->glsl_strings, true);
    free(shader);
@@ -1257,6 +1266,13 @@ static bool vrend_compile_shader(struct vrend_sub_context *sub_ctx,
       vrend_shader_dump(shader);
       return false;
    }
+
+   if (shader->sel->sinfo.separable_program) {
+       shader->program_id = glCreateProgram();
+       glProgramParameteri(shader->program_id, GL_PROGRAM_SEPARABLE, GL_TRUE);
+       glAttachShader(shader->program_id, shader->id);
+   }
+
    shader->is_compiled = true;
    return true;
 }
@@ -1303,9 +1319,20 @@ static bool vrend_is_timer_query(GLenum gltype)
       gltype == GL_TIME_ELAPSED;
 }
 
-static void vrend_use_program(GLuint program_id)
+static void vrend_use_program(struct vrend_linked_shader_program *program)
 {
-   glUseProgram(program_id);
+   GLuint id = !program ? 0 :
+                          program->is_pipeline ? program->id.pipeline :
+                                                 program->id.program;
+
+   if (program && program->is_pipeline) {
+       glUseProgram(0);
+       glBindProgramPipeline(id);
+   } else {
+       if (has_feature(feat_separate_shader_objects))
+           glBindProgramPipeline(0);
+       glUseProgram(id);
+   }
 }
 
 static void vrend_init_pstipple_texture(struct vrend_context *ctx)
@@ -1466,6 +1493,26 @@ static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
          free(varyings[i]);
 }
 
+static inline int
+vrend_get_uniform_location(struct vrend_linked_shader_program *sprog,
+                           char *name, int shader_type)
+{
+    assert(!sprog->is_pipeline || sprog->ss[shader_type]->sel->sinfo.separable_program);
+
+    GLint id = sprog->is_pipeline ?
+                  sprog->ss[shader_type]->program_id :
+                  sprog->id.program;
+
+    return glGetUniformLocation(id, name);
+}
+
+static inline void
+vrend_set_active_pipeline_stage(struct vrend_linked_shader_program *sprog, int shader_type)
+{
+    if (sprog->is_pipeline && sprog->ss[shader_type])
+        glActiveShaderProgram(sprog->id.pipeline, sprog->ss[shader_type]->program_id);
+}
+
 static int bind_sampler_locs(struct vrend_linked_shader_program *sprog,
                              enum pipe_shader_type shader_type, int next_sampler_id)
 {
@@ -1492,13 +1539,17 @@ static int bind_sampler_locs(struct vrend_linked_shader_program *sprog,
          } else
             snprintf(name, 32, "%ssamp%d", prefix, i);
 
-         glUniform1i(glGetUniformLocation(sprog->id, name), next_sampler_id++);
+         vrend_set_active_pipeline_stage(sprog, shader_type);
+         glUniform1i(vrend_get_uniform_location(sprog, name, shader_type),
+                     next_sampler_id++);
 
          if (sinfo->shadow_samp_mask & (1 << i)) {
             snprintf(name, 32, "%sshadmask%d", prefix, i);
-            sprog->shadow_samp_mask_locs[shader_type][sampler_index] = glGetUniformLocation(sprog->id, name);
+            sprog->shadow_samp_mask_locs[shader_type][sampler_index] =
+               vrend_get_uniform_location(sprog, name, shader_type);
             snprintf(name, 32, "%sshadadd%d", prefix, i);
-            sprog->shadow_samp_add_locs[shader_type][sampler_index] = glGetUniformLocation(sprog->id, name);
+            sprog->shadow_samp_add_locs[shader_type][sampler_index] =
+               vrend_get_uniform_location(sprog, name, shader_type);
          }
          sampler_index++;
       }
@@ -1518,9 +1569,36 @@ static void bind_const_locs(struct vrend_linked_shader_program *sprog,
   if (sprog->ss[shader_type]->sel->sinfo.num_consts) {
      char name[32];
      snprintf(name, 32, "%sconst0", pipe_shader_to_prefix(shader_type));
-     sprog->const_location[shader_type] = glGetUniformLocation(sprog->id, name);
+     sprog->const_location[shader_type] = vrend_get_uniform_location(sprog, name,
+                                                                     shader_type);
   } else
-      sprog->const_location[shader_type] = -1;
+     sprog->const_location[shader_type] = -1;
+}
+
+static inline GLuint
+vrend_get_uniform_block_index(struct vrend_linked_shader_program *sprog,
+                              char *name, int shader_type)
+{
+    assert(!sprog->is_pipeline || sprog->ss[shader_type]->sel->sinfo.separable_program);
+
+    GLuint id = sprog->is_pipeline ?
+                  sprog->ss[shader_type]->program_id :
+                  sprog->id.program;
+
+    return glGetUniformBlockIndex(id, name);
+}
+
+static inline void
+vrend_uniform_block_binding(struct vrend_linked_shader_program *sprog,
+                            int shader_type, int loc, int value)
+{
+    assert(!sprog->is_pipeline || sprog->ss[shader_type]->sel->sinfo.separable_program);
+
+    GLint id = sprog->is_pipeline ?
+                  sprog->ss[shader_type]->program_id :
+                  sprog->id.program;
+
+    glUniformBlockBinding(id, loc, value);
 }
 
 static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
@@ -1539,14 +1617,78 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
          else
             snprintf(name, 32, "%subo%d", prefix, ubo_idx);
 
-         GLuint loc = glGetUniformBlockIndex(sprog->id, name);
-         glUniformBlockBinding(sprog->id, loc, next_ubo_id++);
+         GLuint loc = vrend_get_uniform_block_index(sprog, name, shader_type);
+         vrend_uniform_block_binding(sprog, shader_type, loc, next_ubo_id++);
       }
    }
 
    sprog->ubo_used_mask[shader_type] = sinfo->ubo_used_mask;
 
    return next_ubo_id;
+}
+
+static void bind_virgl_block_loc(struct vrend_linked_shader_program *sprog,
+                                 enum pipe_shader_type shader_type,
+                                 int virgl_block_ubo_id)
+{
+   sprog->separate_virgl_block_id[shader_type] =
+	 vrend_get_uniform_block_index(sprog, "VirglBlock", shader_type);
+
+   if (sprog->separate_virgl_block_id[shader_type] != GL_INVALID_INDEX) {
+      bool created_virgl_block_buffer = false;
+
+      if (sprog->virgl_block_bind == -1) {
+         sprog->virgl_block_bind = virgl_block_ubo_id;
+         if (sprog->ubo_sysval_buffer_id == -1) {
+             glGenBuffers(1, (GLuint *) &sprog->ubo_sysval_buffer_id);
+             created_virgl_block_buffer = true;
+         }
+      }
+
+      vrend_set_active_pipeline_stage(sprog, shader_type);
+      vrend_uniform_block_binding(sprog, shader_type,
+		                  sprog->separate_virgl_block_id[shader_type],
+				  sprog->virgl_block_bind);
+
+      GLint virgl_block_size;
+      int prog_id = sprog->is_pipeline ? sprog->ss[shader_type]->program_id :
+                                         sprog->id.program;
+      glGetActiveUniformBlockiv(prog_id, sprog->separate_virgl_block_id[shader_type],
+				GL_UNIFORM_BLOCK_DATA_SIZE, &virgl_block_size);
+      assert((size_t) virgl_block_size >= sizeof(struct sysval_uniform_block));
+
+      if (created_virgl_block_buffer) {
+         glBindBuffer(GL_UNIFORM_BUFFER, sprog->ubo_sysval_buffer_id);
+         glBufferData(GL_UNIFORM_BUFFER, virgl_block_size, NULL, GL_DYNAMIC_DRAW);
+         glBindBuffer(GL_UNIFORM_BUFFER, 0);
+      }
+   }
+}
+
+static void rebind_ubo_locs(struct vrend_linked_shader_program *sprog,
+                            enum pipe_shader_type last_shader)
+{
+   int next_ubo_id = 0;
+
+   for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
+        shader_type <= last_shader;
+        shader_type++) {
+      if (!sprog->ss[shader_type])
+         continue;
+
+      next_ubo_id = bind_ubo_locs(sprog, shader_type, next_ubo_id);
+   }
+
+   /* Now `next_ubo_id` is the last ubo id, which is used for the VirglBlock. */
+   sprog->virgl_block_bind = -1;
+   for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
+        shader_type <= last_shader;
+        shader_type++) {
+      if (!sprog->ss[shader_type])
+         continue;
+
+      bind_virgl_block_loc(sprog, shader_type, next_ubo_id);
+   }
 }
 
 static void bind_ssbo_locs(struct vrend_linked_shader_program *sprog,
@@ -1585,7 +1727,8 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
          struct vrend_array *img_array = &sinfo->image_arrays[i];
          for (int j = 0; j < img_array->array_size; j++) {
             snprintf(name, 32, "%simg%d[%d]", prefix, img_array->first, j);
-            sprog->img_locs[shader_type][img_array->first + j] = glGetUniformLocation(sprog->id, name);
+            sprog->img_locs[shader_type][img_array->first + j] =
+               vrend_get_uniform_location(sprog, name, shader_type);
             if (sprog->img_locs[shader_type][img_array->first + j] == -1)
                vrend_printf( "failed to get uniform loc for image %s\n", name);
          }
@@ -1594,7 +1737,8 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
       for (i = 0; i < nsamp; i++) {
          if (mask & (1 << i)) {
             snprintf(name, 32, "%simg%d", prefix, i);
-            sprog->img_locs[shader_type][i] = glGetUniformLocation(sprog->id, name);
+            sprog->img_locs[shader_type][i] =
+               vrend_get_uniform_location(sprog, name, shader_type);
             if (sprog->img_locs[shader_type][i] == -1)
                vrend_printf( "failed to get uniform loc for image %s\n", name);
          } else {
@@ -1605,22 +1749,30 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
    sprog->images_used_mask[shader_type] = mask;
 }
 
+static bool vrend_link(GLuint id)
+{
+   GLint lret;
+   glLinkProgram(id);
+   glGetProgramiv(id, GL_LINK_STATUS, &lret);
+   if (lret == GL_FALSE) {
+      char infolog[65536];
+      int len;
+      glGetProgramInfoLog(id, 65536, &len, infolog);
+      vrend_printf("Error linking program:\n%s\n", infolog);
+      return false;
+   }
+   return true;
+}
+
 static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_context *ctx,
                                                                  struct vrend_shader *cs)
 {
    struct vrend_linked_shader_program *sprog = CALLOC_STRUCT(vrend_linked_shader_program);
    GLuint prog_id;
-   GLint lret;
    prog_id = glCreateProgram();
    glAttachShader(prog_id, cs->id);
-   glLinkProgram(prog_id);
 
-   glGetProgramiv(prog_id, GL_LINK_STATUS, &lret);
-   if (lret == GL_FALSE) {
-      char infolog[65536];
-      int len;
-      glGetProgramInfoLog(prog_id, 65536, &len, infolog);
-      vrend_printf("got error linking\n%s\n", infolog);
+   if (!vrend_link(prog_id)) {
       /* dump shaders */
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
       vrend_shader_dump(cs);
@@ -1631,10 +1783,10 @@ static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_co
    sprog->ss[PIPE_SHADER_COMPUTE] = cs;
 
    list_add(&sprog->sl[PIPE_SHADER_COMPUTE], &cs->programs);
-   sprog->id = prog_id;
+   sprog->id.program = prog_id;
    list_addtail(&sprog->head, &ctx->sub->cs_programs);
 
-   vrend_use_program(prog_id);
+   vrend_use_program(sprog);
 
    bind_sampler_locs(sprog, PIPE_SHADER_COMPUTE, 0);
    bind_ubo_locs(sprog, PIPE_SHADER_COMPUTE, 0);
@@ -1644,49 +1796,78 @@ static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_co
    return sprog;
 }
 
+static inline bool
+vrend_link_stage(struct vrend_shader *stage) {
+   if (!stage->is_linked)
+      stage->is_linked = vrend_link(stage->program_id);
+   return stage->is_linked;
+}
+
 static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_context *sub_ctx,
                                                               struct vrend_shader *vs,
                                                               struct vrend_shader *fs,
                                                               struct vrend_shader *gs,
                                                               struct vrend_shader *tcs,
-                                                              struct vrend_shader *tes)
+                                                              struct vrend_shader *tes,
+                                                              bool separable)
 {
    struct vrend_linked_shader_program *sprog = CALLOC_STRUCT(vrend_linked_shader_program);
    char name[64];
    int i;
-   GLuint prog_id;
-   GLint lret;
+   GLuint prog_id = 0;
+   GLuint pipeline_id = 0;
+   GLuint vs_id, fs_id, gs_id, tes_id = 0;
    enum pipe_shader_type last_shader;
    if (!sprog)
       return NULL;
 
-   prog_id = glCreateProgram();
-   glAttachShader(prog_id, vs->id);
-   if (tcs && tcs->id > 0)
-      glAttachShader(prog_id, tcs->id);
-   if (tes && tes->id > 0)
-      glAttachShader(prog_id, tes->id);
+   if (separable) {
+       glGenProgramPipelines(1, &pipeline_id);
+
+       vs_id = vs->program_id;
+       fs_id = fs->program_id;
+       if (gs)
+           gs_id = gs->program_id;
+       if (tes)
+           tes_id = tes->program_id;
+   } else { /* inseparable programs */
+       prog_id = glCreateProgram();
+       glAttachShader(prog_id, vs->id);
+       if (tcs && tcs->id > 0)
+          glAttachShader(prog_id, tcs->id);
+       if (tes && tes->id > 0)
+          glAttachShader(prog_id, tes->id);
+       if (gs && gs->id > 0)
+          glAttachShader(prog_id, gs->id);
+       glAttachShader(prog_id, fs->id);
+
+       /* For the non-separable codepath (the usual path), all these shader stages are
+        * contained inside a single program. */
+       vs_id = prog_id;
+       fs_id = prog_id;
+       if (gs)
+           gs_id = prog_id;
+       if (tes)
+           tes_id = prog_id;
+   }
 
    if (gs) {
-      if (gs->id > 0)
-         glAttachShader(prog_id, gs->id);
-      set_stream_out_varyings(sub_ctx, prog_id, &gs->sel->sinfo);
+      set_stream_out_varyings(sub_ctx, gs_id, &gs->sel->sinfo);
    } else if (tes)
-      set_stream_out_varyings(sub_ctx, prog_id, &tes->sel->sinfo);
+      set_stream_out_varyings(sub_ctx, tes_id, &tes->sel->sinfo);
    else
-      set_stream_out_varyings(sub_ctx, prog_id, &vs->sel->sinfo);
-   glAttachShader(prog_id, fs->id);
+      set_stream_out_varyings(sub_ctx, vs_id, &vs->sel->sinfo);
 
    if (fs->sel->sinfo.num_outputs > 1) {
       sprog->dual_src_linked = util_blend_state_is_dual(&sub_ctx->blend_state, 0);
       if (sprog->dual_src_linked) {
          if (has_feature(feat_dual_src_blend)) {
             if (!vrend_state.use_gles) {
-               glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
-               glBindFragDataLocationIndexed(prog_id, 0, 1, "fsout_c1");
+               glBindFragDataLocationIndexed(fs_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexed(fs_id, 0, 1, "fsout_c1");
             } else {
-               glBindFragDataLocationIndexedEXT(prog_id, 0, 0, "fsout_c0");
-               glBindFragDataLocationIndexedEXT(prog_id, 0, 1, "fsout_c1");
+               glBindFragDataLocationIndexedEXT(fs_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexedEXT(fs_id, 0, 1, "fsout_c1");
             }
          } else {
             vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND, 0);
@@ -1698,7 +1879,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
             if (fs->sel->sinfo.fs_output_layout[i] >= 0) {
                char buf[64];
                snprintf(buf, sizeof(buf), "fsout_c%d", fs->sel->sinfo.fs_output_layout[i]);
-               glBindFragDataLocationIndexed(prog_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
+               glBindFragDataLocationIndexed(fs_id, fs->sel->sinfo.fs_output_layout[i], 0, buf);
             }
          }
       }
@@ -1710,18 +1891,30 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       while (mask) {
          i = u_bit_scan(&mask);
          snprintf(name, 32, "in_%d", i);
-         glBindAttribLocation(prog_id, i, name);
+         glBindAttribLocation(vs_id, i, name);
       }
    }
 
-   glLinkProgram(prog_id);
+   bool link_success;
+   if (separable) { /* separable programs */
+      link_success = vrend_link_stage(vs);
+      link_success &= vrend_link_stage(fs);
+      if (gs) link_success &= vrend_link_stage(gs);
+      if (tcs) link_success &= vrend_link_stage(tcs);
+      if (tes) link_success &= vrend_link_stage(tes);
+   } else { /* non-separable programs */
+      link_success = vrend_link(prog_id);
+   }
 
-   glGetProgramiv(prog_id, GL_LINK_STATUS, &lret);
-   if (lret == GL_FALSE) {
-      char infolog[65536];
-      int len;
-      glGetProgramInfoLog(prog_id, 65536, &len, infolog);
-      vrend_printf("got error linking\n%s\n", infolog);
+   if (!link_success) {
+      if (separable) {
+         glDeleteProgramPipelines(1, &pipeline_id);
+      } else {
+         glDeleteProgram(prog_id);
+      }
+
+      free(sprog);
+
       /* dump shaders */
       vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
       vrend_shader_dump(vs);
@@ -1732,9 +1925,22 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       if (gs)
          vrend_shader_dump(gs);
       vrend_shader_dump(fs);
-      glDeleteProgram(prog_id);
-      free(sprog);
       return NULL;
+   }
+
+   if (separable) {
+       glUseProgramStages(pipeline_id, GL_VERTEX_SHADER_BIT, vs->program_id);
+       if (tcs) glUseProgramStages(pipeline_id, GL_TESS_CONTROL_SHADER_BIT, tcs->program_id);
+       if (tes) glUseProgramStages(pipeline_id, GL_TESS_EVALUATION_SHADER_BIT, tes->program_id);
+       if (gs) glUseProgramStages(pipeline_id, GL_GEOMETRY_SHADER_BIT, gs->program_id);
+       glUseProgramStages(pipeline_id, GL_FRAGMENT_SHADER_BIT, fs->program_id);
+
+       glValidateProgramPipeline(pipeline_id);
+       GLint validation_status;
+       glGetProgramPipelineiv(pipeline_id, GL_VALIDATE_STATUS, &validation_status);
+       if (!validation_status) {
+           vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE, 0);
+       }
    }
 
    sprog->ss[PIPE_SHADER_VERTEX] = vs;
@@ -1756,18 +1962,26 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       list_add(&sprog->sl[PIPE_SHADER_TESS_EVAL], &tes->programs);
 
    last_shader = tes ? PIPE_SHADER_TESS_EVAL : (gs ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
-   sprog->id = prog_id;
+
+   sprog->is_pipeline = separable;
+   if (sprog->is_pipeline)
+       sprog->id.pipeline = pipeline_id;
+   else
+       sprog->id.program = prog_id;
 
    list_addtail(&sprog->head, &sub_ctx->gl_programs[vs->id & VREND_PROGRAM_NQUEUE_MASK]);
 
    if (fs->key.pstipple_tex)
-      sprog->fs_stipple_loc = glGetUniformLocation(prog_id, "pstipple_sampler");
+      sprog->fs_stipple_loc = glGetUniformLocation(fs_id, "pstipple_sampler");
    else
       sprog->fs_stipple_loc = -1;
 
-   vrend_use_program(prog_id);
+   sprog->virgl_block_bind = -1;
+   sprog->ubo_sysval_buffer_id = -1;
 
-   int next_ubo_id = 0, next_sampler_id = 0;
+   vrend_use_program(sprog);
+
+   int next_sampler_id = 0;
    for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
         shader_type <= last_shader;
         shader_type++) {
@@ -1776,26 +1990,10 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
 
       next_sampler_id = bind_sampler_locs(sprog, shader_type, next_sampler_id);
       bind_const_locs(sprog, shader_type);
-      next_ubo_id = bind_ubo_locs(sprog, shader_type, next_ubo_id);
       bind_image_locs(sprog, shader_type);
       bind_ssbo_locs(sprog, shader_type);
    }
-
-   sprog->virgl_block_id = glGetUniformBlockIndex(prog_id, "VirglBlock");
-   if (sprog->virgl_block_id != GL_INVALID_INDEX) {
-      sprog->virgl_block_bind = next_ubo_id++;
-      glUniformBlockBinding(prog_id, sprog->virgl_block_id, sprog->virgl_block_bind);
-
-      GLint virgl_block_size;
-      glGetActiveUniformBlockiv(prog_id, sprog->virgl_block_id,
-                                GL_UNIFORM_BLOCK_DATA_SIZE, &virgl_block_size);
-      assert((size_t) virgl_block_size >= sizeof(struct sysval_uniform_block));
-
-      glGenBuffers(1, &sprog->ubo_sysval_buffer_id);
-      glBindBuffer(GL_UNIFORM_BUFFER, sprog->ubo_sysval_buffer_id);
-      glBufferData(GL_UNIFORM_BUFFER, virgl_block_size, NULL, GL_DYNAMIC_DRAW);
-      glBindBuffer(GL_UNIFORM_BUFFER, 0);
-   }
+   rebind_ubo_locs(sprog, last_shader);
 
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
       if (vs->sel->sinfo.num_inputs) {
@@ -1803,7 +2001,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          if (sprog->attrib_locs) {
             for (i = 0; i < vs->sel->sinfo.num_inputs; i++) {
                snprintf(name, 32, "in_%d", i);
-               sprog->attrib_locs[i] = glGetAttribLocation(prog_id, name);
+               sprog->attrib_locs[i] = glGetAttribLocation(vs_id, name);
             }
          }
       } else
@@ -1870,11 +2068,15 @@ static void vrend_destroy_program(struct vrend_linked_shader_program *ent)
    if (ent->ref_context && ent->ref_context->prog == ent)
       ent->ref_context->prog = NULL;
 
-   if (ent->virgl_block_id != GL_INVALID_INDEX) {
-      glDeleteBuffers(1, &ent->ubo_sysval_buffer_id);
+   if (ent->ubo_sysval_buffer_id != -1) {
+       glDeleteBuffers(1, (GLuint *) &ent->ubo_sysval_buffer_id);
    }
 
-   glDeleteProgram(ent->id);
+   if (ent->is_pipeline)
+       glDeleteProgramPipelines(1, &ent->id.pipeline);
+   else
+       glDeleteProgram(ent->id.program);
+
    list_del(&ent->head);
 
    for (i = PIPE_SHADER_VERTEX; i <= PIPE_SHADER_COMPUTE; i++) {
@@ -4000,7 +4202,7 @@ void vrend_clear(struct vrend_context *ctx,
    if (sub_ctx->viewport_state_dirty)
       vrend_update_viewport_state(sub_ctx);
 
-   vrend_use_program(0);
+   vrend_use_program(NULL);
 
    glDisable(GL_SCISSOR_TEST);
 
@@ -4704,7 +4906,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
 static void
 vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
 {
-   if (sub_ctx->prog->virgl_block_id == GL_INVALID_INDEX)
+   if (sub_ctx->prog->virgl_block_bind == -1)
       return;
 
    struct sysval_uniform_block virgl_uniform_block;
@@ -4737,16 +4939,18 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
 {
    int next_ubo_id = 0, next_sampler_id = 0;
    for (int shader_type = PIPE_SHADER_VERTEX; shader_type <= sub_ctx->last_shader_idx; shader_type++) {
+      vrend_set_active_pipeline_stage(sub_ctx->prog, shader_type);
+
       next_ubo_id = vrend_draw_bind_ubo_shader(sub_ctx, shader_type, next_ubo_id);
       vrend_draw_bind_const_shader(sub_ctx, shader_type, new_program);
-      next_sampler_id = vrend_draw_bind_samplers_shader(sub_ctx, shader_type,
-                                                        next_sampler_id);
+      next_sampler_id = vrend_draw_bind_samplers_shader(sub_ctx, shader_type, next_sampler_id);
 
       vrend_draw_bind_images_shader(sub_ctx, shader_type);
       vrend_draw_bind_ssbo_shader(sub_ctx, shader_type);
 
       if (vrend_state.use_gles) {
          if (sub_ctx->prog->tex_levels_uniform_id[shader_type] != -1) {
+            vrend_set_active_pipeline_stage(sub_ctx->prog, shader_type);
             glUniform1iv(sub_ctx->prog->tex_levels_uniform_id[shader_type],
                          sub_ctx->n_samplers[shader_type],
                          sub_ctx->texture_levels[shader_type]);
@@ -4754,12 +4958,14 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
       }
    }
 
-   if (sub_ctx->prog->virgl_block_id != GL_INVALID_INDEX)
+   if (sub_ctx->prog->virgl_block_bind != -1)
       glBindBufferRange(GL_UNIFORM_BUFFER, sub_ctx->prog->virgl_block_bind,
                         sub_ctx->prog->ubo_sysval_buffer_id,
                         0, sizeof(struct sysval_uniform_block));
 
    vrend_draw_bind_abo_shader(sub_ctx);
+
+   vrend_set_active_pipeline_stage(sub_ctx->prog, PIPE_SHADER_FRAGMENT);
 
    if (vrend_state.use_core_profile && sub_ctx->prog->fs_stipple_loc != -1) {
       glActiveTexture(GL_TEXTURE0 + next_sampler_id);
@@ -4886,11 +5092,17 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
        (shaders[PIPE_SHADER_TESS_EVAL] && !shaders[PIPE_SHADER_TESS_EVAL]->current))
       goto fail;
 
-   GLuint vs_id = shaders[PIPE_SHADER_VERTEX]->current->id;
-   GLuint fs_id = shaders[PIPE_SHADER_FRAGMENT]->current->id;
-   GLuint gs_id = shaders[PIPE_SHADER_GEOMETRY] ? shaders[PIPE_SHADER_GEOMETRY]->current->id : 0;
-   GLuint tcs_id = shaders[PIPE_SHADER_TESS_CTRL] ? shaders[PIPE_SHADER_TESS_CTRL]->current->id : 0;
-   GLuint tes_id = shaders[PIPE_SHADER_TESS_EVAL] ? shaders[PIPE_SHADER_TESS_EVAL]->current->id : 0;
+   struct vrend_shader *vs = shaders[PIPE_SHADER_VERTEX]->current;
+   struct vrend_shader *fs = shaders[PIPE_SHADER_FRAGMENT]->current;
+   struct vrend_shader *gs = shaders[PIPE_SHADER_GEOMETRY] ? shaders[PIPE_SHADER_GEOMETRY]->current : NULL;
+   struct vrend_shader *tcs = shaders[PIPE_SHADER_TESS_CTRL] ? shaders[PIPE_SHADER_TESS_CTRL]->current : NULL;
+   struct vrend_shader *tes = shaders[PIPE_SHADER_TESS_EVAL] ? shaders[PIPE_SHADER_TESS_EVAL]->current : NULL;
+
+   GLuint vs_id = vs->id;
+   GLuint fs_id = fs->id;
+   GLuint gs_id = !gs ? 0 : gs->id;
+   GLuint tcs_id = !tcs ? 0 : tcs->id;
+   GLuint tes_id = !tes ? 0 : tes->id;
 
    if (shaders[PIPE_SHADER_FRAGMENT]->current->sel->sinfo.num_outputs <= 1)
       dual_src = false;
@@ -4903,6 +5115,12 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
                     tes_id == sub_ctx->prog_ids[PIPE_SHADER_TESS_EVAL] &&
                     sub_ctx->prog->dual_src_linked == dual_src;
 
+   bool separable = vs->sel->sinfo.separable_program &&
+                    fs->sel->sinfo.separable_program &&
+                    (!gs || gs->sel->sinfo.separable_program) &&
+                    (!tcs || tcs->sel->sinfo.separable_program) &&
+                    (!tes || tes->sel->sinfo.separable_program);
+
    if (!same_prog) {
       prog = lookup_shader_program(sub_ctx, vs_id, fs_id, gs_id, tcs_id, tes_id, dual_src);
       if (!prog) {
@@ -4911,10 +5129,21 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
                                    sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current,
                                    gs_id ? sub_ctx->shaders[PIPE_SHADER_GEOMETRY]->current : NULL,
                                    tcs_id ? sub_ctx->shaders[PIPE_SHADER_TESS_CTRL]->current : NULL,
-                                   tes_id ? sub_ctx->shaders[PIPE_SHADER_TESS_EVAL]->current : NULL);
+                                   tes_id ? sub_ctx->shaders[PIPE_SHADER_TESS_EVAL]->current : NULL,
+                                   separable);
          if (!prog)
             return false;
          prog->gles_use_query_texturelevel_mask = gles_emulate_query_texture_levels_mask;
+      } else if (separable) {
+          /* UBO block bindings are reset to zero if the programs are
+           * re-linked.  With separable shaders, the program can be relinked
+           * because it's shared across multiple pipelines and some things like
+           * transform feedback require relinking, so we have to make sure the
+           * blocks are bound. */
+          int last_shader = tes_id ? PIPE_SHADER_TESS_EVAL :
+                                     (gs_id ? PIPE_SHADER_GEOMETRY :
+                                              PIPE_SHADER_FRAGMENT);
+          rebind_ubo_locs(prog, last_shader);
       }
 
       sub_ctx->last_shader_idx = sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] ? PIPE_SHADER_TESS_EVAL : (sub_ctx->shaders[PIPE_SHADER_GEOMETRY] ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
@@ -5068,7 +5297,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       return 0;
    }
 
-   vrend_use_program(sub_ctx->prog->id);
+   vrend_use_program(sub_ctx->prog);
 
    if (vrend_state.use_gles) {
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
@@ -5077,7 +5306,8 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          if (sub_ctx->prog->gles_use_query_texturelevel_mask & (1 << i)) {
             char loc_name[32];
             snprintf(loc_name, 32, "%s_texlod", pipe_shader_to_prefix(i));
-            sub_ctx->prog->tex_levels_uniform_id[i] = glGetUniformLocation(sub_ctx->prog->id, loc_name);
+            sub_ctx->prog->tex_levels_uniform_id[i] =
+               vrend_get_uniform_location(sub_ctx->prog, loc_name, i);
          } else {
             sub_ctx->prog->tex_levels_uniform_id[i] = -1;
          }
@@ -5322,8 +5552,9 @@ void vrend_launch_grid(struct vrend_context *ctx,
       return;
    }
 
-   vrend_use_program(sub_ctx->prog->id);
+   vrend_use_program(sub_ctx->prog);
 
+   vrend_set_active_pipeline_stage(sub_ctx->prog, PIPE_SHADER_COMPUTE);
    vrend_draw_bind_ubo_shader(sub_ctx, PIPE_SHADER_COMPUTE, 0);
    vrend_draw_bind_const_shader(sub_ctx, PIPE_SHADER_COMPUTE, new_program);
    vrend_draw_bind_samplers_shader(sub_ctx, PIPE_SHADER_COMPUTE, 0);
