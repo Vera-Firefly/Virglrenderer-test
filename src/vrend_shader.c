@@ -4147,8 +4147,6 @@ get_source_info(struct dump_ctx *ctx,
 
       sinfo->override_no_wm[i] = false;
       sinfo->override_no_cast[i] = false;
-      if (isfloatabsolute)
-         swizzle[swz_idx++] = ')';
 
       if (src->Register.Negate)
          prefix[pre_idx++] = '-';
@@ -4171,6 +4169,9 @@ get_source_info(struct dump_ctx *ctx,
           i == 0) {
          swizzle_writer = src_swizzle0;
       }
+
+      if (isfloatabsolute)
+         swizzle_writer[swz_idx++] = ')';
 
       usage_mask |= 1 << src->Register.SwizzleX;
       usage_mask |= 1 << src->Register.SwizzleY;
