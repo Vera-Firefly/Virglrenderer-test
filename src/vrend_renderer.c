@@ -4950,7 +4950,7 @@ fail:
    return false;
 }
 
-void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
+void vrend_link_program_hook(struct vrend_context *ctx, uint32_t *handles)
 {
    /* Pre-compiling compute shaders needs some additional work */
    if (handles[PIPE_SHADER_COMPUTE])

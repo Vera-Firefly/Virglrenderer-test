@@ -1168,7 +1168,7 @@ static int vrend_decode_link_shader(struct vrend_context *ctx, const uint32_t *b
    handles[PIPE_SHADER_TESS_EVAL] = get_buf_entry(buf, VIRGL_LINK_SHADER_TESS_EVAL_HANDLE);
    handles[PIPE_SHADER_COMPUTE] = get_buf_entry(buf, VIRGL_LINK_SHADER_COMPUTE_HANDLE);
 
-   vrend_link_program(ctx, handles);
+   vrend_link_program_hook(ctx, handles);
    return 0;
 }
 
