@@ -4931,7 +4931,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
-       sub_ctx->convert_linear_to_srgb_on_write)
+       sub_ctx->convert_linear_to_srgb_on_write || sub_ctx->vbo_dirty)
       new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
 
    if (!sub_ctx->prog) {
