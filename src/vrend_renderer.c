@@ -694,7 +694,6 @@ struct vrend_sub_context {
    bool stencil_test_enabled;
    bool framebuffer_srgb_enabled;
 
-   GLuint program_id;
    int last_shader_idx;
 
    GLint draw_indirect_buffer;
@@ -1304,12 +1303,9 @@ static bool vrend_is_timer_query(GLenum gltype)
       gltype == GL_TIME_ELAPSED;
 }
 
-static void vrend_use_program(struct vrend_sub_context *sub_ctx, GLuint program_id)
+static void vrend_use_program(GLuint program_id)
 {
-   if (sub_ctx->program_id != program_id) {
-      glUseProgram(program_id);
-      sub_ctx->program_id = program_id;
-   }
+   glUseProgram(program_id);
 }
 
 static void vrend_init_pstipple_texture(struct vrend_context *ctx)
@@ -1638,7 +1634,7 @@ static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_co
    sprog->id = prog_id;
    list_addtail(&sprog->head, &ctx->sub->cs_programs);
 
-   vrend_use_program(ctx->sub, prog_id);
+   vrend_use_program(prog_id);
 
    bind_sampler_locs(sprog, PIPE_SHADER_COMPUTE, 0);
    bind_ubo_locs(sprog, PIPE_SHADER_COMPUTE, 0);
@@ -1769,7 +1765,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    else
       sprog->fs_stipple_loc = -1;
 
-   vrend_use_program(sub_ctx, prog_id);
+   vrend_use_program(prog_id);
 
    int next_ubo_id = 0, next_sampler_id = 0;
    for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
@@ -4004,7 +4000,7 @@ void vrend_clear(struct vrend_context *ctx,
    if (sub_ctx->viewport_state_dirty)
       vrend_update_viewport_state(sub_ctx);
 
-   vrend_use_program(sub_ctx, 0);
+   vrend_use_program(0);
 
    glDisable(GL_SCISSOR_TEST);
 
@@ -5072,7 +5068,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       return 0;
    }
 
-   vrend_use_program(sub_ctx, sub_ctx->prog->id);
+   vrend_use_program(sub_ctx->prog->id);
 
    if (vrend_state.use_gles) {
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
@@ -5326,7 +5322,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
       return;
    }
 
-   vrend_use_program(sub_ctx, sub_ctx->prog->id);
+   vrend_use_program(sub_ctx->prog->id);
 
    vrend_draw_bind_ubo_shader(sub_ctx, PIPE_SHADER_COMPUTE, 0);
    vrend_draw_bind_const_shader(sub_ctx, PIPE_SHADER_COMPUTE, new_program);
@@ -8006,10 +8002,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       uint32_t stride = info->stride;
       uint32_t layer_stride = info->layer_stride;
 
-      if (ctx)
-         vrend_use_program(ctx->sub, 0);
-      else
-         glUseProgram(0);
+      vrend_use_program(0);
 
       if (!stride)
          stride = util_format_get_nblocksx(res->base.format, u_minify(res->base.width0, info->level)) * elsize;
@@ -8382,10 +8375,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
    int row_stride = info->stride / elsize;
    GLint old_fbo;
 
-   if (ctx)
-      vrend_use_program(ctx->sub, 0);
-   else
-      glUseProgram(0);
+   vrend_use_program(0);
 
    enum virgl_formats fmt = res->base.format;
 
