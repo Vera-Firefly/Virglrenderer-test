@@ -655,6 +655,34 @@ void vrend_check_texture_storage(struct vrend_format_table *table)
    }
 }
 
+void vrend_check_texture_multisample(struct vrend_format_table *table,
+                                     bool enable_storage)
+{
+   bool is_desktop_gl = epoxy_is_desktop_gl();
+   for (int i = 0; i < VIRGL_FORMAT_MAX_EXTENDED; i++) {
+      bool function_available =
+         (table[i].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE) ? enable_storage : is_desktop_gl;
+
+      if (table[i].internalformat != 0 &&
+          !(table[i].flags & VIRGL_TEXTURE_CAN_MULTISAMPLE) &&
+          function_available) {
+         GLuint tex_id;
+         glGenTextures(1, &tex_id);
+         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex_id);
+         if (table[i].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE) {
+            glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 2,
+                                      table[i].internalformat, 32, 32, GL_TRUE);
+         } else {
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 2,
+                                    table[i].internalformat, 32, 32, GL_TRUE);
+         }
+         if (glGetError() == GL_NO_ERROR)
+            table[i].flags |= VIRGL_TEXTURE_CAN_MULTISAMPLE;
+         glDeleteTextures(1, &tex_id);
+      }
+   }
+}
+
 bool vrend_check_framebuffer_mixed_color_attachements()
 {
    GLuint tex_id[2];

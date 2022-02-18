@@ -101,6 +101,7 @@ struct vrend_resource {
 #define VIRGL_TEXTURE_CAN_TEXTURE_STORAGE (1 << 1)
 #define VIRGL_TEXTURE_CAN_READBACK        (1 << 2)
 #define VIRGL_TEXTURE_CAN_TARGET_RECTANGLE (1 << 3)
+#define VIRGL_TEXTURE_CAN_MULTISAMPLE      (1 << 4)
 
 struct vrend_format_table {
    enum virgl_formats format;
@@ -415,6 +416,8 @@ void vrend_build_format_list_gl(void);
 void vrend_build_format_list_gles(void);
 void vrend_build_emulated_format_list_gles(void);
 void vrend_check_texture_storage(struct vrend_format_table *table);
+void vrend_check_texture_multisample(struct vrend_format_table *table,
+                                     bool enable_storage);
 
 void vrend_renderer_resource_destroy(struct vrend_resource *res);
 

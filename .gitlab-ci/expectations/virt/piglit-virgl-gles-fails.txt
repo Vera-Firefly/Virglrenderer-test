@@ -21,6 +21,36 @@ spec@arb_color_buffer_float@gl_rgba8_snorm-render,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-render-fog,Fail
 spec@arb_compute_shader@execution@min-dvec4-double-large-group-size,Fail
 spec@arb_copy_image@arb_copy_image-formats,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
+spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
@@ -2582,6 +2612,36 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full 
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,ExpectedFail
 spec@khr_texture_compression_astc@void-extent-dl-bug,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
+spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail

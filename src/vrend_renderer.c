@@ -832,6 +832,11 @@ static inline bool vrend_format_can_readback(enum virgl_formats format)
    return tex_conv_table[format].flags & VIRGL_TEXTURE_CAN_READBACK;
 }
 
+static inline bool vrend_format_can_multisample(enum virgl_formats format)
+{
+   return tex_conv_table[format].flags & VIRGL_TEXTURE_CAN_MULTISAMPLE;
+}
+
 static inline bool vrend_format_can_render(enum virgl_formats format)
 {
    return tex_conv_table[format].bindings & VIRGL_BIND_RENDER_TARGET;
@@ -6572,6 +6577,11 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
 
    vrend_check_texture_storage(tex_conv_table);
 
+   if (has_feature(feat_multisample)) {
+      vrend_check_texture_multisample(tex_conv_table,
+                                      has_feature(feat_storage_multisample));
+   }
+
    /* disable for format testing */
    if (has_feature(feat_debug_cb)) {
       glDisable(GL_DEBUG_OUTPUT);
@@ -6818,8 +6828,9 @@ static int check_resource_valid(const struct vrend_renderer_resource_create_args
 
    /* only texture 2d and 2d array can have multiple samples */
    if (args->nr_samples > 0) {
-      if (!has_feature(feat_texture_multisample)) {
-         snprintf(errmsg, 256, "Multisample textures not supported");
+      if (!vrend_format_can_multisample(args->format)) {
+         snprintf(errmsg, 256, "Unsupported multisample texture format %s",
+                  util_format_name(args->format));
          return -1;
       }
 
@@ -6830,10 +6841,6 @@ static int check_resource_valid(const struct vrend_renderer_resource_create_args
       /* multisample can't have miplevels */
       if (args->last_level > 0) {
          snprintf(errmsg, 256, "Multisample textures don't support mipmaps");
-         return -1;
-      }
-      if (!format_can_texture_storage && vrend_state.use_gles) {
-         snprintf(errmsg, 256, "Unsupported multisample texture format %d", args->format);
          return -1;
       }
    }
