@@ -1951,6 +1951,11 @@ int vrend_create_surface(struct vrend_context *ctx,
          GLenum target = res->target;
          GLenum internalformat = tex_conv_table[format].internalformat;
 
+         if (target == GL_TEXTURE_CUBE_MAP && first_layer == last_layer) {
+            first_layer = 0;
+            last_layer = 5;
+         }
+
          if (vrend_resource_has_24bpp_internal_format(res))
             internalformat = GL_RGB8;
 
