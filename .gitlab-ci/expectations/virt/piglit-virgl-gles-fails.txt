@@ -183,24 +183,12 @@ spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8/Destination: GL_RGBA
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8I/Destination: GL_RGBA8_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8_SNORM/Destination: GL_RGBA8_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8UI/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_depth_buffer_float@fbo-generatemipmap-formats,Fail
-spec@arb_depth_buffer_float@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT32F,Fail
-spec@arb_depth_buffer_float@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT32F NPOT,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor@GL_DEPTH32F_STENCIL8- border color only,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor@GL_DEPTH_COMPONENT32F- border color only,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor-swizzled,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor-swizzled@GL_DEPTH32F_STENCIL8- swizzled- border color only,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT32F- swizzled- border color only,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT16,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT16 NPOT,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT24,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT24 NPOT,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT32,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT32 NPOT,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT,Fail
-spec@arb_depth_texture@fbo-generatemipmap-formats@GL_DEPTH_COMPONENT NPOT,Fail
 spec@arb_depth_texture@texwrap formats bordercolor,Fail
 spec@arb_depth_texture@texwrap formats bordercolor@GL_DEPTH_COMPONENT16- border color only,Fail
 spec@arb_depth_texture@texwrap formats bordercolor@GL_DEPTH_COMPONENT24- border color only,Fail

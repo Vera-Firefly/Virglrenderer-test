@@ -9387,7 +9387,7 @@ static bool vrend_renderer_prepare_blit(struct vrend_context *ctx,
    }
    /* glBlitFramebuffer - can support depth stencil with NEAREST
       which we use for mipmaps */
-   if ((info->b.mask & (PIPE_MASK_Z | PIPE_MASK_S)) && info->gl_filter == PIPE_TEX_FILTER_LINEAR)
+   if ((info->b.mask & (PIPE_MASK_Z | PIPE_MASK_S)) && info->gl_filter != GL_NEAREST)
       return false;
 
    /* since upstream mesa change
