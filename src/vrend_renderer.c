@@ -507,6 +507,7 @@ struct vrend_sampler_view {
    GLenum depth_texture_mode;
    GLuint srgb_decode;
    GLuint levels;
+   bool emulated_rect;
    struct vrend_resource *texture;
 };
 
@@ -1021,7 +1022,6 @@ static void __report_core_warn(const char *fname, struct vrend_context *ctx,
 #define GLES_WARN_POINT_SIZE 4
 #define GLES_WARN_SEAMLESS_CUBE_MAP 5
 #define GLES_WARN_LOD_BIAS 6
-#define GLES_WARN_TEXTURE_RECT 7
 #define GLES_WARN_OFFSET_LINE 8
 #define GLES_WARN_OFFSET_POINT 9
 //#define GLES_WARN_ free slot 10
@@ -1042,7 +1042,6 @@ static const char *vrend_gles_warn_strings[] = {
    [GLES_WARN_POINT_SIZE]            = "Point Size",
    [GLES_WARN_SEAMLESS_CUBE_MAP]     = "Seamless Cube Map",
    [GLES_WARN_LOD_BIAS]              = "Lod Bias",
-   [GLES_WARN_TEXTURE_RECT]          = "Texture Rect",
    [GLES_WARN_OFFSET_LINE]           = "Offset Line",
    [GLES_WARN_OFFSET_POINT]          = "Offset Point",
    [GLES_WARN_FLATSHADE_FIRST]       = "Flatshade First",
@@ -1956,11 +1955,15 @@ int vrend_create_surface(struct vrend_context *ctx,
 
          glGenTextures(1, &surf->id);
          if (vrend_state.use_gles) {
-            if (target == GL_TEXTURE_RECTANGLE_NV ||
-                target == GL_TEXTURE_1D)
+            if (target == GL_TEXTURE_1D)
                target = GL_TEXTURE_2D;
             else if (target == GL_TEXTURE_1D_ARRAY)
                target = GL_TEXTURE_2D_ARRAY;
+         }
+
+         if (target == GL_TEXTURE_RECTANGLE_NV &&
+             !(tex_conv_table[format].flags & VIRGL_TEXTURE_CAN_TARGET_RECTANGLE)) {
+            target = GL_TEXTURE_2D;
          }
 
          glTextureView(surf->id, target, res->id, internalformat,
@@ -2229,13 +2232,18 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
 
    view->target = tgsitargettogltarget(pipe_target, res->base.nr_samples);
 
-   /* Work around TEXTURE_RECTANGLE and TEXTURE_1D missing on GLES */
+   /* Work around TEXTURE_1D missing on GLES */
    if (vrend_state.use_gles) {
-      if (view->target == GL_TEXTURE_RECTANGLE_NV ||
-          view->target == GL_TEXTURE_1D)
+      if (view->target == GL_TEXTURE_1D)
          view->target = GL_TEXTURE_2D;
       else if (view->target == GL_TEXTURE_1D_ARRAY)
          view->target = GL_TEXTURE_2D_ARRAY;
+   }
+
+   if (view->target == GL_TEXTURE_RECTANGLE_NV &&
+       !(tex_conv_table[view->format].flags & VIRGL_TEXTURE_CAN_TARGET_RECTANGLE)) {
+      view->emulated_rect = true;
+      view->target = GL_TEXTURE_2D;
    }
 
    view->val0 = val0;
@@ -3594,10 +3602,17 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
 
    for (int i = 0; i < sub_ctx->views[type].num_views; i++) {
       struct vrend_sampler_view *view = sub_ctx->views[type].views[i];
-      if (view && view->texture->target == GL_TEXTURE_BUFFER &&
+      if (!view)
+         continue;
+
+      if (view->emulated_rect) {
+         vrend_shader_sampler_views_mask_set(key->sampler_views_emulated_rect_mask, i);
+      }
+
+      if (view->texture->target == GL_TEXTURE_BUFFER &&
          tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
 
-         key->sampler_views_lower_swizzle_mask[i / 64] |= 1ull << (i % 64);
+         vrend_shader_sampler_views_mask_set(key->sampler_views_lower_swizzle_mask, i);
          key->tex_swizzle[i] = to_pipe_swizzle(view->gl_swizzle[0])  |
                to_pipe_swizzle(view->gl_swizzle[1]) << 3 |
                to_pipe_swizzle(view->gl_swizzle[2]) << 6 |
@@ -7253,11 +7268,12 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
    gr->target = tgsitargettogltarget(pr->target, pr->nr_samples);
    gr->storage_bits |= VREND_STORAGE_GL_TEXTURE;
 
-   /* ugly workaround for texture rectangle missing on GLES */
-   if (vrend_state.use_gles && gr->target == GL_TEXTURE_RECTANGLE_NV) {
+   /* ugly workaround for texture rectangle incompatibility */
+   if (gr->target == GL_TEXTURE_RECTANGLE_NV &&
+       !(tex_conv_table[format].flags & VIRGL_TEXTURE_CAN_TARGET_RECTANGLE)) {
       /* for some guests this is the only usage of rect */
       if (pr->width0 != 1 || pr->height0 != 1) {
-         report_gles_warn(NULL, GLES_WARN_TEXTURE_RECT);
+         vrend_printf("Warning: specifying format incompatible with GL_TEXTURE_RECTANGLE_NV\n");
       }
       gr->target = GL_TEXTURE_2D;
    }
@@ -9089,34 +9105,14 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-static inline
-GLenum translate_gles_emulation_texture_target(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_RECTANGLE: return GL_TEXTURE_2D;
-   case GL_TEXTURE_1D_ARRAY: return GL_TEXTURE_2D_ARRAY;
-   default: return target;
-   }
-}
-
 static inline void
 vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst_res,
                      uint32_t src_level, const struct pipe_box *src_box,
                      uint32_t dst_level, uint32_t dstx, uint32_t dsty, uint32_t dstz)
 {
-
-   GLenum src_target = tgsitargettogltarget(src_res->base.target, src_res->base.nr_samples);
-   GLenum dst_target = tgsitargettogltarget(dst_res->base.target, dst_res->base.nr_samples);
-
-   if (vrend_state.use_gles) {
-      src_target = translate_gles_emulation_texture_target(src_target);
-      dst_target = translate_gles_emulation_texture_target(dst_target);
-   }
-
-   glCopyImageSubData(src_res->id, src_target, src_level,
+   glCopyImageSubData(src_res->id, src_res->target, src_level,
                       src_box->x, src_box->y, src_box->z,
-                      dst_res->id, dst_target, dst_level,
+                      dst_res->id, dst_res->target, dst_level,
                       dstx, dsty, dstz,
                       src_box->width, src_box->height,src_box->depth);
 }

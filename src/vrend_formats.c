@@ -504,6 +504,14 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
       continue;
     }
 
+    if (is_desktop_gl) {
+      glTexImage2D(GL_TEXTURE_RECTANGLE_NV, 0, table[i].internalformat, 32, 32, 0, table[i].glformat, table[i].gltype, NULL);
+      status = glGetError();
+      if (status == GL_NO_ERROR) {
+        flags |= VIRGL_TEXTURE_CAN_TARGET_RECTANGLE;
+      }
+    }
+
     if (table[i].format < VIRGL_FORMAT_MAX  && util_format_is_depth_or_stencil(table[i].format)) {
       GLenum attachment;
 

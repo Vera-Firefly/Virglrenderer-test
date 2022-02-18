@@ -2879,11 +2879,9 @@ static void translate_tex(struct dump_ctx *ctx,
       }
    }
 
-   /* On GLES we have to normalized the coordinate for all but the texel fetch instruction */
-   if (ctx->cfg->use_gles &&
-       inst->Instruction.Opcode != TGSI_OPCODE_TXF &&
-       (inst->Texture.Texture == TGSI_TEXTURE_RECT ||
-        inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT)) {
+   /* We have to unnormalize the coordinate for all but the texel fetch instruction */
+   if (inst->Instruction.Opcode != TGSI_OPCODE_TXF &&
+       vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_emulated_rect_mask, sinfo->sreg_index)) {
 
       char buf[255];
       const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
@@ -2948,7 +2946,7 @@ static void translate_tex(struct dump_ctx *ctx,
                    tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
                    get_wm_string(twm), bias, offset);
 
-         if (ctx->key->sampler_views_lower_swizzle_mask[sinfo->sreg_index / 64] & (1ull << (sinfo->sreg_index % 64))) {
+         if (vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_lower_swizzle_mask, sinfo->sreg_index)) {
             int16_t  packed_swizzles = ctx->key->tex_swizzle[sinfo->sreg_index];
             emit_buff(&ctx->glsl_strbufs,  "   val = vec4(");
 
@@ -2971,7 +2969,8 @@ static void translate_tex(struct dump_ctx *ctx,
          emit_buff(&ctx->glsl_strbufs, "  %s  = val%s;\n}\n",
                    dst, dinfo->dst_override_no_wm[0] ? "" : writemask);
       }
-   } else if (ctx->cfg->glsl_version < 140 && (ctx->shader_req_bits & SHADER_REQ_SAMPLER_RECT)) {
+   } else if ((ctx->cfg->glsl_version < 140 && (ctx->shader_req_bits & SHADER_REQ_SAMPLER_RECT)) &&
+              !vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_emulated_rect_mask, sinfo->sreg_index)) {
       /* rect is special in GLSL 1.30 */
       if (inst->Texture.Texture == TGSI_TEXTURE_RECT)
          emit_buff(&ctx->glsl_strbufs, "%s = texture2DRect(%s, %s.xy)%s;\n",

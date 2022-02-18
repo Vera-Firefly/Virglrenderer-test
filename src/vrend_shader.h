@@ -184,6 +184,7 @@ struct vrend_shader_key {
    };
 
    uint64_t sampler_views_lower_swizzle_mask[VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH];
+   uint64_t sampler_views_emulated_rect_mask[VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH];
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    uint8_t num_in_cull : 4;
@@ -246,5 +247,19 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *ctx,
                                          int vertices_per_patch);
 
 bool vrend_shader_needs_alpha_func(const struct vrend_shader_key *key);
+
+static inline bool vrend_shader_sampler_views_mask_get(
+   const uint64_t mask[static VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH],
+   int index)
+{
+   return (mask[index / 64] >> (index % 64)) & 1;
+}
+
+static inline void vrend_shader_sampler_views_mask_set(
+   uint64_t mask[static VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH],
+   int index)
+{
+   mask[index / 64] |= 1ull << (index % 64);
+}
 
 #endif

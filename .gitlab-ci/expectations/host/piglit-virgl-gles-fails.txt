@@ -2590,7 +2590,6 @@ spec@oes_egl_image_external_essl3@oes_egl_image_external_essl3,ExpectedFail
 spec@oes_egl_image_external_essl3@oes_egl_image_external_essl3@oes_egl_image_external_essl3_imageLoad,ExpectedFail
 spec@oes_egl_image_external_essl3@oes_egl_image_external_essl3@oes_egl_image_external_essl3_imageStore,ExpectedFail
 spec@oes_point_sprite@arb_point_sprite-checkerboard_gles1,Fail
-spec@!opengl 1.0@gl-1.0-dlist-bitmap,Fail
 spec@!opengl 1.0@gl-1.0-drawbuffer-modes,ExpectedFail
 spec@!opengl 1.0@gl-1.0-edgeflag-const,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag,Fail
