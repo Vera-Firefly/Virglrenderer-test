@@ -6648,7 +6648,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
 
    /* disable for format testing */
    if (has_feature(feat_debug_cb)) {
-      glDisable(GL_DEBUG_OUTPUT);
+      glEnable(GL_DEBUG_OUTPUT);
    }
 
    vrend_clicbs->destroy_gl_context(gl_context);
