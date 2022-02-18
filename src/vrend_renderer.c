@@ -8191,7 +8191,7 @@ static void do_readpixels(struct vrend_resource *res,
       But we have found that at least Mesa returned the wrong formats, again
       luckily we are able to change Mesa. But just in case there are more bad
       drivers out there, or we mess up the format somewhere, we warn here. */
-   if (vrend_state.use_gles) {
+   if (vrend_state.use_gles && !vrend_format_is_ds(res->base.format)) {
       GLint imp;
       if (type != GL_UNSIGNED_BYTE && type != GL_UNSIGNED_INT &&
           type != GL_INT && type != GL_FLOAT) {
