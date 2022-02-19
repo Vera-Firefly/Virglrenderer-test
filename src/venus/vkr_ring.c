@@ -351,7 +351,7 @@ bool
 vkr_ring_stop(struct vkr_ring *ring)
 {
    mtx_lock(&ring->mutex);
-   if (ring->thread == thrd_current()) {
+   if (thrd_equal(ring->thread, thrd_current())) {
       mtx_unlock(&ring->mutex);
       return false;
    }
