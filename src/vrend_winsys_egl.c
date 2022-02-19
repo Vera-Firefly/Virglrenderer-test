@@ -140,10 +140,7 @@ static bool virgl_egl_get_interface(struct egl_funcs *funcs)
 
    assert(funcs);
 
-   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_KHR_platform_base")) {
-      funcs->eglGetPlatformDisplay =
-         (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplay");
-   } else if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
+   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
       funcs->eglGetPlatformDisplay =
          (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplayEXT");
    }
@@ -310,20 +307,7 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
      /* Make -Wdangling-else happy. */
    } else /* Fallback to surfaceless. */
 #endif
-   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_KHR_platform_base")) {
-      PFNEGLGETPLATFORMDISPLAYEXTPROC get_platform_display =
-         (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplay");
-
-      if (!get_platform_display)
-        goto fail;
-
-      if (surfaceless) {
-         egl->egl_display = get_platform_display (EGL_PLATFORM_SURFACELESS_MESA,
-                                                  EGL_DEFAULT_DISPLAY, NULL);
-      } else
-         egl->egl_display = get_platform_display (EGL_PLATFORM_GBM_KHR,
-                                                  (EGLNativeDisplayType)egl->gbm->device, NULL);
-   } else if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
+   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
       PFNEGLGETPLATFORMDISPLAYEXTPROC get_platform_display =
          (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplayEXT");
 
