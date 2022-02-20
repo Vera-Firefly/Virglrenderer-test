@@ -7781,28 +7781,6 @@ static bool check_iov_bounds(struct vrend_resource *res,
    return true;
 }
 
-static void get_current_texture(GLenum target, GLint* tex) {
-   switch (target) {
-#define GET_TEXTURE(a) \
-   case GL_TEXTURE_ ## a: \
-      glGetIntegerv(GL_TEXTURE_BINDING_ ## a, tex); return
-   GET_TEXTURE(1D);
-   GET_TEXTURE(2D);
-   GET_TEXTURE(3D);
-   GET_TEXTURE(1D_ARRAY);
-   GET_TEXTURE(2D_ARRAY);
-   GET_TEXTURE(RECTANGLE);
-   GET_TEXTURE(CUBE_MAP);
-   GET_TEXTURE(CUBE_MAP_ARRAY);
-   GET_TEXTURE(BUFFER);
-   GET_TEXTURE(2D_MULTISAMPLE);
-   GET_TEXTURE(2D_MULTISAMPLE_ARRAY);
-#undef GET_TEXTURE
-   default:
-      vrend_printf("Unknown texture target %x\n", target);
-   }
-}
-
 static void vrend_swizzle_data_bgra(uint64_t size, void *data) {
    const size_t bpp = 4;
    const size_t num_pixels = size / bpp;
@@ -7972,8 +7950,6 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          glDeleteFramebuffers(1, &fb_id);
       } else {
          uint32_t comp_size;
-         GLint old_tex = 0;
-         get_current_texture(res->target, &old_tex);
          glBindTexture(res->target, res->id);
 
          if (compressed) {
@@ -8068,7 +8044,6 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
             if (!vrend_state.use_core_profile)
                glPixelTransferf(GL_DEPTH_SCALE, 1.0);
          }
-         glBindTexture(res->target, old_tex);
       }
 
       if (stride && !need_temp) {
@@ -8140,8 +8115,6 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
       break;
    }
 
-   GLint old_tex = 0;
-   get_current_texture(res->target, &old_tex);
    glBindTexture(res->target, res->id);
    if (res->target == GL_TEXTURE_CUBE_MAP) {
       target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + info->box->z;
@@ -8172,7 +8145,6 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
                        info->stride, info->box, info->level, info->offset,
                        false);
    free(data);
-   glBindTexture(res->target, old_tex);
    return 0;
 }
 
