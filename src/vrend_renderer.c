@@ -10363,7 +10363,7 @@ void vrend_render_condition(struct vrend_context *ctx,
    ctx->sub->cond_render_gl_mode = glmode;
    if (has_feature(feat_gl_conditional_render))
       glBeginConditionalRender(q->id, glmode);
-   if (has_feature(feat_nv_conditional_render))
+   else if (has_feature(feat_nv_conditional_render))
       glBeginConditionalRenderNV(q->id, glmode);
 }
 
