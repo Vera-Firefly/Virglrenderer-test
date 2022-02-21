@@ -75,6 +75,7 @@
 #define SHADER_REQ_SAMPLER_BUF        (1ULL << 31)
 #define SHADER_REQ_GEOMETRY_SHADER    (1ULL << 32)
 #define SHADER_REQ_BLEND_EQUATION_ADVANCED (1ULL << 33)
+#define SHADER_REQ_EXPLICIT_ATTRIB_LOCATION (1ULL << 34)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -1985,7 +1986,14 @@ iter_property(struct tgsi_iterate_context *iter,
       }
       break;
    case TGSI_PROPERTY_SEPARABLE_PROGRAM:
-      ctx->separable_program = prop->u[0].Data;
+      /* GLES is very strict in how separable shaders interfaces should be matched.
+       * It doesn't allow, for example, inputs without matching outputs. So, we just
+       * disable separable shaders for GLES. */
+      if (!ctx->cfg->use_gles) {
+          ctx->separable_program = prop->u[0].Data;
+          ctx->shader_req_bits |= SHADER_REQ_SEPERATE_SHADER_OBJECTS;
+          ctx->shader_req_bits |= SHADER_REQ_EXPLICIT_ATTRIB_LOCATION;
+      }
       break;
    default:
       vrend_printf("unhandled property: %x\n", prop->Property.PropertyName);
@@ -5809,6 +5817,9 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       if (ctx->shader_req_bits & SHADER_REQ_NV_IMAGE_FORMATS)
          emit_ext(glsl_strbufs, "NV_image_formats", "require");
 
+      if (ctx->shader_req_bits & SHADER_REQ_SEPERATE_SHADER_OBJECTS)
+         emit_ext(glsl_strbufs, "EXT_separate_shader_objects", "require");
+
       if ((ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ||
            ctx->prog_type == TGSI_PROCESSOR_TESS_EVAL)) {
          if (ctx->cfg->glsl_version < 320)
@@ -5876,6 +5887,9 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
 
       if (ctx->shader_req_bits & SHADER_REQ_SEPERATE_SHADER_OBJECTS)
          emit_ext(glsl_strbufs, "ARB_separate_shader_objects", "require");
+
+      if (ctx->shader_req_bits & SHADER_REQ_EXPLICIT_ATTRIB_LOCATION)
+         emit_ext(glsl_strbufs, "ARB_explicit_attrib_location", "require");
 
       if (ctx->shader_req_bits & SHADER_REQ_ARRAYS_OF_ARRAYS)
          emit_ext(glsl_strbufs, "ARB_arrays_of_arrays", "require");
@@ -6459,6 +6473,11 @@ emit_ios_generic(const struct dump_ctx *ctx,
    if (io->overlapping_array)
       return;
 
+   if (ctx->separable_program && io->name == TGSI_SEMANTIC_GENERIC &&
+       !(ctx->prog_type == TGSI_PROCESSOR_FRAGMENT && strcmp(inout, "in") != 0)) {
+      snprintf(layout, sizeof(layout), "layout(location = %d)\n", io->sid);
+   }
+
    if (io->usage_mask != 0xf && io->name == TGSI_SEMANTIC_GENERIC)
       t = type[io->num_components - 1];
 
@@ -6630,13 +6649,18 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
 static void
 emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
                const char *prefix, const struct vrend_shader_io *io,
-               const char *inout, int size)
+               const char *inout, int size, bool emit_location)
 {
    const char type[4][6] = {"float", " vec2", " vec3", " vec4"};
    const char *t = " vec4";
 
    if (io->usage_mask != 0xf)
       t = type[io->num_components - 1];
+
+   /* We start these locations from 32 and proceed downwards, to avoid
+    * conflicting with generic IO locations. */
+   if (emit_location)
+      emit_hdrf(glsl_strbufs, "layout(location = %d) ", 32 - io->sid);
 
    if (io->last == io->first)
       emit_hdrf(glsl_strbufs, "%s %s %s %s;\n", prefix, inout, t, io->glsl_name);
@@ -7073,9 +7097,11 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
 
    for (i = 0; i < ctx->num_inputs; i++) {
       if (!ctx->inputs[i].glsl_predefined_no_emit) {
-         if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
-            emit_ios_patch(glsl_strbufs, "",  &ctx->inputs[i], "in", ctx->inputs[i].last - ctx->inputs[i].first + 1);
-         else
+         if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
+            emit_ios_patch(glsl_strbufs, "",  &ctx->inputs[i], "in",
+                           ctx->inputs[i].last - ctx->inputs[i].first + 1,
+                           ctx->separable_program);
+         } else
             emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, "", &ctx->inputs[i], "in", "[]");
       }
    }
@@ -7086,13 +7112,16 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
 
    if (ctx->patch_ios.output_range.used)
       emit_ios_patch(glsl_strbufs, "patch", &ctx->patch_ios.output_range.io, "out",
-                     ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.first + 1);
+                     ctx->patch_ios.output_range.io.last -
+                        ctx->patch_ios.output_range.io.first + 1,
+                     ctx->separable_program);
 
    for (i = 0; i < ctx->num_outputs; i++) {
       if (!ctx->outputs[i].glsl_predefined_no_emit) {
          if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
             emit_ios_patch(glsl_strbufs, "patch", &ctx->outputs[i], "out",
-                           ctx->outputs[i].last - ctx->outputs[i].first + 1);
+                           ctx->outputs[i].last - ctx->outputs[i].first + 1,
+                           ctx->separable_program);
          } else
             emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_out, "", &ctx->outputs[i], "out", "[]");
       } else if (ctx->outputs[i].invariant || ctx->outputs[i].precise) {
@@ -7120,7 +7149,9 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
 
    if (ctx->patch_ios.input_range.used)
       emit_ios_patch(glsl_strbufs, "patch", &ctx->patch_ios.input_range.io, "in",
-                     ctx->patch_ios.input_range.io.last - ctx->patch_ios.input_range.io.first + 1);
+                     ctx->patch_ios.input_range.io.last -
+                        ctx->patch_ios.input_range.io.first + 1,
+                     ctx->separable_program);
 
    if (generic_ios->input_range.used)
       emit_ios_indirect_generics_input(ctx, glsl_strbufs, "[]");
@@ -7129,7 +7160,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
       if (!ctx->inputs[i].glsl_predefined_no_emit) {
          if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
             emit_ios_patch(glsl_strbufs, "patch", &ctx->inputs[i], "in",
-                           ctx->inputs[i].last - ctx->inputs[i].first + 1);
+                           ctx->inputs[i].last - ctx->inputs[i].first + 1,
+                           ctx->separable_program);
          else
             emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, "", &ctx->inputs[i], "in", "[]");
       }
@@ -7202,11 +7234,15 @@ static void emit_match_interfaces(struct vrend_glsl_strbufs *glsl_strbufs,
       int i = u_bit_scan64(&mask);
       emit_interp_info(glsl_strbufs, ctx->cfg, &ctx->key->fs_info,
                        semantic->name, i, ctx->key->flatshade);
+
+      if (semantic->name == TGSI_SEMANTIC_GENERIC && ctx->separable_program)
+          emit_hdrf(glsl_strbufs, "layout(location=%d) ", i);
+
       emit_hdrf(glsl_strbufs, "out vec4 %s_%c%d%s;\n",
                 get_stage_output_name_prefix(ctx->prog_type),
                 semantic->prefix, i,
                 ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
-         }
+   }
 }
 
 static int emit_ios(const struct dump_ctx *ctx,
