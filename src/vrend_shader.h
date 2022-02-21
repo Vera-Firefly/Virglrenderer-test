@@ -32,6 +32,9 @@
 
 #define VIRGL_NUM_CLIP_PLANES 8
 
+#define VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH \
+   ((PIPE_MAX_SHADER_SAMPLER_VIEWS + 63) / 64)
+
 enum gl_advanced_blend_mode
 {
    BLEND_NONE = 0,
@@ -180,7 +183,7 @@ struct vrend_shader_key {
       } gs;
    };
 
-   uint32_t sampler_views_lower_swizzle_mask;
+   uint64_t sampler_views_lower_swizzle_mask[VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH];
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    uint8_t num_in_cull : 4;

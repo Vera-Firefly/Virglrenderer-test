@@ -3597,7 +3597,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       if (view && view->texture->target == GL_TEXTURE_BUFFER &&
          tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
 
-         key->sampler_views_lower_swizzle_mask |= 1 << i;
+         key->sampler_views_lower_swizzle_mask[i / 64] |= 1ull << (i % 64);
          key->tex_swizzle[i] = to_pipe_swizzle(view->gl_swizzle[0])  |
                to_pipe_swizzle(view->gl_swizzle[1]) << 3 |
                to_pipe_swizzle(view->gl_swizzle[2]) << 6 |

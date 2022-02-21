@@ -2948,7 +2948,7 @@ static void translate_tex(struct dump_ctx *ctx,
                    tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
                    get_wm_string(twm), bias, offset);
 
-         if (ctx->key->sampler_views_lower_swizzle_mask & (1 << sinfo->sreg_index)) {
+         if (ctx->key->sampler_views_lower_swizzle_mask[sinfo->sreg_index / 64] & (1ull << (sinfo->sreg_index % 64))) {
             int16_t  packed_swizzles = ctx->key->tex_swizzle[sinfo->sreg_index];
             emit_buff(&ctx->glsl_strbufs,  "   val = vec4(");
 
