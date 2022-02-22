@@ -1711,10 +1711,7 @@ static int vrend_decode_ctx_submit_cmd(struct virgl_context *ctx,
    uint32_t buf_offset = 0;
 
    while (buf_offset < buf_total) {
-#ifndef NDEBUG
       const uint32_t cur_offset = buf_offset;
-#endif
-
       const uint32_t *buf = &typed_buf[buf_offset];
       uint32_t len = *buf >> 16;
       uint32_t cmd = *buf & 0xff;

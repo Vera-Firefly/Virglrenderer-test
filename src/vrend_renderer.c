@@ -3864,11 +3864,9 @@ int vrend_create_shader(struct vrend_context *ctx,
          free(tokens);
          ret = EINVAL;
          goto error;
-      } else {
-#ifdef NDEBUG
-            free(sel->tmp_buf);
-            sel->tmp_buf = NULL;
-#endif
+      } else if (!VREND_DEBUG_ENABLED) {
+         free(sel->tmp_buf);
+         sel->tmp_buf = NULL;
       }
       free(tokens);
       sub_ctx->long_shader_in_progress_handle[type] = 0;
@@ -6489,9 +6487,9 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
          vrend_state.max_texture_3d_size =
          vrend_state.max_texture_cube_size = 16384;
 
-#ifndef NDEBUG
-   vrend_init_debug_flags();
-#endif
+   if (VREND_DEBUG_ENABLED) {
+      vrend_init_debug_flags();
+   }
 
    ctx_params.shared = false;
    for (uint32_t i = 0; i < ARRAY_SIZE(gl_versions); i++) {
