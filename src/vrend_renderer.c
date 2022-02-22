@@ -10701,7 +10701,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 8;
+   caps->v2.host_feature_check_version = 9;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
@@ -10935,16 +10935,30 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    for (int i = 0; i < VIRGL_FORMAT_MAX; i++) {
       enum virgl_formats fmt = (enum virgl_formats)i;
       if (tex_conv_table[i].internalformat != 0) {
+         const char *readback_str = "";
+         const char *multisample_str = "";
+         bool log_texture_feature = false;
          if (vrend_format_can_readback(fmt)) {
-            VREND_DEBUG(dbg_features, NULL, "Support readback of %s\n",
-                        util_format_name(fmt));
+            log_texture_feature = true;
+            readback_str = "readback";
             set_format_bit(&caps->v2.supported_readback_formats, fmt);
          }
+         if (vrend_format_can_multisample(fmt)) {
+            log_texture_feature = true;
+            multisample_str = "multisample";
+            set_format_bit(&caps->v2.supported_multisample_formats, fmt);
+         }
+         if (log_texture_feature)
+            VREND_DEBUG(dbg_features, NULL, "%s: Supports %s %s\n",
+                        util_format_name(fmt), readback_str, multisample_str);
       }
 
       if (vrend_format_can_scanout(fmt))
          set_format_bit(&caps->v2.scanout, fmt);
    }
+
+   /* Needed for framebuffer_no_attachment */
+   set_format_bit(&caps->v2.supported_multisample_formats, VIRGL_FORMAT_NONE);
 
    if (has_feature(feat_clear_texture))
       caps->v2.capability_bits |= VIRGL_CAP_CLEAR_TEXTURE;
