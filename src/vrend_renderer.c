@@ -11000,7 +11000,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    }
 
    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
-   caps->v2.max_texture_image_units = max;
+   caps->v2.max_texture_image_units = MIN2(max, PIPE_MAX_SHADER_SAMPLER_VIEWS);
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
