@@ -355,8 +355,6 @@ struct global_renderer_state {
    uint32_t stop_sync_thread : 1;
    /* async fence callback */
    bool use_async_fence_cb : 1;
-   /* Needed on GLES to inject a TCS */
-   uint32_t bgra_srgb_emulation_loaded : 1;
 
 #ifdef HAVE_EPOXY_EGL_H
    uint32_t use_egl_fence : 1;
