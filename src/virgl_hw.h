@@ -468,7 +468,7 @@ enum virgl_formats {
 #define VIRGL_BIND_STAGING       (1 << 19)
 #define VIRGL_BIND_SHARED        (1 << 20)
 
-/* bit (1<<21) reserved for non-functional VIRGL_BIND_PREFER_EMULATED_BGRA */
+#define VIRGL_BIND_PREFER_EMULATED_BGRA  (1 << 21) /* non-functional */
 
 #define VIRGL_BIND_LINEAR (1 << 22)
 
