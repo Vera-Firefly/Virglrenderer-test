@@ -29,6 +29,7 @@ struct vkr_physical_device {
    bool KHR_external_fence_fd;
 
    VkPhysicalDeviceMemoryProperties memory_properties;
+   VkPhysicalDeviceIDProperties id_properties;
    bool is_memory_export_supported;
    struct gbm_device *gbm_device;
 

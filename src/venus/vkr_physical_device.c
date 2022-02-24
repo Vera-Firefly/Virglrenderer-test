@@ -96,6 +96,18 @@ vkr_instance_lookup_physical_device(struct vkr_instance *instance,
 }
 
 static void
+vkr_physical_device_init_id_properties(struct vkr_physical_device *physical_dev)
+{
+   VkPhysicalDevice handle = physical_dev->base.handle.physical_device;
+   physical_dev->id_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+   VkPhysicalDeviceProperties2 props2 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+      .pNext = &physical_dev->id_properties
+   };
+   vkGetPhysicalDeviceProperties2(handle, &props2);
+}
+
+static void
 vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_dev)
 {
    VkPhysicalDevice handle = physical_dev->base.handle.physical_device;
@@ -295,6 +307,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
          MIN2(physical_dev->properties.apiVersion, instance->api_version);
       vkr_physical_device_init_extensions(physical_dev, instance);
       vkr_physical_device_init_memory_properties(physical_dev);
+      vkr_physical_device_init_id_properties(physical_dev);
 
       list_inithead(&physical_dev->devices);
 
