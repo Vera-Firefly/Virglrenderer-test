@@ -945,7 +945,8 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
                                           blob.type,
                                           blob.u.fd,
                                           args->iovecs,
-                                          args->num_iovs);
+                                          args->num_iovs,
+                                          &blob.opaque_fd_metadata);
       if (!res) {
          close(blob.u.fd);
          return -ENOMEM;
@@ -1104,7 +1105,8 @@ virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_
                                        fd_type,
                                        args->fd,
                                        NULL,
-                                       0);
+                                       0,
+                                       NULL);
    if (!res)
       return -ENOMEM;
 

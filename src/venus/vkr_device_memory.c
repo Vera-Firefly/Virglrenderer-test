@@ -227,6 +227,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
    mem->gbm_bo = gbm_bo;
+   mem->allocation_size = args->pAllocateInfo->allocationSize;
+   mem->memory_type_index = mem_type_index;
 }
 
 static void

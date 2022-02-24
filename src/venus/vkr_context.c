@@ -342,6 +342,13 @@ vkr_context_get_blob_locked(struct virgl_context *base,
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:
          handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+         assert(sizeof(blob->opaque_fd_metadata.driver_uuid) == VK_UUID_SIZE);
+         memcpy(blob->opaque_fd_metadata.driver_uuid,
+                mem->device->physical_device->id_properties.driverUUID, VK_UUID_SIZE);
+         memcpy(blob->opaque_fd_metadata.device_uuid,
+                mem->device->physical_device->id_properties.deviceUUID, VK_UUID_SIZE);
+         blob->opaque_fd_metadata.allocation_size = mem->allocation_size;
+         blob->opaque_fd_metadata.memory_type_index = mem->memory_type_index;
          break;
       default:
          return -EINVAL;

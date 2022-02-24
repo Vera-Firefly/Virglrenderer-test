@@ -20,6 +20,9 @@ struct vkr_device_memory {
    /* gbm bo backing non-external mappable memory */
    struct gbm_bo *gbm_bo;
 
+   uint64_t allocation_size;
+   uint32_t memory_type_index;
+
    bool exported;
 };
 VKR_DEFINE_OBJECT_CAST(device_memory, VK_OBJECT_TYPE_DEVICE_MEMORY, VkDeviceMemory)

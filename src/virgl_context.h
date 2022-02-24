@@ -44,6 +44,8 @@ struct virgl_context_blob {
    } u;
 
    uint32_t map_info;
+
+   struct virgl_resource_opaque_fd_metadata opaque_fd_metadata;
 };
 
 struct virgl_context;

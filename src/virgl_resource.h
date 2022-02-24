@@ -39,6 +39,13 @@ enum virgl_resource_fd_type {
    VIRGL_RESOURCE_FD_INVALID = -1,
 };
 
+struct virgl_resource_opaque_fd_metadata {
+    uint8_t driver_uuid[16];
+    uint8_t device_uuid[16];
+    uint64_t allocation_size;
+    uint32_t memory_type_index;
+};
+
 /**
  * A global cross-context resource.  A virgl_resource is not directly usable
  * by renderer contexts, but must be attached and imported into renderer
@@ -72,6 +79,8 @@ struct virgl_resource {
 
    uint64_t map_size;
    void *mapped;
+
+   struct virgl_resource_opaque_fd_metadata opaque_fd_metadata;
 
    void *private_data;
 };
@@ -114,7 +123,8 @@ virgl_resource_create_from_fd(uint32_t res_id,
                               enum virgl_resource_fd_type fd_type,
                               int fd,
                               const struct iovec *iov,
-                              int iov_count);
+                              int iov_count,
+                              const struct virgl_resource_opaque_fd_metadata *opaque_fd_metadata);
 
 struct virgl_resource *
 virgl_resource_create_from_iov(uint32_t res_id,
