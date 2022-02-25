@@ -10,7 +10,6 @@ shaders@point-vertex-id gl_vertexid divisor,Fail
 shaders@point-vertex-id gl_vertexid,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid divisor,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid,Fail
-spec@arb_clear_texture@arb_clear_texture-base-formats,Fail
 spec@arb_clear_texture@arb_clear_texture-depth,Fail
 spec@arb_clear_texture@arb_clear_texture-sized-formats,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-clear,Fail
