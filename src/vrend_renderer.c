@@ -4154,6 +4154,17 @@ void vrend_clear_texture(struct vrend_context* ctx,
    format = tex_conv_table[fmt].glformat;
    type = tex_conv_table[fmt].gltype;
 
+   /* 32-bit BGRA resources are always reordered to RGBA ordering before
+    * submission to the host driver. Reorder red/blue color bytes in
+    * the clear color to match. */
+   if (vrend_state.use_gles && vrend_format_is_bgra(fmt)) {
+      assert(util_format_get_blocksizebits(fmt) >= 24);
+      VREND_DEBUG(dbg_bgra, ctx, "swizzling clear_texture color for bgra texture\n");
+      uint8_t temp = ((uint8_t*)data)[0];
+      ((uint8_t*)data)[0] = ((uint8_t*)data)[2];
+      ((uint8_t*)data)[2] = temp;
+   }
+
    if (vrend_state.use_gles) {
       glClearTexSubImageEXT(res->id, level,
                             box->x, box->y, box->z,
