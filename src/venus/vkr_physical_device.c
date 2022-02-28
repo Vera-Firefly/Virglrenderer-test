@@ -225,6 +225,14 @@ vkr_physical_device_init_properties(struct vkr_physical_device *physical_dev)
 }
 
 static void
+vkr_physical_device_init_proc_table(struct vkr_physical_device *physical_dev,
+                                    struct vkr_instance *instance)
+{
+   vn_util_init_physical_device_proc_table(instance->base.handle.instance,
+                                           &physical_dev->proc_table);
+}
+
+static void
 vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkEnumeratePhysicalDevices *args)
 {
@@ -281,6 +289,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
 
       physical_dev->base.handle.physical_device = instance->physical_device_handles[i];
 
+      vkr_physical_device_init_proc_table(physical_dev, instance);
       vkr_physical_device_init_properties(physical_dev);
       physical_dev->api_version =
          MIN2(physical_dev->properties.apiVersion, instance->api_version);

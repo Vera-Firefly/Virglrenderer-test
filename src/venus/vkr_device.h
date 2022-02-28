@@ -6,14 +6,17 @@
 #ifndef VKR_DEVICE_H
 #define VKR_DEVICE_H
 
-#include "vkr_common.h"
+#include "venus-protocol/vn_protocol_renderer_util.h"
 
+#include "vkr_common.h"
 #include "vkr_context.h"
 
 struct vkr_device {
    struct vkr_object base;
 
    struct vkr_physical_device *physical_device;
+
+   struct vn_device_proc_table proc_table;
 
    /* Vulkan 1.2 */
    PFN_vkGetSemaphoreCounterValue GetSemaphoreCounterValue;

@@ -143,6 +143,19 @@ vkr_log(const char *fmt, ...)
    virgl_log(line);
 }
 
+void
+vkr_extension_table_init(struct vn_info_extension_table *table,
+                         const char *const *exts,
+                         uint32_t count)
+{
+   memset(table, 0, sizeof(*table));
+   for (uint32_t i = 0; i < count; i++) {
+      const struct vn_info_extension *ext = vn_info_extension_get(exts[i]);
+      if (ext)
+         table->enabled[ext->index] = true;
+   }
+}
+
 uint32_t
 vkr_extension_get_spec_version(const char *name)
 {

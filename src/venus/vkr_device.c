@@ -220,6 +220,19 @@ vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
 }
 
 static void
+vkr_device_init_proc_table(struct vkr_device *dev,
+                           uint32_t api_version,
+                           const char *const *exts,
+                           uint32_t count)
+{
+   struct vn_info_extension_table ext_table;
+   vkr_extension_table_init(&ext_table, exts, count);
+
+   vn_util_init_device_proc_table(dev->base.handle.device, api_version, &ext_table,
+                                  &dev->proc_table);
+}
+
+static void
 vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
                             struct vn_command_vkCreateDevice *args)
 {
@@ -272,9 +285,11 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   free(exts);
-
    dev->physical_device = physical_dev;
+
+   vkr_device_init_proc_table(dev, physical_dev->api_version, exts, ext_count);
+
+   free(exts);
 
    args->ret = vkr_device_create_queues(ctx, dev, args->pCreateInfo->queueCreateInfoCount,
                                         args->pCreateInfo->pQueueCreateInfos);

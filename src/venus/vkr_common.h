@@ -59,6 +59,7 @@
       .begin = (offset), .end = (offset) + (size)                                        \
    }
 
+struct vn_info_extension_table;
 struct vkr_context;
 struct vkr_instance;
 struct vkr_physical_device;
@@ -165,6 +166,11 @@ vkr_api_version_cap_minor(uint32_t version, uint32_t cap)
       version = cap - VK_API_VERSION_PATCH(cap) + VK_API_VERSION_PATCH(version);
    return version;
 }
+
+void
+vkr_extension_table_init(struct vn_info_extension_table *table,
+                         const char *const *exts,
+                         uint32_t count);
 
 uint32_t
 vkr_extension_get_spec_version(const char *name);
