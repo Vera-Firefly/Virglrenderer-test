@@ -97,6 +97,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_external_memory_dma_buf = true,
    .EXT_image_drm_format_modifier = true,
    .EXT_line_rasterization = true,
+   .EXT_provoking_vertex = true,
    .EXT_queue_family_foreign = true,
    .EXT_transform_feedback = true,
 };
