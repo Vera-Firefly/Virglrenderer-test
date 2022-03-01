@@ -579,6 +579,17 @@ vkr_dispatch_vkCmdDrawIndexedIndirectCount(
 }
 
 static void
+vkr_dispatch_vkCmdSetLineStippleEXT(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdSetLineStippleEXT *args)
+{
+   struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
+
+   vn_replace_vkCmdSetLineStippleEXT_args_handle(args);
+   cmd->device->cmd_set_line_stipple(args->commandBuffer, args->lineStippleFactor,
+                                     args->lineStipplePattern);
+}
+
+static void
 vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkCmdBindTransformFeedbackBuffersEXT *args)
@@ -855,6 +866,8 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdDrawIndirectCount = vkr_dispatch_vkCmdDrawIndirectCount;
    dispatch->dispatch_vkCmdDrawIndexedIndirectCount =
       vkr_dispatch_vkCmdDrawIndexedIndirectCount;
+
+   dispatch->dispatch_vkCmdSetLineStippleEXT = vkr_dispatch_vkCmdSetLineStippleEXT;
 
    dispatch->dispatch_vkCmdBindTransformFeedbackBuffersEXT =
       vkr_dispatch_vkCmdBindTransformFeedbackBuffersEXT;

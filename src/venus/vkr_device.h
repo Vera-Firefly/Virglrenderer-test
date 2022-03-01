@@ -44,6 +44,8 @@ struct vkr_device {
    PFN_vkCmdSetStencilTestEnable cmd_set_stencil_test_enable;
    PFN_vkCmdSetViewportWithCount cmd_set_viewport_with_count;
 
+   PFN_vkCmdSetLineStippleEXT cmd_set_line_stipple;
+
    PFN_vkCmdBindTransformFeedbackBuffersEXT cmd_bind_transform_feedback_buffers;
    PFN_vkCmdBeginTransformFeedbackEXT cmd_begin_transform_feedback;
    PFN_vkCmdEndTransformFeedbackEXT cmd_end_transform_feedback;

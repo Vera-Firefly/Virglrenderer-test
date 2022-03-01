@@ -185,6 +185,9 @@ vkr_device_init_entry_points(struct vkr_device *dev, uint32_t api_version)
             handle, "vkCmdSetViewportWithCountEXT");
    }
 
+   dev->cmd_set_line_stipple =
+      (PFN_vkCmdSetLineStippleEXT)vkGetDeviceProcAddr(handle, "vkCmdSetLineStippleEXT");
+
    dev->cmd_bind_transform_feedback_buffers =
       (PFN_vkCmdBindTransformFeedbackBuffersEXT)vkGetDeviceProcAddr(
          handle, "vkCmdBindTransformFeedbackBuffersEXT");
