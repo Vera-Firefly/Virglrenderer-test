@@ -4704,6 +4704,11 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
                ctx->generic_ios.output_range.io.last = ctx->outputs[i].sid;
             }
          }
+
+         if (ctx->key->output.num_indirect_generic > 0)
+            ctx->generic_ios.output_range.io.last = ctx->generic_ios.output_range.io.sid + ctx->key->output.num_indirect_generic - 1;
+         if (ctx->key->output.num_indirect_patch > 0)
+            ctx->patch_ios.output_range.io.last = ctx->patch_ios.output_range.io.sid + ctx->key->output.num_indirect_patch - 1;
       }
       snprintf(ctx->patch_ios.output_range.io.glsl_name, 64, "%s_p%d",
                get_stage_output_name_prefix(ctx->prog_type), ctx->patch_ios.output_range.io.sid);
