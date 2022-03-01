@@ -4734,6 +4734,29 @@ static inline void vn_encode_vkCmdDrawIndirectByteCountEXT_reply(struct vn_cs_en
     /* skip args->vertexStride */
 }
 
+static inline void vn_decode_vkCmdSetLineStippleEXT_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdSetLineStippleEXT *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    vn_decode_uint32_t(dec, &args->lineStippleFactor);
+    vn_decode_uint16_t(dec, &args->lineStipplePattern);
+}
+
+static inline void vn_replace_vkCmdSetLineStippleEXT_args_handle(struct vn_command_vkCmdSetLineStippleEXT *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    /* skip args->lineStippleFactor */
+    /* skip args->lineStipplePattern */
+}
+
+static inline void vn_encode_vkCmdSetLineStippleEXT_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdSetLineStippleEXT *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdSetLineStippleEXT_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->lineStippleFactor */
+    /* skip args->lineStipplePattern */
+}
+
 static inline void vn_decode_vkCmdSetCullMode_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdSetCullMode *args)
 {
     vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
@@ -7100,6 +7123,31 @@ static inline void vn_dispatch_vkCmdDrawIndirectByteCountEXT(struct vn_dispatch_
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCmdDrawIndirectByteCountEXT_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdSetLineStippleEXT(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdSetLineStippleEXT args;
+
+    if (!ctx->dispatch_vkCmdSetLineStippleEXT) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdSetLineStippleEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdSetLineStippleEXT(ctx, &args);
+
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
+       vn_encode_vkCmdSetLineStippleEXT_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

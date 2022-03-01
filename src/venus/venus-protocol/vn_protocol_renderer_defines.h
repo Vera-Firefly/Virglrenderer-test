@@ -329,6 +329,9 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
     VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
     VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
+    VK_COMMAND_TYPE_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_EXT = 235,
+    VK_COMMAND_TYPE_vkGetCalibratedTimestampsEXT_EXT = 236,
+    VK_COMMAND_TYPE_vkCmdSetLineStippleEXT_EXT = 237,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
     VK_COMMAND_TYPE_vkExecuteCommandStreamsMESA_EXT = 180,
@@ -1680,6 +1683,24 @@ struct vn_command_vkGetDescriptorSetLayoutSupport {
     VkDescriptorSetLayoutSupport* pSupport;
 };
 
+struct vn_command_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT {
+    VkPhysicalDevice physicalDevice;
+    uint32_t* pTimeDomainCount;
+    VkTimeDomainEXT* pTimeDomains;
+
+    VkResult ret;
+};
+
+struct vn_command_vkGetCalibratedTimestampsEXT {
+    VkDevice device;
+    uint32_t timestampCount;
+    const VkCalibratedTimestampInfoEXT* pTimestampInfos;
+    uint64_t* pTimestamps;
+    uint64_t* pMaxDeviation;
+
+    VkResult ret;
+};
+
 struct vn_command_vkCreateRenderPass2 {
     VkDevice device;
     const VkRenderPassCreateInfo2* pCreateInfo;
@@ -1826,6 +1847,12 @@ struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress {
     const VkDeviceMemoryOpaqueCaptureAddressInfo* pInfo;
 
     uint64_t ret;
+};
+
+struct vn_command_vkCmdSetLineStippleEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t lineStippleFactor;
+    uint16_t lineStipplePattern;
 };
 
 struct vn_command_vkGetPhysicalDeviceToolProperties {
@@ -2273,6 +2300,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkDestroySamplerYcbcrConversion)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroySamplerYcbcrConversion *args);
     void (*dispatch_vkGetDeviceQueue2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceQueue2 *args);
     void (*dispatch_vkGetDescriptorSetLayoutSupport)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDescriptorSetLayoutSupport *args);
+    void (*dispatch_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT *args);
+    void (*dispatch_vkGetCalibratedTimestampsEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkGetCalibratedTimestampsEXT *args);
     void (*dispatch_vkCreateRenderPass2)(struct vn_dispatch_context *ctx, struct vn_command_vkCreateRenderPass2 *args);
     void (*dispatch_vkCmdBeginRenderPass2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginRenderPass2 *args);
     void (*dispatch_vkCmdNextSubpass2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdNextSubpass2 *args);
@@ -2292,6 +2321,7 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetBufferOpaqueCaptureAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferOpaqueCaptureAddress *args);
     void (*dispatch_vkGetBufferDeviceAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferDeviceAddress *args);
     void (*dispatch_vkGetDeviceMemoryOpaqueCaptureAddress)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args);
+    void (*dispatch_vkCmdSetLineStippleEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLineStippleEXT *args);
     void (*dispatch_vkGetPhysicalDeviceToolProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceToolProperties *args);
     void (*dispatch_vkCmdSetCullMode)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetCullMode *args);
     void (*dispatch_vkCmdSetFrontFace)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetFrontFace *args);
