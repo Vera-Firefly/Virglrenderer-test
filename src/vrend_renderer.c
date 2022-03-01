@@ -1764,6 +1764,66 @@ static bool vrend_link(GLuint id)
    return true;
 }
 
+static bool vrend_link_separable_shader(struct vrend_sub_context *sub_ctx,
+                                        struct vrend_shader *shader, int type)
+{
+   int i;
+   char name[64];
+
+   if (type == PIPE_SHADER_VERTEX || type == PIPE_SHADER_GEOMETRY ||
+       type == PIPE_SHADER_TESS_EVAL)
+       set_stream_out_varyings(sub_ctx, shader->program_id, &shader->sel->sinfo);
+
+   if (type == PIPE_SHADER_FRAGMENT && shader->sel->sinfo.num_outputs > 1) {
+      bool dual_src_linked = util_blend_state_is_dual(&sub_ctx->blend_state, 0);
+      if (dual_src_linked) {
+         if (has_feature(feat_dual_src_blend)) {
+            if (!vrend_state.use_gles) {
+               glBindFragDataLocationIndexed(shader->program_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexed(shader->program_id, 0, 1, "fsout_c1");
+            } else {
+               glBindFragDataLocationIndexedEXT(shader->program_id, 0, 0, "fsout_c0");
+               glBindFragDataLocationIndexedEXT(shader->program_id, 0, 1, "fsout_c1");
+            }
+         } else {
+            vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND, 0);
+         }
+      } else if (!vrend_state.use_gles && has_feature(feat_dual_src_blend)) {
+         /* On GLES without dual source blending we emit the layout directly in the shader
+          * so there is no need to define the binding here */
+         for (int i = 0; i < shader->sel->sinfo.num_outputs; ++i) {
+            if (shader->sel->sinfo.fs_output_layout[i] >= 0) {
+               char buf[64];
+               snprintf(buf, sizeof(buf), "fsout_c%d",
+                        shader->sel->sinfo.fs_output_layout[i]);
+               glBindFragDataLocationIndexed(shader->program_id,
+                                             shader->sel->sinfo.fs_output_layout[i],
+                                             0, buf);
+            }
+         }
+      }
+   }
+
+   if (type == PIPE_SHADER_VERTEX && has_feature(feat_gles31_vertex_attrib_binding)) {
+      uint32_t mask = shader->sel->sinfo.attrib_input_mask;
+      while (mask) {
+         i = u_bit_scan(&mask);
+         snprintf(name, 32, "in_%d", i);
+         glBindAttribLocation(shader->program_id, i, name);
+      }
+   }
+
+   shader->is_linked = vrend_link(shader->program_id);
+
+   if (!shader->is_linked) {
+      /* dump shaders */
+      vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
+      vrend_shader_dump(shader);
+   }
+
+   return shader->is_linked;
+}
+
 static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_context *ctx,
                                                                  struct vrend_shader *cs)
 {
@@ -5185,8 +5245,16 @@ void vrend_link_program_hook(struct vrend_context *ctx, uint32_t *handles)
    if (handles[PIPE_SHADER_COMPUTE])
       return;
 
+   struct vrend_shader_selector *vs = vrend_object_lookup(ctx->sub->object_hash,
+                                                          handles[PIPE_SHADER_VERTEX],
+                                                          VIRGL_OBJECT_SHADER);
+   struct vrend_shader_selector *fs = vrend_object_lookup(ctx->sub->object_hash,
+                                                          handles[PIPE_SHADER_FRAGMENT],
+                                                          VIRGL_OBJECT_SHADER);
+
    /* If we can't force linking, exit early */
-   if (!handles[PIPE_SHADER_VERTEX] || !handles[PIPE_SHADER_FRAGMENT])
+   if ((!handles[PIPE_SHADER_VERTEX] || !handles[PIPE_SHADER_FRAGMENT]) &&
+       (!vs || !vs->sinfo.separable_program) && (!fs || !fs->sinfo.separable_program))
        return;
 
    /* We can't link a pre-link a TCS without a TES, exit early */
@@ -5204,6 +5272,17 @@ void vrend_link_program_hook(struct vrend_context *ctx, uint32_t *handles)
       vrend_bind_shader(ctx, handles[type], type);
    }
 
+   /* Force early-linking for separable shaders, since they don't depend on other stages */
+   for (uint32_t type = 0; type < PIPE_SHADER_TYPES; ++type) {
+       if (ctx->sub->shaders[type] && ctx->sub->shaders[type]->sinfo.separable_program) {
+           if (!ctx->sub->shaders[type]->current->is_compiled)
+               vrend_compile_shader(ctx->sub, ctx->sub->shaders[type]->current);
+           if (!ctx->sub->shaders[type]->current->is_linked)
+               vrend_link_separable_shader(ctx->sub, ctx->sub->shaders[type]->current, type);
+       }
+   }
+
+   /* Force early-link of the whole shader program. */
    vrend_select_program(ctx->sub, 1);
 
    ctx->sub->shader_dirty = true;
