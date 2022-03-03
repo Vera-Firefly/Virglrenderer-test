@@ -98,6 +98,7 @@ static inline bool
 vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
 {
    if (unlikely(!id || _mesa_hash_table_search(ctx->object_table, &id))) {
+      vkr_log("invalid object id %" PRIu64, id);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return false;
    }
