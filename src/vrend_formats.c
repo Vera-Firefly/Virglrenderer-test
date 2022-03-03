@@ -294,12 +294,6 @@ static struct vrend_format_table srgb_formats[] = {
   { VIRGL_FORMAT_R8_SRGB, GL_SR8_EXT, GL_RED, GL_UNSIGNED_BYTE, NO_SWIZZLE },
 };
 
-static struct vrend_format_table gl_srgb_formats[] =
-{
-  { VIRGL_FORMAT_B8G8R8X8_SRGB, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, RGB1_SWIZZLE },
-  { VIRGL_FORMAT_B8G8R8A8_SRGB, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, NO_SWIZZLE },
-};
-
 static struct vrend_format_table bit10_formats[] = {
   { VIRGL_FORMAT_B10G10R10X2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE },
   { VIRGL_FORMAT_B10G10R10A2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE },
@@ -327,6 +321,8 @@ static struct vrend_format_table bptc_formats[] = {
 static struct vrend_format_table gl_bgra_formats[] = {
   { VIRGL_FORMAT_B8G8R8X8_UNORM, GL_RGBA8, GL_BGRA, GL_UNSIGNED_BYTE, RGB1_SWIZZLE },
   { VIRGL_FORMAT_B8G8R8A8_UNORM, GL_RGBA8, GL_BGRA, GL_UNSIGNED_BYTE, NO_SWIZZLE },
+  { VIRGL_FORMAT_B8G8R8X8_SRGB, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, RGB1_SWIZZLE },
+  { VIRGL_FORMAT_B8G8R8A8_SRGB, GL_SRGB8_ALPHA8, GL_BGRA, GL_UNSIGNED_BYTE, NO_SWIZZLE },
 };
 
 static struct vrend_format_table gles_bgra_formats[] = {
@@ -611,7 +607,6 @@ void vrend_build_format_list_gl(void)
    */
   add_formats(gl_base_rgba_formats);
   add_formats(gl_bgra_formats);
-  add_formats(gl_srgb_formats);
 }
 
 void vrend_build_format_list_gles(void)
