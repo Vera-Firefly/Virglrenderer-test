@@ -890,24 +890,6 @@ bool vrend_format_is_bgra(enum virgl_formats format) {
            format == VIRGL_FORMAT_B8G8R8A8_SRGB);
 }
 
-static bool vrend_resource_is_emulated_bgra(struct vrend_resource *res)
-{
-   /* On all hosts, BGR* resources are swizzled on upload and stored with RGB*
-    * internal format. On GLES hosts, we must perform that swizzle ourselves.
-    * However, for externally-stored resources such as EGL images and
-    * GBM-allocated dma-bufs, the pixel data is expected to be stored with BGR*
-    * byte-ordering. Emulation is added during texture sampling, blitting, and
-    * rendering to correct the red/blue color inversion caused by the mismatch
-    * between storage expectation and the RGB* internal format given to the host
-    * GL[ES] API.
-    */
-   if (vrend_format_is_bgra(res->base.format) &&
-       (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE) || res->egl_image ||
-        has_bit(res->storage_bits, VREND_STORAGE_GBM_BUFFER) || res->gbm_bo))
-      return true;
-   return false;
-}
-
 static bool vrend_resource_supports_view(const struct vrend_resource *res,
                                          UNUSED enum virgl_formats view_format)
 {
