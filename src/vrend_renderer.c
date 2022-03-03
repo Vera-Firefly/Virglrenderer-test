@@ -7935,9 +7935,8 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          need_temp = true;
       }
 
-      if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
-          !vrend_resource_is_emulated_bgra(res))
-          need_temp = true;
+      if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format))
+         need_temp = true;
 
       if (vrend_state.use_core_profile == true &&
           (res->y_0_top || (res->base.format == VIRGL_FORMAT_Z24X8_UNORM))) {
@@ -8041,8 +8040,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
 
          /* GLES doesn't allow format conversions, which we need for BGRA resources with RGBA
           * internal format. So we fallback to performing a CPU swizzle before uploading. */
-         if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
-             !vrend_resource_is_emulated_bgra(res)) {
+         if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format)) {
             VREND_DEBUG(dbg_bgra, ctx, "manually swizzling bgra->rgba on upload since gles+bgra\n");
             vrend_swizzle_data_bgra(send_size, data);
          }
@@ -8319,9 +8317,8 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
    if (num_iovs > 1 || separate_invert)
       need_temp = 1;
 
-   if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
-       !vrend_resource_is_emulated_bgra(res))
-       need_temp = true;
+   if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format))
+      need_temp = true;
 
    if (need_temp) {
       send_size = util_format_get_nblocks(res->base.format, info->box->width, info->box->height) * info->box->depth * util_format_get_blocksize(res->base.format);
@@ -8384,8 +8381,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
     * on upload and need to do the same on readback.
     * The notable exception is externally-stored (GBM/EGL) BGR* resources, for which BGR*
     * byte-ordering is used instead to match external access patterns. */
-   if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format) &&
-       !vrend_resource_is_emulated_bgra(res)) {
+   if (vrend_state.use_gles && vrend_format_is_bgra(res->base.format)) {
       VREND_DEBUG(dbg_bgra, ctx, "manually swizzling rgba->bgra on readback since gles+bgra\n");
       vrend_swizzle_data_bgra(send_size, data);
    }
@@ -9064,7 +9060,7 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
        * On the contrary, externally-stored BGR* resources are assumed to remain in BGR* format at
        * all times.
        */
-      if (vrend_format_is_bgra(dst_res->base.format) && !vrend_resource_is_emulated_bgra(dst_res))
+      if (vrend_state.use_gles && vrend_format_is_bgra(dst_res->base.format))
          vrend_swizzle_data_bgra(total_size, tptr);
    } else {
       uint32_t read_chunk_size;
