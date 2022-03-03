@@ -2333,14 +2333,6 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
          swizzle[3] = tex_conv_table[view->format].swizzle[swizzle[3]];
    }
 
-   if (vrend_resource_is_emulated_bgra(view->texture)) {
-      uint8_t temp = swizzle[0];
-      swizzle[0] = swizzle[2];
-      swizzle[2] = temp;
-      VREND_DEBUG(dbg_bgra, ctx, "swizzling sampler channels on %s resource: (%d %d %d %d)\n",
-                  util_format_name(view->texture->base.format),
-                  swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
-   }
    for (unsigned i = 0; i < 4; ++i)
       view->gl_swizzle[i] = to_gl_swizzle(swizzle[i]);
 
@@ -2382,6 +2374,24 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
         int base_level = view->val1 & 0xff;
         int max_level = (view->val1 >> 8) & 0xff;
         view->levels = (max_level - base_level) + 1;
+
+        /* texture views for eglimage-backed bgr* resources are usually not
+         * supported since they cause unintended red/blue channel-swapping.
+         * Since we have control over the swizzle parameters of the sampler, we
+         * can just compensate in this case by swapping the red/blue channels
+         * back, and still benefit from automatic srgb decoding.
+         * If the red/blue swap is intended, we just let it happen and don't
+         * need to explicit change to the sampler's swizzle parameters. */
+        if (!vrend_resource_supports_view(view->texture, view->format) &&
+            vrend_format_is_bgra(view->format)) {
+              VREND_DEBUG(dbg_tex, ctx, "texture view with red/blue swizzle created for EGL-backed texture sampler"
+                          " (format: %s; view: %s)\n",
+                          util_format_name(view->texture->base.format),
+                          util_format_name(view->format));
+              GLint temp = view->gl_swizzle[0];
+              view->gl_swizzle[0] = view->gl_swizzle[2];
+              view->gl_swizzle[2] = temp;
+        }
 
         glTextureView(view->id, view->target, view->texture->id, internalformat,
                       base_level, view->levels,
