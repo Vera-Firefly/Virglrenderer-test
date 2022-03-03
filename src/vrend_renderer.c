@@ -2647,31 +2647,31 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
    sub_ctx->swizzle_output_rgb_to_bgr = 0;
    sub_ctx->needs_manual_srgb_encode_bitmask = 0;
    for (int i = 0; i < sub_ctx->nr_cbufs; i++) {
-      if (sub_ctx->surf[i]) {
-         struct vrend_surface *surf = sub_ctx->surf[i];
+      struct vrend_surface *surf = sub_ctx->surf[i];
+      if (!surf)
+         continue;
 
-         /* glTextureView() is not applied to eglimage-backed surfaces, because it
-          * causes unintended format interpretation errors. But a swizzle may still
-          * be necessary, e.g. for rgb* views on bgr* resources. Ensure this
-          * happens by adding a shader swizzle to the final write of such surfaces.
-          */
-         if (!vrend_resource_supports_view(surf->texture, surf->format) &&
-             !vrend_format_is_bgra(surf->format)) {
-            sub_ctx->swizzle_output_rgb_to_bgr |= 1 << i;
-         }
+      /* glTextureView() is not applied to eglimage-backed surfaces, because it
+       * causes unintended format interpretation errors. But a swizzle may still
+       * be necessary, e.g. for rgb* views on bgr* resources. Ensure this
+       * happens by adding a shader swizzle to the final write of such surfaces.
+       */
+      if (!vrend_resource_supports_view(surf->texture, surf->format) &&
+          !vrend_format_is_bgra(surf->format)) {
+         sub_ctx->swizzle_output_rgb_to_bgr |= 1 << i;
+      }
 
-         /* glTextureView() on eglimage-backed bgr* textures for is not supported.
-          * To work around this for colorspace conversion, views are avoided
-          * manual colorspace conversion is instead injected in the fragment
-          * shader writing to such surfaces and during glClearColor(). */
-         if (util_format_is_srgb(surf->format) &&
-             !vrend_resource_supports_view(surf->texture, surf->format)) {
-            VREND_DEBUG(dbg_tex, sub_ctx->parent,
-                        "manually converting linear->srgb for EGL-backed framebuffer color attachment 0x%x"
-                        " (surface format is %s; resource format is %s)\n",
-                        i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
-            sub_ctx->needs_manual_srgb_encode_bitmask |= 1 << i;
-         }
+      /* glTextureView() on eglimage-backed bgr* textures for is not supported.
+       * To work around this for colorspace conversion, views are avoided
+       * manual colorspace conversion is instead injected in the fragment
+       * shader writing to such surfaces and during glClearColor(). */
+      if (util_format_is_srgb(surf->format) &&
+          !vrend_resource_supports_view(surf->texture, surf->format)) {
+         VREND_DEBUG(dbg_tex, sub_ctx->parent,
+                     "manually converting linear->srgb for EGL-backed framebuffer color attachment 0x%x"
+                     " (surface format is %s; resource format is %s)\n",
+                     i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
+         sub_ctx->needs_manual_srgb_encode_bitmask |= 1 << i;
       }
    }
 
