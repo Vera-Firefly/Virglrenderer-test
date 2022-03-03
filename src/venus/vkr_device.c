@@ -36,10 +36,12 @@ vkr_device_create_queues(struct vkr_context *ctx,
           * with flags set to zero. It was fixed in spec version 1.1.130.
           * Work around drivers that are implementing this buggy behavior
           */
-         if (info.flags)
+         if (info.flags) {
             vkGetDeviceQueue2(dev->base.handle.device, &info, &handle);
-         else
-            vkGetDeviceQueue(dev->base.handle.device, info.queueFamilyIndex, info.queueIndex, &handle);
+         } else {
+            vkGetDeviceQueue(dev->base.handle.device, info.queueFamilyIndex,
+                             info.queueIndex, &handle);
+         }
 
          struct vkr_queue *queue = vkr_queue_create(
             ctx, dev, info.flags, info.queueFamilyIndex, info.queueIndex, handle);
