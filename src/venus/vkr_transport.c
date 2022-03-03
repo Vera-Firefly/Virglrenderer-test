@@ -22,6 +22,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
 
    att = vkr_context_get_resource(ctx, args->pStream->resourceId);
    if (!att) {
+      vkr_log("failed to set reply stream: invalid res_id %u", args->pStream->resourceId);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
@@ -45,8 +46,10 @@ copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMES
    struct vkr_resource_attachment *att;
 
    att = vkr_context_get_resource(ctx, stream->resourceId);
-   if (!att)
+   if (!att) {
+      vkr_log("failed to copy command stream: invalid res_id %u", stream->resourceId);
       return NULL;
+   }
 
    /* seek to offset */
    size_t iov_offset = stream->offset;
