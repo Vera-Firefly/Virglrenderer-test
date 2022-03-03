@@ -3987,22 +3987,28 @@ void vrend_clear(struct vrend_context *ctx,
    float colorf[4];
    memcpy(colorf, color->f, sizeof(colorf));
 
-   if (sub_ctx->nr_cbufs && sub_ctx->surf[0] &&
-       vrend_resource_has_24bpp_internal_format(sub_ctx->surf[0]->texture) &&
-       util_format_is_srgb(sub_ctx->surf[0]->format)) {
-      VREND_DEBUG(dbg_tex, ctx,
-                  "manually converting glClearColor from linear->srgb colorspace for EGL-backed framebuffer color attachment"
-                  " (surface format is %s; resource format is %s)\n",
-                  util_format_name(sub_ctx->surf[0]->format),
-                  util_format_name(sub_ctx->surf[0]->texture->base.format));
-      for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
-         colorf[i] = vrend_color_convert_linear_to_srgb(colorf[i]);
+   {
+      struct vrend_surface *surf = sub_ctx->surf[0];
+      if (sub_ctx->nr_cbufs && surf &&
+          util_format_is_srgb(surf->format) &&
+          !vrend_resource_supports_view(surf->texture, surf->format)) {
+         VREND_DEBUG(dbg_tex, ctx,
+                     "manually converting glClearColor from linear->srgb colorspace for EGL-backed framebuffer color attachment"
+                     " (surface format is %s; resource format is %s)\n",
+                     util_format_name(surf->format),
+                     util_format_name(surf->texture->base.format));
+         for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
+            colorf[i] = vrend_color_convert_linear_to_srgb(colorf[i]);
+      }
    }
 
    if (buffers & PIPE_CLEAR_COLOR) {
       if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_format_is_emulated_alpha(sub_ctx->surf[0]->format)) {
          glClearColor(colorf[3], 0.0, 0.0, 0.0);
-      } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_resource_is_emulated_bgra(sub_ctx->surf[0]->texture)) {
+      } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] &&
+                 !vrend_resource_supports_view(sub_ctx->surf[0]->texture,
+                                               sub_ctx->surf[0]->format) &&
+                 !vrend_format_is_bgra(sub_ctx->surf[0]->format)) {
          VREND_DEBUG(dbg_bgra, ctx, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
          glClearColor(colorf[2], colorf[1], colorf[0], colorf[3]);
       } else {
