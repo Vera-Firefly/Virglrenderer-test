@@ -469,6 +469,8 @@ struct vrend_blit_info {
    bool can_fbo_blit;
    bool has_texture_srgb_decode;
    bool has_srgb_write_control;
+   bool needs_manual_srgb_decode;
+   bool needs_manual_srgb_encode;
 };
 
 void vrend_renderer_resource_get_info(struct pipe_resource *pres,

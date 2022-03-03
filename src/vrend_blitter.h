@@ -62,6 +62,26 @@
    "#extension GL_OES_texture_storage_multisample_2d_array: require\n" \
    "precision mediump float;\n"                 \
 
+
+#define FS_FUNC_COL_SRGB_DECODE                                         \
+   "cvec4 srgb_decode(cvec4 col) {\n"                                   \
+   "   vec3 temp = vec3(col.rgb);\n"                                    \
+   "   bvec3 thresh = lessThanEqual(temp, vec3(0.04045));\n"            \
+   "   vec3 a = temp / vec3(12.92);\n"                                  \
+   "   vec3 b = pow((temp + vec3(0.055)) / vec3(1.055), vec3(2.4));\n"  \
+   "   return cvec4(clamp(mix(b, a, thresh), 0.0, 1.0), col.a);\n"      \
+   "}\n"
+
+#define FS_FUNC_COL_SRGB_ENCODE                                               \
+   "cvec4 srgb_encode(cvec4 col) {\n"                                         \
+   "   vec3 temp = vec3(col.rgb);\n"                                          \
+   "   bvec3 thresh = lessThanEqual(temp, vec3(0.0031308));\n"                \
+   "   vec3 a = temp * vec3(12.92);\n"                                        \
+   "   vec3 b = (vec3(1.055) * pow(temp, vec3(1.0 / 2.4))) - vec3(0.055);\n"  \
+   "   return cvec4(mix(b, a, thresh), col.a);\n"                             \
+   "}\n"
+
+
 #define VS_PASSTHROUGH_BODY                     \
    "in vec4 arg0;\n"                            \
    "in vec4 arg1;\n"                            \
@@ -74,43 +94,54 @@
 #define VS_PASSTHROUGH_GL HEADER_GL VS_PASSTHROUGH_BODY
 #define VS_PASSTHROUGH_GLES HEADER_GLES VS_PASSTHROUGH_BODY
 
-
-#define FS_TEXFETCH_COL_BODY                    \
-   "#define cvec4 %s\n"                         \
-   "uniform mediump %csampler%s samp;\n"        \
-   "in vec4 tc;\n"                              \
-   "out cvec4 FragColor;\n"                     \
-   "void main() {\n"                            \
-   "   cvec4 texel = texture(samp, tc%s);\n"    \
-   "   FragColor = cvec4(%s);\n"                \
+#define FS_TEXFETCH_COL_BODY                                 \
+   "#define cvec4 %s\n"                                      \
+   "%s\n" /* conditional decode() */                         \
+   "%s\n" /* conditional encode() */                         \
+   "#define decode %s\n"                                     \
+   "#define encode %s\n"                                     \
+   "uniform mediump %csampler%s samp;\n"                     \
+   "in vec4 tc;\n"                                           \
+   "out cvec4 FragColor;\n"                                  \
+   "void main() {\n"                                         \
+   "   cvec4 texel = decode(cvec4(texture(samp, tc%s)));\n"  \
+   "   FragColor = encode(cvec4(%s));\n"                     \
    "}\n"
 
-#define FS_TEXFETCH_COL_GLES_1D_BODY            \
-   "#define cvec4 %s\n"                         \
-   "uniform mediump %csampler%s samp;\n"        \
-   "in vec4 tc;\n"                              \
-   "out cvec4 FragColor;\n"                     \
-   "void main() {\n"                            \
-   "   cvec4 texel = texture(samp, vec2(tc%s, 0.5));\n"    \
-   "   FragColor = cvec4(%s);\n"                \
+#define FS_TEXFETCH_COL_GLES_1D_BODY                              \
+   "#define cvec4 %s\n"                                           \
+   "%s\n" /* conditional decode() */                              \
+   "%s\n" /* conditional encode() */                              \
+   "#define decode %s\n"                                          \
+   "#define encode %s\n"                                          \
+   "uniform mediump %csampler%s samp;\n"                          \
+   "in vec4 tc;\n"                                                \
+   "out cvec4 FragColor;\n"                                       \
+   "void main() {\n"                                              \
+   "   cvec4 texel = decode(texture(samp, vec2(tc%s, 0.5)));\n"   \
+   "   FragColor = encode(cvec4(%s));\n"                          \
    "}\n"
 
 #define FS_TEXFETCH_COL_GL FS_HEADER_GL FS_TEXFETCH_COL_BODY
 #define FS_TEXFETCH_COL_GLES FS_HEADER_GLES FS_TEXFETCH_COL_BODY
 #define FS_TEXFETCH_COL_GLES_1D FS_HEADER_GLES FS_TEXFETCH_COL_GLES_1D_BODY
 
-#define FS_TEXFETCH_COL_MSAA_BODY                       \
-   "#define cvec4 %s\n"                                 \
-   "uniform mediump %csampler%s samp;\n"                \
-   "in vec4 tc;\n"                                      \
-   "out cvec4 FragColor;\n"                             \
-   "void main() {\n"                                    \
-   "   const int num_samples = %d;\n"                   \
-   "   cvec4 texel = cvec4(0);\n"                       \
-   "   for (int i = 0; i < num_samples; ++i) \n"        \
-   "      texel += texelFetch(samp, %s(tc%s), i);\n"    \
-   "   texel = texel / cvec4(num_samples);\n"           \
-   "   FragColor = cvec4(%s);\n"                        \
+#define FS_TEXFETCH_COL_MSAA_BODY                             \
+   "#define cvec4 %s\n"                                       \
+   "%s\n" /* conditional decode() */                          \
+   "%s\n" /* conditional encode() */                          \
+   "#define decode %s\n"                                      \
+   "#define encode %s\n"                                      \
+   "uniform mediump %csampler%s samp;\n"                      \
+   "in vec4 tc;\n"                                            \
+   "out cvec4 FragColor;\n"                                   \
+   "void main() {\n"                                          \
+   "   const int num_samples = %d;\n"                         \
+   "   cvec4 texel = cvec4(0);\n"                             \
+   "   for (int i = 0; i < num_samples; ++i) \n"              \
+   "      texel += decode(texelFetch(samp, %s(tc%s), i));\n"  \
+   "   texel = texel / cvec4(num_samples);\n"                 \
+   "   FragColor = encode(cvec4(%s));\n"                      \
    "}\n"
 
 #define FS_TEXFETCH_COL_MSAA_GL FS_HEADER_GL FS_TEXFETCH_COL_MSAA_BODY

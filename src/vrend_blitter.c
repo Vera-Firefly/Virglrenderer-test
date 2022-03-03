@@ -41,9 +41,11 @@
 
 #define DEST_SWIZZLE_SNIPPET_SIZE 64
 
-#define BLIT_USE_GLES      (1 << 0)
-#define BLIT_USE_MSAA      (1 << 1)
-#define BLIT_USE_DEPTH     (1 << 2)
+#define BLIT_USE_GLES           (1 << 0)
+#define BLIT_USE_MSAA           (1 << 1)
+#define BLIT_USE_DEPTH          (1 << 2)
+#define BLIT_MANUAL_SRGB_DECODE (1 << 3)
+#define BLIT_MANUAL_SRGB_ENCODE (1 << 4)
 
 struct vec4 {
    GLfloat x,y,z,w;
@@ -89,6 +91,8 @@ struct blit_swizzle_and_type {
 struct blit_prog_key {
    bool is_color: 1;
    bool is_msaa: 1;
+   bool manual_srgb_decode: 1;
+   bool manual_srgb_encode: 1;
    uint8_t num_samples;
    int pipe_tex_target;
    struct {
@@ -251,11 +255,12 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                       int tgsi_tex_target,
                                       enum tgsi_return_type tgsi_ret,
                                       const uint8_t swizzle[4],
-                                      int nr_samples)
+                                      int nr_samples,
+                                      uint32_t flags)
 {
    char shader_buf[4096];
    struct blit_swizzle_and_type swizzle_and_type;
-   unsigned flags = 0;
+   unsigned swizzle_flags = 0;
    char dest_swizzle_snippet[DEST_SWIZZLE_SNIPPET_SIZE] = "texel";
    const char *ext_str = "";
    bool msaa = nr_samples > 0;
@@ -271,13 +276,16 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    }
 
    if (blit_ctx->use_gles)
-      flags |= BLIT_USE_GLES;
+      swizzle_flags |= BLIT_USE_GLES;
    if (msaa)
-      flags |= BLIT_USE_MSAA;
-   blit_get_swizzle(tgsi_tex_target, flags, &swizzle_and_type);
+      swizzle_flags |= BLIT_USE_MSAA;
+   blit_get_swizzle(tgsi_tex_target, swizzle_flags, &swizzle_and_type);
 
    if (swizzle)
       create_dest_swizzle_snippet(swizzle, dest_swizzle_snippet);
+
+   bool needs_manual_srgb_decode = has_bit(flags, BLIT_MANUAL_SRGB_DECODE);
+   bool needs_manual_srgb_encode = has_bit(flags, BLIT_MANUAL_SRGB_ENCODE);
 
    if (msaa)
       snprintf(shader_buf, 4096, blit_ctx->use_gles ?
@@ -285,6 +293,10 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                                    : FS_TEXFETCH_COL_MSAA_GLES)
                                  : FS_TEXFETCH_COL_MSAA_GL,
          ext_str, vec4_type_for_tgsi_ret(tgsi_ret),
+         needs_manual_srgb_decode ? FS_FUNC_COL_SRGB_DECODE : "",
+         needs_manual_srgb_encode ? FS_FUNC_COL_SRGB_ENCODE : "",
+         needs_manual_srgb_decode ? "srgb_decode" : "",
+         needs_manual_srgb_encode ? "srgb_encode" : "",
          vrend_shader_samplerreturnconv(tgsi_ret),
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target),
          nr_samples, swizzle_and_type.type, swizzle_and_type.swizzle, dest_swizzle_snippet);
@@ -294,6 +306,10 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                     FS_TEXFETCH_COL_GLES_1D : FS_TEXFETCH_COL_GLES)
                                  : FS_TEXFETCH_COL_GL,
          ext_str, vec4_type_for_tgsi_ret(tgsi_ret),
+         needs_manual_srgb_decode ? FS_FUNC_COL_SRGB_DECODE : "",
+         needs_manual_srgb_encode ? FS_FUNC_COL_SRGB_ENCODE : "",
+         needs_manual_srgb_decode ? "srgb_decode" : "",
+         needs_manual_srgb_encode ? "srgb_encode" : "",
          vrend_shader_samplerreturnconv(tgsi_ret),
          vrend_shader_samplertypeconv(blit_ctx->use_gles, tgsi_tex_target),
          swizzle_and_type.swizzle, dest_swizzle_snippet);
@@ -362,7 +378,8 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                        int pipe_tex_target,
                                        unsigned nr_samples,
                                        const struct vrend_format_table *src_entry,
-                                       const uint8_t swizzle[static 4])
+                                       const uint8_t swizzle[static 4],
+                                       uint32_t flags)
 {
    bool needs_swizzle = false;
    for (uint i = 0; i < 4; ++i) {
@@ -375,6 +392,8 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    struct blit_prog_key key = {
       .is_color = true,
       .is_msaa = nr_samples > 0,
+      .manual_srgb_decode = has_bit(flags, BLIT_MANUAL_SRGB_DECODE),
+      .manual_srgb_encode = has_bit(flags, BLIT_MANUAL_SRGB_ENCODE),
       .num_samples = nr_samples,
       .pipe_tex_target  = pipe_tex_target
    };
@@ -396,7 +415,8 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
       enum tgsi_return_type tgsi_ret = tgsi_ret_for_format(src_entry->format);
       int msaa_samples = nr_samples > 0 ? (tgsi_ret == TGSI_RETURN_TYPE_UNORM ? nr_samples : 1) : 0;
 
-      GLuint fs_id = blit_build_frag_tex_col(blit_ctx, tgsi_tex, tgsi_ret, swizzle, msaa_samples);
+      GLuint fs_id = blit_build_frag_tex_col(blit_ctx, tgsi_tex, tgsi_ret,
+                                             swizzle, msaa_samples, flags);
       glAttachShader(prog_id, fs_id);
       if(!blit_shader_link_and_check(prog_id))
          return 0;
@@ -789,10 +809,27 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    } else {
       VREND_DEBUG(dbg_blit, ctx, "BLIT: applying swizzle during blit: (%d %d %d %d)\n",
                   info->swizzle[0], info->swizzle[1], info->swizzle[2], info->swizzle[3]);
+
+      if (info->needs_manual_srgb_decode)
+         VREND_DEBUG(dbg_blit, ctx,
+                     "BLIT: applying manual srgb->linear conversion for src %s(%s)\n",
+                     util_format_name(src_res->base.format),
+                     util_format_name(info->b.src.format));
+
+      if (info->needs_manual_srgb_encode)
+         VREND_DEBUG(dbg_blit, ctx,
+                     "BLIT: applying manual linear->srgb conversion for dst %s(%s)\n",
+                     util_format_name(dst_res->base.format),
+                     util_format_name(info->b.dst.format));
+
+      uint32_t flags = 0;
+      flags |= info->needs_manual_srgb_decode ? BLIT_MANUAL_SRGB_DECODE : 0;
+      flags |= info->needs_manual_srgb_encode ? BLIT_MANUAL_SRGB_ENCODE : 0;
       prog_id = blit_get_frag_tex_col(blit_ctx, src_res->base.target,
                                       src_res->base.nr_samples,
                                       orig_src_entry,
-                                      info->swizzle);
+                                      info->swizzle,
+                                      flags);
    }
    if (!prog_id) {
       vrend_printf("Blitter: unable to create or find shader program\n");
@@ -808,7 +845,9 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
    glDrawBuffers(1, &buffers);
 
    glBindTexture(src_res->target, info->src_view);
-   vrend_set_tex_param(src_res, &info->b, info->has_texture_srgb_decode);
+   vrend_set_tex_param(src_res, &info->b,
+                       info->has_texture_srgb_decode &&
+                       !info->needs_manual_srgb_decode);
    vrend_set_vertex_param(prog_id);
 
    set_dsa_write_depth_keep_stencil();
@@ -822,7 +861,8 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
       glDisable(GL_SCISSOR_TEST);
 
    if (info->has_srgb_write_control) {
-      if (util_format_is_srgb(info->b.dst.format) || util_format_is_srgb(info->b.src.format)) {
+      if (!info->needs_manual_srgb_encode &&
+          (util_format_is_srgb(info->b.dst.format) || util_format_is_srgb(info->b.src.format))) {
          VREND_DEBUG(dbg_blit, ctx, "%s: Enable GL_FRAMEBUFFER_SRGB\n", __func__);
          glEnable(GL_FRAMEBUFFER_SRGB);
       } else {
