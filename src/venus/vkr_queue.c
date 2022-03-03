@@ -53,6 +53,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
       vkResetFences(dev->base.handle.device, 1, &sync->fence);
    }
 
+   sync->device_lost = false;
    sync->flags = fence_flags;
    sync->queue_id = queue_id;
    sync->fence_cookie = fence_cookie;
@@ -101,9 +102,11 @@ vkr_queue_get_signaled_syncs(struct vkr_queue *queue,
       mtx_unlock(&queue->mutex);
    } else {
       LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head) {
-         VkResult result = vkGetFenceStatus(dev->base.handle.device, sync->fence);
-         if (result == VK_NOT_READY)
-            break;
+         if (!sync->device_lost) {
+            VkResult result = vkGetFenceStatus(dev->base.handle.device, sync->fence);
+            if (result == VK_NOT_READY)
+               break;
+         }
 
          bool is_last_sync = sync->head.next == &queue->pending_syncs;
 
@@ -201,8 +204,13 @@ vkr_queue_thread(void *arg)
 
       mtx_unlock(&queue->mutex);
 
-      VkResult result =
-         vkWaitForFences(dev->base.handle.device, 1, &sync->fence, true, ns_per_sec * 3);
+      VkResult result;
+      if (sync->device_lost) {
+         result = VK_ERROR_DEVICE_LOST;
+      } else {
+         result = vkWaitForFences(dev->base.handle.device, 1, &sync->fence, true,
+                                  ns_per_sec * 3);
+      }
 
       mtx_lock(&queue->mutex);
 

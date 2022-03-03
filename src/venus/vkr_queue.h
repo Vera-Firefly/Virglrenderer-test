@@ -10,6 +10,7 @@
 
 struct vkr_queue_sync {
    VkFence fence;
+   bool device_lost;
 
    uint32_t flags;
    uint64_t queue_id;

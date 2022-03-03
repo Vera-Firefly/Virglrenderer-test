@@ -141,7 +141,9 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
       return -ENOMEM;
 
    result = vkQueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
-   if (result != VK_SUCCESS) {
+   if (result == VK_ERROR_DEVICE_LOST) {
+      sync->device_lost = true;
+   } else if (result != VK_SUCCESS) {
       vkr_device_free_queue_sync(dev, sync);
       return -1;
    }
