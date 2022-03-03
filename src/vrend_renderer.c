@@ -908,6 +908,21 @@ static bool vrend_resource_is_emulated_bgra(struct vrend_resource *res)
    return false;
 }
 
+static bool vrend_resource_supports_view(const struct vrend_resource *res,
+                                         UNUSED enum virgl_formats view_format)
+{
+   /* Texture views on eglimage-backed bgr* resources are not supported and
+    * lead to unexpected format interpretation since internally allocated
+    * bgr* resources use GL_RGBA8 internal format, while eglimage-backed
+    * resources use BGRA8, but GL lacks an equivalent internalformat enum.
+    *
+    * For views that don't require colorspace conversion, we can add swizzles
+    * instead. For views that do require colorspace conversion, manual srgb
+    * decode/encode is required. */
+   return !(vrend_format_is_bgra(res->base.format) &&
+            has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE));
+}
+
 static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
 {
    /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
