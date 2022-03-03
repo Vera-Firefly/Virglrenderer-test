@@ -923,6 +923,24 @@ static bool vrend_resource_supports_view(const struct vrend_resource *res,
             has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE));
 }
 
+static inline bool
+vrend_resource_needs_srgb_decode(struct vrend_resource *res,
+                                 enum virgl_formats view_format)
+{
+   return !vrend_resource_supports_view(res, view_format) &&
+      util_format_is_srgb(res->base.format) &&
+      !util_format_is_srgb(view_format);
+}
+
+static inline bool
+vrend_resource_needs_srgb_encode(struct vrend_resource *res,
+                                 enum virgl_formats view_format)
+{
+   return !vrend_resource_supports_view(res, view_format) &&
+      !util_format_is_srgb(res->base.format) &&
+      util_format_is_srgb(view_format);
+}
+
 static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
 {
    /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
@@ -9283,6 +9301,8 @@ static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats for
    if (!has_bit(res->storage_bits, VREND_STORAGE_GL_IMMUTABLE))
       return res->id;
 
+   assert(vrend_resource_supports_view(res, format));
+
    VREND_DEBUG(dbg_blit, NULL, "Create texture view from %s as %s\n",
                util_format_name(res->base.format),
                util_format_name(format));
@@ -9377,6 +9397,18 @@ static void vrend_renderer_prepare_blit_extra_info(struct vrend_context *ctx,
          info->gl_filter = GL_SCALED_RESOLVE_NICEST_EXT;
       else
          info->can_fbo_blit = false;
+   }
+
+   /* need to apply manual gamma correction in the blitter for external
+    * resources that don't support colorspace conversion via views
+    * (EGL-image bgr* textures). */
+   if (vrend_resource_needs_srgb_decode(src_res, info->b.src.format)) {
+      info->needs_manual_srgb_decode = true;
+      info->can_fbo_blit = false;
+   }
+   if (vrend_resource_needs_srgb_encode(dst_res, info->b.dst.format)) {
+      info->needs_manual_srgb_encode = true;
+      info->can_fbo_blit = false;
    }
 }
 
@@ -9635,10 +9667,12 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
 
    /* We create the texture views in this function instead of doing it in
     * vrend_renderer_prepare_blit_extra_info because we also delete them here */
-   if ((src_res->base.format != info->src.format) && has_feature(feat_texture_view))
+   if ((src_res->base.format != info->src.format) && has_feature(feat_texture_view) &&
+       vrend_resource_supports_view(src_res, info->src.format))
       blit_info.src_view = vrend_make_view(src_res, info->src.format);
 
-   if ((dst_res->base.format != info->dst.format) && has_feature(feat_texture_view))
+   if ((dst_res->base.format != info->dst.format) && has_feature(feat_texture_view) &&
+       vrend_resource_supports_view(dst_res, info->dst.format))
       blit_info.dst_view = vrend_make_view(dst_res, info->dst.format);
 
    vrend_renderer_prepare_blit_extra_info(ctx, src_res, dst_res, &blit_info);
@@ -9723,6 +9757,13 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    if (dst_res->egl_image)
       comp_flags ^= VREND_COPY_COMPAT_FLAG_ONE_IS_EGL_IMAGE;
 
+   /* resources that don't support texture views but require colorspace conversion
+    * must have it applied manually in a shader, i.e. require following the
+    * vrend_renderer_blit_int() path. */
+   bool eglimage_copy_compatible =
+      !(vrend_resource_needs_srgb_decode(src_res, info->src.format) ||
+        vrend_resource_needs_srgb_encode(dst_res, info->dst.format));
+
    /* The Gallium blit function can be called for a general blit that may
     * scale, convert the data, and apply some rander states, or it is called via
     * glCopyImageSubData. If the src or the dst image are equal, or the two
@@ -9733,6 +9774,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    if (has_feature(feat_copy_image) &&
        (!info->render_condition_enable || !ctx->sub->cond_render_gl_mode) &&
        format_is_copy_compatible(info->src.format,info->dst.format, comp_flags) &&
+       eglimage_copy_compatible &&
        !info->scissor_enable && (info->filter == PIPE_TEX_FILTER_NEAREST) &&
        !info->alpha_blend && (info->mask == PIPE_MASK_RGBA) &&
        src_res->base.nr_samples == dst_res->base.nr_samples &&
