@@ -9323,27 +9323,15 @@ static bool vrend_blit_needs_redblue_swizzle(struct vrend_resource *src_res,
                                              struct vrend_resource *dst_res,
                                              const struct pipe_blit_info *info)
 {
-   /* Virgl's BGR* formats always use GL_RGBA8 internal format so texture views have no format
-    * conversion effects. Swizzling during blits is required instead.
-    * Also, GBM/EGL-backed (i.e. external) BGR* resources are always stored with BGR* internal
-    * format, despite Virgl's use of the GL_RGBA8 internal format, so special care must be taken
-    * when determining the swizzling.
-    */
-   bool needs_redblue_swizzle = false;
-   if (vrend_resource_is_emulated_bgra(src_res) ^ vrend_resource_is_emulated_bgra(dst_res))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
+   /* EGL-backed bgr* resources are always stored with BGR* internal format,
+    * despite Virgl's use of the GL_RGBA8 internal format, so special care must
+    * be taken when determining the swizzling. */
+   bool src_needs_swizzle = !vrend_format_is_bgra(info->src.format) &&
+      !vrend_resource_supports_view(src_res, info->src.format);
+   bool dst_needs_swizzle = !vrend_format_is_bgra(info->dst.format) &&
+      !vrend_resource_supports_view(dst_res, info->dst.format);
 
-   /* Virgl blits support "views" on source/dest resources, allowing another level of format
-    * conversion on top of the host's GL API. These views need to be reconciled manually when
-    * any BGR* resources are involved, since they are internally stored with RGB* byte-ordering,
-    * and externally stored with BGR* byte-ordering.
-    */
-   if (vrend_format_is_bgra(src_res->base.format) ^ vrend_format_is_bgra(info->src.format))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
-   if (vrend_format_is_bgra(dst_res->base.format) ^ vrend_format_is_bgra(info->dst.format))
-      needs_redblue_swizzle = !needs_redblue_swizzle;
-
-   return needs_redblue_swizzle;
+   return src_needs_swizzle ^ dst_needs_swizzle;
 }
 
 static void vrend_renderer_prepare_blit_extra_info(struct vrend_context *ctx,
