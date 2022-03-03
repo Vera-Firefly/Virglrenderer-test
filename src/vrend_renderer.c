@@ -1958,9 +1958,12 @@ int vrend_create_surface(struct vrend_context *ctx,
       int first_layer = surf->val1 & 0xffff;
       int last_layer = (surf->val1 >> 16) & 0xffff;
 
-      if ((first_layer != last_layer &&
-           (first_layer != 0 || (last_layer != (int)util_max_layer(&res->base, surf->val0)))) ||
-          surf->format != res->base.format) {
+      bool needs_view = first_layer != last_layer &&
+         (first_layer != 0 || (last_layer != (int)util_max_layer(&res->base, surf->val0)));
+      if (!needs_view && surf->format != res->base.format)
+         needs_view = true;
+
+      if (needs_view && vrend_resource_supports_view(res, surf->format)) {
          GLenum target = res->target;
          GLenum internalformat = tex_conv_table[format].internalformat;
 
@@ -2646,21 +2649,23 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
    for (int i = 0; i < sub_ctx->nr_cbufs; i++) {
       if (sub_ctx->surf[i]) {
          struct vrend_surface *surf = sub_ctx->surf[i];
-         if (vrend_resource_is_emulated_bgra(surf->texture)) {
-            VREND_DEBUG(dbg_bgra, sub_ctx->parent, "swizzling output for 0x%x (surface format is %s; resource format is %s)\n",
-                         i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
+
+         /* glTextureView() is not applied to eglimage-backed surfaces, because it
+          * causes unintended format interpretation errors. But a swizzle may still
+          * be necessary, e.g. for rgb* views on bgr* resources. Ensure this
+          * happens by adding a shader swizzle to the final write of such surfaces.
+          */
+         if (!vrend_resource_supports_view(surf->texture, surf->format) &&
+             !vrend_format_is_bgra(surf->format)) {
             sub_ctx->swizzle_output_rgb_to_bgr |= 1 << i;
          }
 
-         /* [R8G8B8|B8G8R8]X8_UNORM formatted resources imported to mesa as EGL images occupy 24bpp instead of
-          * more common 32bpp (with an ignored alpha channel). GL_RGB8 internal format must be specified when
-          * interacting with these textures in the host driver. Unfortunately, GL_SRGB8 is not guaranteed to
-          * be color-renderable on either GL or GLES, and is typically not supported. Thus, rendering to such
-          * surfaces by using an SRGB texture view will have no colorspace conversion effects.
-          * To work around this, manual colorspace conversion is used instead in the fragment shader and
-          * during glClearColor() setting.
-          */
-         if (vrend_resource_has_24bpp_internal_format(surf->texture) && util_format_is_srgb(surf->format)) {
+         /* glTextureView() on eglimage-backed bgr* textures for is not supported.
+          * To work around this for colorspace conversion, views are avoided
+          * manual colorspace conversion is instead injected in the fragment
+          * shader writing to such surfaces and during glClearColor(). */
+         if (util_format_is_srgb(surf->format) &&
+             !vrend_resource_supports_view(surf->texture, surf->format)) {
             VREND_DEBUG(dbg_tex, sub_ctx->parent,
                         "manually converting linear->srgb for EGL-backed framebuffer color attachment 0x%x"
                         " (surface format is %s; resource format is %s)\n",
