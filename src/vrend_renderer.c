@@ -3952,7 +3952,7 @@ void vrend_bind_shader(struct vrend_context *ctx,
 }
 
 static float
-vrend_color_convert_linear_to_srgb(float color) {
+vrend_color_encode_as_srgb(float color) {
    return color <= 0.0031308f
       ? 12.92f * color
       : 1.055f * powf(color, (1.f / 2.4f)) - 0.055f;
@@ -3998,7 +3998,7 @@ void vrend_clear(struct vrend_context *ctx,
                      util_format_name(surf->format),
                      util_format_name(surf->texture->base.format));
          for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
-            colorf[i] = vrend_color_convert_linear_to_srgb(colorf[i]);
+            colorf[i] = vrend_color_encode_as_srgb(colorf[i]);
       }
    }
 
