@@ -61,16 +61,20 @@ copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMES
       }
       iov_offset -= att->iov[i].iov_len;
    }
-   if (!iov)
+   if (!iov) {
+      vkr_log("failed to copy command stream: invalid offset %zu", stream->offset);
       return NULL;
+   }
 
    /* XXX until the decoder supports scatter-gather and is robust enough,
     * always make a copy in case the caller modifies the commands while we
     * parse
     */
    uint8_t *data = malloc(stream->size);
-   if (!data)
+   if (!data) {
+      vkr_log("failed to copy command stream: malloc(%zu) failed", stream->size);
       return NULL;
+   }
 
    uint32_t copied = 0;
    while (true) {
@@ -81,6 +85,7 @@ copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMES
       if (copied == stream->size) {
          break;
       } else if (iov == &att->iov[att->iov_count - 1]) {
+         vkr_log("failed to copy command stream: invalid size %zu", stream->size);
          free(data);
          return NULL;
       }
@@ -99,13 +104,15 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
 {
    struct vkr_context *ctx = dispatch->data;
 
-   if (!args->streamCount) {
+   if (unlikely(!args->streamCount)) {
+      vkr_log("failed to execute command streams: no stream specified");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
    /* note that nested vkExecuteCommandStreamsMESA is not allowed */
-   if (!vkr_cs_decoder_push_state(&ctx->decoder)) {
+   if (unlikely(!vkr_cs_decoder_push_state(&ctx->decoder))) {
+      vkr_log("failed to execute command streams: nested execution");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
