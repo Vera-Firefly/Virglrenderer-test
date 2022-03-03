@@ -2287,7 +2287,7 @@ static void emit_cbuf_colorspace_convert(const struct dump_ctx *ctx,
                                          struct vrend_glsl_strbufs *glsl_strbufs)
 {
    for (uint i = 0; i < ctx->num_outputs; i++) {
-      if (ctx->key->fs.convert_linear_to_srgb_on_write & (1 << i)) {
+      if (ctx->key->fs.needs_manual_srgb_encode_bitmask & (1 << i)) {
          emit_buff(glsl_strbufs,
                    "{\n"
                    "   vec3 temp = fsout_c%d.xyz;\n"
@@ -2319,7 +2319,7 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
     if (ctx->key->fs.swizzle_output_rgb_to_bgr)
        emit_cbuf_swizzle(ctx, glsl_strbufs);
 
-    if (ctx->key->fs.convert_linear_to_srgb_on_write)
+    if (ctx->key->fs.needs_manual_srgb_encode_bitmask)
        emit_cbuf_colorspace_convert(ctx, glsl_strbufs);
 
     if (ctx->write_all_cbufs)

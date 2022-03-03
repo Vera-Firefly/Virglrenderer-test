@@ -716,7 +716,7 @@ struct vrend_sub_context {
    uint32_t abo_used_mask;
    struct vrend_context_tweaks tweaks;
    uint8_t swizzle_output_rgb_to_bgr;
-   uint8_t convert_linear_to_srgb_on_write;
+   uint8_t needs_manual_srgb_encode_bitmask;
    int fake_occlusion_query_samples_passed_multiplier;
 
    int prim_mode;
@@ -2645,7 +2645,7 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
    }
 
    sub_ctx->swizzle_output_rgb_to_bgr = 0;
-   sub_ctx->convert_linear_to_srgb_on_write = 0;
+   sub_ctx->needs_manual_srgb_encode_bitmask = 0;
    for (int i = 0; i < sub_ctx->nr_cbufs; i++) {
       if (sub_ctx->surf[i]) {
          struct vrend_surface *surf = sub_ctx->surf[i];
@@ -2670,7 +2670,7 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
                         "manually converting linear->srgb for EGL-backed framebuffer color attachment 0x%x"
                         " (surface format is %s; resource format is %s)\n",
                         i, util_format_name(surf->format), util_format_name(surf->texture->base.format));
-            sub_ctx->convert_linear_to_srgb_on_write |= 1 << i;
+            sub_ctx->needs_manual_srgb_encode_bitmask |= 1 << i;
          }
       }
    }
@@ -3491,7 +3491,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    if (type == PIPE_SHADER_FRAGMENT) {
       key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
       key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
-      key->fs.convert_linear_to_srgb_on_write = sub_ctx->convert_linear_to_srgb_on_write;
+      key->fs.needs_manual_srgb_encode_bitmask = sub_ctx->needs_manual_srgb_encode_bitmask;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
          key->fs.logicop_enabled = sub_ctx->blend_state.logicop_enable;
          key->fs.logicop_func = sub_ctx->blend_state.logicop_func;
@@ -4980,7 +4980,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
-       sub_ctx->convert_linear_to_srgb_on_write || sub_ctx->vbo_dirty)
+       sub_ctx->needs_manual_srgb_encode_bitmask || sub_ctx->vbo_dirty)
       new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
 
    if (!sub_ctx->prog) {

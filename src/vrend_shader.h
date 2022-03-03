@@ -160,7 +160,7 @@ struct vrend_shader_key {
          uint8_t surface_component_bits[PIPE_MAX_COLOR_BUFS];
          uint32_t coord_replace;
          uint8_t swizzle_output_rgb_to_bgr;
-         uint8_t convert_linear_to_srgb_on_write;
+         uint8_t needs_manual_srgb_encode_bitmask;
          uint8_t cbufs_are_a8_bitmask;
          uint8_t cbufs_signed_int_bitmask;
          uint8_t cbufs_unsigned_int_bitmask;
