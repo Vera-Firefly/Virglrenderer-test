@@ -459,9 +459,10 @@ vkr_dispatch_vkGetSemaphoreCounterValue(UNUSED struct vn_dispatch_context *dispa
                                         struct vn_command_vkGetSemaphoreCounterValue *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetSemaphoreCounterValue_args_handle(args);
-   args->ret = dev->GetSemaphoreCounterValue(args->device, args->semaphore, args->pValue);
+   args->ret = vk->GetSemaphoreCounterValue(args->device, args->semaphore, args->pValue);
 }
 
 static void
@@ -470,6 +471,7 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    /* no blocking call */
    if (args->timeout) {
@@ -478,7 +480,7 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
    }
 
    vn_replace_vkWaitSemaphores_args_handle(args);
-   args->ret = dev->WaitSemaphores(args->device, args->pWaitInfo, args->timeout);
+   args->ret = vk->WaitSemaphores(args->device, args->pWaitInfo, args->timeout);
 }
 
 static void
@@ -486,9 +488,10 @@ vkr_dispatch_vkSignalSemaphore(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkSignalSemaphore *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkSignalSemaphore_args_handle(args);
-   args->ret = dev->SignalSemaphore(args->device, args->pSignalInfo);
+   args->ret = vk->SignalSemaphore(args->device, args->pSignalInfo);
 }
 
 static void

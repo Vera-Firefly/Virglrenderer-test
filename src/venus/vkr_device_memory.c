@@ -256,9 +256,10 @@ vkr_dispatch_vkGetDeviceMemoryOpaqueCaptureAddress(
    struct vn_command_vkGetDeviceMemoryOpaqueCaptureAddress *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetDeviceMemoryOpaqueCaptureAddress_args_handle(args);
-   args->ret = dev->GetDeviceMemoryOpaqueCaptureAddress(args->device, args->pInfo);
+   args->ret = vk->GetDeviceMemoryOpaqueCaptureAddress(args->device, args->pInfo);
 }
 
 static void
@@ -268,6 +269,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, args->resourceId);
    if (!att) {
@@ -293,8 +295,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
       .memoryTypeBits = 0,
    };
    vn_replace_vkGetMemoryResourcePropertiesMESA_args_handle(args);
-   args->ret =
-      dev->get_memory_fd_properties(args->device, handle_type, fd, &mem_fd_props);
+   args->ret = vk->GetMemoryFdPropertiesKHR(args->device, handle_type, fd, &mem_fd_props);
    if (args->ret != VK_SUCCESS) {
       close(fd);
       return;
@@ -343,6 +344,7 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
                             VkExternalMemoryHandleTypeFlagBits handle_type,
                             int *out_fd)
 {
+   struct vn_device_proc_table *vk = &mem->device->proc_table;
    int fd = -1;
 
    if (mem->gbm_bo) {
@@ -362,7 +364,7 @@ vkr_device_memory_export_fd(struct vkr_device_memory *mem,
          .memory = mem_handle,
          .handleType = handle_type,
       };
-      VkResult result = mem->device->get_memory_fd(dev_handle, &fd_info, &fd);
+      VkResult result = vk->GetMemoryFdKHR(dev_handle, &fd_info, &fd);
       if (result != VK_SUCCESS)
          return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
    }

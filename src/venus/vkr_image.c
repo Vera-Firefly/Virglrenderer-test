@@ -114,10 +114,11 @@ vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT(
    struct vn_command_vkGetImageDrmFormatModifierPropertiesEXT *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetImageDrmFormatModifierPropertiesEXT_args_handle(args);
-   args->ret = dev->get_image_drm_format_modifier_properties(args->device, args->image,
-                                                             args->pProperties);
+   args->ret = vk->GetImageDrmFormatModifierPropertiesEXT(args->device, args->image,
+                                                          args->pProperties);
 }
 
 static void

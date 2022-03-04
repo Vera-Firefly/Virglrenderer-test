@@ -88,9 +88,10 @@ vkr_dispatch_vkGetBufferOpaqueCaptureAddress(
    struct vn_command_vkGetBufferOpaqueCaptureAddress *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetBufferOpaqueCaptureAddress_args_handle(args);
-   args->ret = dev->GetBufferOpaqueCaptureAddress(args->device, args->pInfo);
+   args->ret = vk->GetBufferOpaqueCaptureAddress(args->device, args->pInfo);
 }
 
 static void
@@ -98,9 +99,10 @@ vkr_dispatch_vkGetBufferDeviceAddress(UNUSED struct vn_dispatch_context *dispatc
                                       struct vn_command_vkGetBufferDeviceAddress *args)
 {
    struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkGetBufferDeviceAddress_args_handle(args);
-   args->ret = dev->GetBufferDeviceAddress(args->device, args->pInfo);
+   args->ret = vk->GetBufferDeviceAddress(args->device, args->pInfo);
 }
 
 static void
