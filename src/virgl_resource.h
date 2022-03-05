@@ -29,12 +29,25 @@
 
 struct iovec;
 struct pipe_resource;
+struct virgl_context;
 
 enum virgl_resource_fd_type {
    VIRGL_RESOURCE_FD_DMABUF,
    VIRGL_RESOURCE_FD_OPAQUE,
    /* mmap()-able, usually memfd or shm */
    VIRGL_RESOURCE_FD_SHM,
+
+   /**
+    * An opaque handle can be something like a GEM handle, from which a
+    * fd can be created upon demand.
+    *
+    * Renderers which use this type must implement virgl_context::export_fd
+    *
+    * Do not use this type for resources that are _BLOB_FLAG_USE_SHAREABLE,
+    * as the opaque handle can become invalid/stale any time outside of the
+    * original context.
+    */
+   VIRGL_RESOURCE_OPAQUE_HANDLE,
 
    VIRGL_RESOURCE_FD_INVALID = -1,
 };
@@ -69,8 +82,16 @@ struct virgl_resource {
 
    struct pipe_resource *pipe_resource;
 
+   /* valid fd or handle type: */
    enum virgl_resource_fd_type fd_type;
    int fd;
+
+   /**
+    * For fd_type==VIRGL_RESOURCE_OPAQUE_HANDLE, the id of the context
+    * which created this resource
+    */
+   uint32_t opaque_handle_context_id;
+   uint32_t opaque_handle;
 
    const struct iovec *iov;
    int iov_count;
@@ -125,6 +146,11 @@ virgl_resource_create_from_fd(uint32_t res_id,
                               const struct iovec *iov,
                               int iov_count,
                               const struct virgl_resource_opaque_fd_metadata *opaque_fd_metadata);
+
+struct virgl_resource *
+virgl_resource_create_from_opaque_handle(struct virgl_context *ctx,
+                                         uint32_t res_id,
+                                         uint32_t opaque_handle);
 
 struct virgl_resource *
 virgl_resource_create_from_iov(uint32_t res_id,

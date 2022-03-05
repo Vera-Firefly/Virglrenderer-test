@@ -944,7 +944,12 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
    if (ret)
       return ret;
 
-   if (blob.type != VIRGL_RESOURCE_FD_INVALID) {
+   if (blob.type == VIRGL_RESOURCE_OPAQUE_HANDLE) {
+      assert(!(args->blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_SHAREABLE));
+      res = virgl_resource_create_from_opaque_handle(ctx, args->res_handle, blob.u.opaque_handle);
+      if (!res)
+         return -ENOMEM;
+   } else if (blob.type != VIRGL_RESOURCE_FD_INVALID) {
       res = virgl_resource_create_from_fd(args->res_handle,
                                           blob.type,
                                           blob.u.fd,

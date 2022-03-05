@@ -34,6 +34,7 @@
 #include "util/u_hash_table.h"
 #include "util/u_pointer.h"
 #include "virgl_util.h"
+#include "virgl_context.h"
 
 static struct util_hash_table *virgl_resource_table;
 static struct virgl_resource_pipe_callbacks pipe_callbacks;
@@ -45,7 +46,8 @@ virgl_resource_destroy_func(void *val)
 
    if (res->pipe_resource)
       pipe_callbacks.unref(res->pipe_resource, pipe_callbacks.data);
-   if (res->fd_type != VIRGL_RESOURCE_FD_INVALID)
+   if ((res->fd_type != VIRGL_RESOURCE_FD_INVALID) &&
+       (res->fd_type != VIRGL_RESOURCE_OPAQUE_HANDLE))
       close(res->fd);
 
    free(res);
@@ -155,6 +157,31 @@ virgl_resource_create_from_fd(uint32_t res_id,
 }
 
 struct virgl_resource *
+virgl_resource_create_from_opaque_handle(struct virgl_context *ctx,
+                                         uint32_t res_id,
+                                         uint32_t opaque_handle)
+{
+   struct virgl_resource *res;
+
+   res = virgl_resource_create(res_id);
+   if (!res)
+      return NULL;
+
+   res->fd_type = VIRGL_RESOURCE_OPAQUE_HANDLE;
+   res->opaque_handle = opaque_handle;
+
+   /* We need the ctx to get an fd from handle (which we don't want to do
+    * until asked, to avoid file descriptor limits)
+    *
+    * Shareable resources should not use OPAQUE_HANDLE, to avoid lifetime
+    * issues (ie. resource outliving the context which created it).
+    */
+   res->opaque_handle_context_id = ctx->ctx_id;
+
+   return res;
+}
+
+struct virgl_resource *
 virgl_resource_create_from_iov(uint32_t res_id,
                                const struct iovec *iov,
                                int iov_count)
@@ -223,7 +250,15 @@ virgl_resource_detach_iov(struct virgl_resource *res)
 enum virgl_resource_fd_type
 virgl_resource_export_fd(struct virgl_resource *res, int *fd)
 {
-   if (res->fd_type != VIRGL_RESOURCE_FD_INVALID) {
+   if (res->fd_type == VIRGL_RESOURCE_OPAQUE_HANDLE) {
+      struct virgl_context *ctx;
+
+      ctx = virgl_context_lookup(res->opaque_handle_context_id);
+      if (!ctx)
+         return VIRGL_RESOURCE_FD_INVALID;
+
+      return ctx->export_opaque_handle(ctx, res, fd);
+   } else if (res->fd_type != VIRGL_RESOURCE_FD_INVALID) {
       *fd = os_dupfd_cloexec(res->fd);
       return *fd >= 0 ? res->fd_type : VIRGL_RESOURCE_FD_INVALID;
    } else if (res->pipe_resource) {

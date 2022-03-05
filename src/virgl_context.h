@@ -40,6 +40,7 @@ struct virgl_context_blob {
    enum virgl_resource_fd_type type;
    union {
       int fd;
+      uint32_t opaque_handle;
       struct pipe_resource *pipe_resource;
    } u;
 
@@ -79,6 +80,9 @@ struct virgl_context {
                            struct virgl_resource *res);
    void (*detach_resource)(struct virgl_context *ctx,
                            struct virgl_resource *res);
+   enum virgl_resource_fd_type (*export_opaque_handle)(struct virgl_context *ctx,
+                                                       struct virgl_resource *res,
+                                                       int *out_fd);
 
    int (*transfer_3d)(struct virgl_context *ctx,
                       struct virgl_resource *res,
