@@ -84,7 +84,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_pipeline_creation_cache_control = false,
    .EXT_pipeline_creation_feedback = false,
    .EXT_private_data = false,
-   .EXT_shader_demote_to_helper_invocation = false,
+   .EXT_shader_demote_to_helper_invocation = true,
    .EXT_subgroup_size_control = false,
    .EXT_texel_buffer_alignment = false,
    .EXT_texture_compression_astc_hdr = false,
@@ -93,13 +93,18 @@ static const struct vn_info_extension_table vkr_extension_table = {
    /* KHR extensions */
    .KHR_external_memory_fd = true,
    /* EXT extensions */
+   .EXT_conservative_rasterization = true,
    .EXT_custom_border_color = true,
+   .EXT_depth_clip_enable = true,
    .EXT_external_memory_dma_buf = true,
    .EXT_image_drm_format_modifier = true,
    .EXT_line_rasterization = true,
    .EXT_provoking_vertex = true,
    .EXT_queue_family_foreign = true,
+   .EXT_robustness2 = true,
+   .EXT_shader_stencil_export = true,
    .EXT_transform_feedback = true,
+   .EXT_vertex_attribute_divisor = true,
 };
 
 void
