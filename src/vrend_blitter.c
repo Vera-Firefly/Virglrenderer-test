@@ -369,7 +369,7 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, i
             return 0;
 
          glDeleteShader(fs_id);
-         util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(size_t)prog_id);
+         util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(uintptr_t)prog_id);
       }
       return prog_id;
 }
@@ -422,7 +422,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
          return 0;
 
       glDeleteShader(fs_id);
-      util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(size_t)prog_id);
+      util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(uintptr_t)prog_id);
    }
 
    return prog_id;
