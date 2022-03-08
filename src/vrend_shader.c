@@ -1005,7 +1005,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
    int color_offset = 0;
    const char *name_prefix;
    bool add_two_side = false;
-   unsigned mask_temp;
 
    switch (decl->Declaration.File) {
    case TGSI_FILE_INPUT:
@@ -1037,7 +1036,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].layout_location = 0;
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
-      ctx->inputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
+      ctx->inputs[i].usage_mask = decl->Declaration.UsageMask;
       get_swizzle_offset_and_num_components(&ctx->inputs[i]);
 
       ctx->inputs[i].glsl_predefined_no_emit = false;
@@ -1312,7 +1311,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->outputs[i].last = decl->Range.Last;
       ctx->outputs[i].layout_location = 0;
       ctx->outputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
-      ctx->outputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
+      ctx->outputs[i].usage_mask = decl->Declaration.UsageMask;
       get_swizzle_offset_and_num_components(&ctx->outputs[i]);
       ctx->outputs[i].glsl_predefined_no_emit = false;
       ctx->outputs[i].glsl_no_index = false;
@@ -7537,7 +7536,6 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
    const char *shader_out_prefix = "tco";
    const char *name_prefix = "";
    unsigned i;
-   unsigned mask_temp;
 
    // Generate a shader that passes through all VS outputs
    if (decl->Declaration.File == TGSI_FILE_OUTPUT) {
@@ -7560,7 +7558,7 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].layout_location = 0;
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
-      ctx->inputs[i].usage_mask  = mask_temp = decl->Declaration.UsageMask;
+      ctx->inputs[i].usage_mask = decl->Declaration.UsageMask;
       get_swizzle_offset_and_num_components(&ctx->inputs[i]);
 
       ctx->inputs[i].glsl_predefined_no_emit = false;
