@@ -7295,9 +7295,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    memset(&ctx, 0, sizeof(struct dump_ctx));
 
    /* First pass to deal with edge cases. */
-   if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT ||
-       ctx.prog_type == TGSI_PROCESSOR_VERTEX)
-      ctx.iter.iterate_declaration = iter_decls;
+   ctx.iter.iterate_declaration = iter_decls;
    ctx.iter.iterate_instruction = analyze_instruction;
    bret = tgsi_iterate_shader(tokens, &ctx.iter);
    if (bret == false)
