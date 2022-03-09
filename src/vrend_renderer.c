@@ -3684,12 +3684,15 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 
 
    struct vrend_shader_selector *prev = prev_type != PIPE_SHADER_INVALID ? sub_ctx->shaders[prev_type] : NULL;
+
    if (prev) {
-      key->input = prev->sinfo.out;
-      memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
-      memcpy(key->prev_stage_generic_and_patch_outputs_layout,
-             prev->sinfo.generic_outputs_layout,
-             prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
+      if (!prev->sinfo.separable_program || !sel->sinfo.separable_program) {
+         key->input = prev->sinfo.out;
+         memcpy(key->prev_stage_generic_and_patch_outputs_layout,
+            prev->sinfo.generic_outputs_layout,
+            prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
+         memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
+      }
 
       key->num_in_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_clip;
       key->num_in_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_cull;
@@ -3760,7 +3763,10 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    }
 
    if (next_type != PIPE_SHADER_INVALID && sub_ctx->shaders[next_type]) {
-      key->output = sub_ctx->shaders[next_type]->sinfo.in;
+      if (!sub_ctx->shaders[next_type]->sinfo.separable_program ||
+          !sel->sinfo.separable_program) {
+         key->output = sub_ctx->shaders[next_type]->sinfo.in;
+      }
 
       /* FS gets the clip/cull info in the key from this shader, so
        * we can avoid re-translating this shader by not updating the
@@ -3774,15 +3780,13 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          struct vrend_shader *fs =
                sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
          key->fs_info = fs->var_sinfo.fs_info;
-         if (type == PIPE_SHADER_VERTEX) {
-            if (sub_ctx->shaders[type]) {
-               uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
-               uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
+         if (type == PIPE_SHADER_VERTEX && sub_ctx->shaders[type]) {
+            uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
+            uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
 
-               // We only want to issue the fixup for inputs not fed by
-               // the outputs of the previous stage
-               key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
-            }
+            // We only want to issue the fixup for inputs not fed by
+            // the outputs of the previous stage
+            key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
          }
       }
    }
