@@ -127,6 +127,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
                                 void *fence_cookie)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
+   struct vn_device_proc_table *vk;
    struct vkr_queue *queue;
    VkResult result;
 
@@ -134,13 +135,14 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    if (!queue)
       return -EINVAL;
    struct vkr_device *dev = queue->device;
+   vk = &dev->proc_table;
 
    struct vkr_queue_sync *sync =
       vkr_device_alloc_queue_sync(dev, flags, queue_id, fence_cookie);
    if (!sync)
       return -ENOMEM;
 
-   result = vkQueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
+   result = vk->QueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
    if (result == VK_ERROR_DEVICE_LOST) {
       sync->device_lost = true;
    } else if (result != VK_SUCCESS) {

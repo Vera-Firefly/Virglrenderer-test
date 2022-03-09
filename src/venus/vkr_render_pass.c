@@ -51,8 +51,11 @@ static void
 vkr_dispatch_vkGetRenderAreaGranularity(UNUSED struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkGetRenderAreaGranularity *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetRenderAreaGranularity_args_handle(args);
-   vkGetRenderAreaGranularity(args->device, args->renderPass, args->pGranularity);
+   vk->GetRenderAreaGranularity(args->device, args->renderPass, args->pGranularity);
 }
 
 static void

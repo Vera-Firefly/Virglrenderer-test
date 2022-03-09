@@ -20,6 +20,7 @@ vkr_device_create_queues(struct vkr_context *ctx,
                          uint32_t create_info_count,
                          const VkDeviceQueueCreateInfo *create_infos)
 {
+   struct vn_device_proc_table *vk = &dev->proc_table;
    list_inithead(&dev->queues);
 
    for (uint32_t i = 0; i < create_info_count; i++) {
@@ -37,10 +38,10 @@ vkr_device_create_queues(struct vkr_context *ctx,
           * Work around drivers that are implementing this buggy behavior
           */
          if (info.flags) {
-            vkGetDeviceQueue2(dev->base.handle.device, &info, &handle);
+            vk->GetDeviceQueue2(dev->base.handle.device, &info, &handle);
          } else {
-            vkGetDeviceQueue(dev->base.handle.device, info.queueFamilyIndex,
-                             info.queueIndex, &handle);
+            vk->GetDeviceQueue(dev->base.handle.device, info.queueFamilyIndex,
+                               info.queueIndex, &handle);
          }
 
          struct vkr_queue *queue = vkr_queue_create(
@@ -156,81 +157,83 @@ vkr_device_object_destroy(struct vkr_context *ctx,
                           struct vkr_device *dev,
                           struct vkr_object *obj)
 {
+   struct vn_device_proc_table *vk = &dev->proc_table;
    VkDevice device = dev->base.handle.device;
 
    assert(vkr_device_should_track_object(obj));
 
    switch (obj->type) {
    case VK_OBJECT_TYPE_SEMAPHORE:
-      vkDestroySemaphore(device, obj->handle.semaphore, NULL);
+      vk->DestroySemaphore(device, obj->handle.semaphore, NULL);
       break;
    case VK_OBJECT_TYPE_FENCE:
-      vkDestroyFence(device, obj->handle.fence, NULL);
+      vk->DestroyFence(device, obj->handle.fence, NULL);
       break;
    case VK_OBJECT_TYPE_DEVICE_MEMORY:
-      vkFreeMemory(device, obj->handle.device_memory, NULL);
+      vk->FreeMemory(device, obj->handle.device_memory, NULL);
       vkr_device_memory_release((struct vkr_device_memory *)obj);
       break;
    case VK_OBJECT_TYPE_BUFFER:
-      vkDestroyBuffer(device, obj->handle.buffer, NULL);
+      vk->DestroyBuffer(device, obj->handle.buffer, NULL);
       break;
    case VK_OBJECT_TYPE_IMAGE:
-      vkDestroyImage(device, obj->handle.image, NULL);
+      vk->DestroyImage(device, obj->handle.image, NULL);
       break;
    case VK_OBJECT_TYPE_EVENT:
-      vkDestroyEvent(device, obj->handle.event, NULL);
+      vk->DestroyEvent(device, obj->handle.event, NULL);
       break;
    case VK_OBJECT_TYPE_QUERY_POOL:
-      vkDestroyQueryPool(device, obj->handle.query_pool, NULL);
+      vk->DestroyQueryPool(device, obj->handle.query_pool, NULL);
       break;
    case VK_OBJECT_TYPE_BUFFER_VIEW:
-      vkDestroyBufferView(device, obj->handle.buffer_view, NULL);
+      vk->DestroyBufferView(device, obj->handle.buffer_view, NULL);
       break;
    case VK_OBJECT_TYPE_IMAGE_VIEW:
-      vkDestroyImageView(device, obj->handle.image_view, NULL);
+      vk->DestroyImageView(device, obj->handle.image_view, NULL);
       break;
    case VK_OBJECT_TYPE_SHADER_MODULE:
-      vkDestroyShaderModule(device, obj->handle.shader_module, NULL);
+      vk->DestroyShaderModule(device, obj->handle.shader_module, NULL);
       break;
    case VK_OBJECT_TYPE_PIPELINE_CACHE:
-      vkDestroyPipelineCache(device, obj->handle.pipeline_cache, NULL);
+      vk->DestroyPipelineCache(device, obj->handle.pipeline_cache, NULL);
       break;
    case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
-      vkDestroyPipelineLayout(device, obj->handle.pipeline_layout, NULL);
+      vk->DestroyPipelineLayout(device, obj->handle.pipeline_layout, NULL);
       break;
    case VK_OBJECT_TYPE_RENDER_PASS:
-      vkDestroyRenderPass(device, obj->handle.render_pass, NULL);
+      vk->DestroyRenderPass(device, obj->handle.render_pass, NULL);
       break;
    case VK_OBJECT_TYPE_PIPELINE:
-      vkDestroyPipeline(device, obj->handle.pipeline, NULL);
+      vk->DestroyPipeline(device, obj->handle.pipeline, NULL);
       break;
    case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
-      vkDestroyDescriptorSetLayout(device, obj->handle.descriptor_set_layout, NULL);
+      vk->DestroyDescriptorSetLayout(device, obj->handle.descriptor_set_layout, NULL);
       break;
    case VK_OBJECT_TYPE_SAMPLER:
-      vkDestroySampler(device, obj->handle.sampler, NULL);
+      vk->DestroySampler(device, obj->handle.sampler, NULL);
       break;
    case VK_OBJECT_TYPE_DESCRIPTOR_POOL: {
       /* Destroying VkDescriptorPool frees all VkDescriptorSet allocated inside. */
-      vkDestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
+      vk->DestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
       vkr_descriptor_pool_release(ctx, (struct vkr_descriptor_pool *)obj);
       break;
    }
    case VK_OBJECT_TYPE_FRAMEBUFFER:
-      vkDestroyFramebuffer(device, obj->handle.framebuffer, NULL);
+      vk->DestroyFramebuffer(device, obj->handle.framebuffer, NULL);
       break;
    case VK_OBJECT_TYPE_COMMAND_POOL: {
       /* Destroying VkCommandPool frees all VkCommandBuffer allocated inside. */
-      vkDestroyCommandPool(device, obj->handle.command_pool, NULL);
+      vk->DestroyCommandPool(device, obj->handle.command_pool, NULL);
       vkr_command_pool_release(ctx, (struct vkr_command_pool *)obj);
       break;
    }
    case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
-      vkDestroySamplerYcbcrConversion(device, obj->handle.sampler_ycbcr_conversion, NULL);
+      vk->DestroySamplerYcbcrConversion(device, obj->handle.sampler_ycbcr_conversion,
+                                        NULL);
       break;
    case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
-      vkDestroyDescriptorUpdateTemplate(device, obj->handle.descriptor_update_template,
-                                        NULL);
+      vk->DestroyDescriptorUpdateTemplate(device, obj->handle.descriptor_update_template,
+                                          NULL);
       break;
    default:
       vkr_log("Unhandled vkr_object(%p) with VkObjectType(%u)", obj, (uint32_t)obj->type);
@@ -244,12 +247,13 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 void
 vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
 {
+   struct vn_device_proc_table *vk = &dev->proc_table;
    VkDevice device = dev->base.handle.device;
 
    if (!LIST_IS_EMPTY(&dev->objects))
       vkr_log("destroying device with valid objects");
 
-   VkResult result = vkDeviceWaitIdle(device);
+   VkResult result = vk->DeviceWaitIdle(device);
    if (result != VK_SUCCESS)
       vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)result);
 
@@ -265,13 +269,13 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
 
    struct vkr_queue_sync *sync, *sync_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &dev->free_syncs, head) {
-      vkDestroyFence(dev->base.handle.device, sync->fence, NULL);
+      vk->DestroyFence(dev->base.handle.device, sync->fence, NULL);
       free(sync);
    }
 
    mtx_destroy(&dev->free_sync_mutex);
 
-   vkDestroyDevice(device, NULL);
+   vk->DestroyDevice(device, NULL);
 
    list_del(&dev->base.track_head);
 
@@ -297,10 +301,13 @@ vkr_dispatch_vkGetDeviceGroupPeerMemoryFeatures(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceGroupPeerMemoryFeatures *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetDeviceGroupPeerMemoryFeatures_args_handle(args);
-   vkGetDeviceGroupPeerMemoryFeatures(args->device, args->heapIndex,
-                                      args->localDeviceIndex, args->remoteDeviceIndex,
-                                      args->pPeerMemoryFeatures);
+   vk->GetDeviceGroupPeerMemoryFeatures(args->device, args->heapIndex,
+                                        args->localDeviceIndex, args->remoteDeviceIndex,
+                                        args->pPeerMemoryFeatures);
 }
 
 static void

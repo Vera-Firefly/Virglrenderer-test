@@ -246,8 +246,12 @@ vkr_dispatch_vkGetDeviceMemoryCommitment(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetDeviceMemoryCommitment *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetDeviceMemoryCommitment_args_handle(args);
-   vkGetDeviceMemoryCommitment(args->device, args->memory, args->pCommittedMemoryInBytes);
+   vk->GetDeviceMemoryCommitment(args->device, args->memory,
+                                 args->pCommittedMemoryInBytes);
 }
 
 static void

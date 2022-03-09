@@ -46,8 +46,11 @@ vkr_dispatch_vkGetImageMemoryRequirements(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageMemoryRequirements *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetImageMemoryRequirements_args_handle(args);
-   vkGetImageMemoryRequirements(args->device, args->image, args->pMemoryRequirements);
+   vk->GetImageMemoryRequirements(args->device, args->image, args->pMemoryRequirements);
 }
 
 static void
@@ -55,8 +58,11 @@ vkr_dispatch_vkGetImageMemoryRequirements2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageMemoryRequirements2 *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetImageMemoryRequirements2_args_handle(args);
-   vkGetImageMemoryRequirements2(args->device, args->pInfo, args->pMemoryRequirements);
+   vk->GetImageMemoryRequirements2(args->device, args->pInfo, args->pMemoryRequirements);
 }
 
 static void
@@ -64,10 +70,13 @@ vkr_dispatch_vkGetImageSparseMemoryRequirements(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageSparseMemoryRequirements *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetImageSparseMemoryRequirements_args_handle(args);
-   vkGetImageSparseMemoryRequirements(args->device, args->image,
-                                      args->pSparseMemoryRequirementCount,
-                                      args->pSparseMemoryRequirements);
+   vk->GetImageSparseMemoryRequirements(args->device, args->image,
+                                        args->pSparseMemoryRequirementCount,
+                                        args->pSparseMemoryRequirements);
 }
 
 static void
@@ -75,27 +84,36 @@ vkr_dispatch_vkGetImageSparseMemoryRequirements2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageSparseMemoryRequirements2 *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetImageSparseMemoryRequirements2_args_handle(args);
-   vkGetImageSparseMemoryRequirements2(args->device, args->pInfo,
-                                       args->pSparseMemoryRequirementCount,
-                                       args->pSparseMemoryRequirements);
+   vk->GetImageSparseMemoryRequirements2(args->device, args->pInfo,
+                                         args->pSparseMemoryRequirementCount,
+                                         args->pSparseMemoryRequirements);
 }
 
 static void
 vkr_dispatch_vkBindImageMemory(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkBindImageMemory *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkBindImageMemory_args_handle(args);
    args->ret =
-      vkBindImageMemory(args->device, args->image, args->memory, args->memoryOffset);
+      vk->BindImageMemory(args->device, args->image, args->memory, args->memoryOffset);
 }
 
 static void
 vkr_dispatch_vkBindImageMemory2(UNUSED struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkBindImageMemory2 *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkBindImageMemory2_args_handle(args);
-   args->ret = vkBindImageMemory2(args->device, args->bindInfoCount, args->pBindInfos);
+   args->ret = vk->BindImageMemory2(args->device, args->bindInfoCount, args->pBindInfos);
 }
 
 static void
@@ -103,9 +121,12 @@ vkr_dispatch_vkGetImageSubresourceLayout(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetImageSubresourceLayout *args)
 {
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
    vn_replace_vkGetImageSubresourceLayout_args_handle(args);
-   vkGetImageSubresourceLayout(args->device, args->image, args->pSubresource,
-                               args->pLayout);
+   vk->GetImageSubresourceLayout(args->device, args->image, args->pSubresource,
+                                 args->pLayout);
 }
 
 static void
