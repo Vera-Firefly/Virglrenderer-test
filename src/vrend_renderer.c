@@ -9896,11 +9896,11 @@ static bool vrend_get_one_query_result(GLuint query_id, bool use_64, uint64_t *r
 static inline void
 vrend_update_oq_samples_multiplier(struct vrend_context *ctx)
 {
-   if (!vrend_state.current_ctx->sub->fake_occlusion_query_samples_passed_multiplier) {
+   if (!ctx->sub->fake_occlusion_query_samples_passed_multiplier) {
       uint32_t multiplier = 0;
       bool tweaked = vrend_get_tweak_is_active_with_params(vrend_get_context_tweaks(ctx),
                                                            virgl_tweak_gles_tf3_samples_passes_multiplier, &multiplier);
-      vrend_state.current_ctx->sub->fake_occlusion_query_samples_passed_multiplier =
+      ctx->sub->fake_occlusion_query_samples_passed_multiplier =
             tweaked ? multiplier: fake_occlusion_query_samples_passed_default;
    }
 }
@@ -9921,8 +9921,8 @@ static bool vrend_check_query(struct vrend_query *query)
     * blow the number up so that the client doesn't think it was just one pixel
     * and discards an object that might be bigger */
    if (query->fake_samples_passed) {
-      vrend_update_oq_samples_multiplier(vrend_state.current_ctx);
-      state.result *=  vrend_state.current_ctx->sub->fake_occlusion_query_samples_passed_multiplier;
+      vrend_update_oq_samples_multiplier(query->ctx);
+      state.result *= query->ctx->sub->fake_occlusion_query_samples_passed_multiplier;
    }
 
    state.query_state = VIRGL_QUERY_STATE_DONE;
