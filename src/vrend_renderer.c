@@ -26,6 +26,7 @@
 #endif
 
 #include <unistd.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <errno.h>
 #include "pipe/p_shader_tokens.h"
@@ -326,6 +327,12 @@ struct global_renderer_state {
    virgl_gl_context sync_context;
 
    cnd_t fence_cond;
+
+   /* only used with async fence callback */
+   atomic_bool has_waiting_queries;
+   bool polling;
+   mtx_t poll_mutex;
+   cnd_t poll_cond;
 
    float tess_factors[6];
    int eventfd;
@@ -6221,6 +6228,8 @@ static void vrend_free_sync_thread(void)
 
    cnd_destroy(&vrend_state.fence_cond);
    mtx_destroy(&vrend_state.fence_mutex);
+   cnd_destroy(&vrend_state.poll_cond);
+   mtx_destroy(&vrend_state.poll_mutex);
 }
 
 static void free_fence_locked(struct vrend_fence *fence)
@@ -6304,16 +6313,56 @@ static bool do_wait(struct vrend_fence *fence, bool can_block)
 
 static void wait_sync(struct vrend_fence *fence)
 {
+   struct vrend_context *ctx = fence->ctx;
+
+   bool signal_poll = atomic_load(&vrend_state.has_waiting_queries);
    do_wait(fence, /* can_block */ true);
 
    mtx_lock(&vrend_state.fence_mutex);
-   list_addtail(&fence->fences, &vrend_state.fence_list);
+   if (vrend_state.use_async_fence_cb) {
+      /* to be able to call free_fence_locked without locking */
+      list_inithead(&fence->fences);
+   } else {
+      list_addtail(&fence->fences, &vrend_state.fence_list);
+   }
    vrend_state.fence_waiting = NULL;
    mtx_unlock(&vrend_state.fence_mutex);
 
-   if (write_eventfd(vrend_state.eventfd, 1)) {
-      perror("failed to write to eventfd\n");
+   if (!vrend_state.use_async_fence_cb) {
+      if (write_eventfd(vrend_state.eventfd, 1))
+         perror("failed to write to eventfd\n");
+      return;
    }
+
+   /* If the current GL fence completed while one or more query was pending,
+    * check queries on the main thread before notifying the caller about fence
+    * completion.
+    * TODO: store seqno of first query in waiting_query_list and compare to
+    * current fence to avoid polling when it (and all later queries) are after
+    * the current fence. */
+   if (signal_poll) {
+      mtx_lock(&vrend_state.poll_mutex);
+      if (write_eventfd(vrend_state.eventfd, 1))
+         perror("failed to write to eventfd\n");
+
+      struct timespec ts;
+      int ret;
+      vrend_state.polling = true;
+      do {
+         ret = timespec_get(&ts, TIME_UTC);
+         assert(ret);
+         ts.tv_sec += 5;
+         ret = cnd_timedwait(&vrend_state.poll_cond, &vrend_state.poll_mutex, &ts);
+         if (ret)
+            vrend_printf("timeout (5s) waiting for renderer poll() to finish.");
+      } while (vrend_state.polling && ret);
+   }
+
+   ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
+   free_fence_locked(fence);
+
+   if (signal_poll)
+      mtx_unlock(&vrend_state.poll_mutex);
 }
 
 static int thread_sync(UNUSED void *arg)
@@ -6375,6 +6424,9 @@ static void vrend_renderer_use_threaded_sync(void)
 
    cnd_init(&vrend_state.fence_cond);
    mtx_init(&vrend_state.fence_mutex, mtx_plain);
+   cnd_init(&vrend_state.poll_cond);
+   mtx_init(&vrend_state.poll_mutex, mtx_plain);
+   vrend_state.polling = false;
 
    vrend_state.sync_thread = u_thread_create(thread_sync, NULL);
    if (!vrend_state.sync_thread) {
@@ -6383,6 +6435,8 @@ static void vrend_renderer_use_threaded_sync(void)
       vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
       cnd_destroy(&vrend_state.fence_cond);
       mtx_destroy(&vrend_state.fence_mutex);
+      cnd_destroy(&vrend_state.poll_cond);
+      mtx_destroy(&vrend_state.poll_mutex);
    }
 }
 
@@ -6620,6 +6674,8 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    list_inithead(&vrend_state.fence_list);
    list_inithead(&vrend_state.fence_wait_list);
    list_inithead(&vrend_state.waiting_query_list);
+   atomic_store(&vrend_state.has_waiting_queries, false);
+
    /* create 0 context */
    vrend_state.ctx0 = vrend_create_context(0, strlen("HOST"), "HOST");
 
@@ -9818,6 +9874,8 @@ void vrend_renderer_check_fences(void)
    struct list_head retired_fences;
    struct vrend_fence *fence, *stor;
 
+   assert(!vrend_state.use_async_fence_cb);
+
    list_inithead(&retired_fences);
 
    if (vrend_state.sync_thread) {
@@ -9952,6 +10010,9 @@ static void vrend_renderer_check_queries(void)
 
       list_delinit(&query->waiting_queries);
    }
+
+   atomic_store(&vrend_state.has_waiting_queries,
+                !LIST_IS_EMPTY(&vrend_state.waiting_query_list));
 }
 
 bool vrend_hw_switch_context(struct vrend_context *ctx, bool now)
@@ -10177,6 +10238,9 @@ void vrend_get_query_result(struct vrend_context *ctx, uint32_t handle,
    } else if (LIST_IS_EMPTY(&q->waiting_queries)) {
       list_addtail(&q->waiting_queries, &vrend_state.waiting_query_list);
    }
+
+   atomic_store(&vrend_state.has_waiting_queries,
+                !LIST_IS_EMPTY(&vrend_state.waiting_query_list));
 }
 
 #define COPY_QUERY_RESULT_TO_BUFFER(resid, offset, pvalue, size, multiplier) \
