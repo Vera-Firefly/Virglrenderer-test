@@ -9942,9 +9942,15 @@ static void vrend_renderer_check_queries(void)
    struct vrend_query *query, *stor;
 
    LIST_FOR_EACH_ENTRY_SAFE(query, stor, &vrend_state.waiting_query_list, waiting_queries) {
-      if (!vrend_hw_switch_context(query->ctx, true) ||
-          vrend_check_query(query))
-         list_delinit(&query->waiting_queries);
+      if (!vrend_hw_switch_context(query->ctx, true)) {
+         vrend_printf("failed to switch to context (%d) for query %u\n",
+                      query->ctx->ctx_id, query->id);
+      }
+      else if (!vrend_check_query(query)) {
+         continue;
+      }
+
+      list_delinit(&query->waiting_queries);
    }
 }
 
