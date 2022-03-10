@@ -505,6 +505,7 @@ boolean format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst
 
 void vrend_renderer_prepare_reset(void);
 void vrend_renderer_reset(void);
+void vrend_renderer_poll(void);
 int vrend_renderer_get_poll_fd(void);
 
 unsigned vrend_context_has_debug_flag(const struct vrend_context *ctx,

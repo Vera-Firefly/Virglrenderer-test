@@ -6311,6 +6311,25 @@ static bool do_wait(struct vrend_fence *fence, bool can_block)
    return done;
 }
 
+static void vrend_renderer_check_queries(void);
+
+void vrend_renderer_poll(void) {
+   if (vrend_state.use_async_fence_cb) {
+      flush_eventfd(vrend_state.eventfd);
+      mtx_lock(&vrend_state.poll_mutex);
+
+      /* queries must be checked before fences are retired. */
+      vrend_renderer_check_queries();
+
+      /* wake up the sync thread to keep doing work */
+      vrend_state.polling = false;
+      cnd_signal(&vrend_state.poll_cond);
+      mtx_unlock(&vrend_state.poll_mutex);
+   } else {
+      vrend_renderer_check_fences();
+   }
+}
+
 static void wait_sync(struct vrend_fence *fence)
 {
    struct vrend_context *ctx = fence->ctx;
@@ -9846,8 +9865,6 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
    return ENOMEM;
 }
 
-static void vrend_renderer_check_queries(void);
-
 static bool need_fence_retire_signal_locked(struct vrend_fence *fence,
                                             const struct list_head *signaled_list)
 {
@@ -11495,7 +11512,10 @@ void vrend_renderer_reset(void)
 
 int vrend_renderer_get_poll_fd(void)
 {
-   return vrend_state.eventfd;
+   int fd = vrend_state.eventfd;
+   if (vrend_state.use_async_fence_cb && fd < 0)
+      vrend_printf("failed to duplicate eventfd: error=%d\n", errno);
+   return fd;
 }
 
 int vrend_renderer_export_query(struct pipe_resource *pres,

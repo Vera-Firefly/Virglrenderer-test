@@ -587,7 +587,7 @@ void virgl_renderer_poll(void)
 {
    TRACE_FUNC();
    if (state.vrend_initialized)
-      vrend_renderer_check_fences();
+      vrend_renderer_poll();
 }
 
 void virgl_renderer_cleanup(UNUSED void *cookie)
