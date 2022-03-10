@@ -6322,26 +6322,14 @@ static void vrend_renderer_check_queries_locked(void);
 
 static void wait_sync(struct vrend_fence *fence)
 {
-   struct vrend_context *ctx = fence->ctx;
-
    do_wait(fence, /* can_block */ true);
 
    mtx_lock(&vrend_state.fence_mutex);
    if (vrend_state.use_async_fence_cb) {
       vrend_renderer_check_queries_locked();
-      /* to be able to call free_fence_locked without locking */
-      list_inithead(&fence->fences);
-   } else {
-      list_addtail(&fence->fences, &vrend_state.fence_list);
-   }
+   list_addtail(&fence->fences, &vrend_state.fence_list);
    vrend_state.fence_waiting = NULL;
    mtx_unlock(&vrend_state.fence_mutex);
-
-   if (vrend_state.use_async_fence_cb) {
-      ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
-      free_fence_locked(fence);
-      return;
-   }
 
    if (write_eventfd(vrend_state.eventfd, 1)) {
       perror("failed to write to eventfd\n");
@@ -6398,13 +6386,11 @@ static void vrend_renderer_use_threaded_sync(void)
       return;
    }
 
-   if (!vrend_state.use_async_fence_cb) {
-      vrend_state.eventfd = create_eventfd(0);
-      if (vrend_state.eventfd == -1) {
-         vrend_printf( "Failed to create eventfd\n");
-         vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
-         return;
-      }
+   vrend_state.eventfd = create_eventfd(0);
+   if (vrend_state.eventfd == -1) {
+      vrend_printf( "Failed to create eventfd\n");
+      vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
+      return;
    }
 
    cnd_init(&vrend_state.fence_cond);
@@ -6412,10 +6398,8 @@ static void vrend_renderer_use_threaded_sync(void)
 
    vrend_state.sync_thread = u_thread_create(thread_sync, NULL);
    if (!vrend_state.sync_thread) {
-      if (vrend_state.eventfd != -1) {
-         close(vrend_state.eventfd);
-         vrend_state.eventfd = -1;
-      }
+      close(vrend_state.eventfd);
+      vrend_state.eventfd = -1;
       vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
       cnd_destroy(&vrend_state.fence_cond);
       mtx_destroy(&vrend_state.fence_mutex);
@@ -6661,8 +6645,6 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
 
    vrend_state.eventfd = -1;
    if (flags & VREND_USE_THREAD_SYNC) {
-      if (flags & VREND_USE_ASYNC_FENCE_CB)
-         vrend_state.use_async_fence_cb = true;
       vrend_renderer_use_threaded_sync();
    }
    if (flags & VREND_USE_EXTERNAL_BLOB)
@@ -9859,12 +9841,6 @@ void vrend_renderer_check_fences(void)
    struct list_head retired_fences;
    struct vrend_fence *fence, *stor;
 
-   /* No need to check the fence list, fences are retired directly in
-    * the polling thread in that case.
-    */
-   if (vrend_state.use_async_fence_cb)
-      return;
-
    list_inithead(&retired_fences);
 
    if (vrend_state.sync_thread) {
@@ -11089,7 +11065,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
 
-   // we use capability bits (not a version of protocol), because 
+   // we use capability bits (not a version of protocol), because
    // we disable this on client side if virglrenderer is used under
    // vtest. vtest can't support this, because size of resource
    // is used to create shmem. On drm path, we can use this, because

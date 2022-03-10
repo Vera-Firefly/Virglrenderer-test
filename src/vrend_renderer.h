@@ -124,9 +124,8 @@ struct vrend_if_cbs {
    int (*make_current)(virgl_gl_context ctx);
 };
 
-#define VREND_USE_THREAD_SYNC (1 << 0)
-#define VREND_USE_EXTERNAL_BLOB (1 << 1)
-#define VREND_USE_ASYNC_FENCE_CB (1 << 2)
+#define VREND_USE_THREAD_SYNC 1
+#define VREND_USE_EXTERNAL_BLOB 2
 
 bool vrend_check_no_error(struct vrend_context *ctx);
 
