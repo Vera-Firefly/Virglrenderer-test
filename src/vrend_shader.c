@@ -4874,13 +4874,14 @@ static bool apply_prev_layout(const struct vrend_shader_key *key,
 
       if (io->name == TGSI_SEMANTIC_GENERIC || io->name == TGSI_SEMANTIC_PATCH) {
 
+         bool already_found_one = false;
          const struct vrend_layout_info *layout = key->prev_stage_generic_and_patch_outputs_layout;
          for (unsigned generic_index = 0; generic_index  < key->input.num_generic_and_patch; ++generic_index, ++layout) {
 
-            bool already_found_one = false;
-
             /* Identify by sid and arrays_id  */
-            if (io->sid == layout->sid && (io->array_id == layout->array_id)) {
+            if (io->sid == layout->sid &&
+                (io->array_id == layout->array_id) &&
+                (io->name == layout->name)) {
 
                /* We have already one IO with the same SID and arrays ID, so we need to duplicate it */
                if (already_found_one) {
