@@ -9,7 +9,9 @@ variables:
   # If multiple pipeline runs are available, please choose the one having
   # at least the 'debian-testing' job in 'Build-x86_64' stage completed.
   #
-  MESA_PIPELINE_ID: 502781
+  # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
+  #
+  MESA_PIPELINE_ID: 533405
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
   # Per-pipeline artifact storage on MinIO
@@ -28,7 +30,9 @@ include:
       - '/templates/fedora.yml'
   - project: 'mesa/mesa'
     # IMPORTANT: Use a recent Mesa Git revision
-    ref: fa4390f7bf6c2bff7ee6799b67accdf2e2db475c
+    # The commit ref must be in sync with the pipeline picked above
+    # It can be found on the pipeline page below the commit message
+    ref: 3244100557fc8c92fccb8258a7c1f69bbabb9172
     file:
       - '/.gitlab-ci/image-tags.yml'
 

@@ -20,8 +20,6 @@ spec@arb_color_buffer_float@gl_rgba8_snorm-render,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-render-fog,Fail
 spec@arb_compute_shader@execution@min-dvec4-double-large-group-size,Fail
 spec@arb_copy_image@arb_copy_image-formats,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2,Crash
-spec@arb_copy_image@arb_copy_image-formats --samples=4,Crash
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
@@ -367,8 +365,10 @@ spec@arb_shader_image_load_store@level@Cube level binding test,Fail
 spec@arb_shader_image_load_store@level,Fail
 spec@arb_shader_image_load_store@max-images@Combined max image uniforms test,Fail
 spec@arb_shader_image_load_store@max-images,Fail
-spec@arb_shader_image_load_store@max-size,Crash
+spec@arb_shader_image_load_store@max-size,Fail
 spec@arb_shader_image_load_store@max-size@image1D max size test/16384x1x1x1,Fail
+spec@arb_shader_image_load_store@max-size@image1DArray max size test/16384x8x1x1,Fail
+spec@arb_shader_image_load_store@max-size@image1DArray max size test/8x2048x1x1,Fail
 spec@arb_shader_image_load_store@restrict,Fail
 spec@arb_shader_image_load_store@restrict@no qualifier image aliasing test,Fail
 spec@arb_shader_image_load_store@semantics,Fail
@@ -480,6 +480,8 @@ spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB16F- swizzled-
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB32F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA16F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA32F- swizzled- border color only,Fail
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Fail
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGB9_E5,Fail
 spec@arb_texture_query_lod@execution@fs-texturequerylod-nearest-biased,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-07,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-08,Fail
@@ -560,7 +562,7 @@ spec@ext_framebuffer_multisample@draw-buffers-alpha-to-coverage 2,Fail
 spec@ext_framebuffer_multisample@draw-buffers-alpha-to-one 2,Fail
 spec@ext_framebuffer_multisample@draw-buffers-alpha-to-one 4,Fail
 spec@ext_framebuffer_multisample@enable-flag,Fail
-spec@ext_framebuffer_multisample@fast-clear,Crash
+spec@ext_framebuffer_multisample@fast-clear,Fail
 spec@ext_framebuffer_multisample@formats 2,Fail
 spec@ext_framebuffer_multisample@formats 4,Fail
 spec@ext_framebuffer_multisample@formats all_samples,Fail
@@ -679,8 +681,6 @@ spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRE
 spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RGBA_S3TC_DXT5_EXT- swizzled- border color only,Fail
 spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RGB_S3TC_DXT1_EXT- swizzled- border color only,Fail
 spec@ext_texture_integer@fbo-blending,Fail
-spec@ext_texture_integer@getteximage-clamping,Fail
-spec@ext_texture_integer@getteximage-clamping gl_arb_texture_rg,Fail
 spec@ext_texture_integer@multisample-fast-clear gl_ext_texture_integer,Fail
 spec@ext_texture_integer@texwrap formats bordercolor,Fail
 spec@ext_texture_integer@texwrap formats bordercolor@GL_ALPHA16I_EXT- border color only,Fail
@@ -2482,8 +2482,6 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full 
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,ExpectedFail
 spec@khr_texture_compression_astc@void-extent-dl-bug,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2,Crash
-spec@nv_copy_image@nv_copy_image-formats --samples=4,Crash
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail

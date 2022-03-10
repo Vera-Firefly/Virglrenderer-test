@@ -14,42 +14,13 @@ spec@arb_clear_texture@arb_clear_texture-depth,Fail
 spec@arb_clear_texture@arb_clear_texture-sized-formats,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-clear,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-drawpixels,Fail
+spec@arb_color_buffer_float@gl_rgba8_snorm-getteximage,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-probepixel,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-readpixels,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-render,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-render-fog,Fail
 spec@arb_compute_shader@execution@min-dvec4-double-large-group-size,Fail
 spec@arb_copy_image@arb_copy_image-formats,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=2@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
-spec@arb_copy_image@arb_copy_image-formats --samples=4@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
@@ -263,6 +234,23 @@ spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
 spec@arb_shader_atomic_counter_ops@execution@add,Fail
 spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail
+spec@arb_shader_image_load_store@bitcast,Fail
+spec@arb_shader_image_load_store@bitcast@r11f_g11f_b10f to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@r32f to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@r32i to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@r32ui to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg16 to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg16_snorm to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg16f to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg16i to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg16ui to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg32f to rgba16_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg32i to rgba16_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rg32ui to rgba16_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rgb10_a2 to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rgb10_a2ui to rgba8_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rgba16 to rgba16_snorm bitcast test,Fail
+spec@arb_shader_image_load_store@bitcast@rgba8 to rgba8_snorm bitcast test,Fail
 spec@arb_shader_image_load_store@early-z,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/late-z pass,Fail
@@ -333,6 +321,11 @@ spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/full barrier test/64
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/16x16,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/4x4,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Pixel/RaW/one bit barrier test/64x64,Fail
+spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/full barrier test/16x16,Fail
+spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/full barrier test/4x4,Fail
+spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/16x16,Fail
+spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/4x4,Fail
+spec@arb_shader_image_load_store@host-mem-barrier@Pixel/WaW/one bit barrier test/64x64,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/16x16,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/4x4,Fail
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/64x64,Fail
@@ -508,6 +501,8 @@ spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB16F- swizzled-
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB32F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA16F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA32F- swizzled- border color only,Fail
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Fail
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGB9_E5,Fail
 spec@arb_texture_query_lod@execution@fs-texturequerylod-nearest-biased,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-07,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-08,Fail
@@ -715,6 +710,7 @@ spec@ext_texture_compression_rgtc@texwrap formats bordercolor-swizzled@GL_COMPRE
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RG_RGTC2- swizzled- border color only,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_SIGNED_RED_RGTC1- swizzled- border color only,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_SIGNED_RG_RGTC2- swizzled- border color only,Fail
+spec@ext_texture_compression_rgtc@rgtc-teximage-01,Fail
 spec@ext_texture_compression_s3tc@getteximage-targets 2d_array s3tc,Fail
 spec@ext_texture_compression_s3tc@getteximage-targets cube_array s3tc,Fail
 spec@ext_texture_compression_s3tc@texwrap formats bordercolor,Fail
@@ -728,8 +724,6 @@ spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRE
 spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RGBA_S3TC_DXT5_EXT- swizzled- border color only,Fail
 spec@ext_texture_compression_s3tc@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RGB_S3TC_DXT1_EXT- swizzled- border color only,Fail
 spec@ext_texture_integer@fbo-blending,Fail
-spec@ext_texture_integer@getteximage-clamping,Fail
-spec@ext_texture_integer@getteximage-clamping gl_arb_texture_rg,Fail
 spec@ext_texture_integer@multisample-fast-clear gl_ext_texture_integer,Fail
 spec@ext_texture_integer@texwrap formats bordercolor,Fail
 spec@ext_texture_integer@texwrap formats bordercolor@GL_ALPHA16I_EXT- border color only,Fail
@@ -2531,36 +2525,6 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full 
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,ExpectedFail
 spec@khr_texture_compression_astc@void-extent-dl-bug,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=2@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_ALPHA12/Destination: GL_ALPHA12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY/Destination: GL_INTENSITY,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY12/Destination: GL_INTENSITY12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY16/Destination: GL_INTENSITY16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_INTENSITY8/Destination: GL_INTENSITY8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE/Destination: GL_LUMINANCE,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE12/Destination: GL_LUMINANCE12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE12_ALPHA12/Destination: GL_LUMINANCE12_ALPHA12,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE16/Destination: GL_LUMINANCE16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE16_ALPHA16/Destination: GL_LUMINANCE16_ALPHA16,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE8/Destination: GL_LUMINANCE8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE8_ALPHA8/Destination: GL_LUMINANCE8_ALPHA8,Fail
-spec@nv_copy_image@nv_copy_image-formats --samples=4@Source: GL_LUMINANCE_ALPHA/Destination: GL_LUMINANCE_ALPHA,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
@@ -3317,8 +3281,15 @@ spec@!opengl 1.1@read-front samples=2,Crash
 spec@!opengl 1.1@read-front samples=4,ExpectedFail
 spec@!opengl 1.1@streaming-texture-leak,Crash
 spec@!opengl 1.1@teximage-colors gl_alpha16@Exact upload-download of GL_ALPHA16,Fail
+spec@!opengl 1.1@teximage-colors gl_r16_snorm@Exact upload-download of GL_R16_SNORM,Fail
+spec@!opengl 1.1@teximage-colors gl_rgb16_snorm@Exact upload-download of GL_RGB16_SNORM,Fail
+spec@!opengl 1.1@teximage-colors gl_rgba16_snorm@Exact upload-download of GL_RGBA16_SNORM,Fail
+spec@!opengl 1.1@teximage-colors gl_r8_snorm@Exact upload-download of GL_R8_SNORM,Fail
+spec@!opengl 1.1@teximage-colors gl_rgb8_snorm@Exact upload-download of GL_RGB8_SNORM,Fail
+spec@!opengl 1.1@teximage-colors gl_rgba8_snorm@Exact upload-download of GL_RGBA8_SNORM,Fail
 spec@!opengl 1.1@teximage-colors gl_rgba,Fail
 spec@!opengl 1.1@teximage-colors gl_rgba@GL_RGBA texture with GL_BGRA and GL_UNSIGNED_INT_2_10_10_10_REV,Fail
+
 spec@!opengl 1.1@texwrap 1d bordercolor,Fail
 spec@!opengl 1.1@texwrap 1d bordercolor@GL_RGBA8- border color only,Fail
 spec@!opengl 1.1@texwrap 1d proj bordercolor,Fail
@@ -3408,6 +3379,7 @@ spec@!opengl 1.5@draw-vertices-user,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@gl-2.0-large-point-fs,Fail
+spec@!opengl 2.0@gl-2.0-vertexattribpointer,Fail
 spec@!opengl 2.0@occlusion-query-discard,Fail
 spec@!opengl 3.0@required-texture-attachment-formats,Fail
 spec@!opengl 3.0@sampler-cube-shadow,Fail
