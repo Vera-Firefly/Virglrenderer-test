@@ -34,9 +34,18 @@ mkdir -p ${MESA_CI_PROJECT_DIR}
 cd ${MESA_CI_PROJECT_DIR}
 
 # Deploy Mesa CI artifacts
-wget -S --progress=dot:giga -O- \
-    https://${MINIO_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.gz \
-| tar -xvz
+MESA_CI_ARTIFACTS_URL="https://${MINIO_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.gz"
+if [ wget -q --method=HEAD ${MESA_CI_ARTIFACTS_URL} ]; then
+    wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xvz
+else
+    echo -e "\e[31mThe Mesa artifacts has expired, please update to newer Mesa pipeline!\e[0m"
+    apt-get update && apt-get -y install jq
+    MESA_JOB_ID=$(wget -cq "${CI_API_V4_URL}/projects/176/pipelines/${MESA_PIPELINE_ID}/jobs?per_page=100&scope=success" -O - \
+        | jq -c '.[] | select(.name == "debian-testing") | .id')
+    MESA_CI_ARTIFACTS_URL="${CI_API_V4_URL}/projects/176/jobs/${MESA_JOB_ID}/artifacts/artifacts/install.tar"
+    unset MESA_JOB_ID
+    wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xv
+fi
 
 # Overwrite Mesa CI's virglrenderer binaries with self built versions
 cp -a ${CI_PROJECT_DIR}/install/bin/virgl_test_server /usr/local/bin/
