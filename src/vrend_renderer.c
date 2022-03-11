@@ -890,6 +890,14 @@ bool vrend_format_is_bgra(enum virgl_formats format) {
            format == VIRGL_FORMAT_B8G8R8A8_SRGB);
 }
 
+static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
+{
+   /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
+   return (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE) &&
+           (res->base.format == VIRGL_FORMAT_B8G8R8X8_UNORM ||
+            res->base.format == VIRGL_FORMAT_R8G8B8X8_UNORM));
+}
+
 static bool vrend_resource_supports_view(const struct vrend_resource *res,
                                          UNUSED enum virgl_formats view_format)
 {
@@ -902,7 +910,16 @@ static bool vrend_resource_supports_view(const struct vrend_resource *res,
     * instead. For views that do require colorspace conversion, manual srgb
     * decode/encode is required. */
    return !(vrend_format_is_bgra(res->base.format) &&
-            has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE));
+            has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE)) &&
+         !vrend_resource_has_24bpp_internal_format(res);
+}
+
+static inline bool
+vrend_resource_needs_redblue_swizzle(struct vrend_resource *res,
+                                     enum virgl_formats view_format)
+{
+   return !vrend_resource_supports_view(res, view_format) &&
+         vrend_format_is_bgra(res->base.format) ^ vrend_format_is_bgra(view_format);
 }
 
 static inline bool
@@ -921,14 +938,6 @@ vrend_resource_needs_srgb_encode(struct vrend_resource *res,
    return !vrend_resource_supports_view(res, view_format) &&
       !util_format_is_srgb(res->base.format) &&
       util_format_is_srgb(view_format);
-}
-
-static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
-{
-   /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
-   return (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE) &&
-           (res->base.format == VIRGL_FORMAT_B8G8R8X8_UNORM ||
-            res->base.format == VIRGL_FORMAT_R8G8B8X8_UNORM));
 }
 
 static bool vrend_blit_needs_swizzle(enum virgl_formats src,
@@ -1972,9 +1981,6 @@ int vrend_create_surface(struct vrend_context *ctx,
             last_layer = 5;
          }
 
-         if (vrend_resource_has_24bpp_internal_format(res))
-            internalformat = GL_RGB8;
-
          VREND_DEBUG(dbg_tex, ctx, "Create texture view from %s for %s\n",
                      util_format_name(res->base.format),
                      util_format_name(surf->format));
@@ -2364,8 +2370,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
          * back, and still benefit from automatic srgb decoding.
          * If the red/blue swap is intended, we just let it happen and don't
          * need to explicit change to the sampler's swizzle parameters. */
-        if (!vrend_resource_supports_view(view->texture, view->format) &&
-            vrend_format_is_bgra(view->format)) {
+        if (vrend_resource_needs_redblue_swizzle(view->texture, view->format)) {
               VREND_DEBUG(dbg_tex, ctx, "texture view with red/blue swizzle created for EGL-backed texture sampler"
                           " (format: %s; view: %s)\n",
                           util_format_name(view->texture->base.format),
@@ -2666,10 +2671,8 @@ static void vrend_hw_emit_framebuffer_state(struct vrend_sub_context *sub_ctx)
        * be necessary, e.g. for rgb* views on bgr* resources. Ensure this
        * happens by adding a shader swizzle to the final write of such surfaces.
        */
-      if (!vrend_resource_supports_view(surf->texture, surf->format) &&
-          !vrend_format_is_bgra(surf->format)) {
+      if (vrend_resource_needs_redblue_swizzle(surf->texture, surf->format))
          sub_ctx->swizzle_output_rgb_to_bgr |= 1 << i;
-      }
 
       /* glTextureView() on eglimage-backed bgr* textures for is not supported.
        * To work around this for colorspace conversion, views are avoided
@@ -4016,9 +4019,7 @@ void vrend_clear(struct vrend_context *ctx,
       if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_format_is_emulated_alpha(sub_ctx->surf[0]->format)) {
          glClearColor(colorf[3], 0.0, 0.0, 0.0);
       } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] &&
-                 !vrend_resource_supports_view(sub_ctx->surf[0]->texture,
-                                               sub_ctx->surf[0]->format) &&
-                 !vrend_format_is_bgra(sub_ctx->surf[0]->format)) {
+                 vrend_resource_needs_redblue_swizzle(sub_ctx->surf[0]->texture, sub_ctx->surf[0]->format)) {
          VREND_DEBUG(dbg_bgra, ctx, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
          glClearColor(colorf[2], colorf[1], colorf[0], colorf[3]);
       } else {
@@ -9325,11 +9326,8 @@ static bool vrend_blit_needs_redblue_swizzle(struct vrend_resource *src_res,
    /* EGL-backed bgr* resources are always stored with BGR* internal format,
     * despite Virgl's use of the GL_RGBA8 internal format, so special care must
     * be taken when determining the swizzling. */
-   bool src_needs_swizzle = !vrend_format_is_bgra(info->src.format) &&
-      !vrend_resource_supports_view(src_res, info->src.format);
-   bool dst_needs_swizzle = !vrend_format_is_bgra(info->dst.format) &&
-      !vrend_resource_supports_view(dst_res, info->dst.format);
-
+   bool src_needs_swizzle = vrend_resource_needs_redblue_swizzle(src_res, info->src.format);
+   bool dst_needs_swizzle = vrend_resource_needs_redblue_swizzle(dst_res, info->dst.format);
    return src_needs_swizzle ^ dst_needs_swizzle;
 }
 
