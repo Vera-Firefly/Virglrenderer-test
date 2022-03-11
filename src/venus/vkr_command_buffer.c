@@ -683,6 +683,44 @@ vkr_dispatch_vkCmdSetViewportWithCount(UNUSED struct vn_dispatch_context *dispat
    VKR_CMD_CALL(CmdSetViewportWithCount, args, args->viewportCount, args->pViewports);
 }
 
+static void
+vkr_dispatch_vkCmdSetDepthBiasEnable(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdSetDepthBiasEnable *args)
+{
+   VKR_CMD_CALL(CmdSetDepthBiasEnable, args, args->depthBiasEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetLogicOpEXT(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCmdSetLogicOpEXT *args)
+{
+   VKR_CMD_CALL(CmdSetLogicOpEXT, args, args->logicOp);
+}
+
+static void
+vkr_dispatch_vkCmdSetPatchControlPointsEXT(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdSetPatchControlPointsEXT *args)
+{
+   VKR_CMD_CALL(CmdSetPatchControlPointsEXT, args, args->patchControlPoints);
+}
+
+static void
+vkr_dispatch_vkCmdSetPrimitiveRestartEnable(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdSetPrimitiveRestartEnable *args)
+{
+   VKR_CMD_CALL(CmdSetPrimitiveRestartEnable, args, args->primitiveRestartEnable);
+}
+
+static void
+vkr_dispatch_vkCmdSetRasterizerDiscardEnable(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdSetRasterizerDiscardEnable *args)
+{
+   VKR_CMD_CALL(CmdSetRasterizerDiscardEnable, args, args->rasterizerDiscardEnable);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -786,4 +824,14 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdSetStencilOp = vkr_dispatch_vkCmdSetStencilOp;
    dispatch->dispatch_vkCmdSetStencilTestEnable = vkr_dispatch_vkCmdSetStencilTestEnable;
    dispatch->dispatch_vkCmdSetViewportWithCount = vkr_dispatch_vkCmdSetViewportWithCount;
+
+   /* VK_EXT_extended_dynamic_state2 */
+   dispatch->dispatch_vkCmdSetRasterizerDiscardEnable =
+      vkr_dispatch_vkCmdSetRasterizerDiscardEnable;
+   dispatch->dispatch_vkCmdSetPrimitiveRestartEnable =
+      vkr_dispatch_vkCmdSetPrimitiveRestartEnable;
+   dispatch->dispatch_vkCmdSetPatchControlPointsEXT =
+      vkr_dispatch_vkCmdSetPatchControlPointsEXT;
+   dispatch->dispatch_vkCmdSetLogicOpEXT = vkr_dispatch_vkCmdSetLogicOpEXT;
+   dispatch->dispatch_vkCmdSetDepthBiasEnable = vkr_dispatch_vkCmdSetDepthBiasEnable;
 }
