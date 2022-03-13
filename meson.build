@@ -118,11 +118,15 @@ if cc.has_header('dlfcn.h')
    conf_data.set('HAVE_DLFCN_H', 1)
 endif
 
-if cc.has_header('pthread.h')
-   conf_data.set('HAVE_PTHREAD', 1)
-   if cc.has_function('pthread_setaffinity_np', dependencies: thread_dep)
-      conf_data.set('HAVE_PTHREAD_SETAFFINITY', 1)
-   endif
+if thread_dep.found() and host_machine.system() != 'windows'
+  conf_data.set('HAVE_PTHREAD', 1)
+  if host_machine.system() != 'netbsd' and cc.has_function(
+      'pthread_setaffinity_np',
+      dependencies : thread_dep,
+      prefix : '#include <pthread.h>',
+      args : '-D_GNU_SOURCE')
+    conf_data.set('HAVE_PTHREAD_SETAFFINITY', 1)
+  endif
 endif
 
 if cc.has_header('sys/eventfd.h')
