@@ -180,6 +180,7 @@ struct vn_device_proc_table {
    PFN_vkGetDeviceQueue GetDeviceQueue;
    PFN_vkGetDeviceQueue2 GetDeviceQueue2;
    PFN_vkGetEventStatus GetEventStatus;
+   PFN_vkGetFenceFdKHR GetFenceFdKHR;
    PFN_vkGetFenceStatus GetFenceStatus;
    PFN_vkGetImageDrmFormatModifierPropertiesEXT GetImageDrmFormatModifierPropertiesEXT;
    PFN_vkGetImageMemoryRequirements GetImageMemoryRequirements;
@@ -194,6 +195,7 @@ struct vn_device_proc_table {
    PFN_vkGetQueryPoolResults GetQueryPoolResults;
    PFN_vkGetRenderAreaGranularity GetRenderAreaGranularity;
    PFN_vkGetSemaphoreCounterValue GetSemaphoreCounterValue;
+   PFN_vkImportFenceFdKHR ImportFenceFdKHR;
    PFN_vkInvalidateMappedMemoryRanges InvalidateMappedMemoryRanges;
    PFN_vkMapMemory MapMemory;
    PFN_vkMergePipelineCaches MergePipelineCaches;
@@ -582,6 +584,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_1 ? VN_GDPA(dev, vkGetDeviceQueue2) :
       NULL;
    proc_table->GetEventStatus = VN_GDPA(dev, vkGetEventStatus);
+   proc_table->GetFenceFdKHR =
+      ext_table->KHR_external_fence_fd ? VN_GDPA(dev, vkGetFenceFdKHR) :
+      NULL;
    proc_table->GetFenceStatus = VN_GDPA(dev, vkGetFenceStatus);
    proc_table->GetImageDrmFormatModifierPropertiesEXT =
       ext_table->EXT_image_drm_format_modifier ? VN_GDPA(dev, vkGetImageDrmFormatModifierPropertiesEXT) :
@@ -613,6 +618,9 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->GetSemaphoreCounterValue =
       api_version >= VK_API_VERSION_1_2 ? VN_GDPA(dev, vkGetSemaphoreCounterValue) :
       ext_table->KHR_timeline_semaphore ? VN_GDPA(dev, vkGetSemaphoreCounterValueKHR) :
+      NULL;
+   proc_table->ImportFenceFdKHR =
+      ext_table->KHR_external_fence_fd ? VN_GDPA(dev, vkImportFenceFdKHR) :
       NULL;
    proc_table->InvalidateMappedMemoryRanges = VN_GDPA(dev, vkInvalidateMappedMemoryRanges);
    proc_table->MapMemory = VN_GDPA(dev, vkMapMemory);

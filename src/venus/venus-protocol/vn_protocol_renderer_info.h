@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[86];
+      bool enabled[87];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -64,6 +64,7 @@ struct vn_info_extension_table {
          bool KHR_dynamic_rendering;
          bool KHR_external_fence;
          bool KHR_external_fence_capabilities;
+         bool KHR_external_fence_fd;
          bool KHR_external_memory;
          bool KHR_external_memory_capabilities;
          bool KHR_external_memory_fd;
@@ -132,7 +133,7 @@ vn_info_extension_compare(const void *name, const void *ext)
 static inline const struct vn_info_extension *
 vn_info_extension_get(const char *name)
 {
-   static const struct vn_info_extension vn_info_extensions[86] = {
+   static const struct vn_info_extension vn_info_extensions[87] = {
       { 0, "VK_EXT_4444_formats", 1 },
       { 1, "VK_EXT_calibrated_timestamps", 2 },
       { 2, "VK_EXT_command_serialization", 0 },
@@ -183,45 +184,46 @@ vn_info_extension_get(const char *name)
       { 47, "VK_KHR_dynamic_rendering", 1 },
       { 48, "VK_KHR_external_fence", 1 },
       { 49, "VK_KHR_external_fence_capabilities", 1 },
-      { 50, "VK_KHR_external_memory", 1 },
-      { 51, "VK_KHR_external_memory_capabilities", 1 },
-      { 52, "VK_KHR_external_memory_fd", 1 },
-      { 53, "VK_KHR_external_semaphore", 1 },
-      { 54, "VK_KHR_external_semaphore_capabilities", 1 },
-      { 55, "VK_KHR_format_feature_flags2", 1 },
-      { 56, "VK_KHR_get_memory_requirements2", 1 },
-      { 57, "VK_KHR_get_physical_device_properties2", 2 },
-      { 58, "VK_KHR_image_format_list", 1 },
-      { 59, "VK_KHR_imageless_framebuffer", 1 },
-      { 60, "VK_KHR_maintenance1", 2 },
-      { 61, "VK_KHR_maintenance2", 1 },
-      { 62, "VK_KHR_maintenance3", 1 },
-      { 63, "VK_KHR_maintenance4", 2 },
-      { 64, "VK_KHR_multiview", 1 },
-      { 65, "VK_KHR_relaxed_block_layout", 1 },
-      { 66, "VK_KHR_sampler_mirror_clamp_to_edge", 3 },
-      { 67, "VK_KHR_sampler_ycbcr_conversion", 14 },
-      { 68, "VK_KHR_separate_depth_stencil_layouts", 1 },
-      { 69, "VK_KHR_shader_atomic_int64", 1 },
-      { 70, "VK_KHR_shader_draw_parameters", 1 },
-      { 71, "VK_KHR_shader_float16_int8", 1 },
-      { 72, "VK_KHR_shader_float_controls", 4 },
-      { 73, "VK_KHR_shader_integer_dot_product", 1 },
-      { 74, "VK_KHR_shader_non_semantic_info", 1 },
-      { 75, "VK_KHR_shader_subgroup_extended_types", 1 },
-      { 76, "VK_KHR_shader_terminate_invocation", 1 },
-      { 77, "VK_KHR_spirv_1_4", 1 },
-      { 78, "VK_KHR_storage_buffer_storage_class", 1 },
-      { 79, "VK_KHR_synchronization2", 1 },
-      { 80, "VK_KHR_timeline_semaphore", 2 },
-      { 81, "VK_KHR_uniform_buffer_standard_layout", 1 },
-      { 82, "VK_KHR_variable_pointers", 1 },
-      { 83, "VK_KHR_vulkan_memory_model", 3 },
-      { 84, "VK_KHR_zero_initialize_workgroup_memory", 1 },
-      { 85, "VK_MESA_venus_protocol", 100000 },
+      { 50, "VK_KHR_external_fence_fd", 1 },
+      { 51, "VK_KHR_external_memory", 1 },
+      { 52, "VK_KHR_external_memory_capabilities", 1 },
+      { 53, "VK_KHR_external_memory_fd", 1 },
+      { 54, "VK_KHR_external_semaphore", 1 },
+      { 55, "VK_KHR_external_semaphore_capabilities", 1 },
+      { 56, "VK_KHR_format_feature_flags2", 1 },
+      { 57, "VK_KHR_get_memory_requirements2", 1 },
+      { 58, "VK_KHR_get_physical_device_properties2", 2 },
+      { 59, "VK_KHR_image_format_list", 1 },
+      { 60, "VK_KHR_imageless_framebuffer", 1 },
+      { 61, "VK_KHR_maintenance1", 2 },
+      { 62, "VK_KHR_maintenance2", 1 },
+      { 63, "VK_KHR_maintenance3", 1 },
+      { 64, "VK_KHR_maintenance4", 2 },
+      { 65, "VK_KHR_multiview", 1 },
+      { 66, "VK_KHR_relaxed_block_layout", 1 },
+      { 67, "VK_KHR_sampler_mirror_clamp_to_edge", 3 },
+      { 68, "VK_KHR_sampler_ycbcr_conversion", 14 },
+      { 69, "VK_KHR_separate_depth_stencil_layouts", 1 },
+      { 70, "VK_KHR_shader_atomic_int64", 1 },
+      { 71, "VK_KHR_shader_draw_parameters", 1 },
+      { 72, "VK_KHR_shader_float16_int8", 1 },
+      { 73, "VK_KHR_shader_float_controls", 4 },
+      { 74, "VK_KHR_shader_integer_dot_product", 1 },
+      { 75, "VK_KHR_shader_non_semantic_info", 1 },
+      { 76, "VK_KHR_shader_subgroup_extended_types", 1 },
+      { 77, "VK_KHR_shader_terminate_invocation", 1 },
+      { 78, "VK_KHR_spirv_1_4", 1 },
+      { 79, "VK_KHR_storage_buffer_storage_class", 1 },
+      { 80, "VK_KHR_synchronization2", 1 },
+      { 81, "VK_KHR_timeline_semaphore", 2 },
+      { 82, "VK_KHR_uniform_buffer_standard_layout", 1 },
+      { 83, "VK_KHR_variable_pointers", 1 },
+      { 84, "VK_KHR_vulkan_memory_model", 3 },
+      { 85, "VK_KHR_zero_initialize_workgroup_memory", 1 },
+      { 86, "VK_MESA_venus_protocol", 100000 },
    };
 
-   return bsearch(name, vn_info_extensions, 86,
+   return bsearch(name, vn_info_extensions, 87,
          sizeof(*vn_info_extensions), vn_info_extension_compare);
 }
 

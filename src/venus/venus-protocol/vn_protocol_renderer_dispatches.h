@@ -280,12 +280,14 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkMapMemory_EXT: return "vkMapMemory";
     case VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT: return "vkGetMemoryFdKHR";
     case VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT: return "vkGetMemoryFdPropertiesKHR";
+    case VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT: return "vkGetFenceFdKHR";
+    case VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT: return "vkImportFenceFdKHR";
     case VK_COMMAND_TYPE_vkUpdateDescriptorSetWithTemplate_EXT: return "vkUpdateDescriptorSetWithTemplate";
     default: return "unknown";
     }
 }
 
-static void (*const vn_dispatch_table[238])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[240])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -532,7 +534,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 238 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 240 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

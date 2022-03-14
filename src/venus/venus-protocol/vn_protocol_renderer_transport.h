@@ -19,6 +19,7 @@
  *
  *   vkGetMemoryFdKHR
  *   vkGetMemoryFdPropertiesKHR
+ *   vkImportFenceFdKHR
  */
 
 /* struct VkCalibratedTimestampInfoEXT chain */

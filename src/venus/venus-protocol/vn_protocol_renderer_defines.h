@@ -326,6 +326,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCmdDrawIndirectByteCountEXT_EXT = 186,
     VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT = 193,
     VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
+    VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT = 238,
+    VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT = 239,
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
     VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
     VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
@@ -1549,6 +1551,21 @@ struct vn_command_vkGetPhysicalDeviceExternalFenceProperties {
     VkExternalFenceProperties* pExternalFenceProperties;
 };
 
+struct vn_command_vkGetFenceFdKHR {
+    VkDevice device;
+    const VkFenceGetFdInfoKHR* pGetFdInfo;
+    int* pFd;
+
+    VkResult ret;
+};
+
+struct vn_command_vkImportFenceFdKHR {
+    VkDevice device;
+    const VkImportFenceFdInfoKHR* pImportFenceFdInfo;
+
+    VkResult ret;
+};
+
 struct vn_command_vkEnumeratePhysicalDeviceGroups {
     VkInstance instance;
     uint32_t* pPhysicalDeviceGroupCount;
@@ -2281,6 +2298,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetMemoryFdPropertiesKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdPropertiesKHR *args);
     void (*dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties *args);
     void (*dispatch_vkGetPhysicalDeviceExternalFenceProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalFenceProperties *args);
+    void (*dispatch_vkGetFenceFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetFenceFdKHR *args);
+    void (*dispatch_vkImportFenceFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkImportFenceFdKHR *args);
     void (*dispatch_vkEnumeratePhysicalDeviceGroups)(struct vn_dispatch_context *ctx, struct vn_command_vkEnumeratePhysicalDeviceGroups *args);
     void (*dispatch_vkGetDeviceGroupPeerMemoryFeatures)(struct vn_dispatch_context *ctx, struct vn_command_vkGetDeviceGroupPeerMemoryFeatures *args);
     void (*dispatch_vkBindBufferMemory2)(struct vn_dispatch_context *ctx, struct vn_command_vkBindBufferMemory2 *args);

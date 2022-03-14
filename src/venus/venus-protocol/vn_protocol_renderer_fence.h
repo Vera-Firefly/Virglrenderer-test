@@ -14,6 +14,12 @@
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+/*
+ * These structs/unions/commands are not included
+ *
+ *   vkGetFenceFdKHR
+ */
+
 /* struct VkExportFenceCreateInfo chain */
 
 static inline void *
