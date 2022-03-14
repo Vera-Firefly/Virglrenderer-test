@@ -198,7 +198,6 @@ make check venus:
 .deqp-host:
   extends:
     - .gl-host-test
-  parallel: 3
 
 .piglit-host:
   extends:
@@ -207,7 +206,6 @@ make check venus:
     PIGLIT_PLATFORM: surfaceless_egl
     PIGLIT_NO_WINDOW: 1
     PIGLIT_PROFILES: gpu
-  parallel: 2
 
 .deqp-virt:
   extends:
@@ -215,7 +213,6 @@ make check venus:
   variables:
     # There will be FDO_CI_CONCURRENT Crosvm processes, so each should use a single thread
     LP_NUM_THREADS: 1
-  parallel: 3
 
 .piglit-virt:
   extends:
@@ -225,7 +222,6 @@ make check venus:
     # Use all threads for rendering and only run one job at a time
     LP_NUM_THREADS: ${FDO_CI_CONCURRENT}
     FORCE_FDO_CI_CONCURRENT: 1
-  parallel: 4
 
 # Host runners (virpipe/vtest)
 
@@ -279,6 +275,7 @@ deqp-gles-virt:
 piglit-gl-virt:
   extends:
     - .piglit-virt
+  parallel: 3
   variables:
     GPU_VERSION: virgl-gl
     CROSVM_GPU_ARGS: *deqp-gl-crosvm-gpu-args
@@ -286,6 +283,7 @@ piglit-gl-virt:
 piglit-gles-virt:
   extends:
     - .piglit-virt
+  parallel: 3
   variables:
     VIRGL_HOST_API: GLES
     GPU_VERSION: virgl-gles
