@@ -167,6 +167,8 @@ make check venus:
   dependencies:
     - debian/x86_build
   rules:
+    - if: *is-post-merge
+      when: never
     - when: on_success
 
 .gl-host-test:
