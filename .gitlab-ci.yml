@@ -114,7 +114,7 @@ debian/x86_build:
 .make_check_base:
   stage: sanity test
   extends: debian/x86_build
-  dependencies: []
+  needs: []
   artifacts:
     when: always
     paths:
@@ -164,8 +164,9 @@ make check venus:
       - results/
     reports:
       junit: results/junit.xml
-  dependencies:
-    - debian/x86_build
+  needs:
+    - job: debian/x86_build
+      artifacts: true
   rules:
     - if: *is-post-merge
       when: never
