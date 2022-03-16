@@ -3487,8 +3487,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    struct vrend_shader_selector *prev = prev_type != -1  ? sub_ctx->shaders[prev_type] : NULL;
    if (prev) {
       key->input = prev->sinfo.out;
-      key->force_invariant_inputs = prev->sinfo.invariant_outputs;
-
+      memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
       memcpy(key->prev_stage_generic_and_patch_outputs_layout,
              prev->sinfo.generic_outputs_layout,
              prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
@@ -10752,7 +10751,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 9;
+   caps->v2.host_feature_check_version = 10;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);

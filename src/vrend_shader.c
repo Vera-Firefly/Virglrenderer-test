@@ -903,6 +903,141 @@ static bool add_samplers(struct dump_ctx *ctx, int first, int last, int sview_ty
    return true;
 }
 
+typedef enum
+{
+   VARYING_SLOT_POS,
+   VARYING_SLOT_COL0, /* COL0 and COL1 must be contiguous */
+   VARYING_SLOT_COL1,
+   VARYING_SLOT_FOGC,
+   VARYING_SLOT_TEX0, /* TEX0-TEX7 must be contiguous */
+   VARYING_SLOT_TEX1,
+   VARYING_SLOT_TEX2,
+   VARYING_SLOT_TEX3,
+   VARYING_SLOT_TEX4,
+   VARYING_SLOT_TEX5,
+   VARYING_SLOT_TEX6,
+   VARYING_SLOT_TEX7,
+   VARYING_SLOT_PSIZ, /* Does not appear in FS */
+   VARYING_SLOT_BFC0, /* Does not appear in FS */
+   VARYING_SLOT_BFC1, /* Does not appear in FS */
+   VARYING_SLOT_EDGE, /* Does not appear in FS */
+   VARYING_SLOT_CLIP_VERTEX, /* Does not appear in FS */
+   VARYING_SLOT_CLIP_DIST0,
+   VARYING_SLOT_CLIP_DIST1,
+   VARYING_SLOT_CULL_DIST0,
+   VARYING_SLOT_CULL_DIST1,
+   VARYING_SLOT_PRIMITIVE_ID, /* Does not appear in VS */
+   VARYING_SLOT_LAYER, /* Appears as VS or GS output */
+   VARYING_SLOT_VIEWPORT, /* Appears as VS or GS output */
+   VARYING_SLOT_FACE, /* FS only */
+   VARYING_SLOT_PNTC, /* FS only */
+   VARYING_SLOT_TESS_LEVEL_OUTER, /* Only appears as TCS output. */
+   VARYING_SLOT_TESS_LEVEL_INNER, /* Only appears as TCS output. */
+   VARYING_SLOT_BOUNDING_BOX0, /* Only appears as TCS output. */
+   VARYING_SLOT_BOUNDING_BOX1, /* Only appears as TCS output. */
+   VARYING_SLOT_VIEW_INDEX,
+   VARYING_SLOT_VIEWPORT_MASK, /* Does not appear in FS */
+   VARYING_SLOT_PRIMITIVE_SHADING_RATE = VARYING_SLOT_FACE, /* Does not appear in FS. */
+
+   VARYING_SLOT_PRIMITIVE_COUNT = VARYING_SLOT_TESS_LEVEL_OUTER, /* Only appears in MESH. */
+   VARYING_SLOT_PRIMITIVE_INDICES = VARYING_SLOT_TESS_LEVEL_INNER, /* Only appears in MESH. */
+   VARYING_SLOT_TASK_COUNT = VARYING_SLOT_BOUNDING_BOX0, /* Only appears in TASK. */
+
+   VARYING_SLOT_VAR0 = 32, /* First generic varying slot */
+   /* the remaining are simply for the benefit of gl_varying_slot_name()
+    * and not to be construed as an upper bound:
+    */
+   VARYING_SLOT_VAR1,
+   VARYING_SLOT_VAR2,
+   VARYING_SLOT_VAR3,
+   VARYING_SLOT_VAR4,
+   VARYING_SLOT_VAR5,
+   VARYING_SLOT_VAR6,
+   VARYING_SLOT_VAR7,
+   VARYING_SLOT_VAR8,
+   VARYING_SLOT_VAR9,
+   VARYING_SLOT_VAR10,
+   VARYING_SLOT_VAR11,
+   VARYING_SLOT_VAR12,
+   VARYING_SLOT_VAR13,
+   VARYING_SLOT_VAR14,
+   VARYING_SLOT_VAR15,
+   VARYING_SLOT_VAR16,
+   VARYING_SLOT_VAR17,
+   VARYING_SLOT_VAR18,
+   VARYING_SLOT_VAR19,
+   VARYING_SLOT_VAR20,
+   VARYING_SLOT_VAR21,
+   VARYING_SLOT_VAR22,
+   VARYING_SLOT_VAR23,
+   VARYING_SLOT_VAR24,
+   VARYING_SLOT_VAR25,
+   VARYING_SLOT_VAR26,
+   VARYING_SLOT_VAR27,
+   VARYING_SLOT_VAR28,
+   VARYING_SLOT_VAR29,
+   VARYING_SLOT_VAR30,
+   VARYING_SLOT_VAR31,
+   /* Account for the shift without CAP_TEXCOORD in mesa*/
+   VARYING_SLOT_PATCH0 = VARYING_SLOT_VAR31 + 9
+} gl_varying_slot;
+
+static uint32_t
+varying_bit_from_semantic_and_index(int semantic, int index)
+{
+   switch (semantic) {
+   case TGSI_SEMANTIC_POSITION:
+      return VARYING_SLOT_POS;
+   case TGSI_SEMANTIC_COLOR:
+      if (index == 0)
+         return VARYING_SLOT_COL0;
+      else
+         return VARYING_SLOT_COL1;
+   case TGSI_SEMANTIC_BCOLOR:
+      if (index == 0)
+         return VARYING_SLOT_BFC0;
+      else
+         return VARYING_SLOT_BFC1;
+   case TGSI_SEMANTIC_FOG:
+      return VARYING_SLOT_FOGC;
+   case TGSI_SEMANTIC_PSIZE:
+      return VARYING_SLOT_PSIZ;
+   case TGSI_SEMANTIC_GENERIC:
+      return VARYING_SLOT_VAR0 + index;
+   case TGSI_SEMANTIC_FACE:
+      return VARYING_SLOT_FACE;
+   case TGSI_SEMANTIC_EDGEFLAG:
+      return VARYING_SLOT_EDGE;
+   case TGSI_SEMANTIC_PRIMID:
+      return VARYING_SLOT_PRIMITIVE_ID;
+   case TGSI_SEMANTIC_CLIPDIST:
+      if (index == 0)
+         return VARYING_SLOT_CLIP_DIST0;
+      else
+         return VARYING_SLOT_CLIP_DIST1;
+   case TGSI_SEMANTIC_CLIPVERTEX:
+      return VARYING_SLOT_CLIP_VERTEX;
+   case TGSI_SEMANTIC_TEXCOORD:
+      assert(index < 8);
+      return (VARYING_SLOT_TEX0 + index);
+   case TGSI_SEMANTIC_PCOORD:
+      return VARYING_SLOT_PNTC;
+   case TGSI_SEMANTIC_VIEWPORT_INDEX:
+      return VARYING_SLOT_VIEWPORT;
+   case TGSI_SEMANTIC_LAYER:
+      return VARYING_SLOT_LAYER;
+   case TGSI_SEMANTIC_TESSINNER:
+      return VARYING_SLOT_TESS_LEVEL_INNER;
+   case TGSI_SEMANTIC_TESSOUTER:
+      return VARYING_SLOT_TESS_LEVEL_OUTER;
+   case TGSI_SEMANTIC_PATCH:
+      return VARYING_SLOT_PATCH0 + index;
+   default:
+      vrend_printf("Warning: Bad TGSI semantic: %d/%d\n", semantic, index);
+      return 0;
+   }
+}
+
 static struct vrend_array *lookup_image_array_ptr(const struct dump_ctx *ctx, int index)
 {
    uint32_t i;
@@ -5104,7 +5239,10 @@ iter_instruction(struct tgsi_iterate_context *iter,
        * GLSL < 4.30 it is required to match the output of the previous stage */
       if (!ctx->cfg->use_gles) {
          for (unsigned i = 0; i < ctx->num_inputs; ++i) {
-            if (ctx->key->force_invariant_inputs & (1ull << ctx->inputs[i].sid))
+            uint32_t bit_pos = varying_bit_from_semantic_and_index(ctx->inputs[i].name, ctx->inputs[i].sid);
+            uint32_t slot = bit_pos / 32;
+            uint32_t bit = 1u << (bit_pos & 0x1f);
+            if (ctx->key->force_invariant_inputs[slot] & bit)
                ctx->inputs[i].invariant = 1;
             else
                ctx->inputs[i].invariant = 0;
@@ -7263,8 +7401,12 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->in.generic_emitted_mask = ctx->generic_ios.inputs_emitted_mask;
 
    for (unsigned i = 0; i < ctx->num_outputs; ++i) {
-      if (ctx->outputs[i].invariant)
-         sinfo->invariant_outputs |= 1ull << ctx->outputs[i].sid;
+      if (ctx->outputs[i].invariant) {
+         uint32_t bit_pos = varying_bit_from_semantic_and_index(ctx->outputs[i].name, ctx->outputs[i].sid);
+         uint32_t slot = bit_pos / 32;
+         uint32_t bit = 1u << (bit_pos & 0x1f);
+         sinfo->invariant_outputs[slot] |= bit;
+      }
    }
    sinfo->gles_use_tex_query_level = ctx->gles_use_tex_query_level;
 }
