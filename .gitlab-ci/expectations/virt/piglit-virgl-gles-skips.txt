@@ -29,3 +29,8 @@ spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecond
 spec@glsl-1.30@execution@interpolation@interpolation-smooth-gl_backsecondarycolor-flat-fixed
 spec@glsl-1.50@execution@built-in-functions@gs-op-bitor-neg-int-ivec3
 spec@glsl-4.30@execution@built-in-functions@cs-op-selection-bool-vec4-vec4
+
+# Skip any fp64 tests, this is not supported on GLES hosts
+spec@glsl-4.*@*dmat*
+spec@glsl-4.*@*dvec*
+spec@glsl-4.*@*double*

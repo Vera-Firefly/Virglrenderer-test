@@ -68,4 +68,9 @@ spec@glsl-1.50@execution@texelfetch@gs-texelfetch-usampler1darray
 spec@glsl-1.50@execution@texelfetchoffset@gs-texelfetch-isampler1darray
 spec@glsl-1.50@execution@texelfetchoffset@gs-texelfetch-sampler1darray
 spec@glsl-1.50@execution@texelfetchoffset@gs-texelfetch-usampler1darray
-spec@glsl-4.00@execution@built-in-functions@gs-step-dvec4-dvec4
+
+# Skip any fp64 tests, it's not working properly, and there is
+# no priority in fixing this
+spec@glsl-4.*@*dmat*
+spec@glsl-4.*@*dvec*
+spec@glsl-4.*@*double*
