@@ -4619,10 +4619,9 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
          if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
             ctx->inputs[i].glsl_predefined_no_emit = true;
             if (ctx->inputs[i].sid < ctx->patch_ios.input_range.io.sid || ctx->patch_ios.input_range.used == false) {
-               ctx->patch_ios.input_range.io.first = i;
-               ctx->patch_ios.input_range.io.usage_mask = 0xf;
-               ctx->patch_ios.input_range.io.name = TGSI_SEMANTIC_PATCH;
                ctx->patch_ios.input_range.io.sid = ctx->inputs[i].sid;
+               ctx->patch_ios.input_range.io.first = i;
+               ctx->patch_ios.input_range.io.name = TGSI_SEMANTIC_PATCH;
                ctx->patch_ios.input_range.used = true;
                if (ctx->cfg->has_arrays_of_arrays && !ctx->cfg->use_gles)
                   ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
@@ -4637,7 +4636,6 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
                ctx->generic_ios.input_range.io.sid = ctx->inputs[i].sid;
                ctx->generic_ios.input_range.io.first = i;
                ctx->generic_ios.input_range.io.name = TGSI_SEMANTIC_GENERIC;
-               ctx->generic_ios.input_range.io.num_components = 4;
                ctx->generic_ios.input_range.used = true;
                if (ctx->cfg->has_arrays_of_arrays && !ctx->cfg->use_gles)
                   ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
@@ -4645,12 +4643,14 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
             if (ctx->inputs[i].sid > ctx->generic_ios.input_range.io.last)
                ctx->generic_ios.input_range.io.last = ctx->inputs[i].sid;
          }
-
-         if (ctx->key->input.num_indirect_generic > 0)
-            ctx->generic_ios.input_range.io.last = ctx->generic_ios.input_range.io.sid + ctx->key->input.num_indirect_generic - 1;
-         if (ctx->key->input.num_indirect_patch > 0)
-            ctx->patch_ios.input_range.io.last = ctx->patch_ios.input_range.io.sid + ctx->key->input.num_indirect_patch - 1;
       }
+
+      if (ctx->key->input.num_indirect_generic > 0)
+         ctx->generic_ios.input_range.io.last = ctx->generic_ios.input_range.io.sid + ctx->key->input.num_indirect_generic - 1;
+
+      if (ctx->key->input.num_indirect_patch > 0)
+         ctx->patch_ios.input_range.io.last = ctx->patch_ios.input_range.io.sid + ctx->key->input.num_indirect_patch - 1;
+
       snprintf(ctx->patch_ios.input_range.io.glsl_name, 64, "%s_p%d",
                get_stage_input_name_prefix(ctx, ctx->prog_type), ctx->patch_ios.input_range.io.sid);
       snprintf(ctx->generic_ios.input_range.io.glsl_name, 64, "%s_g%d",
@@ -4676,9 +4676,9 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
          if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
             if (ctx->outputs[i].sid < ctx->patch_ios.output_range.io.sid || ctx->patch_ios.output_range.used == false) {
+               ctx->patch_ios.output_range.io.sid = ctx->outputs[i].sid;
                ctx->patch_ios.output_range.io.first = i;
                ctx->patch_ios.output_range.io.name = TGSI_SEMANTIC_PATCH;
-               ctx->patch_ios.output_range.io.sid = ctx->outputs[i].sid;
                ctx->patch_ios.output_range.used = true;
                if (ctx->cfg->has_arrays_of_arrays && !ctx->cfg->use_gles)
                   ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
@@ -4695,8 +4695,6 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
                ctx->generic_ios.output_range.io.first = i;
                ctx->generic_ios.output_range.io.name = TGSI_SEMANTIC_GENERIC;
                ctx->generic_ios.output_range.used = true;
-               ctx->generic_ios.output_range.io.usage_mask = 0xf;
-               ctx->generic_ios.output_range.io.num_components = 4;
                if (ctx->cfg->has_arrays_of_arrays && !ctx->cfg->use_gles)
                   ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
             }
@@ -4704,12 +4702,14 @@ void rewrite_io_ranged(struct dump_ctx *ctx)
                ctx->generic_ios.output_range.io.last = ctx->outputs[i].sid;
             }
          }
-
-         if (ctx->key->output.num_indirect_generic > 0)
-            ctx->generic_ios.output_range.io.last = ctx->generic_ios.output_range.io.sid + ctx->key->output.num_indirect_generic - 1;
-         if (ctx->key->output.num_indirect_patch > 0)
-            ctx->patch_ios.output_range.io.last = ctx->patch_ios.output_range.io.sid + ctx->key->output.num_indirect_patch - 1;
       }
+
+      if (ctx->key->output.num_indirect_generic > 0)
+         ctx->generic_ios.output_range.io.last = ctx->generic_ios.output_range.io.sid + ctx->key->output.num_indirect_generic - 1;
+
+      if (ctx->key->output.num_indirect_patch > 0)
+         ctx->patch_ios.output_range.io.last = ctx->patch_ios.output_range.io.sid + ctx->key->output.num_indirect_patch - 1;
+
       snprintf(ctx->patch_ios.output_range.io.glsl_name, 64, "%s_p%d",
                get_stage_output_name_prefix(ctx->prog_type), ctx->patch_ios.output_range.io.sid);
       snprintf(ctx->generic_ios.output_range.io.glsl_name, 64, "%s_g%d",
