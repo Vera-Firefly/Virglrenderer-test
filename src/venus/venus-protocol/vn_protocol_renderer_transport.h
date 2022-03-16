@@ -22,63 +22,6 @@
  *   vkImportFenceFdKHR
  */
 
-/* struct VkCalibratedTimestampInfoEXT chain */
-
-static inline void *
-vn_decode_VkCalibratedTimestampInfoEXT_pnext_temp(struct vn_cs_decoder *dec)
-{
-    /* no known/supported struct */
-    if (vn_decode_simple_pointer(dec))
-        vn_cs_decoder_set_fatal(dec);
-    return NULL;
-}
-
-static inline void
-vn_decode_VkCalibratedTimestampInfoEXT_self_temp(struct vn_cs_decoder *dec, VkCalibratedTimestampInfoEXT *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_decode_VkTimeDomainEXT(dec, &val->timeDomain);
-}
-
-static inline void
-vn_decode_VkCalibratedTimestampInfoEXT_temp(struct vn_cs_decoder *dec, VkCalibratedTimestampInfoEXT *val)
-{
-    VkStructureType stype;
-    vn_decode_VkStructureType(dec, &stype);
-    if (stype != VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT)
-        vn_cs_decoder_set_fatal(dec);
-
-    val->sType = stype;
-    val->pNext = vn_decode_VkCalibratedTimestampInfoEXT_pnext_temp(dec);
-    vn_decode_VkCalibratedTimestampInfoEXT_self_temp(dec, val);
-}
-
-static inline void
-vn_replace_VkCalibratedTimestampInfoEXT_handle_self(VkCalibratedTimestampInfoEXT *val)
-{
-    /* skip val->sType */
-    /* skip val->pNext */
-    /* skip val->timeDomain */
-}
-
-static inline void
-vn_replace_VkCalibratedTimestampInfoEXT_handle(VkCalibratedTimestampInfoEXT *val)
-{
-    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
-
-    do {
-        switch ((int32_t)pnext->sType) {
-        case VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT:
-            vn_replace_VkCalibratedTimestampInfoEXT_handle_self((VkCalibratedTimestampInfoEXT *)pnext);
-            break;
-        default:
-            /* ignore unknown/unsupported struct */
-            break;
-        }
-        pnext = pnext->pNext;
-    } while (pnext);
-}
-
 /* struct VkCommandStreamDescriptionMESA */
 
 static inline void
@@ -334,67 +277,6 @@ vn_decode_VkMemoryResourcePropertiesMESA_partial_temp(struct vn_cs_decoder *dec,
     val->sType = stype;
     val->pNext = vn_decode_VkMemoryResourcePropertiesMESA_pnext_partial_temp(dec);
     vn_decode_VkMemoryResourcePropertiesMESA_self_partial_temp(dec, val);
-}
-
-static inline void vn_decode_vkGetCalibratedTimestampsEXT_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkGetCalibratedTimestampsEXT *args)
-{
-    vn_decode_VkDevice_lookup(dec, &args->device);
-    vn_decode_uint32_t(dec, &args->timestampCount);
-    if (vn_peek_array_size(dec)) {
-        const uint32_t iter_count = vn_decode_array_size(dec, args->timestampCount);
-        args->pTimestampInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pTimestampInfos) * iter_count);
-        if (!args->pTimestampInfos) return;
-        for (uint32_t i = 0; i < iter_count; i++)
-            vn_decode_VkCalibratedTimestampInfoEXT_temp(dec, &((VkCalibratedTimestampInfoEXT *)args->pTimestampInfos)[i]);
-    } else {
-        vn_decode_array_size(dec, args->timestampCount);
-        args->pTimestampInfos = NULL;
-    }
-    if (vn_peek_array_size(dec)) {
-        const size_t array_size = vn_decode_array_size(dec, args->timestampCount);
-        args->pTimestamps = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pTimestamps) * array_size);
-        if (!args->pTimestamps) return;
-    } else {
-        vn_decode_array_size(dec, args->timestampCount);
-        args->pTimestamps = NULL;
-    }
-    if (vn_decode_simple_pointer(dec)) {
-        args->pMaxDeviation = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMaxDeviation));
-        if (!args->pMaxDeviation) return;
-    } else {
-        args->pMaxDeviation = NULL;
-        vn_cs_decoder_set_fatal(dec);
-    }
-}
-
-static inline void vn_replace_vkGetCalibratedTimestampsEXT_args_handle(struct vn_command_vkGetCalibratedTimestampsEXT *args)
-{
-    vn_replace_VkDevice_handle(&args->device);
-    /* skip args->timestampCount */
-    if (args->pTimestampInfos) {
-       for (uint32_t i = 0; i < args->timestampCount; i++)
-            vn_replace_VkCalibratedTimestampInfoEXT_handle(&((VkCalibratedTimestampInfoEXT *)args->pTimestampInfos)[i]);
-    }
-    /* skip args->pTimestamps */
-    /* skip args->pMaxDeviation */
-}
-
-static inline void vn_encode_vkGetCalibratedTimestampsEXT_reply(struct vn_cs_encoder *enc, const struct vn_command_vkGetCalibratedTimestampsEXT *args)
-{
-    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkGetCalibratedTimestampsEXT_EXT});
-
-    vn_encode_VkResult(enc, &args->ret);
-    /* skip args->device */
-    /* skip args->timestampCount */
-    /* skip args->pTimestampInfos */
-    if (args->pTimestamps) {
-        vn_encode_array_size(enc, args->timestampCount);
-        vn_encode_uint64_t_array(enc, args->pTimestamps, args->timestampCount);
-    } else {
-        vn_encode_array_size(enc, 0);
-    }
-    if (vn_encode_simple_pointer(enc, args->pMaxDeviation))
-        vn_encode_uint64_t(enc, args->pMaxDeviation);
 }
 
 static inline void vn_decode_vkSetReplyCommandStreamMESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkSetReplyCommandStreamMESA *args)
@@ -664,35 +546,6 @@ static inline void vn_encode_vkGetVenusExperimentalFeatureData100000MESA_reply(s
     } else {
         vn_encode_array_size(enc, 0);
     }
-}
-
-static inline void vn_dispatch_vkGetCalibratedTimestampsEXT(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
-{
-    struct vn_command_vkGetCalibratedTimestampsEXT args;
-
-    if (!ctx->dispatch_vkGetCalibratedTimestampsEXT) {
-        vn_cs_decoder_set_fatal(ctx->decoder);
-        return;
-    }
-
-    vn_decode_vkGetCalibratedTimestampsEXT_args_temp(ctx->decoder, &args);
-    if (!args.device) {
-        vn_cs_decoder_set_fatal(ctx->decoder);
-        return;
-    }
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder))
-        ctx->dispatch_vkGetCalibratedTimestampsEXT(ctx, &args);
-
-#ifdef DEBUG
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && vn_dispatch_should_log_result(args.ret))
-        vn_dispatch_debug_log(ctx, "vkGetCalibratedTimestampsEXT returned %d", args.ret);
-#endif
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkGetCalibratedTimestampsEXT_reply(ctx->encoder, &args);
-
-    vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
 
 static inline void vn_dispatch_vkSetReplyCommandStreamMESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
