@@ -1105,7 +1105,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
                   }
                   add_two_side = true;
                }
-               name_prefix = "ex";
             }
          }
          break;
@@ -1405,24 +1404,21 @@ iter_declaration(struct tgsi_iterate_context *iter,
                else if (ctx->outputs[i].sid == 1)
                   name_prefix = "gl_FrontSecondaryColor";
             } else {
-               name_prefix = ctx->is_last_vertex_stage ? "ex" : get_stage_output_name_prefix(iter->processor.Processor);
-               ctx->color_out_mask |= (1 << decl->Semantic.Index);
+                      ctx->color_out_mask |= (1 << decl->Semantic.Index);
             }
          }
          ctx->outputs[i].override_no_wm = false;
          break;
       case TGSI_SEMANTIC_BCOLOR:
-         if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
-            if (ctx->glsl_ver_required < 140) {
-               ctx->outputs[i].glsl_no_index = true;
-               if (ctx->outputs[i].sid == 0)
-                  name_prefix = "gl_BackColor";
-               else if (ctx->outputs[i].sid == 1)
-                  name_prefix = "gl_BackSecondaryColor";
-            } else {
-               ctx->outputs[i].override_no_wm = false;
-               ctx->color_out_mask |= (1 << decl->Semantic.Index) << 2;
-            }
+         if (ctx->glsl_ver_required < 140) {
+            ctx->outputs[i].glsl_no_index = true;
+            if (ctx->outputs[i].sid == 0)
+               name_prefix = "gl_BackColor";
+            else if (ctx->outputs[i].sid == 1)
+               name_prefix = "gl_BackSecondaryColor";
+         } else {
+            ctx->outputs[i].override_no_wm = false;
+            ctx->color_out_mask |= (1 << decl->Semantic.Index) << 2;
          }
          break;
       case TGSI_SEMANTIC_PSIZE:
@@ -1865,11 +1861,14 @@ static void emit_color_select(const struct dump_ctx *ctx,
    if (!ctx->key->color_two_side || !(ctx->color_in_mask & 0x3))
       return;
 
+   const char *name_prefix = get_stage_input_name_prefix(ctx, ctx->prog_type);
    if (ctx->color_in_mask & 1)
-      emit_buf(glsl_strbufs, "realcolor0 = gl_FrontFacing ? ex_c0 : ex_bc0;\n");
+      emit_buff(glsl_strbufs, "realcolor0 = gl_FrontFacing ? %s_c0 : %s_bc0;\n",
+               name_prefix, name_prefix);
 
    if (ctx->color_in_mask & 2)
-      emit_buf(glsl_strbufs, "realcolor1 = gl_FrontFacing ? ex_c1 : ex_bc1;\n");
+      emit_buff(glsl_strbufs, "realcolor1 = gl_FrontFacing ? %s_c1 : %s_bc1;\n",
+                name_prefix, name_prefix);
 }
 
 static void emit_prescale(struct vrend_glsl_strbufs *glsl_strbufs)
@@ -6518,11 +6517,11 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
          bcolor_emitted = front_back_color_emitted_flags[ctx->outputs[i].sid] & BACK_COLOR_EMITTED;
 
          if (fcolor_emitted && !bcolor_emitted) {
-            emit_hdrf(glsl_strbufs, "%sout vec4 ex_bc%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
+            emit_hdrf(glsl_strbufs, "%sout vec4 vso_bc%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= BACK_COLOR_EMITTED;
          }
          if (bcolor_emitted && !fcolor_emitted) {
-            emit_hdrf(glsl_strbufs, "%sout vec4 ex_c%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
+            emit_hdrf(glsl_strbufs, "%sout vec4 vso_c%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= FRONT_COLOR_EMITTED;
          }
       }
@@ -7506,9 +7505,9 @@ static bool vrend_patch_vertex_shader_interpolants(
                replace_interp(prog_strings, "gl_BackColor", pstring, auxstring);
             }
          } else {
-            snprintf(glsl_name, 64, "ex_c%d", fs_info->interpinfo[i].semantic_index);
+            snprintf(glsl_name, 64, "%s_c%d", oprefix, fs_info->interpinfo[i].semantic_index);
             replace_interp(prog_strings, glsl_name, pstring, auxstring);
-            snprintf(glsl_name, 64, "ex_bc%d", fs_info->interpinfo[i].semantic_index);
+            snprintf(glsl_name, 64, "%s_bc%d",  oprefix, fs_info->interpinfo[i].semantic_index);
             replace_interp(prog_strings, glsl_name, pstring, auxstring);
          }
          break;
