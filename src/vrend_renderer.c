@@ -2370,7 +2370,8 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
          * back, and still benefit from automatic srgb decoding.
          * If the red/blue swap is intended, we just let it happen and don't
          * need to explicit change to the sampler's swizzle parameters. */
-        if (vrend_resource_needs_redblue_swizzle(view->texture, view->format)) {
+        if (!vrend_resource_supports_view(view->texture, view->format) &&
+            vrend_format_is_bgra(view->format)) {
               VREND_DEBUG(dbg_tex, ctx, "texture view with red/blue swizzle created for EGL-backed texture sampler"
                           " (format: %s; view: %s)\n",
                           util_format_name(view->texture->base.format),
