@@ -229,14 +229,14 @@ make check venus:
 
 # Host runners (virpipe/vtest)
 
-debian/x86_test/deqp-gl-host:
+deqp-gl-host:
   extends:
     - .deqp-host
   variables:
     DEQP_SUITE: virgl-gl
     GPU_VERSION: virgl-gl
 
-debian/x86_test/deqp-gles-host:
+deqp-gles-host:
   extends:
     - .deqp-host
   variables:
@@ -244,13 +244,13 @@ debian/x86_test/deqp-gles-host:
     DEQP_SUITE: virgl-gles
     GPU_VERSION: virgl-gles
 
-debian/x86_test/piglit-gl-host:
+piglit-gl-host:
   extends:
     - .piglit-host
   variables:
     GPU_VERSION: virgl-gl
 
-debian/x86_test/piglit-gles-host:
+piglit-gles-host:
   extends:
     - .piglit-host
   variables:
@@ -259,7 +259,7 @@ debian/x86_test/piglit-gles-host:
 
 # Virt runners (virgl/crosvm)
 
-debian/x86_test/deqp-gl-virt:
+deqp-gl-virt:
   extends:
     - .deqp-virt
   variables:
@@ -267,7 +267,7 @@ debian/x86_test/deqp-gl-virt:
     GPU_VERSION: virgl-gl
     CROSVM_GPU_ARGS: &deqp-gl-crosvm-gpu-args "gles=false,backend=virglrenderer,egl=true,surfaceless=true,width=1024,height=768"
 
-debian/x86_test/deqp-gles-virt:
+deqp-gles-virt:
   extends:
     - .deqp-virt
   variables:
@@ -276,14 +276,14 @@ debian/x86_test/deqp-gles-virt:
     GPU_VERSION: virgl-gles
     CROSVM_GPU_ARGS: &deqp-gles-crosvm-gpu-args "gles=true,backend=virglrenderer,egl=true,surfaceless=true,width=1024,height=768"
 
-debian/x86_test/piglit-gl-virt:
+piglit-gl-virt:
   extends:
     - .piglit-virt
   variables:
     GPU_VERSION: virgl-gl
     CROSVM_GPU_ARGS: *deqp-gl-crosvm-gpu-args
 
-debian/x86_test/piglit-gles-virt:
+piglit-gles-virt:
   extends:
     - .piglit-virt
   variables:
