@@ -5207,9 +5207,11 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_buff(&ctx->glsl_strbufs, "%s = %s(1.0LF/(%s));\n", dsts[0], get_string(dinfo.dstconv), srcs[0]);
       break;
    case TGSI_OPCODE_FLR:
+   case TGSI_OPCODE_DFLR:
       emit_op1("floor");
       break;
    case TGSI_OPCODE_ROUND:
+   case TGSI_OPCODE_DROUND:
       // There is no TGSI OPCODE for roundEven, prefer roundEven
       // so roundEven in guest gets translated to roundEven.
       if ((ctx->cfg->use_gles && ctx->cfg->glsl_version >= 300) ||
@@ -5222,6 +5224,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_op1("sign");
       break;
    case TGSI_OPCODE_CEIL:
+   case TGSI_OPCODE_DCEIL:
       emit_op1("ceil");
       break;
    case TGSI_OPCODE_FRC:
@@ -5229,9 +5232,11 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_op1("fract");
       break;
    case TGSI_OPCODE_TRUNC:
+   case TGSI_OPCODE_DTRUNC:
       emit_op1("trunc");
       break;
    case TGSI_OPCODE_SSG:
+   case TGSI_OPCODE_DSSG:
       emit_op1("sign");
       break;
    case TGSI_OPCODE_RSQ:
