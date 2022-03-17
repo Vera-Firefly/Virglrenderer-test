@@ -156,13 +156,17 @@ make check venus:
   stage: test
   extends:
     - .set-image-base-tag
+  before_script:
+    - export CI_JOB_NAME_SANITIZED="$(echo $CI_JOB_NAME | tr ' /' '--')"
   variables:
     MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_X86_TEST_GL_TAG}
   script:
+    - export DEQP_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
+    - export PIGLIT_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
     - .gitlab-ci/container/debian/x86_test.sh
   artifacts:
-    name: "virgl_${CI_JOB_NAME}"
+    name: "virgl-result"
     when: always
     paths:
       - results/
