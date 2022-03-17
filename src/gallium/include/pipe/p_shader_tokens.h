@@ -254,6 +254,8 @@ struct tgsi_declaration_array {
 #define TGSI_IMM_UINT32    1
 #define TGSI_IMM_INT32     2
 #define TGSI_IMM_FLOAT64   3
+#define TGSI_IMM_UINT64    4
+#define TGSI_IMM_INT64     5
 
 struct tgsi_immediate
 {
