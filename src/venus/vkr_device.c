@@ -130,7 +130,9 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
 
    dev->physical_device = physical_dev;
 
-   vkr_device_init_proc_table(dev, physical_dev->api_version, exts, ext_count);
+   vkr_device_init_proc_table(dev, physical_dev->api_version,
+                              args->pCreateInfo->ppEnabledExtensionNames,
+                              args->pCreateInfo->enabledExtensionCount);
 
    free(exts);
 
