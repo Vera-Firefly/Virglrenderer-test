@@ -250,6 +250,8 @@ if with_venus
    endif
 endif
 
+with_drm = false
+
 with_render_server = get_option('render-server')
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')

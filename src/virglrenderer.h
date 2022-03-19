@@ -135,6 +135,11 @@ struct virgl_renderer_callbacks {
  */
 #define VIRGL_RENDERER_RENDER_SERVER (1 << 9)
 
+/*
+ * Enable drm renderer.
+ */
+#define VIRGL_RENDERER_DRM           (1 << 10)
+
 #endif /* VIRGL_RENDERER_UNSTABLE_APIS */
 
 VIRGL_EXPORT int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks *cb);

@@ -38,6 +38,7 @@
 #include "util/u_math.h"
 #include "vkr_allocator.h"
 #include "vkr_renderer.h"
+#include "drm_renderer.h"
 #include "vrend_renderer.h"
 #include "proxy/proxy_renderer.h"
 #include "vrend_winsys.h"
@@ -175,6 +176,9 @@ void virgl_renderer_fill_caps(uint32_t set, uint32_t version,
       if (state.vkr_initialized)
          vkr_get_capset(caps);
       break;
+   case VIRGL_RENDERER_CAPSET_DRM:
+      drm_renderer_capset(caps);
+      break;
    default:
       break;
    }
@@ -229,6 +233,9 @@ int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
          ctx = vkr_context_create(nlen, name);
       else
          return EINVAL;
+      break;
+   case VIRGL_RENDERER_CAPSET_DRM:
+      ctx = drm_renderer_create(nlen, name);
       break;
    default:
       return EINVAL;
@@ -493,6 +500,10 @@ void virgl_renderer_get_cap_set(uint32_t cap_set, uint32_t *max_ver,
       *max_ver = 0;
       *max_size = vkr_get_capset(NULL);
       break;
+   case VIRGL_RENDERER_CAPSET_DRM:
+      *max_ver = 0;
+      *max_size = drm_renderer_capset(NULL);
+      break;
    default:
       *max_ver = 0;
       *max_size = 0;
@@ -617,6 +628,8 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
 
    if (state.winsys_initialized || state.external_winsys_initialized)
       vrend_winsys_cleanup();
+
+   drm_renderer_fini();
 
    memset(&state, 0, sizeof(state));
 }
@@ -748,6 +761,16 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       state.proxy_initialized = true;
    }
 
+   if ((flags & VIRGL_RENDERER_ASYNC_FENCE_CB) &&
+       (flags & VIRGL_RENDERER_DRM)) {
+      int drm_fd = -1;
+
+      if (cbs->version >= 2 && cbs->get_drm_fd)
+         drm_fd = cbs->get_drm_fd(cookie);
+
+      drm_renderer_init(drm_fd);
+   }
+
    return 0;
 
 fail:
@@ -791,6 +814,8 @@ void virgl_renderer_reset(void)
 
    if (state.vrend_initialized)
       vrend_renderer_reset();
+
+   drm_renderer_reset();
 }
 
 int virgl_renderer_get_poll_fd(void)

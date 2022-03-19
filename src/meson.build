@@ -135,6 +135,15 @@ venus_codegen = custom_target(
    command : [prog_python, '@INPUT0@', '-o', '@OUTDIR@', '@INPUT1@'],
 )
 
+drm_sources = [
+   'drm/drm_fence.c',
+   'drm/drm_fence.h',
+   'drm/drm_renderer.c',
+   'drm/drm_renderer.h',
+   'drm/drm_util.c',
+   'drm/drm_util.h',
+]
+
 proxy_sources = [
    'proxy/proxy_client.c',
    'proxy/proxy_common.c',
@@ -178,6 +187,10 @@ if with_venus
    virgl_depends += [venus_dep]
 endif
 
+if with_drm
+   virgl_sources += drm_sources
+endif
+
 if with_render_server
    virgl_sources += proxy_sources
 endif
@@ -185,14 +198,14 @@ endif
 libvirgl = static_library(
    'virgl',
    virgl_sources,
-   include_directories: [inc_gallium, inc_configuration, 'venus'],
+   include_directories: [inc_gallium, inc_configuration, 'venus', 'drm'],
    dependencies : virgl_depends,
 )
 
 libvirgl_inc = [
    inc_gallium,
    inc_configuration,
-   include_directories(['.', 'venus'])
+   include_directories(['.', 'venus', 'drm'])
 ]
 
 libvirgl_dep = declare_dependency(
