@@ -2882,23 +2882,40 @@ static void translate_tex(struct dump_ctx *ctx,
        vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_emulated_rect_mask, sinfo->sreg_index)) {
 
       char buf[255];
+      const char *bias = "";
       const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
+
+      /* No LOD for these texture types, but on GLES we emulate RECT by using
+       * a normal 2D texture, so we have to give LOD 0 */
+      switch (inst->Texture.Texture) {
+      case TGSI_TEXTURE_BUFFER:
+      case TGSI_TEXTURE_2D_MSAA:
+      case TGSI_TEXTURE_2D_ARRAY_MSAA:
+         break;
+      case TGSI_TEXTURE_RECT:
+      case TGSI_TEXTURE_SHADOWRECT:
+         if (!ctx->cfg->use_gles)
+            break;
+         /* fallthrough */
+      default:
+         bias = ", 0";
+      }
 
       switch (inst->Instruction.Opcode) {
       case TGSI_OPCODE_TXP:
-         snprintf(buf, 255, "vec4(%s)/vec4(textureSize(%s, 0), 1, 1)", srcs[0], srcs[sampler_index]);
+         snprintf(buf, 255, "vec4(%s)/vec4(textureSize(%s%s), 1, 1)", srcs[0], srcs[sampler_index], bias);
          break;
 
       case TGSI_OPCODE_TG4:
-         snprintf(buf, 255, "%s.xy/vec2(textureSize(%s, 0))", srcs[0], srcs[sampler_index]);
+         snprintf(buf, 255, "%s.xy/vec2(textureSize(%s%s))", srcs[0], srcs[sampler_index], bias);
          break;
 
       default:
          /* Non TG4 ops have the compare value in the z components */
          if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWRECT) {
-            snprintf(buf, 255, "vec3(%s.xy/vec2(textureSize(%s, 0)), %s.z)", srcs[0], srcs[sampler_index], srcs[0]);
+            snprintf(buf, 255, "vec3(%s.xy/vec2(textureSize(%s%s)), %s.z)", srcs[0], srcs[sampler_index], bias, srcs[0]);
          } else
-            snprintf(buf, 255, "%s.xy/vec2(textureSize(%s, 0))", srcs[0], srcs[sampler_index]);
+            snprintf(buf, 255, "%s.xy/vec2(textureSize(%s%s))", srcs[0], srcs[sampler_index], bias);
       }
       srcs = new_srcs;
    }
