@@ -152,17 +152,21 @@ vkr_extension_table_init(struct vn_info_extension_table *table,
 {
    memset(table, 0, sizeof(*table));
    for (uint32_t i = 0; i < count; i++) {
-      const struct vn_info_extension *ext = vn_info_extension_get(exts[i]);
-      if (ext)
-         table->enabled[ext->index] = true;
+      const int32_t index = vn_info_extension_index(exts[i]);
+      if (index >= 0)
+         table->enabled[index] = true;
    }
 }
 
 uint32_t
 vkr_extension_get_spec_version(const char *name)
 {
-   const struct vn_info_extension *ext = vn_info_extension_get(name);
-   return ext && vkr_extension_table.enabled[ext->index] ? ext->spec_version : 0;
+   const int32_t index = vn_info_extension_index(name);
+   if (index < 0 || !vkr_extension_table.enabled[index])
+      return 0;
+
+   const struct vn_info_extension *ext = vn_info_extension_get(index);
+   return ext->spec_version;
 }
 
 void
