@@ -451,6 +451,10 @@ vrend_resource_reference(struct vrend_resource **ptr, struct vrend_resource *tex
 {
    struct vrend_resource *old_tex = *ptr;
 
+   /**
+    * Check the comment in vrend_sampler_view_reference for more information.
+    * Like above here only the address of the first element of *ptr.
+    */
    if (pipe_reference(&(*ptr)->base.reference, &tex->base.reference))
       vrend_renderer_resource_destroy(old_tex);
    *ptr = tex;

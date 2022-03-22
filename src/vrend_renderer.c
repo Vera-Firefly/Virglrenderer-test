@@ -1211,6 +1211,13 @@ vrend_sampler_view_reference(struct vrend_sampler_view **ptr, struct vrend_sampl
 {
    struct vrend_sampler_view *old_view = *ptr;
 
+   /**
+    * While this construct looks unsafe and seems to constitute undefined behavior all
+    * relevant compilers translate the construct &view->reference to
+    * `view + offset_in_struct(reference)` and pass this as function parameter,
+    * and since "reference" is the first value in the struct, view being NULL will
+    * result in passing a NULL pointer that is then checked in the function.
+    */
    if (pipe_reference(&(*ptr)->reference, &view->reference))
       vrend_destroy_sampler_view(old_view);
    *ptr = view;
@@ -1331,6 +1338,10 @@ vrend_shader_state_reference(struct vrend_shader_selector **ptr, struct vrend_sh
 {
    struct vrend_shader_selector *old_shader = *ptr;
 
+   /**
+    * We are are not acessing ptr memory here.
+    * Check the comment in vrend_sampler_view_reference for more information.
+    */
    if (pipe_reference(&(*ptr)->reference, &shader->reference))
       vrend_destroy_shader_selector(old_shader);
    *ptr = shader;
