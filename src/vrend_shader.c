@@ -6411,6 +6411,10 @@ static void emit_ios_indirect_generics_output(const struct dump_ctx *ctx,
    if (ctx->generic_ios.output_range.used) {
       int size = ctx->generic_ios.output_range.io.last -
          ctx->generic_ios.output_range.io.first + 1;
+      char array_handle[32] = "";
+      if (size > 1)
+         snprintf(array_handle, sizeof(array_handle), "[%d]", size);
+
       if (prefer_generic_io_block(ctx, io_out)) {
          char blockname[64];
          const char *stage_prefix = get_stage_output_name_prefix(ctx->prog_type);
@@ -6419,13 +6423,13 @@ static void emit_ios_indirect_generics_output(const struct dump_ctx *ctx,
          char blockvarame[64];
          get_blockvarname(blockvarame, stage_prefix, &ctx->generic_ios.output_range.io, postfix);
 
-         emit_hdrf(glsl_strbufs, "out %s {\n  vec4 %s[%d]; \n} %s;\n", blockname,
-                   ctx->generic_ios.output_range.io.glsl_name, size, blockvarame);
+         emit_hdrf(glsl_strbufs, "out %s {\n  vec4 %s%s; \n} %s;\n", blockname,
+                   ctx->generic_ios.output_range.io.glsl_name, array_handle, blockvarame);
       } else
-         emit_hdrf(glsl_strbufs, "out vec4 %s%s[%d];\n",
+         emit_hdrf(glsl_strbufs, "out vec4 %s%s%s;\n",
                    ctx->generic_ios.output_range.io.glsl_name,
                    postfix,
-                   size);
+                   array_handle);
    }
 }
 
@@ -6436,6 +6440,10 @@ static void emit_ios_indirect_generics_input(const struct dump_ctx *ctx,
    if (ctx->generic_ios.input_range.used) {
       int size = ctx->generic_ios.input_range.io.last -
          ctx->generic_ios.input_range.io.first + 1;
+      char array_handle[32] = "";
+      if (size > 1)
+         snprintf(array_handle, sizeof(array_handle), "[%d]", size);
+
       assert(size < 256 && size >= 0);
       if (size < ctx->key->input.num_indirect_generic) {
          VREND_DEBUG(dbg_shader, NULL, "WARNING: shader key indicates less indirect inputs"
@@ -6453,14 +6461,14 @@ static void emit_ios_indirect_generics_input(const struct dump_ctx *ctx,
          get_blockvarname(blockvarame, stage_prefix, &ctx->generic_ios.input_range.io,
                           postfix);
 
-         emit_hdrf(glsl_strbufs, "in %s {\n        vec4 %s[%d]; \n} %s;\n",
+         emit_hdrf(glsl_strbufs, "in %s {\n        vec4 %s%s; \n} %s;\n",
                    blockname, ctx->generic_ios.input_range.io.glsl_name,
-                   size, blockvarame);
+                   array_handle, blockvarame);
       } else
-         emit_hdrf(glsl_strbufs, "in vec4 %s%s[%d];\n",
+         emit_hdrf(glsl_strbufs, "in vec4 %s%s%s;\n",
                    ctx->generic_ios.input_range.io.glsl_name,
                    postfix,
-                   size);
+                   array_handle);
    }
 }
 
