@@ -3878,6 +3878,20 @@ static void get_destination_info_generic(const struct dump_ctx *ctx,
    strbuf_appendf(result, "%s", wm);
 }
 
+static
+int find_io_index(int num_io, struct vrend_shader_io *io,
+                  int index, uint32_t usage_mask)
+{
+   for (int j = 0; j < num_io; j++) {
+      if (io[j].first <= index &&
+          io[j].last >= index &&
+          (io[j].usage_mask & usage_mask)) {
+         return j;
+      }
+   }
+   return -1;
+}
+
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static bool
 get_destination_info(struct dump_ctx *ctx,
@@ -3958,101 +3972,101 @@ get_destination_info(struct dump_ctx *ctx,
       }
 
       if (dst_reg->Register.File == TGSI_FILE_OUTPUT) {
-         uint32_t j;
-         for (j = 0; j < ctx->num_outputs; j++) {
-            if (ctx->outputs[j].first <= dst_reg->Register.Index &&
-                ctx->outputs[j].last >= dst_reg->Register.Index &&
-                (ctx->outputs[j].usage_mask & dst_reg->Register.WriteMask)) {
-               if (inst->Instruction.Precise) {
-                  if (!ctx->outputs[j].invariant && ctx->outputs[j].name != TGSI_SEMANTIC_CLIPVERTEX) {
-                     ctx->outputs[j].precise = true;
-                     ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
-                  }
-               }
+         int j = find_io_index(ctx->num_outputs, ctx->outputs,
+                               dst_reg->Register.Index, dst_reg->Register.WriteMask);
 
-               if (ctx->glsl_ver_required >= 140 && ctx->outputs[j].name == TGSI_SEMANTIC_CLIPVERTEX) {
-                  if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
-                     strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]", ctx->outputs[j].glsl_name);
-                  } else {
-                     strbuf_fmt(&dst_bufs[i], "%s", ctx->is_last_vertex_stage ? "clipv_tmp" : ctx->outputs[j].glsl_name);
-                  }
-               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
-                  char clip_indirect[32] = "";
-                  if (ctx->outputs[j].first != ctx->outputs[j].last) {
-                     if (dst_reg->Register.Indirect)
-                        snprintf(clip_indirect, sizeof(clip_indirect), "+ addr%d", dst_reg->Indirect.Index);
-                     else
-                        snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", dst_reg->Register.Index - ctx->outputs[j].first);
-                  }
-                  strbuf_fmt(&dst_bufs[i], "clip_dist_temp[%d %s]%s", ctx->outputs[j].sid, clip_indirect, writemask);
-               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
-                          ctx->outputs[j].name == TGSI_SEMANTIC_TESSINNER ||
-                          ctx->outputs[j].name == TGSI_SEMANTIC_SAMPLEMASK) {
-                  int idx;
-                  switch (dst_reg->Register.WriteMask) {
-                  case 0x1: idx = 0; break;
-                  case 0x2: idx = 1; break;
-                  case 0x4: idx = 2; break;
-                  case 0x8: idx = 3; break;
-                  default:
-                     idx = 0;
-                     break;
-                  }
-                  strbuf_fmt(&dst_bufs[i], "%s[%d]", ctx->outputs[j].glsl_name, idx);
-                  if (ctx->outputs[j].is_int) {
-                     dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
-                     dinfo->dstconv = INT;
-                  }
+         if (j < 0)
+            return false;
+
+         struct vrend_shader_io *output = &ctx->outputs[j];
+
+         if (inst->Instruction.Precise) {
+            if (!output->invariant && output->name != TGSI_SEMANTIC_CLIPVERTEX) {
+               output->precise = true;
+               ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            }
+         }
+
+         if (ctx->glsl_ver_required >= 140 && output->name == TGSI_SEMANTIC_CLIPVERTEX) {
+            if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
+               strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]", output->glsl_name);
+            } else {
+               strbuf_fmt(&dst_bufs[i], "%s", ctx->is_last_vertex_stage ? "clipv_tmp" : output->glsl_name);
+            }
+         } else if (output->name == TGSI_SEMANTIC_CLIPDIST) {
+            char clip_indirect[32] = "";
+            if (output->first != output->last) {
+               if (dst_reg->Register.Indirect)
+                  snprintf(clip_indirect, sizeof(clip_indirect), "+ addr%d", dst_reg->Indirect.Index);
+               else
+                  snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", dst_reg->Register.Index - output->first);
+            }
+            strbuf_fmt(&dst_bufs[i], "clip_dist_temp[%d %s]%s", output->sid, clip_indirect, writemask);
+         } else if (output->name == TGSI_SEMANTIC_TESSOUTER ||
+                    output->name == TGSI_SEMANTIC_TESSINNER ||
+                    output->name == TGSI_SEMANTIC_SAMPLEMASK) {
+            int idx;
+            switch (dst_reg->Register.WriteMask) {
+            case 0x1: idx = 0; break;
+            case 0x2: idx = 1; break;
+            case 0x4: idx = 2; break;
+            case 0x8: idx = 3; break;
+            default:
+               idx = 0;
+               break;
+            }
+            strbuf_fmt(&dst_bufs[i], "%s[%d]", output->glsl_name, idx);
+            if (output->is_int) {
+               dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
+               dinfo->dstconv = INT;
+            }
+         } else {
+            if (output->glsl_gl_block) {
+               strbuf_fmt(&dst_bufs[i], "gl_out[%s].%s%s",
+                          ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "gl_InvocationID" : "0",
+                          output->glsl_name,
+                          output->override_no_wm ? "" : writemask);
+            } else if (output->name == TGSI_SEMANTIC_GENERIC) {
+               struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : output;
+               get_destination_info_generic(ctx, dst_reg, io, writemask, &dst_bufs[i]);
+               dinfo->dst_override_no_wm[i] = output->override_no_wm;
+            } else if (output->name == TGSI_SEMANTIC_TEXCOORD) {
+               get_destination_info_generic(ctx, dst_reg, output, writemask, &dst_bufs[i]);
+               dinfo->dst_override_no_wm[i] = output->override_no_wm;
+            } else if (output->name == TGSI_SEMANTIC_PATCH) {
+               struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : output;
+               char reswizzled[6] = "";
+               const char *wm = reswizzle_dest(io, dst_reg, reswizzled, writemask);
+               strbuf_reset(&dst_bufs[i]);
+               vrend_shader_write_io_as_dst(&dst_bufs[i], "", io, dst_reg, decl_plain);
+               if (!output->override_no_wm)
+                  strbuf_appendf(&dst_bufs[i], "%s", wm);
+               dinfo->dst_override_no_wm[i] = output->override_no_wm;
+            } else {
+               if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
+                  strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]%s", output->glsl_name, output->override_no_wm ? "" : writemask);
                } else {
-                  if (ctx->outputs[j].glsl_gl_block) {
-                     strbuf_fmt(&dst_bufs[i], "gl_out[%s].%s%s",
-                              ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "gl_InvocationID" : "0",
-                              ctx->outputs[j].glsl_name,
-                              ctx->outputs[j].override_no_wm ? "" : writemask);
-                  } else if (ctx->outputs[j].name == TGSI_SEMANTIC_GENERIC) {
-                     struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : &ctx->outputs[j];
-                     get_destination_info_generic(ctx, dst_reg, io, writemask, &dst_bufs[i]);
-                     dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
-                  } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TEXCOORD) {
-                     get_destination_info_generic(ctx, dst_reg, &ctx->outputs[j], writemask, &dst_bufs[i]);
-                     dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
-                  } else if (ctx->outputs[j].name == TGSI_SEMANTIC_PATCH) {
-                     struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
-                     char reswizzled[6] = "";
-                     const char *wm = reswizzle_dest(io, dst_reg, reswizzled, writemask);
-                     strbuf_reset(&dst_bufs[i]);
-                     vrend_shader_write_io_as_dst(&dst_bufs[i], "", io, dst_reg, decl_plain);
-                     if (!ctx->outputs[j].override_no_wm)
-                        strbuf_appendf(&dst_bufs[i], "%s", wm);
-                     dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
-                  } else {
-                     if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
-                        strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
-                     } else {
-                        strbuf_fmt(&dst_bufs[i], "%s%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
-                     }
-                     dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
-                  }
-                  if (ctx->outputs[j].is_int) {
-                     if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
-                        dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
-                     dinfo->dstconv = INT;
-                  }
-                  else if (ctx->outputs[j].type == VEC_UINT) {
-                     if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
-                        dinfo->dtypeprefix = FLOAT_BITS_TO_UINT;
-                     dinfo->dstconv = dinfo->udstconv;
-                  }
-                  else if (ctx->outputs[j].type == VEC_INT) {
-                     if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
-                        dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
-                     dinfo->dstconv = dinfo->idstconv;
-                  }
-                  if (ctx->outputs[j].name == TGSI_SEMANTIC_PSIZE) {
-                     dinfo->dstconv = FLOAT;
-                     break;
-                  }
+                  strbuf_fmt(&dst_bufs[i], "%s%s", output->glsl_name, output->override_no_wm ? "" : writemask);
                }
+               dinfo->dst_override_no_wm[i] = output->override_no_wm;
+            }
+            if (output->is_int) {
+               if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
+                  dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
+               dinfo->dstconv = INT;
+            }
+            else if (output->type == VEC_UINT) {
+               if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
+                  dinfo->dtypeprefix = FLOAT_BITS_TO_UINT;
+               dinfo->dstconv = dinfo->udstconv;
+            }
+            else if (output->type == VEC_INT) {
+               if (dinfo->dtypeprefix == TYPE_CONVERSION_NONE)
+                  dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
+               dinfo->dstconv = dinfo->idstconv;
+            }
+            if (output->name == TGSI_SEMANTIC_PSIZE) {
+               dinfo->dstconv = FLOAT;
                break;
             }
          }
@@ -4219,21 +4233,6 @@ static void get_source_swizzle(const struct tgsi_full_src_register *src, char sw
    *swizzle++ = 0;
 }
 
-static
-int find_input_index(int num_inputs, struct vrend_shader_io *inputs,
-                     int index, uint32_t usage_mask)
-{
-   for (int j = 0; j < num_inputs; j++) {
-      if (inputs[j].first <= index &&
-          inputs[j].last >= index &&
-          (inputs[j].usage_mask & usage_mask)) {
-         return j;
-      }
-   }
-   return -1;
-}
-
-
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static bool
 get_source_info(struct dump_ctx *ctx,
@@ -4319,7 +4318,7 @@ get_source_info(struct dump_ctx *ctx,
       get_source_swizzle(src, swizzle_writer + swz_idx);
 
       if (src->Register.File == TGSI_FILE_INPUT) {
-         int j = find_input_index(ctx->num_inputs, ctx->inputs,
+         int j = find_io_index(ctx->num_inputs, ctx->inputs,
                                   src->Register.Index, usage_mask);
          if (j < 0)
             return false;
@@ -4396,45 +4395,45 @@ get_source_info(struct dump_ctx *ctx,
          }
          sinfo->override_no_wm[i] = input->override_no_wm;
       } else if (src->Register.File == TGSI_FILE_OUTPUT) {
-         for (uint32_t j = 0; j < ctx->num_outputs; j++) {
-            if (ctx->outputs[j].first <= src->Register.Index &&
-                ctx->outputs[j].last >= src->Register.Index &&
-                (ctx->outputs[j].usage_mask & usage_mask)) {
-               if (inst->Instruction.Opcode == TGSI_OPCODE_FBFETCH) {
-                  ctx->outputs[j].fbfetch_used = true;
-                  ctx->shader_req_bits |= SHADER_REQ_FBFETCH;
-               }
+         int j = find_io_index(ctx->num_outputs, ctx->outputs, src->Register.Index,
+                           usage_mask);
+         if (j < 0)
+            return false;
 
-               enum vrend_type_qualifier srcstypeprefix = stypeprefix;
-               if (stype == TGSI_TYPE_UNSIGNED && ctx->outputs[j].is_int)
-                  srcstypeprefix = TYPE_CONVERSION_NONE;
-               if (ctx->outputs[j].glsl_gl_block) {
-                  if (ctx->outputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
-                     char clip_indirect[32] = "";
-                     if (ctx->outputs[j].first != ctx->outputs[j].last) {
-                        if (src->Register.Indirect)
-                           snprintf(clip_indirect, sizeof(clip_indirect), "+ addr%d", src->Indirect.Index);
-                        else
-                           snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", src->Register.Index - ctx->outputs[j].first);
-                     }
-                     strbuf_fmt(src_buf, "clip_dist_temp[%d%s]", ctx->outputs[j].sid, clip_indirect);
-                  }
-               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_GENERIC) {
-                  struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : &ctx->outputs[j];
-                  get_source_info_generic(ctx, io_out, srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
-               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_PATCH) {
-                  struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
-                  get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
-               } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
-                          ctx->outputs[j].name == TGSI_SEMANTIC_TESSINNER) {
-                  get_tesslevel_as_source(src_buf, prefix, ctx->outputs[j].glsl_name, &src->Register);
-               } else {
-                  strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, ctx->outputs[j].glsl_name, arrayname, ctx->outputs[j].is_int ? "" : swizzle);
-               }
-               sinfo->override_no_wm[i] = ctx->outputs[j].override_no_wm;
-               break;
-            }
+         struct vrend_shader_io *output = &ctx->outputs[j];
+
+         if (inst->Instruction.Opcode == TGSI_OPCODE_FBFETCH) {
+            output->fbfetch_used = true;
+            ctx->shader_req_bits |= SHADER_REQ_FBFETCH;
          }
+
+         enum vrend_type_qualifier srcstypeprefix = stypeprefix;
+         if (stype == TGSI_TYPE_UNSIGNED && output->is_int)
+            srcstypeprefix = TYPE_CONVERSION_NONE;
+         if (output->glsl_gl_block) {
+            if (output->name == TGSI_SEMANTIC_CLIPDIST) {
+               char clip_indirect[32] = "";
+               if (output->first != output->last) {
+                  if (src->Register.Indirect)
+                     snprintf(clip_indirect, sizeof(clip_indirect), "+ addr%d", src->Indirect.Index);
+                  else
+                     snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", src->Register.Index - output->first);
+               }
+               strbuf_fmt(src_buf, "clip_dist_temp[%d%s]", output->sid, clip_indirect);
+            }
+         } else if (output->name == TGSI_SEMANTIC_GENERIC) {
+            struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : &ctx->outputs[j];
+            get_source_info_generic(ctx, io_out, srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+         } else if (output->name == TGSI_SEMANTIC_PATCH) {
+            struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
+            get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+         } else if (output->name == TGSI_SEMANTIC_TESSOUTER ||
+                    output->name == TGSI_SEMANTIC_TESSINNER) {
+            get_tesslevel_as_source(src_buf, prefix, output->glsl_name, &src->Register);
+         } else {
+            strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, output->glsl_name, arrayname, output->is_int ? "" : swizzle);
+         }
+         sinfo->override_no_wm[i] = output->override_no_wm;
       } else if (src->Register.File == TGSI_FILE_TEMPORARY) {
          struct vrend_temp_range *range = find_temp_range(ctx, src->Register.Index);
          if (!range)
