@@ -4250,6 +4250,21 @@ static void get_source_swizzle(const struct tgsi_full_src_register *src, char sw
    *swizzle++ = 0;
 }
 
+static
+int find_input_index(int num_inputs, struct vrend_shader_io *inputs,
+                     int index, uint32_t usage_mask)
+{
+   for (int j = 0; j < num_inputs; j++) {
+      if (inputs[j].first <= index &&
+          inputs[j].last >= index &&
+          (inputs[j].usage_mask & usage_mask)) {
+         return j;
+      }
+   }
+   return -1;
+}
+
+
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static bool
 get_source_info(struct dump_ctx *ctx,
@@ -4335,81 +4350,82 @@ get_source_info(struct dump_ctx *ctx,
       get_source_swizzle(src, swizzle_writer + swz_idx);
 
       if (src->Register.File == TGSI_FILE_INPUT) {
-         for (uint32_t j = 0; j < ctx->num_inputs; j++)
-            if (ctx->inputs[j].first <= src->Register.Index &&
-                ctx->inputs[j].last >= src->Register.Index &&
-                (ctx->inputs[j].usage_mask & usage_mask)) {
-               if (ctx->prog_type == TGSI_PROCESSOR_VERTEX) {
-                  if (ctx->key->vs.attrib_zyxw_bitmask & (1 << ctx->inputs[j].first)) {
-                     swizzle_writer[swz_idx++] = '.';
-                     swizzle_writer[swz_idx++] = 'z';
-                     swizzle_writer[swz_idx++] = 'y';
-                     swizzle_writer[swz_idx++] = 'x';
-                     swizzle_writer[swz_idx++] = 'w';
-                  }
-                  get_source_swizzle(src, swizzle_writer + swz_idx);
-               }
+         int j = find_input_index(ctx->num_inputs, ctx->inputs,
+                                  src->Register.Index, usage_mask);
+         if (j < 0)
+            return false;
 
-               if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
-                   ctx->key->color_two_side && ctx->inputs[j].name == TGSI_SEMANTIC_COLOR)
-                  strbuf_fmt(src_buf, "%s(%s%s%d%s%s)", get_string(stypeprefix), prefix, "realcolor", ctx->inputs[j].sid, arrayname, swizzle);
-               else if (ctx->inputs[j].glsl_gl_block) {
-                  /* GS input clipdist requires a conversion */
-                  if (ctx->inputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
-                     create_swizzled_clipdist(ctx, src_buf, src, j, true, get_string(stypeprefix), prefix, arrayname, ctx->inputs[j].first);
-                  } else {
-                     strbuf_fmt(src_buf, "%s(vec4(%sgl_in%s.%s)%s)", get_string(stypeprefix), prefix, arrayname, ctx->inputs[j].glsl_name, swizzle);
-                  }
-               }
-               else if (ctx->inputs[j].name == TGSI_SEMANTIC_PRIMID)
-                  strbuf_fmt(src_buf, "%s(vec4(intBitsToFloat(%s)))", get_string(stypeprefix), ctx->inputs[j].glsl_name);
-               else if (ctx->inputs[j].name == TGSI_SEMANTIC_FACE)
-                  strbuf_fmt(src_buf, "%s(%s ? 1.0 : -1.0)", get_string(stypeprefix), ctx->inputs[j].glsl_name);
-               else if (ctx->inputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
-                  if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT)
-                     load_clipdist_fs(ctx, src_buf, src, j, false, get_string(stypeprefix), ctx->inputs[j].first);
-                  else
-                     create_swizzled_clipdist(ctx, src_buf, src, j, false, get_string(stypeprefix), prefix, arrayname, ctx->inputs[j].first);
-               }  else if (ctx->inputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
-                           ctx->inputs[j].name == TGSI_SEMANTIC_TESSINNER) {
-                  get_tesslevel_as_source(src_buf, prefix, ctx->inputs[j].glsl_name, &src->Register);
-               } else {
-                  enum vrend_type_qualifier srcstypeprefix = stypeprefix;
-                  if (ctx->inputs[j].type != VEC_FLOAT) {
-                     if (stype == TGSI_TYPE_UNSIGNED)
-                        srcstypeprefix = UVEC4;
-                     else if (stype == TGSI_TYPE_SIGNED)
-                        srcstypeprefix = IVEC4;
-                     else if (ctx->inputs[j].type == VEC_INT)
-                        srcstypeprefix = INT_BITS_TO_FLOAT;
-                     else // ctx->inputs[j].type == VEC_UINT
-                        srcstypeprefix = UINT_BITS_TO_FLOAT;
-                  }
+         struct vrend_shader_io *input = &ctx->inputs[j];
 
-                  if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1) {
-                     strbuf_fmt(src_buf, "floatBitsToInt(%s%s%s%s)", prefix, ctx->inputs[j].glsl_name, arrayname, swizzle);
-                  } else if (ctx->inputs[j].name == TGSI_SEMANTIC_GENERIC) {
-                     struct vrend_shader_io *io = ctx->generic_ios.input_range.used ? &ctx->generic_ios.input_range.io : &ctx->inputs[j];
-                     get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
-                  } else if (ctx->inputs[j].name == TGSI_SEMANTIC_TEXCOORD) {
-                     get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, &ctx->inputs[j], arrayname, swizzle, src_buf);
-                  } else if (ctx->inputs[j].name == TGSI_SEMANTIC_PATCH) {
-                     struct vrend_shader_io *io = ctx->patch_ios.input_range.used ? &ctx->patch_ios.input_range.io : &ctx->inputs[j];
-                     get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
-                  } else if (ctx->inputs[j].name == TGSI_SEMANTIC_POSITION && ctx->prog_type == TGSI_PROCESSOR_VERTEX &&
-                             ctx->inputs[j].first != ctx->inputs[j].last) {
-                     if (src->Register.Indirect)
-                        strbuf_fmt(src_buf, "%s(%s%s%s[addr%d + %d]%s)", get_string(srcstypeprefix), prefix, ctx->inputs[j].glsl_name, arrayname,
-                                   src->Indirect.Index, src->Register.Index, ctx->inputs[j].is_int ? "" : swizzle);
-                     else
-                        strbuf_fmt(src_buf, "%s(%s%s%s[%d]%s)", get_string(srcstypeprefix), prefix, ctx->inputs[j].glsl_name, arrayname,
-                                   src->Register.Index, ctx->inputs[j].is_int ? "" : swizzle);
-                  } else
-                     strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, ctx->inputs[j].glsl_name, arrayname, ctx->inputs[j].is_int ? "" : swizzle);
-               }
-               sinfo->override_no_wm[i] = ctx->inputs[j].override_no_wm;
-               break;
+         if (ctx->prog_type == TGSI_PROCESSOR_VERTEX) {
+            if (ctx->key->vs.attrib_zyxw_bitmask & (1 << input->first)) {
+               swizzle_writer[swz_idx++] = '.';
+               swizzle_writer[swz_idx++] = 'z';
+               swizzle_writer[swz_idx++] = 'y';
+               swizzle_writer[swz_idx++] = 'x';
+               swizzle_writer[swz_idx++] = 'w';
             }
+            get_source_swizzle(src, swizzle_writer + swz_idx);
+         }
+
+         if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
+             ctx->key->color_two_side && input->name == TGSI_SEMANTIC_COLOR)
+            strbuf_fmt(src_buf, "%s(%s%s%d%s%s)", get_string(stypeprefix), prefix, "realcolor", input->sid, arrayname, swizzle);
+         else if (input->glsl_gl_block) {
+            /* GS input clipdist requires a conversion */
+            if (input->name == TGSI_SEMANTIC_CLIPDIST) {
+               create_swizzled_clipdist(ctx, src_buf, src, j, true, get_string(stypeprefix), prefix, arrayname, input->first);
+            } else {
+               strbuf_fmt(src_buf, "%s(vec4(%sgl_in%s.%s)%s)", get_string(stypeprefix), prefix, arrayname, input->glsl_name, swizzle);
+            }
+         }
+         else if (input->name == TGSI_SEMANTIC_PRIMID)
+            strbuf_fmt(src_buf, "%s(vec4(intBitsToFloat(%s)))", get_string(stypeprefix), input->glsl_name);
+         else if (input->name == TGSI_SEMANTIC_FACE)
+            strbuf_fmt(src_buf, "%s(%s ? 1.0 : -1.0)", get_string(stypeprefix), input->glsl_name);
+         else if (input->name == TGSI_SEMANTIC_CLIPDIST) {
+            if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT)
+               load_clipdist_fs(ctx, src_buf, src, j, false, get_string(stypeprefix), input->first);
+            else
+               create_swizzled_clipdist(ctx, src_buf, src, j, false, get_string(stypeprefix), prefix, arrayname, input->first);
+         }  else if (input->name == TGSI_SEMANTIC_TESSOUTER ||
+                     input->name == TGSI_SEMANTIC_TESSINNER) {
+            get_tesslevel_as_source(src_buf, prefix, input->glsl_name, &src->Register);
+         } else {
+            enum vrend_type_qualifier srcstypeprefix = stypeprefix;
+            if (input->type != VEC_FLOAT) {
+               if (stype == TGSI_TYPE_UNSIGNED)
+                  srcstypeprefix = UVEC4;
+               else if (stype == TGSI_TYPE_SIGNED)
+                  srcstypeprefix = IVEC4;
+               else if (input->type == VEC_INT)
+                  srcstypeprefix = INT_BITS_TO_FLOAT;
+               else // input->type == VEC_UINT
+                  srcstypeprefix = UINT_BITS_TO_FLOAT;
+            }
+
+            if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1) {
+               strbuf_fmt(src_buf, "floatBitsToInt(%s%s%s%s)", prefix, input->glsl_name, arrayname, swizzle);
+            } else if (input->name == TGSI_SEMANTIC_GENERIC) {
+               struct vrend_shader_io *io = ctx->generic_ios.input_range.used ? &ctx->generic_ios.input_range.io : &ctx->inputs[j];
+               get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+            } else if (input->name == TGSI_SEMANTIC_TEXCOORD) {
+               get_source_info_generic(ctx, io_in, srcstypeprefix, prefix, src, &ctx->inputs[j], arrayname, swizzle, src_buf);
+            } else if (input->name == TGSI_SEMANTIC_PATCH) {
+               struct vrend_shader_io *io = ctx->patch_ios.input_range.used ? &ctx->patch_ios.input_range.io : &ctx->inputs[j];
+               get_source_info_patch(srcstypeprefix, prefix, src, io, arrayname, swizzle, src_buf);
+            } else if (input->name == TGSI_SEMANTIC_POSITION && ctx->prog_type == TGSI_PROCESSOR_VERTEX &&
+                       input->first != input->last) {
+               if (src->Register.Indirect)
+                  strbuf_fmt(src_buf, "%s(%s%s%s[addr%d + %d]%s)", get_string(srcstypeprefix), prefix, input->glsl_name, arrayname,
+                             src->Indirect.Index, src->Register.Index, input->is_int ? "" : swizzle);
+               else
+                  strbuf_fmt(src_buf, "%s(%s%s%s[%d]%s)", get_string(srcstypeprefix), prefix, input->glsl_name, arrayname,
+                             src->Register.Index, input->is_int ? "" : swizzle);
+            } else
+               strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, input->glsl_name, arrayname, input->is_int ? "" : swizzle);
+         }
+         sinfo->override_no_wm[i] = input->override_no_wm;
       } else if (src->Register.File == TGSI_FILE_OUTPUT) {
          for (uint32_t j = 0; j < ctx->num_outputs; j++) {
             if (ctx->outputs[j].first <= src->Register.Index &&
