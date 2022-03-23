@@ -183,6 +183,7 @@ struct dump_ctx {
    uint instno;
 
    struct vrend_strbuf src_bufs[4];
+   struct vrend_strbuf dst_bufs[3];
 
    uint32_t num_interps;
    uint32_t num_inputs;
@@ -3854,37 +3855,27 @@ static const char *reswizzle_dest(const struct vrend_shader_io *io, const struct
 static void get_destination_info_generic(const struct dump_ctx *ctx,
                                          const struct tgsi_full_dst_register *dst_reg,
                                          const struct vrend_shader_io *io,
-                                         const char *writemask, char dsts[255])
+                                         const char *writemask,
+                                         struct vrend_strbuf *result)
 {
    const char *blkarray = (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) ? "[gl_InvocationID]" : "";
    const char *stage_prefix = get_stage_output_name_prefix(ctx->prog_type);
    const char *wm = io->override_no_wm ? "" : writemask;
    char reswizzled[6] = "";
+   char outvarname[64];
 
    wm = reswizzle_dest(io, dst_reg, reswizzled, writemask);
 
-   if (io->first == io->last)
-      snprintf(dsts, 255, "%s%s%s", io->glsl_name, blkarray, wm);
-   else {
-      if (prefer_generic_io_block(ctx, io_out)) {
-         char outvarname[64];
-         get_blockvarname(outvarname, stage_prefix,  io, blkarray);
+   strbuf_reset(result);
 
-         if (dst_reg->Register.Indirect)
-            snprintf(dsts, 255, "%s.%s[addr%d + %d]%s",  outvarname, io->glsl_name,
-                     dst_reg->Indirect.Index, dst_reg->Register.Index - io->first, wm);
-         else
-            snprintf(dsts, 255, "%s.%s[%d]%s",  outvarname, io->glsl_name,
-                     dst_reg->Register.Index - io->first, wm);
-      } else {
-         if (dst_reg->Register.Indirect)
-            snprintf(dsts, 255, "%s%s[addr%d + %d]%s",  io->glsl_name, blkarray,
-                     dst_reg->Indirect.Index, dst_reg->Register.Index - io->first, wm);
-         else
-            snprintf(dsts, 255, "%s%s[%d]%s", io->glsl_name, blkarray,
-                     dst_reg->Register.Index - io->first, wm);
-      }
+   enum io_decl_type decl_type = decl_plain;
+   if (io->first != io->last && prefer_generic_io_block(ctx, io_out)) {
+      get_blockvarname(outvarname, stage_prefix,  io, blkarray);
+      decl_type = decl_block;
+      blkarray = outvarname;
    }
+   vrend_shader_write_io_as_dst(result, blkarray, io, dst_reg, decl_type);
+   strbuf_appendf(result, "%s", wm);
 }
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
@@ -3892,7 +3883,7 @@ static bool
 get_destination_info(struct dump_ctx *ctx,
                      const struct tgsi_full_instruction *inst,
                      struct dest_info *dinfo,
-                     char dsts[3][255],
+                     struct vrend_strbuf dst_bufs[3],
                      char fp64_dsts[3][255],
                      char *writemask)
 {
@@ -3981,12 +3972,10 @@ get_destination_info(struct dump_ctx *ctx,
 
                if (ctx->glsl_ver_required >= 140 && ctx->outputs[j].name == TGSI_SEMANTIC_CLIPVERTEX) {
                   if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
-                     snprintf(dsts[i], 255, "%s[gl_InvocationID]", ctx->outputs[j].glsl_name);
+                     strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]", ctx->outputs[j].glsl_name);
                   } else {
-                     snprintf(dsts[i], 255, "%s", ctx->is_last_vertex_stage ? "clipv_tmp" : ctx->outputs[j].glsl_name);
+                     strbuf_fmt(&dst_bufs[i], "%s", ctx->is_last_vertex_stage ? "clipv_tmp" : ctx->outputs[j].glsl_name);
                   }
-
-
                } else if (ctx->outputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
                   char clip_indirect[32] = "";
                   if (ctx->outputs[j].first != ctx->outputs[j].last) {
@@ -3995,7 +3984,7 @@ get_destination_info(struct dump_ctx *ctx,
                      else
                         snprintf(clip_indirect, sizeof(clip_indirect), "+ %d", dst_reg->Register.Index - ctx->outputs[j].first);
                   }
-                  snprintf(dsts[i], 255, "clip_dist_temp[%d %s]%s", ctx->outputs[j].sid, clip_indirect, writemask);
+                  strbuf_fmt(&dst_bufs[i], "clip_dist_temp[%d %s]%s", ctx->outputs[j].sid, clip_indirect, writemask);
                } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TESSOUTER ||
                           ctx->outputs[j].name == TGSI_SEMANTIC_TESSINNER ||
                           ctx->outputs[j].name == TGSI_SEMANTIC_SAMPLEMASK) {
@@ -4009,48 +3998,38 @@ get_destination_info(struct dump_ctx *ctx,
                      idx = 0;
                      break;
                   }
-                  snprintf(dsts[i], 255, "%s[%d]", ctx->outputs[j].glsl_name, idx);
+                  strbuf_fmt(&dst_bufs[i], "%s[%d]", ctx->outputs[j].glsl_name, idx);
                   if (ctx->outputs[j].is_int) {
                      dinfo->dtypeprefix = FLOAT_BITS_TO_INT;
                      dinfo->dstconv = INT;
                   }
                } else {
                   if (ctx->outputs[j].glsl_gl_block) {
-                     snprintf(dsts[i], 255, "gl_out[%s].%s%s",
+                     strbuf_fmt(&dst_bufs[i], "gl_out[%s].%s%s",
                               ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "gl_InvocationID" : "0",
                               ctx->outputs[j].glsl_name,
                               ctx->outputs[j].override_no_wm ? "" : writemask);
                   } else if (ctx->outputs[j].name == TGSI_SEMANTIC_GENERIC) {
                      struct vrend_shader_io *io = ctx->generic_ios.output_range.used ? &ctx->generic_ios.output_range.io : &ctx->outputs[j];
-                     get_destination_info_generic(ctx, dst_reg, io, writemask, dsts[i]);
+                     get_destination_info_generic(ctx, dst_reg, io, writemask, &dst_bufs[i]);
                      dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
                   } else if (ctx->outputs[j].name == TGSI_SEMANTIC_TEXCOORD) {
-                     get_destination_info_generic(ctx, dst_reg, &ctx->outputs[j], writemask, dsts[i]);
+                     get_destination_info_generic(ctx, dst_reg, &ctx->outputs[j], writemask, &dst_bufs[i]);
                      dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
                   } else if (ctx->outputs[j].name == TGSI_SEMANTIC_PATCH) {
                      struct vrend_shader_io *io = ctx->patch_ios.output_range.used ? &ctx->patch_ios.output_range.io : &ctx->outputs[j];
                      char reswizzled[6] = "";
                      const char *wm = reswizzle_dest(io, dst_reg, reswizzled, writemask);
-                     if (io->last != io->first) {
-                        if (dst_reg->Register.Indirect)
-                           snprintf(dsts[i], 255, "%s[addr%d + %d]%s",
-                                    io->glsl_name,                                     dst_reg->Indirect.Index,
-                                    dst_reg->Register.Index - io->first,
-                                    io->override_no_wm ? "" : wm);
-                        else
-                           snprintf(dsts[i], 255, "%s[%d]%s",
-                                    io->glsl_name,
-                                    dst_reg->Register.Index - io->first,
-                                    io->override_no_wm ? "" : wm);
-                     } else {
-                           snprintf(dsts[i], 255, "%s%s", io->glsl_name, ctx->outputs[j].override_no_wm ? "" : wm);
-                     }
+                     strbuf_reset(&dst_bufs[i]);
+                     vrend_shader_write_io_as_dst(&dst_bufs[i], "", io, dst_reg, decl_plain);
+                     if (!ctx->outputs[j].override_no_wm)
+                        strbuf_appendf(&dst_bufs[i], "%s", wm);
                      dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
                   } else {
                      if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL) {
-                        snprintf(dsts[i], 255, "%s[gl_InvocationID]%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
+                        strbuf_fmt(&dst_bufs[i], "%s[gl_InvocationID]%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
                      } else {
-                        snprintf(dsts[i], 255, "%s%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
+                        strbuf_fmt(&dst_bufs[i], "%s%s", ctx->outputs[j].glsl_name, ctx->outputs[j].override_no_wm ? "" : writemask);
                      }
                      dinfo->dst_override_no_wm[i] = ctx->outputs[j].override_no_wm;
                   }
@@ -4083,9 +4062,9 @@ get_destination_info(struct dump_ctx *ctx,
          if (!range)
             return false;
          if (dst_reg->Register.Indirect) {
-            snprintf(dsts[i], 255, "temp%d[addr0 + %d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
+            strbuf_fmt(&dst_bufs[i], "temp%d[addr0 + %d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
          } else
-            snprintf(dsts[i], 255, "temp%d[%d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
+            strbuf_fmt(&dst_bufs[i], "temp%d[%d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
       }
       else if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
@@ -4093,11 +4072,11 @@ get_destination_info(struct dump_ctx *ctx,
             int basearrayidx = lookup_image_array(ctx, dst_reg->Register.Index);
             if (dst_reg->Register.Indirect) {
                assert(dst_reg->Indirect.File == TGSI_FILE_ADDRESS);
-               snprintf(dsts[i], 255, "%simg%d[addr%d + %d]", cname, basearrayidx, dst_reg->Indirect.Index, dst_reg->Register.Index - basearrayidx);
+               strbuf_fmt(&dst_bufs[i], "%simg%d[addr%d + %d]", cname, basearrayidx, dst_reg->Indirect.Index, dst_reg->Register.Index - basearrayidx);
             } else
-               snprintf(dsts[i], 255, "%simg%d[%d]", cname, basearrayidx, dst_reg->Register.Index - basearrayidx);
+               strbuf_fmt(&dst_bufs[i], "%simg%d[%d]", cname, basearrayidx, dst_reg->Register.Index - basearrayidx);
          } else
-            snprintf(dsts[i], 255, "%simg%d", cname, dst_reg->Register.Index);
+            strbuf_fmt(&dst_bufs[i], "%simg%d", cname, dst_reg->Register.Index);
       } else if (dst_reg->Register.File == TGSI_FILE_BUFFER) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
@@ -4105,20 +4084,20 @@ get_destination_info(struct dump_ctx *ctx,
             const char *atomic_str = atomic_ssbo ? "atomic" : "";
             int base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
             if (dst_reg->Register.Indirect) {
-               snprintf(dsts[i], 255, "%sssboarr%s[addr%d+%d].%sssbocontents%d", cname, atomic_str, dst_reg->Indirect.Index, dst_reg->Register.Index - base, cname, base);
+               strbuf_fmt(&dst_bufs[i], "%sssboarr%s[addr%d+%d].%sssbocontents%d", cname, atomic_str, dst_reg->Indirect.Index, dst_reg->Register.Index - base, cname, base);
             } else
-               snprintf(dsts[i], 255, "%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str, dst_reg->Register.Index - base, cname, base);
+               strbuf_fmt(&dst_bufs[i], "%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str, dst_reg->Register.Index - base, cname, base);
          } else
-            snprintf(dsts[i], 255, "%sssbocontents%d", cname, dst_reg->Register.Index);
+            strbuf_fmt(&dst_bufs[i], "%sssbocontents%d", cname, dst_reg->Register.Index);
       } else if (dst_reg->Register.File == TGSI_FILE_MEMORY) {
-         snprintf(dsts[i], 255, "values");
+         strbuf_fmt(&dst_bufs[i], "values");
       } else if (dst_reg->Register.File == TGSI_FILE_ADDRESS) {
-         snprintf(dsts[i], 255, "addr%d", dst_reg->Register.Index);
+         strbuf_fmt(&dst_bufs[i], "addr%d", dst_reg->Register.Index);
       }
 
       if (dtype == TGSI_TYPE_DOUBLE) {
-         strcpy(fp64_dsts[i], dsts[i]);
-         snprintf(dsts[i], 255, "fp64_dst[%d]%s", i, fp64_writemask);
+         strcpy(fp64_dsts[i], dst_bufs[i].buf);
+         strbuf_fmt(&dst_bufs[i], "fp64_dst[%d]%s", i, fp64_writemask);
          writemask[0] = 0;
       }
 
@@ -5224,7 +5203,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
    struct dest_info dinfo = { 0 };
    struct source_info sinfo = { 0 };
    const char *srcs[4];
-   char dsts[3][255];
+   char *dsts[3];
    char fp64_dsts[3][255];
    uint instno = ctx->instno++;
    char writemask[6] = "";
@@ -5269,7 +5248,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       }
    }
 
-   if (!get_destination_info(ctx, inst, &dinfo, dsts, fp64_dsts, writemask))
+   if (!get_destination_info(ctx, inst, &dinfo, ctx->dst_bufs, fp64_dsts, writemask))
       return false;
 
    if (!get_source_info(ctx, inst, &sinfo, ctx->src_bufs, src_swizzle0))
@@ -5277,6 +5256,9 @@ iter_instruction(struct tgsi_iterate_context *iter,
 
    for (size_t i = 0; i < ARRAY_SIZE(srcs); ++i)
       srcs[i] = ctx->src_bufs[i].buf;
+
+   for (size_t i = 0; i < ARRAY_SIZE(dsts); ++i)
+      dsts[i] = ctx->dst_bufs[i].buf;
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_SQRT:
@@ -7946,6 +7928,36 @@ void vrend_shader_write_io_as_src(struct vrend_strbuf *result,
                                   const  char *array_or_varname,
                                   const struct vrend_shader_io *io,
                                   const struct tgsi_full_src_register *src,
+                                  enum io_decl_type decl_type)
+{
+   if (io->first == io->last) {
+      strbuf_appendf(result, "%s%s", io->glsl_name, array_or_varname);
+   } else {
+      if (decl_type == decl_block) {
+         if (src->Register.Indirect)
+            strbuf_appendf(result, "%s.%s[addr%d + %d]", array_or_varname, io->glsl_name,
+                           src->Indirect.Index, src->Register.Index - io->first);
+         else
+            strbuf_appendf(result, "%s.%s[%d]", array_or_varname, io->glsl_name,
+                           src->Register.Index - io->first);
+      } else {
+         if (src->Register.Indirect)
+            strbuf_appendf(result, "%s%s[addr%d + %d]", io->glsl_name,
+                           array_or_varname, src->Indirect.Index,
+                           src->Register.Index - io->first);
+         else
+            strbuf_appendf(result, "%s%s[%d]", io->glsl_name,
+                           array_or_varname,
+                           src->Register.Index - io->first);
+      }
+   }
+}
+
+static
+void vrend_shader_write_io_as_dst(struct vrend_strbuf *result,
+                                  const  char *array_or_varname,
+                                  const struct vrend_shader_io *io,
+                                  const struct tgsi_full_dst_register *src,
                                   enum io_decl_type decl_type)
 {
    if (io->first == io->last) {
