@@ -440,31 +440,6 @@ vn_replace_VkMemoryAllocateInfo_handle(VkMemoryAllocateInfo *val)
 
 /* struct VkMappedMemoryRange chain */
 
-static inline void
-vn_encode_VkMappedMemoryRange_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    /* no known/supported struct */
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkMappedMemoryRange_self(struct vn_cs_encoder *enc, const VkMappedMemoryRange *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkDeviceMemory(enc, &val->memory);
-    vn_encode_VkDeviceSize(enc, &val->offset);
-    vn_encode_VkDeviceSize(enc, &val->size);
-}
-
-static inline void
-vn_encode_VkMappedMemoryRange(struct vn_cs_encoder *enc, const VkMappedMemoryRange *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE });
-    vn_encode_VkMappedMemoryRange_pnext(enc, val->pNext);
-    vn_encode_VkMappedMemoryRange_self(enc, val);
-}
-
 static inline void *
 vn_decode_VkMappedMemoryRange_pnext_temp(struct vn_cs_decoder *dec)
 {
@@ -525,29 +500,6 @@ vn_replace_VkMappedMemoryRange_handle(VkMappedMemoryRange *val)
 }
 
 /* struct VkDeviceMemoryOpaqueCaptureAddressInfo chain */
-
-static inline void
-vn_encode_VkDeviceMemoryOpaqueCaptureAddressInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    /* no known/supported struct */
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkDeviceMemoryOpaqueCaptureAddressInfo_self(struct vn_cs_encoder *enc, const VkDeviceMemoryOpaqueCaptureAddressInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkDeviceMemory(enc, &val->memory);
-}
-
-static inline void
-vn_encode_VkDeviceMemoryOpaqueCaptureAddressInfo(struct vn_cs_encoder *enc, const VkDeviceMemoryOpaqueCaptureAddressInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_DEVICE_MEMORY_OPAQUE_CAPTURE_ADDRESS_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_DEVICE_MEMORY_OPAQUE_CAPTURE_ADDRESS_INFO });
-    vn_encode_VkDeviceMemoryOpaqueCaptureAddressInfo_pnext(enc, val->pNext);
-    vn_encode_VkDeviceMemoryOpaqueCaptureAddressInfo_self(enc, val);
-}
 
 static inline void *
 vn_decode_VkDeviceMemoryOpaqueCaptureAddressInfo_pnext_temp(struct vn_cs_decoder *dec)

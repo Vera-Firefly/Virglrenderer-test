@@ -247,30 +247,6 @@ vn_replace_VkSemaphoreWaitInfo_handle(VkSemaphoreWaitInfo *val)
 
 /* struct VkSemaphoreSignalInfo chain */
 
-static inline void
-vn_encode_VkSemaphoreSignalInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    /* no known/supported struct */
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkSemaphoreSignalInfo_self(struct vn_cs_encoder *enc, const VkSemaphoreSignalInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkSemaphore(enc, &val->semaphore);
-    vn_encode_uint64_t(enc, &val->value);
-}
-
-static inline void
-vn_encode_VkSemaphoreSignalInfo(struct vn_cs_encoder *enc, const VkSemaphoreSignalInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO });
-    vn_encode_VkSemaphoreSignalInfo_pnext(enc, val->pNext);
-    vn_encode_VkSemaphoreSignalInfo_self(enc, val);
-}
-
 static inline void *
 vn_decode_VkSemaphoreSignalInfo_pnext_temp(struct vn_cs_decoder *dec)
 {

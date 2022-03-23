@@ -77,40 +77,6 @@ vn_replace_VkCommandBufferAllocateInfo_handle(VkCommandBufferAllocateInfo *val)
 
 /* struct VkCommandBufferInheritanceRenderingInfo chain */
 
-static inline void
-vn_encode_VkCommandBufferInheritanceRenderingInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    /* no known/supported struct */
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkCommandBufferInheritanceRenderingInfo_self(struct vn_cs_encoder *enc, const VkCommandBufferInheritanceRenderingInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkFlags(enc, &val->flags);
-    vn_encode_uint32_t(enc, &val->viewMask);
-    vn_encode_uint32_t(enc, &val->colorAttachmentCount);
-    if (val->pColorAttachmentFormats) {
-        vn_encode_array_size(enc, val->colorAttachmentCount);
-        vn_encode_VkFormat_array(enc, val->pColorAttachmentFormats, val->colorAttachmentCount);
-    } else {
-        vn_encode_array_size(enc, 0);
-    }
-    vn_encode_VkFormat(enc, &val->depthAttachmentFormat);
-    vn_encode_VkFormat(enc, &val->stencilAttachmentFormat);
-    vn_encode_VkSampleCountFlagBits(enc, &val->rasterizationSamples);
-}
-
-static inline void
-vn_encode_VkCommandBufferInheritanceRenderingInfo(struct vn_cs_encoder *enc, const VkCommandBufferInheritanceRenderingInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO });
-    vn_encode_VkCommandBufferInheritanceRenderingInfo_pnext(enc, val->pNext);
-    vn_encode_VkCommandBufferInheritanceRenderingInfo_self(enc, val);
-}
-
 static inline void *
 vn_decode_VkCommandBufferInheritanceRenderingInfo_pnext_temp(struct vn_cs_decoder *dec)
 {
@@ -187,50 +153,6 @@ vn_replace_VkCommandBufferInheritanceRenderingInfo_handle(VkCommandBufferInherit
 }
 
 /* struct VkCommandBufferInheritanceInfo chain */
-
-static inline void
-vn_encode_VkCommandBufferInheritanceInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    const VkBaseInStructure *pnext = val;
-
-    while (pnext) {
-        switch ((int32_t)pnext->sType) {
-        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO:
-            vn_encode_simple_pointer(enc, pnext);
-            vn_encode_VkStructureType(enc, &pnext->sType);
-            vn_encode_VkCommandBufferInheritanceInfo_pnext(enc, pnext->pNext);
-            vn_encode_VkCommandBufferInheritanceRenderingInfo_self(enc, (const VkCommandBufferInheritanceRenderingInfo *)pnext);
-            return;
-        default:
-            /* ignore unknown/unsupported struct */
-            break;
-        }
-        pnext = pnext->pNext;
-    }
-
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkCommandBufferInheritanceInfo_self(struct vn_cs_encoder *enc, const VkCommandBufferInheritanceInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkRenderPass(enc, &val->renderPass);
-    vn_encode_uint32_t(enc, &val->subpass);
-    vn_encode_VkFramebuffer(enc, &val->framebuffer);
-    vn_encode_VkBool32(enc, &val->occlusionQueryEnable);
-    vn_encode_VkFlags(enc, &val->queryFlags);
-    vn_encode_VkFlags(enc, &val->pipelineStatistics);
-}
-
-static inline void
-vn_encode_VkCommandBufferInheritanceInfo(struct vn_cs_encoder *enc, const VkCommandBufferInheritanceInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO });
-    vn_encode_VkCommandBufferInheritanceInfo_pnext(enc, val->pNext);
-    vn_encode_VkCommandBufferInheritanceInfo_self(enc, val);
-}
 
 static inline void *
 vn_decode_VkCommandBufferInheritanceInfo_pnext_temp(struct vn_cs_decoder *dec)
@@ -322,29 +244,6 @@ vn_replace_VkCommandBufferInheritanceInfo_handle(VkCommandBufferInheritanceInfo 
 
 /* struct VkDeviceGroupCommandBufferBeginInfo chain */
 
-static inline void
-vn_encode_VkDeviceGroupCommandBufferBeginInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    /* no known/supported struct */
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkDeviceGroupCommandBufferBeginInfo_self(struct vn_cs_encoder *enc, const VkDeviceGroupCommandBufferBeginInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_uint32_t(enc, &val->deviceMask);
-}
-
-static inline void
-vn_encode_VkDeviceGroupCommandBufferBeginInfo(struct vn_cs_encoder *enc, const VkDeviceGroupCommandBufferBeginInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO });
-    vn_encode_VkDeviceGroupCommandBufferBeginInfo_pnext(enc, val->pNext);
-    vn_encode_VkDeviceGroupCommandBufferBeginInfo_self(enc, val);
-}
-
 static inline void *
 vn_decode_VkDeviceGroupCommandBufferBeginInfo_pnext_temp(struct vn_cs_decoder *dec)
 {
@@ -401,47 +300,6 @@ vn_replace_VkDeviceGroupCommandBufferBeginInfo_handle(VkDeviceGroupCommandBuffer
 }
 
 /* struct VkCommandBufferBeginInfo chain */
-
-static inline void
-vn_encode_VkCommandBufferBeginInfo_pnext(struct vn_cs_encoder *enc, const void *val)
-{
-    const VkBaseInStructure *pnext = val;
-
-    while (pnext) {
-        switch ((int32_t)pnext->sType) {
-        case VK_STRUCTURE_TYPE_DEVICE_GROUP_COMMAND_BUFFER_BEGIN_INFO:
-            vn_encode_simple_pointer(enc, pnext);
-            vn_encode_VkStructureType(enc, &pnext->sType);
-            vn_encode_VkCommandBufferBeginInfo_pnext(enc, pnext->pNext);
-            vn_encode_VkDeviceGroupCommandBufferBeginInfo_self(enc, (const VkDeviceGroupCommandBufferBeginInfo *)pnext);
-            return;
-        default:
-            /* ignore unknown/unsupported struct */
-            break;
-        }
-        pnext = pnext->pNext;
-    }
-
-    vn_encode_simple_pointer(enc, NULL);
-}
-
-static inline void
-vn_encode_VkCommandBufferBeginInfo_self(struct vn_cs_encoder *enc, const VkCommandBufferBeginInfo *val)
-{
-    /* skip val->{sType,pNext} */
-    vn_encode_VkFlags(enc, &val->flags);
-    if (vn_encode_simple_pointer(enc, val->pInheritanceInfo))
-        vn_encode_VkCommandBufferInheritanceInfo(enc, val->pInheritanceInfo);
-}
-
-static inline void
-vn_encode_VkCommandBufferBeginInfo(struct vn_cs_encoder *enc, const VkCommandBufferBeginInfo *val)
-{
-    assert(val->sType == VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO);
-    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO });
-    vn_encode_VkCommandBufferBeginInfo_pnext(enc, val->pNext);
-    vn_encode_VkCommandBufferBeginInfo_self(enc, val);
-}
 
 static inline void *
 vn_decode_VkCommandBufferBeginInfo_pnext_temp(struct vn_cs_decoder *dec)
