@@ -86,34 +86,6 @@ enum vec_type {
    VEC_UINT = 2
 };
 
-struct vrend_shader_io {
-   char glsl_name[128];
-
-   unsigned sid : 16;
-   unsigned first : 16;
-   unsigned last : 16;
-   unsigned array_id : 10;
-   unsigned interpolate : 4;
-   unsigned location : 2;
-
-   unsigned name : 8;
-   unsigned stream : 2;
-   unsigned usage_mask : 4;
-   unsigned type : 2;
-   unsigned num_components : 3;
-   unsigned swizzle_offset : 3;
-
-   unsigned layout_location : 1;
-   unsigned invariant : 1;
-   unsigned precise : 1;
-   unsigned glsl_predefined_no_emit : 1;
-   unsigned glsl_no_index : 1;
-   unsigned glsl_gl_block : 1;
-   unsigned override_no_wm : 1;
-   unsigned is_int : 1;
-   unsigned fbfetch_used : 1;
-};
-
 struct vrend_shader_sampler {
    int tgsi_sampler_type;
    enum tgsi_return_type tgsi_sampler_return;
@@ -144,6 +116,35 @@ struct vrend_temp_range {
    int first;
    int last;
    int array_id;
+};
+
+struct vrend_shader_io {
+   char glsl_name[128];
+   struct vrend_shader_io *overlapping_array;
+   unsigned sid : 16;
+   unsigned first : 16;
+   unsigned last : 16;
+   unsigned array_id : 10;
+   unsigned interpolate : 4;
+   unsigned location : 2;
+
+   unsigned array_offset : 8;
+   unsigned name : 8;
+   unsigned stream : 2;
+   unsigned usage_mask : 4;
+   unsigned type : 2;
+   unsigned num_components : 3;
+   unsigned swizzle_offset : 3;
+
+   unsigned layout_location : 1;
+   unsigned invariant : 1;
+   unsigned precise : 1;
+   unsigned glsl_predefined_no_emit : 1;
+   unsigned glsl_no_index : 1;
+   unsigned glsl_gl_block : 1;
+   unsigned override_no_wm : 1;
+   unsigned is_int : 1;
+   unsigned fbfetch_used : 1;
 };
 
 struct vrend_io_range {
@@ -385,6 +386,25 @@ enum io_type {
    io_in,
    io_out
 };
+
+enum io_decl_type {
+   decl_plain,
+   decl_block
+};
+
+static
+void vrend_shader_write_io_as_src(struct vrend_strbuf *buf,
+                                  const  char *arrayname,
+                                  const struct vrend_shader_io *io,
+                                  const struct tgsi_full_src_register *src,
+                                  enum io_decl_type decl_type);
+
+static
+void vrend_shader_write_io_as_dst(struct vrend_strbuf *buf,
+                                  const  char *arrayname,
+                                  const struct vrend_shader_io *io,
+                                  const struct tgsi_full_dst_register *src,
+                                  enum io_decl_type decl_type);
 
 /* We prefer arrays of arrays, but if this is not available then TCS, GEOM, and TES
  * inputs must be blocks, but FS input should not because interpolateAt* doesn't
@@ -4145,6 +4165,8 @@ static void get_source_info_generic(const struct dump_ctx *ctx,
 {
    int swz_offset = 0;
    char swizzle_shifted[6] = "";
+   char outvarname[64];
+
    if (swizzle[0] == ')') {
       swizzle_shifted[swz_offset++] = ')';
       swizzle_shifted[swz_offset] = 0;
@@ -4153,42 +4175,20 @@ static void get_source_info_generic(const struct dump_ctx *ctx,
    /* This IO element is not using all vector elements, so we have to shift the swizzle names */
    swizzle = shift_swizzles(io, src, swz_offset, swizzle_shifted, swizzle);
 
-   if (io->first == io->last) {
-      strbuf_fmt(result, "%s(%s%s%s%s)", get_string(srcstypeprefix),
-               prefix, io->glsl_name, arrayname, io->is_int ? "" : swizzle);
-   } else {
+   strbuf_fmt(result, "%s(%s", get_string(srcstypeprefix), prefix);
 
-      if (prefer_generic_io_block(ctx, iot)) {
-         char outvarname[64];
-         const char *stage_prefix = iot == io_in ? get_stage_input_name_prefix(ctx, ctx->prog_type) :
-                                                   get_stage_output_name_prefix(ctx->prog_type);
+   enum io_decl_type decl_type = decl_plain;
 
-         get_blockvarname(outvarname, stage_prefix, io, arrayname);
-         if (src->Register.Indirect)
-            strbuf_fmt(result, "%s(%s %s.%s[addr%d + %d] %s)", get_string(srcstypeprefix), prefix,
-                     outvarname, io->glsl_name, src->Indirect.Index, src->Register.Index - io->first,
-                     io->is_int ? "" : swizzle);
-         else
-            strbuf_fmt(result, "%s(%s %s.%s[%d] %s)", get_string(srcstypeprefix), prefix,
-                     outvarname, io->glsl_name, src->Register.Index - io->first,
-                     io->is_int ? "" : swizzle);
-      } else {
-         if (src->Register.Indirect)
-            strbuf_fmt(result, "%s(%s %s%s[addr%d + %d] %s)", get_string(srcstypeprefix), prefix,
-                     io->glsl_name,
-                     arrayname,
-                     src->Indirect.Index,
-                     src->Register.Index - io->first,
-                     io->is_int ? "" : swizzle);
-         else
-            strbuf_fmt(result, "%s(%s %s%s[%d] %s)", get_string(srcstypeprefix), prefix,
-                     io->glsl_name,
-                     arrayname,
-                     src->Register.Index - io->first,
-                     io->is_int ? "" : swizzle);
-      }
-
+   if (io->first != io->last && prefer_generic_io_block(ctx, iot)) {
+      const char *stage_prefix = iot == io_in ? get_stage_input_name_prefix(ctx, ctx->prog_type) :
+                                                get_stage_output_name_prefix(ctx->prog_type);
+      get_blockvarname(outvarname, stage_prefix, io, arrayname);
+      arrayname = outvarname;
+      decl_type = decl_block;
    }
+
+   vrend_shader_write_io_as_src(result, arrayname, io, src, decl_type);
+   strbuf_appendf(result, "%s)", io->is_int ? "" : swizzle);
 }
 
 static void get_source_info_patch(enum vrend_type_qualifier srcstypeprefix,
@@ -4207,20 +4207,10 @@ static void get_source_info_patch(enum vrend_type_qualifier srcstypeprefix,
    }
 
    swizzle = shift_swizzles(io, src, swz_offset, swizzle_shifted, swizzle);
-   const char *wm = io->is_int ? "" : swizzle;
 
-   if (io->last == io->first)
-      strbuf_fmt(result, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, io->glsl_name,
-               arrayname, wm);
-   else {
-      if (src->Register.Indirect)
-         strbuf_fmt(result, "%s(%s %s[addr%d + %d] %s)", get_string(srcstypeprefix), prefix,
-                  io->glsl_name, src->Indirect.Index, src->Register.Index - io->first, wm);
-      else
-         strbuf_fmt(result, "%s(%s %s[%d] %s)", get_string(srcstypeprefix), prefix,
-                  io->glsl_name, src->Register.Index - io->first, wm);
-   }
-
+   strbuf_fmt(result, "%s(%s", get_string(srcstypeprefix), prefix);
+   vrend_shader_write_io_as_src(result, io->last == io->first ? arrayname : "", io, src, decl_plain);
+   strbuf_appendf(result, "%s)", io->is_int ? "" : swizzle);
 }
 
 static void get_tesslevel_as_source(struct vrend_strbuf *src_buf, const char *prefix,
@@ -7951,3 +7941,32 @@ fail:
    return false;
 }
 
+static
+void vrend_shader_write_io_as_src(struct vrend_strbuf *result,
+                                  const  char *array_or_varname,
+                                  const struct vrend_shader_io *io,
+                                  const struct tgsi_full_src_register *src,
+                                  enum io_decl_type decl_type)
+{
+   if (io->first == io->last) {
+      strbuf_appendf(result, "%s%s", io->glsl_name, array_or_varname);
+   } else {
+      if (decl_type == decl_block) {
+         if (src->Register.Indirect)
+            strbuf_appendf(result, "%s.%s[addr%d + %d]", array_or_varname, io->glsl_name,
+                           src->Indirect.Index, src->Register.Index - io->first);
+         else
+            strbuf_appendf(result, "%s.%s[%d]", array_or_varname, io->glsl_name,
+                           src->Register.Index - io->first);
+      } else {
+         if (src->Register.Indirect)
+            strbuf_appendf(result, "%s%s[addr%d + %d]", io->glsl_name,
+                           array_or_varname, src->Indirect.Index,
+                           src->Register.Index - io->first);
+         else
+            strbuf_appendf(result, "%s%s[%d]", io->glsl_name,
+                           array_or_varname,
+                           src->Register.Index - io->first);
+      }
+   }
+}
