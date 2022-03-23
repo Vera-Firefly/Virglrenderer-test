@@ -60,6 +60,12 @@ static inline size_t strbuf_get_len(struct vrend_strbuf *sb)
    return sb->size;
 }
 
+static inline void strbuf_reset(struct vrend_strbuf *sb)
+{
+   sb->size = 0;
+}
+
+
 static inline void strbuf_free(struct vrend_strbuf *sb)
 {
    if (!sb->external_buffer)
