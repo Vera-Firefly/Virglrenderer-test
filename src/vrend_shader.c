@@ -5039,12 +5039,10 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
  * previous shader stage to the according inputs.
  */
 
-static bool apply_prev_layout(const struct vrend_shader_key *key,
+static void apply_prev_layout(const struct vrend_shader_key *key,
                               struct vrend_shader_io inputs[],
                               uint32_t *num_inputs)
 {
-   bool require_enhanced_layouts = false;
-
    /* Walk through all inputs and see whether we have a corresonding output from
     * the previous shader that uses a different layout. It may even be that one
     * input be the combination of two inputs. */
@@ -5094,13 +5092,11 @@ static bool apply_prev_layout(const struct vrend_shader_key *key,
       ++io;
       ++i_input;
    }
-   return require_enhanced_layouts;
 }
 
-static bool evaluate_layout_overlays(unsigned nio, struct vrend_shader_io *io,
+static void evaluate_layout_overlays(unsigned nio, struct vrend_shader_io *io,
                                      const char *name_prefix, unsigned coord_replace)
 {
-   bool require_enhanced_layouts = 0;
    int next_loc = 1;
 
    /* IO elements may be emitted for the same location but with
@@ -5139,16 +5135,11 @@ static bool evaluate_layout_overlays(unsigned nio, struct vrend_shader_io *io,
             io[i].layout_location = next_loc++;
             io[j].layout_location = next_loc++;
          }
-         require_enhanced_layouts = true;
       }
    }
 
    rename_variables(nio, io, name_prefix, coord_replace);
-
-   return require_enhanced_layouts;
 }
-
-
 
 static
 void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
@@ -5186,22 +5177,17 @@ static void handle_io_arrays(struct dump_ctx *ctx)
    if (ctx->prog_type == TGSI_PROCESSOR_GEOMETRY ||
        ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ||
        ctx->prog_type == TGSI_PROCESSOR_TESS_EVAL)
-      require_enhanced_layouts |= apply_prev_layout(ctx->key, ctx->inputs, &ctx->num_inputs);
+      apply_prev_layout(ctx->key, ctx->inputs, &ctx->num_inputs);
 
    if (ctx->guest_sent_io_arrays)  {
       if (ctx->num_inputs > 0)
-         if (evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
+         evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
                                       get_stage_input_name_prefix(ctx, ctx->prog_type),
-                                      ctx->key->fs.coord_replace)) {
-            require_enhanced_layouts = true;
-         }
+                                      ctx->key->fs.coord_replace);
 
       if (ctx->num_outputs > 0)
-         if (evaluate_layout_overlays(ctx->num_outputs, ctx->outputs,
-                                      get_stage_output_name_prefix(ctx->prog_type), 0)){
-            require_enhanced_layouts = true;
-         }
-
+         evaluate_layout_overlays(ctx->num_outputs, ctx->outputs,
+                                  get_stage_output_name_prefix(ctx->prog_type), 0);
    } else {
       /* The guest didn't send real arrays, do we might have to add a big array
        * for all generic and another ofr patch inputs */
@@ -5212,11 +5198,6 @@ static void handle_io_arrays(struct dump_ctx *ctx)
 
       rewrite_components(ctx->num_outputs, ctx->outputs,
                          get_stage_output_name_prefix(ctx->prog_type), 0, true);
-   }
-
-   if (require_enhanced_layouts) {
-      ctx->shader_req_bits |= SHADER_REQ_ENHANCED_LAYOUTS;
-      ctx->shader_req_bits |= SHADER_REQ_SEPERATE_SHADER_OBJECTS;
    }
 }
 
@@ -7400,7 +7381,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->out.guest_sent_io_arrays = ctx->guest_sent_io_arrays;
    sinfo->out.num_generic_and_patch = 0;
    for(unsigned i = 0; i < ctx->num_outputs; i++) {
-      if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC || ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
+      if ((ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC || ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) &&
+          !ctx->outputs[i].overlapping_array) {
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].name = ctx->outputs[i].name;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].sid = ctx->outputs[i].sid;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].location = ctx->outputs[i].layout_location;
