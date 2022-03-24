@@ -36,10 +36,8 @@ dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_src_x,Fail
 KHR-GL30.glsl_noperspective.functionaltest,Fail
 KHR-GL30.transform_feedback.api_errors_test,Fail
 KHR-GL30.transform_feedback.draw_xfb_stream_instanced_test,Fail
-KHR-GL31.CommonBugs.CommonBug_ParenthesisInLayoutQualifierIntegerValue,Fail
 KHR-GL31.glsl_noperspective.functionaltest,Fail
 KHR-GL31.transform_feedback.draw_xfb_stream_instanced_test,Fail
-KHR-GL32.CommonBugs.CommonBug_ParenthesisInLayoutQualifierIntegerValue,Fail
 KHR-GL32.glsl_noperspective.functionaltest,Fail
 KHR-GL32.transform_feedback.draw_xfb_stream_instanced_test,Fail
 KHR-GL32.transform_feedback_overflow_query_ARB.advanced-single-stream-interleaved-attribs,Fail

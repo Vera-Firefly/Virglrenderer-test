@@ -10963,10 +10963,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    if (has_feature(feat_texture_barrier))
       caps->v2.capability_bits |= VIRGL_CAP_TEXTURE_BARRIER;
 
-   /* If we enable input arrays and don't have enhanced layouts then we
-    * can't support components. */
-   if (has_feature(feat_enhanced_layouts))
-      caps->v2.capability_bits |= VIRGL_CAP_TGSI_COMPONENTS;
+   caps->v2.capability_bits |= VIRGL_CAP_TGSI_COMPONENTS;
 
    if (has_feature(feat_srgb_write_control))
       caps->v2.capability_bits |= VIRGL_CAP_SRGB_WRITE_CONTROL;
