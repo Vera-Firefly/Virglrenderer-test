@@ -2,17 +2,7 @@
 
 set -ex
 
-if [ ${MESA_PROJECT_PATH} = "mesa/mesa" ]; then
-    MESA_CI_PROJECT_DIR="/builds/${MESA_PROJECT_PATH}"
-else
-    # Hack to allow testing with a Mesa CI fork
-    MESA_CI_PROJECT_DIR="/builds/mesa/mesa"
-
-    # Sometimes LD_LIBRARY_PATH seem to be ignored by dEQP MESA-LOADER since
-    # it still tries to load drivers from paths specific to Mesa container.
-    export LIBGL_DRIVERS_PATH=${MESA_CI_PROJECT_DIR}/install/lib/dri
-fi
-
+MESA_CI_PROJECT_DIR="/builds/${MESA_PROJECT_PATH}"
 mkdir -p ${MESA_CI_PROJECT_DIR}
 cd ${MESA_CI_PROJECT_DIR}
 
