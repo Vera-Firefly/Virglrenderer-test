@@ -23,10 +23,12 @@ if wget -q --method=HEAD ${MESA_CI_ARTIFACTS_URL}; then
 else
     echo -e "\e[31mThe Mesa artifacts has expired, please update to newer Mesa pipeline!\e[0m"
     apt-get update && apt-get -y install jq
+    MESA_PROJECT_PATH_ESCAPED=$(echo "$MESA_PROJECT_PATH" | sed 's|/|%2F|')
+    MESA_PROJECT_ID=$(wget -cq "${CI_API_V4_URL}/projects/${MESA_PROJECT_PATH_ESCAPED}" -O - | jq -c '.id')
     FALLBACK_PAGE=1
     while :
     do
-        MESA_JOB_ID=$(wget -cq "${CI_API_V4_URL}/projects/176/pipelines/${MESA_PIPELINE_ID}/jobs?per_page=100&page=${FALLBACK_PAGE}&scope=success" -O - \
+        MESA_JOB_ID=$(wget -cq "${CI_API_V4_URL}/projects/${MESA_PROJECT_ID}/pipelines/${MESA_PIPELINE_ID}/jobs?per_page=100&page=${FALLBACK_PAGE}&scope=success" -O - \
           | jq -c '.[] | select(.name == "debian-testing") | .id')
         if [ ! -z "${MESA_JOB_ID}" ]; then
             break
@@ -37,7 +39,7 @@ else
         fi
         FALLBACK_PAGE=$((FALLBACK_PAGE+1))
     done
-    MESA_CI_ARTIFACTS_URL="${CI_API_V4_URL}/projects/176/jobs/${MESA_JOB_ID}/artifacts/artifacts/install.tar"
+    MESA_CI_ARTIFACTS_URL="${CI_API_V4_URL}/projects/${MESA_PROJECT_ID}/jobs/${MESA_JOB_ID}/artifacts/artifacts/install.tar"
     unset MESA_JOB_ID
     wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xv
 fi
