@@ -7,6 +7,10 @@
 
 #include "vkr_command_buffer_gen.h"
 
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #define VKR_CMD_CALL(cmd_name, args, ...)                                                \
    do {                                                                                  \
       struct vkr_command_buffer *_cmd =                                                  \
