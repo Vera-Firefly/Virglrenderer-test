@@ -107,6 +107,8 @@ struct vn_info_extension_table {
    };
 };
 
+#define VN_INFO_EXTENSION_MAX_NUMBER (414)
+
 struct vn_info_extension {
    const char *name;
    uint32_t number;
@@ -239,6 +241,14 @@ vn_info_extension_get(int32_t index)
 {
    assert(index >= 0 && (uint32_t)index < _vn_info_extension_count);
    return &_vn_info_extensions[index];
+}
+
+static inline void
+vn_info_extension_mask_init(uint32_t *out_mask)
+{
+   for (uint32_t i = 0; i < _vn_info_extension_count; i++) {
+       out_mask[_vn_info_extensions[i].number / 32] |= 1 << (_vn_info_extensions[i].number % 32);
+   }
 }
 
 #endif /* VN_PROTOCOL_RENDERER_INFO_H */
