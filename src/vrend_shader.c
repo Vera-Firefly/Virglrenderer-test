@@ -2930,7 +2930,12 @@ static void translate_tex(struct dump_ctx *ctx,
       break;
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
-      strbuf_appendf(&bias_buf, ", %s.w", srcs[0]);
+      /* On GLES we emulate the 1D array by using a 2D array, for this
+       * there is no shadow lookup with bias. To avoid that compiling an
+       * invalid shader results in a crash we ignore the bias value */
+      if (!(ctx->cfg->use_gles &&
+            TGSI_TEXTURE_SHADOW1D_ARRAY == inst->Texture.Texture))
+         strbuf_appendf(&bias_buf, ", %s.w", srcs[0]);
       break;
    case TGSI_OPCODE_TXF:
       if (inst->Texture.Texture == TGSI_TEXTURE_1D ||
