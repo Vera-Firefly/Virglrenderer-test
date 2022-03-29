@@ -358,6 +358,12 @@ vkr_context_get_blob_locked(struct virgl_context *base,
       if (ret)
          return ret;
 
+      if (fd_type == VIRGL_RESOURCE_FD_DMABUF &&
+          (uint64_t)lseek64(fd, 0, SEEK_END) < blob_size) {
+         close(fd);
+         return -EINVAL;
+      }
+
       mem->exported = true;
    }
 
