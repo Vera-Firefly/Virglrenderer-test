@@ -652,7 +652,6 @@ spec@ext_texture_array@fbo-generatemipmap-array s3tc_dxt1,Fail
 spec@ext_texture_array@gen-mipmap,Fail
 spec@ext_texture_array@glsl-fs-shadow1darray-07,Fail
 spec@ext_texture_array@glsl-fs-shadow1darray-08,Fail
-spec@ext_texture_array@glsl-fs-shadow1darray-bias,Fail
 spec@ext_texture_array@glsl-fs-shadow2darray-07,Fail
 spec@ext_texture_array@glsl-fs-shadow2darray-08,Fail
 spec@ext_texture_compression_rgtc@fbo-generatemipmap-formats-signed,Fail

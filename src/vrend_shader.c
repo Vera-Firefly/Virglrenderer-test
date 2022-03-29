@@ -2584,6 +2584,7 @@ static void emit_txq(struct dump_ctx *ctx,
    }
 
    if (inst->Dst[0].Register.WriteMask & 0x7) {
+      char wm_buffer[16];
       bool txq_returns_vec = (inst->Texture.Texture != TGSI_TEXTURE_BUFFER) &&
                              (ctx->cfg->use_gles ||
                               (inst->Texture.Texture != TGSI_TEXTURE_1D &&
@@ -2592,7 +2593,8 @@ static void emit_txq(struct dump_ctx *ctx,
       if (ctx->cfg->use_gles &&
           (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY ||
            inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY)) {
-         writemask = ".xz";
+         snprintf(wm_buffer, sizeof(wm_buffer), ".xz%s", writemask);
+         writemask = wm_buffer;
       }
 
       emit_buff(&ctx->glsl_strbufs, "%s%s = %s(textureSize(%s%s))%s;\n", dst,
