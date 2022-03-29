@@ -328,6 +328,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
     VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT = 238,
     VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT = 239,
+    VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT = 240,
+    VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT = 241,
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
     VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
     VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
@@ -1413,6 +1415,15 @@ struct vn_command_vkCmdEndQuery {
     uint32_t query;
 };
 
+struct vn_command_vkCmdBeginConditionalRenderingEXT {
+    VkCommandBuffer commandBuffer;
+    const VkConditionalRenderingBeginInfoEXT* pConditionalRenderingBegin;
+};
+
+struct vn_command_vkCmdEndConditionalRenderingEXT {
+    VkCommandBuffer commandBuffer;
+};
+
 struct vn_command_vkCmdResetQueryPool {
     VkCommandBuffer commandBuffer;
     VkQueryPool queryPool;
@@ -2277,6 +2288,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkCmdPipelineBarrier)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdPipelineBarrier *args);
     void (*dispatch_vkCmdBeginQuery)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginQuery *args);
     void (*dispatch_vkCmdEndQuery)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdEndQuery *args);
+    void (*dispatch_vkCmdBeginConditionalRenderingEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBeginConditionalRenderingEXT *args);
+    void (*dispatch_vkCmdEndConditionalRenderingEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdEndConditionalRenderingEXT *args);
     void (*dispatch_vkCmdResetQueryPool)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdResetQueryPool *args);
     void (*dispatch_vkCmdWriteTimestamp)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdWriteTimestamp *args);
     void (*dispatch_vkCmdCopyQueryPoolResults)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyQueryPoolResults *args);

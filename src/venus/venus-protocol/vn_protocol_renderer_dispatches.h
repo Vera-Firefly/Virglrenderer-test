@@ -171,6 +171,8 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkCmdPipelineBarrier_EXT: return "vkCmdPipelineBarrier";
     case VK_COMMAND_TYPE_vkCmdBeginQuery_EXT: return "vkCmdBeginQuery";
     case VK_COMMAND_TYPE_vkCmdEndQuery_EXT: return "vkCmdEndQuery";
+    case VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT: return "vkCmdBeginConditionalRenderingEXT";
+    case VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT: return "vkCmdEndConditionalRenderingEXT";
     case VK_COMMAND_TYPE_vkCmdResetQueryPool_EXT: return "vkCmdResetQueryPool";
     case VK_COMMAND_TYPE_vkCmdWriteTimestamp_EXT: return "vkCmdWriteTimestamp";
     case VK_COMMAND_TYPE_vkCmdCopyQueryPoolResults_EXT: return "vkCmdCopyQueryPoolResults";
@@ -287,7 +289,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     }
 }
 
-static void (*const vn_dispatch_table[240])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[242])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -416,6 +418,8 @@ static void (*const vn_dispatch_table[240])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkCmdPipelineBarrier_EXT] = vn_dispatch_vkCmdPipelineBarrier,
     [VK_COMMAND_TYPE_vkCmdBeginQuery_EXT] = vn_dispatch_vkCmdBeginQuery,
     [VK_COMMAND_TYPE_vkCmdEndQuery_EXT] = vn_dispatch_vkCmdEndQuery,
+    [VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT] = vn_dispatch_vkCmdBeginConditionalRenderingEXT,
+    [VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT] = vn_dispatch_vkCmdEndConditionalRenderingEXT,
     [VK_COMMAND_TYPE_vkCmdResetQueryPool_EXT] = vn_dispatch_vkCmdResetQueryPool,
     [VK_COMMAND_TYPE_vkCmdWriteTimestamp_EXT] = vn_dispatch_vkCmdWriteTimestamp,
     [VK_COMMAND_TYPE_vkCmdCopyQueryPoolResults_EXT] = vn_dispatch_vkCmdCopyQueryPoolResults,
@@ -534,7 +538,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 240 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 242 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

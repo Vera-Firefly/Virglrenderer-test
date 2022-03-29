@@ -25,6 +25,7 @@ struct vn_device_proc_table {
    PFN_vkBindBufferMemory2 BindBufferMemory2;
    PFN_vkBindImageMemory BindImageMemory;
    PFN_vkBindImageMemory2 BindImageMemory2;
+   PFN_vkCmdBeginConditionalRenderingEXT CmdBeginConditionalRenderingEXT;
    PFN_vkCmdBeginQuery CmdBeginQuery;
    PFN_vkCmdBeginQueryIndexedEXT CmdBeginQueryIndexedEXT;
    PFN_vkCmdBeginRenderPass CmdBeginRenderPass;
@@ -61,6 +62,7 @@ struct vn_device_proc_table {
    PFN_vkCmdDrawIndirect CmdDrawIndirect;
    PFN_vkCmdDrawIndirectByteCountEXT CmdDrawIndirectByteCountEXT;
    PFN_vkCmdDrawIndirectCount CmdDrawIndirectCount;
+   PFN_vkCmdEndConditionalRenderingEXT CmdEndConditionalRenderingEXT;
    PFN_vkCmdEndQuery CmdEndQuery;
    PFN_vkCmdEndQueryIndexedEXT CmdEndQueryIndexedEXT;
    PFN_vkCmdEndRenderPass CmdEndRenderPass;
@@ -254,6 +256,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_1 ? VN_GDPA(dev, vkBindImageMemory2) :
       ext_table->KHR_bind_memory2 ? VN_GDPA(dev, vkBindImageMemory2KHR) :
       NULL;
+   proc_table->CmdBeginConditionalRenderingEXT =
+      ext_table->EXT_conditional_rendering ? VN_GDPA(dev, vkCmdBeginConditionalRenderingEXT) :
+      NULL;
    proc_table->CmdBeginQuery = VN_GDPA(dev, vkCmdBeginQuery);
    proc_table->CmdBeginQueryIndexedEXT =
       ext_table->EXT_transform_feedback ? VN_GDPA(dev, vkCmdBeginQueryIndexedEXT) :
@@ -330,6 +335,9 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->CmdDrawIndirectCount =
       api_version >= VK_API_VERSION_1_2 ? VN_GDPA(dev, vkCmdDrawIndirectCount) :
       ext_table->KHR_draw_indirect_count ? VN_GDPA(dev, vkCmdDrawIndirectCountKHR) :
+      NULL;
+   proc_table->CmdEndConditionalRenderingEXT =
+      ext_table->EXT_conditional_rendering ? VN_GDPA(dev, vkCmdEndConditionalRenderingEXT) :
       NULL;
    proc_table->CmdEndQuery = VN_GDPA(dev, vkCmdEndQuery);
    proc_table->CmdEndQueryIndexedEXT =

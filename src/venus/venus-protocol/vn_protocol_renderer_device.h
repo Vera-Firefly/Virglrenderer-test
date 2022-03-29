@@ -2549,6 +2549,119 @@ vn_replace_VkPhysicalDevice8BitStorageFeatures_handle(VkPhysicalDevice8BitStorag
     } while (pnext);
 }
 
+/* struct VkPhysicalDeviceConditionalRenderingFeaturesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkBool32(enc, &val->conditionalRendering);
+    vn_encode_VkBool32(enc, &val->inheritedConditionalRendering);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT(struct vn_cs_encoder *enc, const VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT });
+    vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkBool32(dec, &val->conditionalRendering);
+    vn_decode_VkBool32(dec, &val->inheritedConditionalRendering);
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext_temp(dec);
+    vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_temp(dec, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->conditionalRendering */
+    /* skip val->inheritedConditionalRendering */
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_partial_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceConditionalRenderingFeaturesEXT_handle_self(VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->conditionalRendering */
+    /* skip val->inheritedConditionalRendering */
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceConditionalRenderingFeaturesEXT_handle(VkPhysicalDeviceConditionalRenderingFeaturesEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceConditionalRenderingFeaturesEXT_handle_self((VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
 /* struct VkPhysicalDeviceVulkanMemoryModelFeatures chain */
 
 static inline void
@@ -3658,6 +3771,115 @@ vn_replace_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_handle(VkPhysicalDe
         switch ((int32_t)pnext->sType) {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES:
             vn_replace_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_handle_self((VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkPhysicalDeviceIndexTypeUint8FeaturesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_VkBool32(enc, &val->indexTypeUint8);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT(struct vn_cs_encoder *enc, const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT });
+    vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkBool32(dec, &val->indexTypeUint8);
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext_temp(dec);
+    vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_temp(dec, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->indexTypeUint8 */
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_partial_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_handle_self(VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->indexTypeUint8 */
+}
+
+static inline void
+vn_replace_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_handle(VkPhysicalDeviceIndexTypeUint8FeaturesEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_handle_self((VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */
@@ -6500,6 +6722,12 @@ vn_encode_VkPhysicalDeviceFeatures2_pnext(struct vn_cs_encoder *enc, const void 
             vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDevice8BitStorageFeatures_self(enc, (const VkPhysicalDevice8BitStorageFeatures *)pnext);
             return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self(enc, (const VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
             vn_encode_simple_pointer(enc, pnext);
             vn_encode_VkStructureType(enc, &pnext->sType);
@@ -6559,6 +6787,12 @@ vn_encode_VkPhysicalDeviceFeatures2_pnext(struct vn_cs_encoder *enc, const void 
             vn_encode_VkStructureType(enc, &pnext->sType);
             vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_self(enc, (const VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+            return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceFeatures2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self(enc, (const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
             return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
             vn_encode_simple_pointer(enc, pnext);
@@ -6849,6 +7083,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkPhysicalDevice8BitStorageFeatures_self_temp(dec, (VkPhysicalDevice8BitStorageFeatures *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceConditionalRenderingFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_temp(dec, (VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceVulkanMemoryModelFeatures));
         if (pnext) {
@@ -6927,6 +7169,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(struct vn_cs_decoder *dec)
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
             vn_decode_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_self_temp(dec, (VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceIndexTypeUint8FeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_temp(dec, (VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
@@ -7266,6 +7516,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(struct vn_cs_decoder *dec
             vn_decode_VkPhysicalDevice8BitStorageFeatures_self_partial_temp(dec, (VkPhysicalDevice8BitStorageFeatures *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceConditionalRenderingFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_partial_temp(dec, (VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceVulkanMemoryModelFeatures));
         if (pnext) {
@@ -7344,6 +7602,14 @@ vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(struct vn_cs_decoder *dec
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(dec);
             vn_decode_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_self_partial_temp(dec, (VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceIndexTypeUint8FeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceFeatures2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_partial_temp(dec, (VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
@@ -7615,6 +7881,9 @@ vn_replace_VkPhysicalDeviceFeatures2_handle(VkPhysicalDeviceFeatures2 *val)
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES:
             vn_replace_VkPhysicalDevice8BitStorageFeatures_handle_self((VkPhysicalDevice8BitStorageFeatures *)pnext);
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceConditionalRenderingFeaturesEXT_handle_self((VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
             vn_replace_VkPhysicalDeviceVulkanMemoryModelFeatures_handle_self((VkPhysicalDeviceVulkanMemoryModelFeatures *)pnext);
             break;
@@ -7644,6 +7913,9 @@ vn_replace_VkPhysicalDeviceFeatures2_handle(VkPhysicalDeviceFeatures2 *val)
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES:
             vn_replace_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_handle_self((VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_handle_self((VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
             vn_replace_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_handle_self((VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures *)pnext);
@@ -7947,6 +8219,14 @@ vn_decode_VkDeviceCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkPhysicalDevice8BitStorageFeatures_self_temp(dec, (VkPhysicalDevice8BitStorageFeatures *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceConditionalRenderingFeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkDeviceCreateInfo_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceConditionalRenderingFeaturesEXT_self_temp(dec, (VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceVulkanMemoryModelFeatures));
         if (pnext) {
@@ -8025,6 +8305,14 @@ vn_decode_VkDeviceCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkDeviceCreateInfo_pnext_temp(dec);
             vn_decode_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_self_temp(dec, (VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceIndexTypeUint8FeaturesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkDeviceCreateInfo_pnext_temp(dec);
+            vn_decode_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_self_temp(dec, (VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
@@ -8364,6 +8652,9 @@ vn_replace_VkDeviceCreateInfo_handle(VkDeviceCreateInfo *val)
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES:
             vn_replace_VkPhysicalDevice8BitStorageFeatures_handle_self((VkPhysicalDevice8BitStorageFeatures *)pnext);
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceConditionalRenderingFeaturesEXT_handle_self((VkPhysicalDeviceConditionalRenderingFeaturesEXT *)pnext);
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
             vn_replace_VkPhysicalDeviceVulkanMemoryModelFeatures_handle_self((VkPhysicalDeviceVulkanMemoryModelFeatures *)pnext);
             break;
@@ -8393,6 +8684,9 @@ vn_replace_VkDeviceCreateInfo_handle(VkDeviceCreateInfo *val)
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES:
             vn_replace_VkPhysicalDeviceTextureCompressionASTCHDRFeatures_handle_self((VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
+            vn_replace_VkPhysicalDeviceIndexTypeUint8FeaturesEXT_handle_self((VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)pnext);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
             vn_replace_VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures_handle_self((VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures *)pnext);

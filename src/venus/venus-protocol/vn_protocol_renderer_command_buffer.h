@@ -75,6 +75,63 @@ vn_replace_VkCommandBufferAllocateInfo_handle(VkCommandBufferAllocateInfo *val)
     } while (pnext);
 }
 
+/* struct VkCommandBufferInheritanceConditionalRenderingInfoEXT chain */
+
+static inline void *
+vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_self_temp(struct vn_cs_decoder *dec, VkCommandBufferInheritanceConditionalRenderingInfoEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkBool32(dec, &val->conditionalRenderingEnable);
+}
+
+static inline void
+vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_temp(struct vn_cs_decoder *dec, VkCommandBufferInheritanceConditionalRenderingInfoEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_pnext_temp(dec);
+    vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkCommandBufferInheritanceConditionalRenderingInfoEXT_handle_self(VkCommandBufferInheritanceConditionalRenderingInfoEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->conditionalRenderingEnable */
+}
+
+static inline void
+vn_replace_VkCommandBufferInheritanceConditionalRenderingInfoEXT_handle(VkCommandBufferInheritanceConditionalRenderingInfoEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT:
+            vn_replace_VkCommandBufferInheritanceConditionalRenderingInfoEXT_handle_self((VkCommandBufferInheritanceConditionalRenderingInfoEXT *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
 /* struct VkCommandBufferInheritanceRenderingInfo chain */
 
 static inline void *
@@ -165,6 +222,14 @@ vn_decode_VkCommandBufferInheritanceInfo_pnext_temp(struct vn_cs_decoder *dec)
 
     vn_decode_VkStructureType(dec, &stype);
     switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkCommandBufferInheritanceConditionalRenderingInfoEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkCommandBufferInheritanceInfo_pnext_temp(dec);
+            vn_decode_VkCommandBufferInheritanceConditionalRenderingInfoEXT_self_temp(dec, (VkCommandBufferInheritanceConditionalRenderingInfoEXT *)pnext);
+        }
+        break;
     case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO:
         pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkCommandBufferInheritanceRenderingInfo));
         if (pnext) {
@@ -230,6 +295,9 @@ vn_replace_VkCommandBufferInheritanceInfo_handle(VkCommandBufferInheritanceInfo 
         switch ((int32_t)pnext->sType) {
         case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO:
             vn_replace_VkCommandBufferInheritanceInfo_handle_self((VkCommandBufferInheritanceInfo *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT:
+            vn_replace_VkCommandBufferInheritanceConditionalRenderingInfoEXT_handle_self((VkCommandBufferInheritanceConditionalRenderingInfoEXT *)pnext);
             break;
         case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO:
             vn_replace_VkCommandBufferInheritanceRenderingInfo_handle_self((VkCommandBufferInheritanceRenderingInfo *)pnext);
@@ -786,6 +854,67 @@ vn_replace_VkImageMemoryBarrier_handle(VkImageMemoryBarrier *val)
         switch ((int32_t)pnext->sType) {
         case VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER:
             vn_replace_VkImageMemoryBarrier_handle_self((VkImageMemoryBarrier *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkConditionalRenderingBeginInfoEXT chain */
+
+static inline void *
+vn_decode_VkConditionalRenderingBeginInfoEXT_pnext_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkConditionalRenderingBeginInfoEXT_self_temp(struct vn_cs_decoder *dec, VkConditionalRenderingBeginInfoEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_VkBuffer_lookup(dec, &val->buffer);
+    vn_decode_VkDeviceSize(dec, &val->offset);
+    vn_decode_VkFlags(dec, &val->flags);
+}
+
+static inline void
+vn_decode_VkConditionalRenderingBeginInfoEXT_temp(struct vn_cs_decoder *dec, VkConditionalRenderingBeginInfoEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_CONDITIONAL_RENDERING_BEGIN_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkConditionalRenderingBeginInfoEXT_pnext_temp(dec);
+    vn_decode_VkConditionalRenderingBeginInfoEXT_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkConditionalRenderingBeginInfoEXT_handle_self(VkConditionalRenderingBeginInfoEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    vn_replace_VkBuffer_handle(&val->buffer);
+    /* skip val->offset */
+    /* skip val->flags */
+}
+
+static inline void
+vn_replace_VkConditionalRenderingBeginInfoEXT_handle(VkConditionalRenderingBeginInfoEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_CONDITIONAL_RENDERING_BEGIN_INFO_EXT:
+            vn_replace_VkConditionalRenderingBeginInfoEXT_handle_self((VkConditionalRenderingBeginInfoEXT *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */
@@ -3880,6 +4009,51 @@ static inline void vn_encode_vkCmdEndQuery_reply(struct vn_cs_encoder *enc, cons
     /* skip args->query */
 }
 
+static inline void vn_decode_vkCmdBeginConditionalRenderingEXT_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdBeginConditionalRenderingEXT *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    if (vn_decode_simple_pointer(dec)) {
+        args->pConditionalRenderingBegin = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pConditionalRenderingBegin));
+        if (!args->pConditionalRenderingBegin) return;
+        vn_decode_VkConditionalRenderingBeginInfoEXT_temp(dec, (VkConditionalRenderingBeginInfoEXT *)args->pConditionalRenderingBegin);
+    } else {
+        args->pConditionalRenderingBegin = NULL;
+        vn_cs_decoder_set_fatal(dec);
+    }
+}
+
+static inline void vn_replace_vkCmdBeginConditionalRenderingEXT_args_handle(struct vn_command_vkCmdBeginConditionalRenderingEXT *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    if (args->pConditionalRenderingBegin)
+        vn_replace_VkConditionalRenderingBeginInfoEXT_handle((VkConditionalRenderingBeginInfoEXT *)args->pConditionalRenderingBegin);
+}
+
+static inline void vn_encode_vkCmdBeginConditionalRenderingEXT_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdBeginConditionalRenderingEXT *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pConditionalRenderingBegin */
+}
+
+static inline void vn_decode_vkCmdEndConditionalRenderingEXT_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdEndConditionalRenderingEXT *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+}
+
+static inline void vn_replace_vkCmdEndConditionalRenderingEXT_args_handle(struct vn_command_vkCmdEndConditionalRenderingEXT *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+}
+
+static inline void vn_encode_vkCmdEndConditionalRenderingEXT_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdEndConditionalRenderingEXT *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT});
+
+    /* skip args->commandBuffer */
+}
+
 static inline void vn_decode_vkCmdResetQueryPool_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdResetQueryPool *args)
 {
     vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
@@ -6456,6 +6630,56 @@ static inline void vn_dispatch_vkCmdEndQuery(struct vn_dispatch_context *ctx, Vk
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCmdEndQuery_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdBeginConditionalRenderingEXT(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdBeginConditionalRenderingEXT args;
+
+    if (!ctx->dispatch_vkCmdBeginConditionalRenderingEXT) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdBeginConditionalRenderingEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdBeginConditionalRenderingEXT(ctx, &args);
+
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
+       vn_encode_vkCmdBeginConditionalRenderingEXT_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdEndConditionalRenderingEXT(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdEndConditionalRenderingEXT args;
+
+    if (!ctx->dispatch_vkCmdEndConditionalRenderingEXT) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdEndConditionalRenderingEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdEndConditionalRenderingEXT(ctx, &args);
+
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
+       vn_encode_vkCmdEndConditionalRenderingEXT_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
