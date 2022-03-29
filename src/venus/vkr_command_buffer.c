@@ -725,6 +725,22 @@ vkr_dispatch_vkCmdSetRasterizerDiscardEnable(
    VKR_CMD_CALL(CmdSetRasterizerDiscardEnable, args, args->rasterizerDiscardEnable);
 }
 
+static void
+vkr_dispatch_vkCmdBeginConditionalRenderingEXT(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdBeginConditionalRenderingEXT *args)
+{
+   VKR_CMD_CALL(CmdBeginConditionalRenderingEXT, args, args->pConditionalRenderingBegin);
+}
+
+static void
+vkr_dispatch_vkCmdEndConditionalRenderingEXT(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdEndConditionalRenderingEXT *args)
+{
+   VKR_CMD_CALL(CmdEndConditionalRenderingEXT, args);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -838,4 +854,10 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkCmdSetPatchControlPointsEXT;
    dispatch->dispatch_vkCmdSetLogicOpEXT = vkr_dispatch_vkCmdSetLogicOpEXT;
    dispatch->dispatch_vkCmdSetDepthBiasEnable = vkr_dispatch_vkCmdSetDepthBiasEnable;
+
+   /* VK_EXT_conditional_rendering */
+   dispatch->dispatch_vkCmdBeginConditionalRenderingEXT =
+      vkr_dispatch_vkCmdBeginConditionalRenderingEXT;
+   dispatch->dispatch_vkCmdEndConditionalRenderingEXT =
+      vkr_dispatch_vkCmdEndConditionalRenderingEXT;
 }
