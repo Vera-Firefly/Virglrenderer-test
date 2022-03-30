@@ -20,6 +20,10 @@ elif with_render_server_worker == 'minijail'
    virgl_render_server_depends += [minijail_dep]
 endif
 
+if with_tracing == 'percetto'
+   virgl_render_server_depends += [percetto_dep]
+endif
+
 virgl_render_server = executable(
    'virgl_render_server',
    virgl_render_server_sources,
