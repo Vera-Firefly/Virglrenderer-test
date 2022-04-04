@@ -2114,12 +2114,18 @@ static void emit_so_movs(const struct dump_ctx *ctx,
             free(ctx->so_names[i]);
          if (ctx->so->output[i].register_index > ctx->num_outputs)
             ctx->so_names[i] = NULL;
-         else if (ctx->outputs[ctx->so->output[i].register_index].name == TGSI_SEMANTIC_CLIPVERTEX && ctx->has_clipvertex) {
+         else if (output->name == TGSI_SEMANTIC_CLIPVERTEX && ctx->has_clipvertex) {
             ctx->so_names[i] = strdup("clipv_tmp");
             *has_clipvertex_so = true;
          } else {
             char out_var[255];
-            get_so_name(ctx, true, output, ctx->so->output[i].register_index, out_var, "");
+            const struct vrend_shader_io *used_output_io = output;
+            if (output->name == TGSI_SEMANTIC_GENERIC && ctx->generic_ios.output_range.used) {
+               used_output_io = &ctx->generic_ios.output_range.io;
+            } else if (output->name == TGSI_SEMANTIC_PATCH && ctx->patch_ios.output_range.used) {
+               used_output_io = &ctx->patch_ios.output_range.io;
+            }
+            get_so_name(ctx, true, used_output_io, ctx->so->output[i].register_index, out_var, "");
             ctx->so_names[i] = strdup(out_var);
          }
       } else {
@@ -2128,7 +2134,7 @@ static void emit_so_movs(const struct dump_ctx *ctx,
          ctx->so_names[i] = strdup(ntemp);
       }
       if (ctx->so->output[i].num_components == 1) {
-         if (ctx->outputs[ctx->so->output[i].register_index].is_int)
+         if (output->is_int)
             snprintf(outtype, 15, "intBitsToFloat");
          else
             snprintf(outtype, 15, "float");
