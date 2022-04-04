@@ -893,7 +893,7 @@ bool vrend_format_is_bgra(enum virgl_formats format) {
            format == VIRGL_FORMAT_B8G8R8A8_SRGB);
 }
 
-static bool vrend_resource_has_24bpp_internal_format(struct vrend_resource *res)
+static bool vrend_resource_has_24bpp_internal_format(const struct vrend_resource *res)
 {
    /* Some shared resources imported to guest mesa as EGL images occupy 24bpp instead of more common 32bpp. */
    return (has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE) &&
