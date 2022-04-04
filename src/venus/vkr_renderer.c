@@ -31,6 +31,13 @@ vkr_get_capset(void *capset)
          vkr_extension_get_spec_version("VK_MESA_venus_protocol");
       /* TODO always true once Mesa resolves its performance issue */
       c->supports_blob_id_0 = (bool)(vkr_renderer_flags & VKR_RENDERER_RENDER_SERVER);
+
+      uint32_t ext_mask[VN_INFO_EXTENSION_MAX_NUMBER / 32 + 1] = { 0 };
+      vn_info_extension_mask_init(ext_mask);
+
+      static_assert(sizeof(ext_mask) <= sizeof(c->vk_extension_mask1),
+                    "Time to extend venus capset with vk_extension_mask2");
+      memcpy(c->vk_extension_mask1, ext_mask, sizeof(ext_mask));
    }
 
    return sizeof(*c);
