@@ -25,6 +25,11 @@ spec@arb_depth_buffer_float@depthstencil-render-miplevels 585 d=z32f_s8
 spec@arb_depth_buffer_float@fbo-depthstencil-gl_depth32f_stencil8-copypixels
 spec@arb_depth_texture@depthstencil-render-miplevels 146 d=z16
 spec@arb_depth_texture@depthstencil-render-miplevels 585 d=z16
+spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
+spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
 spec@arb_framebuffer_object@arb_framebuffer_object-depth-stencil-blit stencil gl_stencil_index1
 spec@arb_framebuffer_srgb@blit renderbuffer linear_to_srgb upsample disabled clear
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
@@ -56,6 +61,7 @@ spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier
 spec@arb_shader_image_load_store@host-mem-barrier@Uniform buffer/RaW/full barrier test/4x4
 spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier test/4x4
 spec@arb_shader_precision@fs-op-assign-div-vec3-float
+spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
 spec@arb_texture_cube_map@copyteximage cube samples=4
 spec@arb_texture_multisample@texelfetch fs sampler2dms 4 1x71-501x71
 spec@arb_texture_rg@texwrap formats-float bordercolor
@@ -127,6 +133,7 @@ spec@glsl-4.30@execution@built-in-functions@cs-op-mult-uvec2-uint
 spec@glsl-4.30@execution@built-in-functions@cs-op-rshift-ivec2-int
 spec@glsl-4.30@execution@built-in-functions@cs-op-selection-bool-vec4-vec4
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_DEPTH32F_STENCIL8/Destination: GL_DEPTH32F_STENCIL8
+spec@oes_viewport_array@viewport-gs-writes-in-range
 spec@!opengl 1.0@gl-1.0-blend-func
 spec@!opengl 1.0@gl-1.0-front-invalidate-back
 spec@!opengl 1.1@copypixels-draw-sync

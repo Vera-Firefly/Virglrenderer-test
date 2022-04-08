@@ -216,13 +216,19 @@ spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT16
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT24- swizzled- border color only,Fail
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT32- swizzled- border color only,Fail
 spec@arb_draw_indirect@arb_draw_indirect-draw-elements-prim-restart-ugly,Fail
-spec@arb_enhanced_layouts@execution@component-layout@vs-to-fs-array-interleave-single-location,Fail
+spec@arb_enhanced_layouts@execution@component-layout@vs-fs-array-dvec3,Fail
 spec@arb_enhanced_layouts@linker@component-layout@intrastage-vs,Fail
 spec@arb_enhanced_layouts@linker@component-layout@vs-to-fs,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled@GL_RGB565- swizzled- border color only,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@Basic,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@discard,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query,Fail
@@ -243,6 +249,7 @@ spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
 spec@arb_gpu_shader5@linker@stream-different-zero-gs-fs,Fail
 spec@arb_gpu_shader5@linker@stream-invalid-prim-output,Fail
 spec@arb_occlusion_query@occlusion_query_conform,Fail
+spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi1,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi2,Fail
 spec@arb_occlusion_query@occlusion_query,Fail
 spec@arb_occlusion_query@occlusion_query_meta_fragments,Fail
@@ -285,6 +292,8 @@ spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
 spec@arb_shader_atomic_counter_ops@execution@add,Fail
 spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail
+spec@arb_shader_atomic_counters@fragment-discard,Fail
+spec@arb_shader_atomic_counters@function-argument,Fail
 spec@arb_shader_image_load_store@bitcast,Fail
 spec@arb_shader_image_load_store@bitcast@r11f_g11f_b10f to rgba8_snorm bitcast test,Fail
 spec@arb_shader_image_load_store@bitcast@r32f to rgba8_snorm bitcast test,Fail
@@ -449,6 +458,8 @@ spec@arb_shader_storage_buffer_object@execution@indirect,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,ExpectedFail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int,Fail
+spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
+spec@arb_shader_storage_buffer_object@layout-std430-write-shader,Fail
 spec@arb_shader_storage_buffer_object@maxblocks,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgradcube,ExpectedFail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,ExpectedFail
@@ -682,7 +693,6 @@ spec@ext_framebuffer_multisample@upsample 2 stencil,Fail
 spec@ext_framebuffer_multisample@upsample 4 stencil,Fail
 spec@ext_framebuffer_object@fbo-alphatest-nocolor,Fail
 spec@ext_framebuffer_object@fbo-alphatest-nocolor-ff,Fail
-spec@ext_framebuffer_object@fbo-blending-format-quirks,Fail
 spec@ext_framebuffer_object@fbo-blending-formats,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA12,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA16,Fail
@@ -715,7 +725,6 @@ spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_xyuv,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y210,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y212,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y216,Fail
-spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y410,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y412,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y416,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yuv420,Fail
@@ -869,7 +878,6 @@ spec@glsl-1.10@execution@samplers@glsl-fs-shadow1d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-07,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
-spec@glsl-1.20@execution@matrix-out-of-bounds-access@fs-mat4-out-of-bounds-6,Crash
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:texture() 1d,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:texture() 1dshadow,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:texture() 2d,Fail
@@ -883,6 +891,8 @@ spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2d,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2d_projvec4,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2dshadow,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 3d,Fail
+spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-read,Crash
+spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-write,Crash
 spec@glsl-1.30@execution@fs-texturelod-miplevels-biased,Fail
 spec@glsl-1.30@execution@interpolation@interpolation-mixed,Fail
 spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-distance,Fail
@@ -1030,6 +1040,7 @@ spec@glsl-1.30@execution@tex-miplevel-selection textureprojoffset 2d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureprojoffset 2d_projvec4,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureprojoffset 2dshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureprojoffset 3d,Fail
+spec@glsl-1.30@execution@vs-isnan-and-more-comparison,Fail
 spec@glsl-1.30@execution@vs-texturelod-miplevels-biased,Fail
 spec@glsl-1.50@built-in constants,Fail
 spec@glsl-1.50@built-in constants@gl_MaxGeometryOutputComponents,Fail
@@ -2574,6 +2585,11 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp,ExpectedFail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full precision,ExpectedFail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,ExpectedFail
 spec@khr_texture_compression_astc@void-extent-dl-bug,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x223344ff,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x76356278,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x223344ff,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x76356278,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
@@ -2625,7 +2641,7 @@ spec@!opengl 1.0@gl-1.0-logicop@GL_OR_REVERSE_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-logicop@GL_XOR_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-spot-light,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,ExpectedFail
-spec@!opengl 1.0@rasterpos,Fail
+spec@!opengl 1.0@rasterpos,Crash
 spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
 spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@clipflat,Fail

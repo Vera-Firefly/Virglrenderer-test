@@ -168,21 +168,31 @@ spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT16
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT24- swizzled- border color only,Fail
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT32- swizzled- border color only,Fail
 spec@arb_direct_state_access@gettextureimage-targets,Fail
-spec@arb_enhanced_layouts@execution@component-layout@vs-fs-array-dvec3,Fail
-spec@arb_enhanced_layouts@execution@component-layout@vs-to-fs-array-interleave-single-location,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled@GL_RGB565- swizzled- border color only,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample,Fail
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples,Fail
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed,Crash
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get,Fail
 spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
+spec@arb_occlusion_query@occlusion_query_conform,Fail
+spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi1,Fail
 spec@arb_occlusion_query@occlusion_query_meta_no_fragments,Fail
 spec@arb_occlusion_query@occlusion_query_meta_save,Fail
 spec@arb_point_sprite@arb_point_sprite-mipmap,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex@'vs_input2[1][0]' on GL_PROGRAM_INPUT,Fail
 spec@arb_sample_shading@builtin-gl-sample-position 2,Fail
+spec@arb_shader_atomic_counter_ops@execution@add,Fail
+spec@arb_shader_atomic_counters@fragment-discard,Fail
+spec@arb_shader_atomic_counters@function-argument,Fail
 spec@arb_shader_image_load_store@early-z,Fail
 spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,Fail
 spec@arb_shader_image_load_store@layer,Fail
@@ -200,6 +210,9 @@ spec@arb_shader_image_load_store@semantics,Fail
 spec@arb_shader_image_load_store@semantics@imageLoad/Vertex shader/rgba32f/image2DMSArray test,Fail
 spec@arb_shader_image_load_store@semantics@imageLoad/Vertex shader/rgba32f/image2DMS test,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,Fail
+spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int,Fail
+spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
+spec@arb_shader_storage_buffer_object@layout-std430-write-shader,Fail
 spec@arb_shader_storage_buffer_object@maxblocks,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,Fail
 spec@arb_shader_texture_lod@execution@glsl-fs-shadow2dgradarb-07,Fail
@@ -381,7 +394,6 @@ spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_xyuv,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y210,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y212,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y216,Fail
-spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y410,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y412,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y416,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yuv420,Fail
@@ -519,9 +531,9 @@ spec@glsl-1.10@execution@samplers@glsl-fs-shadow1d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-07,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
-spec@glsl-1.20@execution@matrix-out-of-bounds-access@fs-mat4-out-of-bounds-6,Crash
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
+spec@glsl-1.50@execution@variable-indexing@gs-input-array-float-index-rd,Fail
 spec@khr_texture_compression_astc@array-gl@12x12 Block Dim,Fail
 spec@khr_texture_compression_astc@array-gl@5x5 Block Dim,Fail
 spec@khr_texture_compression_astc@array-gles@12x12 Block Dim,Fail
@@ -556,6 +568,11 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb,Fail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp,Fail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full precision,Fail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x223344ff,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x76356278,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x223344ff,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x76356278,Fail
+spec@nv_copy_depth_to_color@nv_copy_depth_to_color,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
@@ -583,7 +600,7 @@ spec@!opengl 1.0@gl-1.0-drawbuffer-modes,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag,Fail
 spec@!opengl 1.0@gl-1.0-edgeflag-quads,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,Fail
-spec@!opengl 1.0@rasterpos,Fail
+spec@!opengl 1.0@rasterpos,Crash
 spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
 spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@copypixels-draw-sync,Fail

@@ -2,6 +2,10 @@ dEQP-GLES31.functional.draw_buffers_indexed.random.max_implementation_draw_buffe
 
 shaders@glsl-uniform-interstage-limits@subdivide 5
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
 spec@arb_shader_image_load_store@atomicity
 spec@arb_shader_image_load_store@atomicity@imageAtomicAdd
@@ -22,11 +26,15 @@ spec@arb_shader_image_load_store@host-mem-barrier@Indirect/RaW/one bit barrier t
 spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/4x4
 spec@arb_shader_image_load_store@host-mem-barrier@Uniform buffer/RaW/full barrier test/4x4
 spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier test/4x4
+spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
+spec@arb_shader_storage_buffer_object@layout-std140-write-shader
+spec@arb_shader_storage_buffer_object@layout-std430-write-shader
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
 spec@ext_framebuffer_blit@fbo-blit-check-limits
 spec@ext_framebuffer_blit@fbo-sys-blit
 spec@ext_framebuffer_blit@fbo-sys-sub-blit
+spec@oes_viewport_array@viewport-gs-writes-in-range
 spec@!opengl 1.0@gl-1.0-front-invalidate-back
 spec@!opengl 1.1@masked-clear
 spec@!opengl 1.1@ppgtt_memory_alignment

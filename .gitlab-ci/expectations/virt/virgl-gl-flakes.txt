@@ -9,11 +9,6 @@ KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x2_vs
 KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x3_vs
 KHR-GL31.transform_feedback.capture_special_interleaved_test
 
-piglit.spec@arb_framebuffer_object@fbo blit to missing attachment
-piglit.spec@arb_gpu_shader5@texturegatheroffset@fs-r-0-float-2drect
-piglit.spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontcolor-flat-fixed
-piglit.spec@glsl-1.50@execution@built-in-functions@gs-op-assign-mult-vec2-mat2
-piglit.spec@glsl-1.50@execution@texelfetchoffset@gs-texelfetch-usampler3d
 shaders@glsl-max-varyings
 shaders@glsl-max-varyings >max_varying_components
 shaders@glsl-uniform-interstage-limits@subdivide 5
@@ -22,10 +17,18 @@ spec@arb_compute_shader@local-id-explosion
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8I
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8UI
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RED/Destination: GL_RED
+spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
 spec@arb_gpu_shader5@texturegatheroffset@fs-rgba-3-int-2drect-const
 spec@arb_gpu_shader_int64@execution@built-in-functions@gs-min-i64vec2-int64_t
+spec@arb_shader_atomic_counter_ops@execution@add
 spec@arb_shader_image_load_store@indexing
+spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
+spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
+spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
 spec@arb_texture_rg@fbo-rg-gl_rg
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
@@ -34,6 +37,7 @@ spec@ext_framebuffer_blit@fbo-sys-blit
 spec@ext_framebuffer_blit@fbo-sys-sub-blit
 spec@ext_framebuffer_object@fbo-stencil-gl_stencil_index16-drawpixels
 spec@ext_texture_snorm@multisample-formats 2 gl_ext_texture_snorm
+spec@ext_timer_query@time-elapsed
 spec@glsl-1.10@execution@glsl-fs-max-array-access-function
 spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontcolor-flat-vertex
 spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontsecondarycolor-smooth-none
@@ -47,6 +51,7 @@ spec@glsl-4.00@execution@built-in-functions@vs-op-mult-dmat3x4-dvec3
 spec@glsl-4.30@execution@built-in-functions@cs-op-bitand-not-uvec2-uvec2
 spec@glsl-4.30@execution@built-in-functions@cs-op-bitor-abs-not-int-ivec4
 spec@oes_texture_view@sampling-2d-array-as-2d-layer
+spec@oes_viewport_array@viewport-gs-writes-in-range
 spec@!opengl 1.0@gl-1.0-drawbuffer-modes
 spec@!opengl 1.0@gl-1.0-front-invalidate-back
 spec@!opengl 1.0@gl-1.0-polygon-line-aa
