@@ -38,6 +38,10 @@ vkr_get_capset(void *capset)
       static_assert(sizeof(ext_mask) <= sizeof(c->vk_extension_mask1),
                     "Time to extend venus capset with vk_extension_mask2");
       memcpy(c->vk_extension_mask1, ext_mask, sizeof(ext_mask));
+
+      /* set bit 0 to enable the extension mask(s) */
+      assert(!(c->vk_extension_mask1[0] & 0x1u));
+      c->vk_extension_mask1[0] |= 0x1u;
    }
 
    return sizeof(*c);
