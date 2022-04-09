@@ -343,6 +343,8 @@ enum virgl_formats {
    VIRGL_FORMAT_A8L8_SNORM              = 260,
    VIRGL_FORMAT_A8L8_SRGB               = 261,
 
+   VIRGL_FORMAT_A1B5G5R5_UNORM          = 262,
+
    VIRGL_FORMAT_X8B8G8R8_SNORM          = 268,
 
 
