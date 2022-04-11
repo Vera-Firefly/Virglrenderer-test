@@ -5219,6 +5219,10 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          sub_ctx->current_so->xfb_state = XFB_STATE_PAUSED;
       }
    }
+
+   if (use_advanced_blending)
+      glDisable(GL_BLEND);
+
    return 0;
 }
 
