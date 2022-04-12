@@ -167,6 +167,12 @@ struct vrend_generic_ios {
    uint64_t outputs_emitted_mask;
 };
 
+struct vrend_texcoord_ios {
+   uint8_t outputs_expected_mask;
+   uint8_t inputs_emitted_mask;
+   uint8_t outputs_emitted_mask;
+};
+
 struct vrend_patch_ios {
    struct vrend_io_range input_range;
    struct vrend_io_range output_range;
@@ -195,6 +201,7 @@ struct dump_ctx {
    struct vrend_shader_io system_values[32];
 
    bool guest_sent_io_arrays;
+   struct vrend_texcoord_ios texcoord_ios;
    struct vrend_generic_ios generic_ios;
    struct vrend_patch_ios patch_ios;
 
@@ -6484,6 +6491,7 @@ static void
 emit_ios_generic(const struct dump_ctx *ctx,
                  struct vrend_glsl_strbufs *glsl_strbufs,
                  struct vrend_generic_ios *generic_ios,
+                 struct vrend_texcoord_ios *texcoord_ios,
                  enum io_type iot,  const char *prefix,
                  const struct vrend_shader_io *io, const char *inout,
                  const char *postfix)
@@ -6526,6 +6534,13 @@ emit_ios_generic(const struct dump_ctx *ctx,
             generic_ios->inputs_emitted_mask |= 1ull << io->sid;
          } else {
             generic_ios->outputs_emitted_mask |= 1ull << io->sid;
+         }
+      } else if (io->name == TGSI_SEMANTIC_TEXCOORD) {
+         assert(io->sid < 8);
+         if (iot == io_in) {
+            texcoord_ios->inputs_emitted_mask |= 1ull << io->sid;
+         } else {
+            texcoord_ios->outputs_emitted_mask |= 1ull << io->sid;
          }
       }
 
@@ -6572,6 +6587,7 @@ static void
 emit_ios_generic_outputs(const struct dump_ctx *ctx,
                          struct vrend_glsl_strbufs *glsl_strbufs,
                          struct vrend_generic_ios *generic_ios,
+                         struct vrend_texcoord_ios *texcoord_ios,
                          uint8_t front_back_color_emitted_flags[],
                          bool *force_color_two_side,
                          uint32_t *num_interps,
@@ -6607,7 +6623,7 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
             bc_emitted |= 1ull << ctx->outputs[i].sid;
          }
 
-         emit_ios_generic(ctx, glsl_strbufs, generic_ios,
+         emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios,
                           io_out, prefix, &ctx->outputs[i],
                           ctx->outputs[i].fbfetch_used ? "inout" : "out", "");
       } else if (ctx->outputs[i].invariant || ctx->outputs[i].precise) {
@@ -6657,6 +6673,7 @@ can_emit_generic_default(UNUSED const struct vrend_shader_io *io)
 static void emit_ios_vs(const struct dump_ctx *ctx,
                         struct vrend_glsl_strbufs *glsl_strbufs,
                         struct vrend_generic_ios *generic_ios,
+                        struct vrend_texcoord_ios *texcoord_ios,
                         uint32_t *num_interps,
                         uint8_t front_back_color_emitted_flags[],
                         bool *force_color_two_side)
@@ -6679,8 +6696,9 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
 
    emit_ios_indirect_generics_output(ctx, glsl_strbufs, "");
 
-   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags,
-                            force_color_two_side, num_interps, can_emit_generic_default);
+   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
+                            front_back_color_emitted_flags, force_color_two_side,
+                            num_interps, can_emit_generic_default);
 
    if (ctx->key->color_two_side || ctx->force_color_two_side) {
       bool fcolor_emitted, bcolor_emitted;
@@ -6764,6 +6782,7 @@ static const char *get_depth_layout(int depth_layout)
 static void emit_ios_fs(const struct dump_ctx *ctx,
                         struct vrend_glsl_strbufs *glsl_strbufs,
                         struct vrend_generic_ios *generic_ios,
+                        struct vrend_texcoord_ios *texcoord_ios,
                         uint32_t *num_interps,
                         bool *winsys_adjust_y_emitted
                         )
@@ -6821,7 +6840,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
 
          char prefixes[64];
          snprintf(prefixes, sizeof(prefixes), "%s %s", prefix, auxprefix);
-         emit_ios_generic(ctx, glsl_strbufs, generic_ios, io_in, prefixes, &ctx->inputs[i], "in", "");
+         emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, prefixes, &ctx->inputs[i], "in", "");
       }
 
       if (ctx->cfg->use_gles && !ctx->winsys_adjust_y_emitted &&
@@ -6882,7 +6901,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
                 !ctx->cfg->has_dual_src_blend)
                sprintf(prefix, "layout(location = %d)", ctx->outputs[i].sid);
 
-            emit_ios_generic(ctx, glsl_strbufs, generic_ios, io_out, prefix, &ctx->outputs[i],
+            emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_out, prefix, &ctx->outputs[i],
                               ctx->outputs[i].fbfetch_used ? "inout" : "out", "");
 
          } else if (ctx->outputs[i].invariant || ctx->outputs[i].precise) {
@@ -6984,6 +7003,7 @@ static void emit_ios_per_vertex_out(const struct dump_ctx *ctx,
 static void emit_ios_geom(const struct dump_ctx *ctx,
                           struct vrend_glsl_strbufs *glsl_strbufs,
                           struct vrend_generic_ios *generic_ios,
+                          struct vrend_texcoord_ios *texcoord_ios,
                           uint8_t front_back_color_emitted_flags[],
                           uint32_t *num_interps,
                           bool *has_pervertex,
@@ -7004,7 +7024,7 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
       if (!ctx->inputs[i].glsl_predefined_no_emit) {
          char postfix[64];
          snprintf(postfix, sizeof(postfix), "[%d]", gs_input_prim_to_size(ctx->gs_in_prim));
-         emit_ios_generic(ctx, glsl_strbufs, generic_ios,
+         emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios,
                           io_in, "", &ctx->inputs[i], "in", postfix);
       }
    }
@@ -7032,8 +7052,9 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
 
    emit_ios_indirect_generics_output(ctx, glsl_strbufs, "");
 
-   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags,
-                            force_color_two_side, num_interps, can_emit_generic_geom);
+   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
+                            front_back_color_emitted_flags, force_color_two_side,
+                            num_interps, can_emit_generic_geom);
 
    emit_winsys_correction(glsl_strbufs);
 
@@ -7072,6 +7093,7 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
 static void emit_ios_tcs(const struct dump_ctx *ctx,
                          struct vrend_glsl_strbufs *glsl_strbufs,
                          struct vrend_generic_ios *generic_ios,
+                         struct vrend_texcoord_ios *texcoord_ios,
                          bool *has_pervertex)
 {
    uint32_t i;
@@ -7083,7 +7105,7 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
          if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
             emit_ios_patch(glsl_strbufs, "",  &ctx->inputs[i], "in", ctx->inputs[i].last - ctx->inputs[i].first + 1);
          else
-            emit_ios_generic(ctx, glsl_strbufs, generic_ios, io_in, "", &ctx->inputs[i], "in", "[]");
+            emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, "", &ctx->inputs[i], "in", "[]");
       }
    }
 
@@ -7101,7 +7123,7 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
             emit_ios_patch(glsl_strbufs, "patch", &ctx->outputs[i], "out",
                            ctx->outputs[i].last - ctx->outputs[i].first + 1);
          } else
-            emit_ios_generic(ctx, glsl_strbufs, generic_ios, io_out, "", &ctx->outputs[i], "out", "[]");
+            emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_out, "", &ctx->outputs[i], "out", "[]");
       } else if (ctx->outputs[i].invariant || ctx->outputs[i].precise) {
          emit_hdrf(glsl_strbufs, "%s%s;\n",
                    ctx->outputs[i].precise ? "precise " :
@@ -7117,6 +7139,7 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
 static void emit_ios_tes(const struct dump_ctx *ctx,
                          struct vrend_glsl_strbufs *glsl_strbufs,
                          struct vrend_generic_ios *generic_ios,
+                         struct vrend_texcoord_ios *texcoord_ios,
                          uint8_t front_back_color_emitted_flags[],
                          uint32_t *num_interps,
                          bool *has_pervertex,
@@ -7137,7 +7160,7 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
             emit_ios_patch(glsl_strbufs, "patch", &ctx->inputs[i], "in",
                            ctx->inputs[i].last - ctx->inputs[i].first + 1);
          else
-            emit_ios_generic(ctx, glsl_strbufs, generic_ios, io_in, "", &ctx->inputs[i], "in", "[]");
+            emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, "", &ctx->inputs[i], "in", "[]");
       }
    }
 
@@ -7149,8 +7172,9 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
 
    emit_ios_indirect_generics_output(ctx, glsl_strbufs, "");
 
-   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags,
-                            force_color_two_side, num_interps, can_emit_generic_default);
+   emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
+                            front_back_color_emitted_flags, force_color_two_side,
+                            num_interps, can_emit_generic_default);
 
    emit_winsys_correction(glsl_strbufs);
 
@@ -7184,6 +7208,7 @@ static void emit_ios_cs(const struct dump_ctx *ctx,
 static int emit_ios(const struct dump_ctx *ctx,
                     struct vrend_glsl_strbufs *glsl_strbufs,
                     struct vrend_generic_ios *generic_ios,
+                    struct vrend_texcoord_ios *texcoord_ios,
                     uint8_t front_back_color_emitted_flags[],
                     uint32_t *num_interps,
                     bool *has_pervertex,
@@ -7202,19 +7227,19 @@ static int emit_ios(const struct dump_ctx *ctx,
 
    switch (ctx->prog_type) {
    case TGSI_PROCESSOR_VERTEX:
-      emit_ios_vs(ctx, glsl_strbufs, generic_ios, num_interps, front_back_color_emitted_flags, force_color_two_side);
+      emit_ios_vs(ctx, glsl_strbufs, generic_ios, texcoord_ios, num_interps, front_back_color_emitted_flags, force_color_two_side);
       break;
    case TGSI_PROCESSOR_FRAGMENT:
-      emit_ios_fs(ctx, glsl_strbufs, generic_ios, num_interps, winsys_adjust_y_emitted);
+      emit_ios_fs(ctx, glsl_strbufs, generic_ios, texcoord_ios, num_interps, winsys_adjust_y_emitted);
       break;
    case TGSI_PROCESSOR_GEOMETRY:
-      emit_ios_geom(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
+      emit_ios_geom(ctx, glsl_strbufs, generic_ios, texcoord_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
       break;
    case TGSI_PROCESSOR_TESS_CTRL:
-      emit_ios_tcs(ctx, glsl_strbufs, generic_ios, has_pervertex);
+      emit_ios_tcs(ctx, glsl_strbufs, generic_ios, texcoord_ios, has_pervertex);
       break;
    case TGSI_PROCESSOR_TESS_EVAL:
-      emit_ios_tes(ctx, glsl_strbufs, generic_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
+      emit_ios_tes(ctx, glsl_strbufs, generic_ios, texcoord_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
       break;
    case TGSI_PROCESSOR_COMPUTE:
       emit_ios_cs(ctx, glsl_strbufs);
@@ -7230,10 +7255,24 @@ static int emit_ios(const struct dump_ctx *ctx,
       for (int i = 0; i < 64; ++i) {
          uint64_t mask = 1ull << i;
          bool expecting = generic_ios->outputs_expected_mask & mask;
-         if (expecting & !(generic_ios->outputs_emitted_mask & mask))
+         if (expecting & !(generic_ios->outputs_emitted_mask & mask)) {
             emit_hdrf(glsl_strbufs, "                              out vec4 %s_g%dA0_f%s;\n",
                       get_stage_output_name_prefix(ctx->prog_type), i,
                       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
+         }
+      }
+   }
+
+   if (texcoord_ios->outputs_expected_mask &&
+       (texcoord_ios->outputs_expected_mask != texcoord_ios->outputs_emitted_mask)) {
+      for (int i = 0; i < 8; ++i) {
+         uint8_t mask = 1u << i;
+         bool expecting = texcoord_ios->outputs_expected_mask & mask;
+         if (expecting & !(texcoord_ios->outputs_emitted_mask & mask)) {
+            emit_hdrf(glsl_strbufs, "                              out vec4 %s_t%d%s;\n",
+                      get_stage_output_name_prefix(ctx->prog_type), i,
+                      ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
+         }
       }
    }
 
@@ -7410,6 +7449,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->image_arrays = ctx->image_arrays;
    sinfo->num_image_arrays = ctx->num_image_arrays;
    sinfo->in.generic_emitted_mask = ctx->generic_ios.inputs_emitted_mask;
+   sinfo->in.texcoord_emitted_mask = ctx->texcoord_ios.inputs_emitted_mask;
 
    for (unsigned i = 0; i < ctx->num_outputs; ++i) {
       if (ctx->outputs[i].invariant) {
@@ -7512,6 +7552,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.req_local_mem = req_local_mem;
    ctx.guest_sent_io_arrays = key->input.guest_sent_io_arrays;
    ctx.generic_ios.outputs_expected_mask = key->output.generic_emitted_mask;
+   ctx.texcoord_ios.outputs_expected_mask = key->output.texcoord_emitted_mask;
 
    tgsi_scan_shader(tokens, &ctx.info);
    /* if we are in core profile mode we should use GLSL 1.40 */
@@ -7552,7 +7593,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
 
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
-                                    ctx.front_back_color_emitted_flags,
+                                    &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
                                     &ctx.winsys_adjust_y_emitted,
@@ -7863,7 +7904,7 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
 
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
-                                    ctx.front_back_color_emitted_flags,
+                                    &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
                                     &ctx.winsys_adjust_y_emitted,
