@@ -11417,6 +11417,11 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
       sub->vps[i].far_val = 1.0;
    }
 
+   /* Default is enabled, so set the initial hardware state accordingly */
+   for (int i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {
+      sub->hw_blend_state.rt[i].colormask = 0xf;
+   }
+
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
       glGenVertexArrays(1, &sub->vaoid);
       glBindVertexArray(sub->vaoid);
