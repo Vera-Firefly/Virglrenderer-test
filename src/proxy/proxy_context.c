@@ -200,32 +200,20 @@ proxy_context_submit_fence(struct virgl_context *base,
                            void *fence_cookie)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
+   const uint64_t old_busy_mask = ctx->timeline_busy_mask;
 
    /* TODO fix virglrenderer to match virtio-gpu spec which uses ring_idx */
    const uint32_t ring_idx = queue_id;
    if (ring_idx >= PROXY_CONTEXT_TIMELINE_COUNT)
       return -EINVAL;
 
+   struct proxy_timeline *timeline = &ctx->timelines[ring_idx];
    struct proxy_fence *fence = proxy_context_alloc_fence(ctx);
    if (!fence)
       return -ENOMEM;
 
-   struct proxy_timeline *timeline = &ctx->timelines[ring_idx];
-   const uint32_t seqno = timeline->next_seqno++;
-   const struct render_context_op_submit_fence_request req = {
-      .header.op = RENDER_CONTEXT_OP_SUBMIT_FENCE,
-      .flags = flags,
-      .ring_index = ring_idx,
-      .seqno = seqno,
-   };
-   if (!proxy_socket_send_request(&ctx->socket, &req, sizeof(req))) {
-      proxy_log("failed to submit fence");
-      proxy_context_free_fence(ctx, fence);
-      return -1;
-   }
-
    fence->flags = flags;
-   fence->seqno = seqno;
+   fence->seqno = timeline->next_seqno++;
    fence->cookie = fence_cookie;
 
    if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
@@ -237,7 +225,28 @@ proxy_context_submit_fence(struct virgl_context *base,
    if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
       mtx_unlock(&ctx->timeline_mutex);
 
-   return 0;
+   const struct render_context_op_submit_fence_request req = {
+      .header.op = RENDER_CONTEXT_OP_SUBMIT_FENCE,
+      .flags = flags,
+      .ring_index = ring_idx,
+      .seqno = fence->seqno,
+   };
+   if (proxy_socket_send_request(&ctx->socket, &req, sizeof(req)))
+      return 0;
+
+   /* recover timeline fences and busy_mask on submit_fence request failure */
+   if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
+      mtx_lock(&ctx->timeline_mutex);
+
+   list_del(&fence->head);
+   ctx->timeline_busy_mask = old_busy_mask;
+
+   if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
+      mtx_unlock(&ctx->timeline_mutex);
+
+   proxy_context_free_fence(ctx, fence);
+   proxy_log("failed to submit fence");
+   return -1;
 }
 
 static void
