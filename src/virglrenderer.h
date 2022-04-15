@@ -71,7 +71,9 @@ struct virgl_renderer_callbacks {
    /*
     * v2, used with flags & VIRGL_RENDERER_USE_EGL
     * Chose the drm fd, that will be used by virglrenderer
-    * for winsys initialization.
+    * for winsys initialization.  Virglrenderer takes ownership of the fd
+    * that is returned and is responsible to close() it.  This should not
+    * return the same fd each time it is call, if called multiple times.
     */
    int (*get_drm_fd)(void *cookie);
 
