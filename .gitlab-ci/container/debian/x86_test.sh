@@ -2,23 +2,6 @@
 
 set -ex
 
-#
-# Copy platform dependent <TEST_TYPE>-*.txt files and remove test type prefix.
-# Additionally, deploy the *.toml files.
-#
-# arg1: test platform (host, virt)
-#
-deploy_expectations() {
-    local tp=${1:-host} tt file
-    [ -z "${DEQP_SUITE}" ] && tt=piglit || tt=deqp
-
-    for file in ${CI_PROJECT_DIR}/.gitlab-ci/expectations/${tp}/${tt}-*.txt; do
-        cp -a ${file} install/$(printf "%s" "${file##*/}" | sed "s/^${tt}-//")
-    done
-
-    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/${tp}/*.toml install/
-}
-
 if [ ${MESA_PROJECT_PATH} = "mesa/mesa" ]; then
     MESA_CI_PROJECT_DIR="/builds/${MESA_PROJECT_PATH}"
 else
@@ -67,7 +50,8 @@ if [ "${GALLIUM_DRIVER}" = "virgl" ]; then
     #
     # Run the tests on virtual platform (virgl/crosvm)
     #
-    deploy_expectations virt
+    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/virt/*.txt install/
+    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/virt/*.toml install/
 
     #
     # crosvm-runner.sh depends on resources from ${CI_PROJECT_DIR}/install,
@@ -98,7 +82,8 @@ else
     #
     # Run the tests on host platform (virpipe/vtest)
     #
-    deploy_expectations host
+    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/host/*.txt install/
+    cp -a ${CI_PROJECT_DIR}/.gitlab-ci/expectations/host/*.toml install/
 
     export LIBGL_ALWAYS_SOFTWARE="true"
     set +e

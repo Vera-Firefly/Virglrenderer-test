@@ -1,3 +1,5 @@
+dEQP-GLES31.functional.draw_buffers_indexed.random.max_implementation_draw_buffers.8
+
 shaders@glsl-uniform-interstage-limits@subdivide 5
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed

@@ -1,3 +1,14 @@
+dEQP-GLES31.functional.draw_buffers_indexed.random.max_implementation_draw_buffers.8
+dEQP-GLES31.functional.ssbo.layout.3_level_unsized_array.shared.mat4
+dEQP-GLES31.functional.ssbo.layout.random.all_shared_buffer.36
+dEQP-GLES31.functional.ssbo.layout.random.arrays_of_arrays.1
+dEQP-GLES31.functional.ssbo.layout.random.nested_structs_arrays_instance_arrays.22
+KHR-GL30.shaders30.glsl_constructors.bvec4_from_bool_mat3_vs
+KHR-GL30.shaders30.glsl_constructors.bvec4_from_bool_mat4x3_vs
+KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x2_vs
+KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x3_vs
+KHR-GL31.transform_feedback.capture_special_interleaved_test
+
 piglit.spec@arb_framebuffer_object@fbo blit to missing attachment
 piglit.spec@arb_gpu_shader5@texturegatheroffset@fs-r-0-float-2drect
 piglit.spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontcolor-flat-fixed

@@ -1,1 +1,0 @@
-dEQP-GLES31.functional.draw_buffers_indexed.random.max_implementation_draw_buffers.8
