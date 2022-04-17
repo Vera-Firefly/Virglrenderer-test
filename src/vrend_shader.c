@@ -754,14 +754,28 @@ static bool allocate_temp_range(struct vrend_temp_range **temp_ranges, uint32_t 
 {
    int idx = *num_temp_ranges;
 
-   *temp_ranges = realloc(*temp_ranges, sizeof(struct vrend_temp_range) * (idx + 1));
-   if (!*temp_ranges)
-      return false;
+   if (array_id > 0) {
 
-   (*temp_ranges)[idx].first = first;
-   (*temp_ranges)[idx].last = last;
-   (*temp_ranges)[idx].array_id = array_id;
-   (*num_temp_ranges)++;
+      *temp_ranges = realloc(*temp_ranges, sizeof(struct vrend_temp_range) * (idx + 1));
+      if (!*temp_ranges)
+         return false;
+
+      (*temp_ranges)[idx].first = first;
+      (*temp_ranges)[idx].last = last;
+      (*temp_ranges)[idx].array_id = array_id;
+      (*num_temp_ranges)++;
+   } else {
+      int ntemps = last - first + 1;
+      *temp_ranges = realloc(*temp_ranges, sizeof(struct vrend_temp_range) * (idx + ntemps));
+      for (int i = 0; i < ntemps; ++i) {
+         (*temp_ranges)[idx + i].first = first + i;
+         (*temp_ranges)[idx + i].last = first + i;
+         (*temp_ranges)[idx + i].array_id = 0;
+      }
+      (*num_temp_ranges) += ntemps;
+
+
+   }
    return true;
 }
 
@@ -2780,6 +2794,22 @@ static const char *get_tex_inst_ext(const struct tgsi_full_instruction *inst)
    }
 }
 
+static void get_temp(const struct dump_ctx *ctx,
+              bool indirect_dim, int dim, int reg,
+              char buf[static 64])
+{
+   struct vrend_temp_range *range = find_temp_range(ctx, reg);
+   if (indirect_dim) {
+      snprintf(buf, 64, "temp%d[addr%d + %d]", range->first, dim, reg - range->first);
+   } else {
+      if (range->array_id > 0) {
+         snprintf(buf, 64, "temp%d[%d]", range->first, reg - range->first);
+      } else {
+         snprintf(buf, 64, "temp%d", reg);
+      }
+   }
+}
+
 static bool fill_offset_buffer(const struct dump_ctx *ctx,
                                const struct tgsi_full_instruction *inst,
                                struct vrend_strbuf *offset_buf)
@@ -2813,15 +2843,16 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
          return false;
       }
    } else if (inst->TexOffsets[0].File == TGSI_FILE_TEMPORARY) {
-      struct vrend_temp_range *range = find_temp_range(ctx, inst->TexOffsets[0].Index);
-      int idx = inst->TexOffsets[0].Index - range->first;
+      char temp_buf[64];
+      get_temp(ctx, false, 0, inst->TexOffsets[0].Index, temp_buf);
       switch (inst->Texture.Texture) {
       case TGSI_TEXTURE_1D:
       case TGSI_TEXTURE_1D_ARRAY:
       case TGSI_TEXTURE_SHADOW1D:
       case TGSI_TEXTURE_SHADOW1D_ARRAY:
-         strbuf_appendf(offset_buf, ", int(floatBitsToInt(temp%d[%d].%c))",
-                  range->first, idx,
+
+         strbuf_appendf(offset_buf, ", int(floatBitsToInt(%s.%c))",
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleX));
          break;
       case TGSI_TEXTURE_RECT:
@@ -2830,19 +2861,19 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
       case TGSI_TEXTURE_2D_ARRAY:
       case TGSI_TEXTURE_SHADOW2D:
       case TGSI_TEXTURE_SHADOW2D_ARRAY:
-         strbuf_appendf(offset_buf, ", ivec2(floatBitsToInt(temp%d[%d].%c), floatBitsToInt(temp%d[%d].%c))",
-                  range->first, idx,
+         strbuf_appendf(offset_buf, ", ivec2(floatBitsToInt(%s.%c), floatBitsToInt(%s.%c))",
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleX),
-                  range->first, idx,
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleY));
             break;
       case TGSI_TEXTURE_3D:
-         strbuf_appendf(offset_buf, ", ivec3(floatBitsToInt(temp%d[%d].%c), floatBitsToInt(temp%d[%d].%c), floatBitsToInt(temp%d[%d].%c)",
-                  range->first, idx,
+         strbuf_appendf(offset_buf, ", ivec3(floatBitsToInt(%s.%c), floatBitsToInt(%s.%c), floatBitsToInt(%s.%c)",
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleX),
-                  range->first, idx,
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleY),
-                  range->first, idx,
+                  temp_buf,
                   get_swiz_char(inst->TexOffsets[0].SwizzleZ));
          break;
       default:
@@ -4156,13 +4187,12 @@ get_destination_info(struct dump_ctx *ctx,
          }
       }
       else if (dst_reg->Register.File == TGSI_FILE_TEMPORARY) {
+         char temp_buf[64];
+         get_temp(ctx, dst_reg->Register.Indirect, 0, dst_reg->Register.Index, temp_buf);
          struct vrend_temp_range *range = find_temp_range(ctx, dst_reg->Register.Index);
          if (!range)
             return false;
-         if (dst_reg->Register.Indirect) {
-            strbuf_fmt(&dst_bufs[i], "temp%d[addr0 + %d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
-         } else
-            strbuf_fmt(&dst_bufs[i], "temp%d[%d]%s", range->first, dst_reg->Register.Index - range->first, writemask);
+         strbuf_fmt(&dst_bufs[i], "%s%s", temp_buf, writemask);
       }
       else if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
@@ -4518,12 +4548,9 @@ get_source_info(struct dump_ctx *ctx,
             stprefix = true;
             stypeprefix = FLOAT_BITS_TO_INT;
          }
-
-         if (src->Register.Indirect) {
-            assert(src->Indirect.File == TGSI_FILE_ADDRESS);
-            strbuf_fmt(src_buf, "%s%c%stemp%d[addr%d + %d]%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, range->first, src->Indirect.Index, src->Register.Index - range->first, swizzle, stprefix ? ')' : ' ');
-         } else
-            strbuf_fmt(src_buf, "%s%c%stemp%d[%d]%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, range->first, src->Register.Index - range->first, swizzle, stprefix ? ')' : ' ');
+         char temp_buf[64];
+         get_temp(ctx, src->Register.Indirect, src->Indirect.Index, src->Register.Index, temp_buf);
+         strbuf_fmt(src_buf, "%s%c%s%s%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, temp_buf, swizzle, stprefix ? ')' : ' ');
       } else if (src->Register.File == TGSI_FILE_CONSTANT) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          int dim = 0;
@@ -6190,6 +6217,11 @@ static int emit_ios_common(const struct dump_ctx *ctx,
 
    for (i = 0; i < ctx->num_temp_ranges; i++) {
       emit_hdrf(glsl_strbufs, "vec4 temp%d[%d];\n", ctx->temp_ranges[i].first, ctx->temp_ranges[i].last - ctx->temp_ranges[i].first + 1);
+      if (ctx->temp_ranges[i].array_id > 0) {
+         emit_hdrf(glsl_strbufs, "vec4 temp%d[%d];\n", ctx->temp_ranges[i].first, ctx->temp_ranges[i].last - ctx->temp_ranges[i].first + 1);
+      } else {
+         emit_hdrf(glsl_strbufs, "vec4 temp%d;\n", ctx->temp_ranges[i].first);
+      }
    }
 
    if (ctx->write_mul_utemp) {
