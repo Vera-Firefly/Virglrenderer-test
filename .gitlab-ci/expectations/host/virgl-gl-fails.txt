@@ -223,7 +223,6 @@ spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4,Fa
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample,Fail
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed,Crash
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get,Fail
-spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
 spec@arb_occlusion_query@occlusion_query_conform,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi1,Fail
 spec@arb_occlusion_query@occlusion_query_meta_no_fragments,Fail
@@ -551,7 +550,6 @@ spec@glsl-1.10@execution@samplers@glsl-fs-shadow1d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-07,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
-spec@glsl-1.30@execution@vs-isnan-and-more-comparison,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
 spec@glsl-1.50@execution@variable-indexing@gs-input-array-float-index-rd,Fail

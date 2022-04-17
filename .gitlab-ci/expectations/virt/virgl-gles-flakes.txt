@@ -64,6 +64,7 @@ spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier 
 spec@arb_shader_precision@fs-op-assign-div-vec3-float
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
+spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
 spec@arb_texture_cube_map@copyteximage cube samples=4
 spec@arb_texture_multisample@texelfetch fs sampler2dms 4 1x71-501x71
 spec@arb_texture_rg@texwrap formats-float bordercolor
