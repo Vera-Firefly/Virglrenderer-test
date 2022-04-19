@@ -6381,7 +6381,13 @@ static void wait_sync(struct vrend_fence *fence)
       } while (vrend_state.polling && ret);
    }
 
-   ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
+   /* vrend_free_fences_for_context might have marked the fence invalid
+    * by setting fence->ctx to NULL
+    */
+   if (ctx) {
+      ctx->fence_retire(fence->fence_cookie, ctx->fence_retire_data);
+   }
+
    free_fence_locked(fence);
 
    if (signal_poll)
