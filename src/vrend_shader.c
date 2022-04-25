@@ -240,7 +240,6 @@ struct dump_ctx {
    int num_consts;
    int num_imm;
    struct immed imm[MAX_IMMEDIATE];
-   unsigned fragcoord_input;
 
    uint32_t req_local_mem;
    bool integer_memory;

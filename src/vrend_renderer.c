@@ -108,7 +108,6 @@ struct vrend_query {
    GLuint gltype;
    struct vrend_context *ctx;
    struct vrend_resource *res;
-   uint64_t current_total;
    bool fake_samples_passed;
 };
 
@@ -656,7 +655,7 @@ struct vrend_sub_context {
    int32_t n_samplers[PIPE_SHADER_TYPES];
 
    uint32_t fb_id;
-   int nr_cbufs, old_nr_cbufs;
+   int nr_cbufs;
    struct vrend_surface *zsurf;
    struct vrend_surface *surf[PIPE_MAX_COLOR_BUFS];
 
@@ -774,8 +773,6 @@ struct vrend_context {
     */
    struct list_head untyped_resources;
    struct virgl_resource *untyped_resource_cache;
-
-   struct list_head active_nontimer_query_list;
 
    struct vrend_shader_cfg shader_cfg;
 
@@ -2718,7 +2715,6 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
 
    old_num = sub_ctx->nr_cbufs;
    sub_ctx->nr_cbufs = nr_cbufs;
-   sub_ctx->old_nr_cbufs = old_num;
 
    for (i = 0; i < (int)nr_cbufs; i++) {
       if (surf_handle[i] != 0) {
@@ -6907,7 +6903,6 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    list_inithead(&grctx->sub_ctxs);
    list_inithead(&grctx->vrend_resources);
-   list_inithead(&grctx->active_nontimer_query_list);
 
    grctx->res_hash = vrend_ctx_resource_init_table();
    list_inithead(&grctx->untyped_resources);
