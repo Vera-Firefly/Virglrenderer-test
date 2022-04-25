@@ -4843,7 +4843,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
          continue;
 
       struct vrend_shader *shader = sel->current;
-      if (shader && !shader->is_compiled) {//shader->sel->type == PIPE_SHADER_FRAGMENT || shader->sel->type == PIPE_SHADER_GEOMETRY) {
+      if (shader && !shader->is_compiled) {
          if (!vrend_compile_shader(sub_ctx, shader))
             return false;
       }
