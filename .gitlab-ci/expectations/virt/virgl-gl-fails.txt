@@ -370,8 +370,6 @@ spec@ext_framebuffer_multisample@no-color 4 depth-computed single,Fail
 spec@ext_framebuffer_multisample@no-color 4 depth single,Fail
 spec@ext_framebuffer_multisample@sample-coverage 2 inverted,Fail
 spec@ext_framebuffer_multisample@sample-coverage 2 non-inverted,Fail
-spec@ext_framebuffer_object@fbo-alphatest-nocolor,Fail
-spec@ext_framebuffer_object@fbo-alphatest-nocolor-ff,Fail
 spec@ext_framebuffer_object@fbo-blending-format-quirks,Fail
 spec@ext_framebuffer_object@fbo-blending-formats,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY12,Fail
