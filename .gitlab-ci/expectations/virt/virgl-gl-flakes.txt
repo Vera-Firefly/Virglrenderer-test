@@ -18,6 +18,7 @@ spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8I
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8UI
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RED/Destination: GL_RED
 spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
+spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
