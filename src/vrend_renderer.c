@@ -7421,6 +7421,12 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       } else if (has_feature(feat_egl_image_external)) {
          gr->storage_bits &= ~VREND_STORAGE_GL_IMMUTABLE;
          glEGLImageTargetTexture2DOES(gr->target, (GLeglImageOES) image_oes);
+         if ((format == VIRGL_FORMAT_NV12 ||
+              format == VIRGL_FORMAT_NV21 ||
+              format == VIRGL_FORMAT_YV12 ||
+              format == VIRGL_FORMAT_P010) && glGetError() != GL_NO_ERROR) {
+            vrend_printf("glEGLImageTargetTexture2DOES maybe fail\n");
+         }
       } else {
          vrend_printf( "missing GL_OES_EGL_image_external extensions\n");
          glBindTexture(gr->target, 0);
