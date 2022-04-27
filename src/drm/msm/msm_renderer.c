@@ -83,6 +83,15 @@ DEFINE_CAST(virgl_context, msm_context)
 
 #define valid_payload_len(req) ((req)->len <= ((req)->hdr.len - sizeof(*(req))))
 
+static struct hash_entry *
+table_search(struct hash_table *ht, uint32_t key)
+{
+   /* zero is not a valid key for u32_keys hashtable: */
+   if (!key)
+      return NULL;
+   return _mesa_hash_table_search(ht, (void *)(uintptr_t)key);
+}
+
 static int
 gem_info(struct msm_context *mctx, uint32_t handle, uint32_t param, uint64_t *val)
 {
@@ -144,7 +153,7 @@ valid_blob_id(struct msm_context *mctx, uint32_t blob_id)
       return false;
 
    /* must not already be in-use: */
-   if (_mesa_hash_table_search(mctx->blob_table, (void *)(uintptr_t)blob_id))
+   if (table_search(mctx->blob_table, blob_id))
       return false;
 
    return true;
@@ -162,7 +171,7 @@ msm_object_set_blob_id(struct msm_context *mctx, struct msm_object *obj, uint32_
 static bool
 valid_res_id(struct msm_context *mctx, uint32_t res_id)
 {
-   return !_mesa_hash_table_search(mctx->resource_table, (void *)(uintptr_t)res_id);
+   return !table_search(mctx->resource_table, res_id);
 }
 
 static void
@@ -188,16 +197,14 @@ msm_get_object_from_blob_id(struct msm_context *mctx, uint64_t blob_id)
 {
    assert((blob_id >> 32) == 0);
    uint32_t id = blob_id;
-   const struct hash_entry *entry =
-      _mesa_hash_table_search(mctx->blob_table, (void *)(uintptr_t)id);
+   const struct hash_entry *entry = table_search(mctx->blob_table, id);
    return likely(entry) ? entry->data : NULL;
 }
 
 static struct msm_object *
 msm_get_object_from_res_id(struct msm_context *mctx, uint32_t res_id)
 {
-   const struct hash_entry *entry =
-      _mesa_hash_table_search(mctx->resource_table, (void *)(uintptr_t)res_id);
+   const struct hash_entry *entry = table_search(mctx->resource_table, res_id);
    return likely(entry) ? entry->data : NULL;
 }
 
@@ -854,8 +861,8 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
       msm_dump_submit(&args);
       mctx->shmem->async_error++;
    } else {
-      const struct hash_entry *entry = _mesa_hash_table_search(
-         mctx->sq_to_ring_idx_table, (void *)(uintptr_t)args.queueid);
+      const struct hash_entry *entry =
+            table_search(mctx->sq_to_ring_idx_table, args.queueid);
 
       if (!entry) {
          drm_log("unknown submitqueue: %u", args.queueid);
