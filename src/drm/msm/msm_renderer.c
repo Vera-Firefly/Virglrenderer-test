@@ -986,6 +986,15 @@ msm_ccmd_set_debuginfo(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 {
    const struct msm_ccmd_set_debuginfo_req *req = to_msm_ccmd_set_debuginfo_req(hdr);
 
+   size_t sz = sizeof(*req);
+   sz = size_add(sz, req->comm_len);
+   sz = size_add(sz, req->cmdline_len);
+
+   if (sz > hdr->len) {
+      drm_log("out of bounds: comm_len=%u, cmdline_len=%u", req->comm_len, req->cmdline_len);
+      return -ENOSPC;
+   }
+
    struct drm_msm_param set_comm = {
       .pipe = MSM_PIPE_3D0,
       .param = MSM_PARAM_COMM,
