@@ -730,7 +730,8 @@ msm_ccmd_gem_new(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 out_close:
    gem_close(mctx->fd, gem_new.handle);
 out_error:
-   mctx->shmem->async_error++;
+   if (mctx->shmem)
+      mctx->shmem->async_error++;
    return ret;
 }
 
@@ -760,7 +761,8 @@ msm_ccmd_gem_set_iova(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    return 0;
 
 out_error:
-   mctx->shmem->async_error++;
+   if (mctx->shmem)
+      mctx->shmem->async_error++;
    return 0;
 }
 
@@ -859,7 +861,8 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    if (unlikely(ret)) {
       drm_log("submit failed: %s", strerror(errno));
       msm_dump_submit(&args);
-      mctx->shmem->async_error++;
+      if (mctx->shmem)
+         mctx->shmem->async_error++;
    } else {
       const struct hash_entry *entry =
             table_search(mctx->sq_to_ring_idx_table, args.queueid);
