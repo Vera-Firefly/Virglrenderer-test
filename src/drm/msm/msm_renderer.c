@@ -1125,8 +1125,13 @@ msm_renderer_submit_cmd(struct virgl_context *vctx, const void *_buffer, size_t 
       const struct msm_ccmd_req *hdr = (const struct msm_ccmd_req *)buffer;
 
       /* Sanity check first: */
-      if ((hdr->len > size) || (hdr->len < sizeof(*hdr))) {
+      if ((hdr->len > size) || (hdr->len < sizeof(*hdr)) || (hdr->len % 4)) {
          drm_log("bad size, %u vs %zu (%u)", hdr->len, size, hdr->cmd);
+         return -EINVAL;
+      }
+
+      if (hdr->rsp_off % 4) {
+         drm_log("bad rsp_off, %u", hdr->rsp_off);
          return -EINVAL;
       }
 
