@@ -48,7 +48,10 @@ static unsigned nr_timelines;
  *
  * The blob-id is used to link the bo created via MSM_CCMD_GEM_NEW and
  * the get_blob() cb.  It is unused in the case of a bo that is imported
- * from another context.
+ * from another context.  An object is added to the blob table in GEM_NEW
+ * and removed in ctx->get_blob() (where it is added to resource_table).
+ * By avoiding having an obj in both tables, we can safely free remaining
+ * entries in either hashtable at context teardown.
  */
 struct msm_context {
    struct virgl_context base;
@@ -187,18 +190,20 @@ static void
 msm_remove_object(struct msm_context *mctx, struct msm_object *obj)
 {
    drm_dbg("obj=%p, blob_id=%u, res_id=%u", obj, obj->blob_id, obj->res_id);
-   if (obj->blob_id)
-      _mesa_hash_table_remove_key(mctx->blob_table, (void *)(uintptr_t)obj->blob_id);
    _mesa_hash_table_remove_key(mctx->resource_table, (void *)(uintptr_t)obj->res_id);
 }
 
 static struct msm_object *
-msm_get_object_from_blob_id(struct msm_context *mctx, uint64_t blob_id)
+msm_retrieve_object_from_blob_id(struct msm_context *mctx, uint64_t blob_id)
 {
    assert((blob_id >> 32) == 0);
    uint32_t id = blob_id;
-   const struct hash_entry *entry = table_search(mctx->blob_table, id);
-   return likely(entry) ? entry->data : NULL;
+   struct hash_entry *entry = table_search(mctx->blob_table, id);
+   if (!entry)
+      return NULL;
+   struct msm_object *obj = entry->data;
+   _mesa_hash_table_remove(mctx->blob_table, entry);
+   return obj;
 }
 
 static struct msm_object *
@@ -314,6 +319,12 @@ msm_renderer_probe(int fd, struct virgl_renderer_capset_drm *capset)
 }
 
 static void
+resource_delete_fxn(struct hash_entry *entry)
+{
+   free((void *)entry->data);
+}
+
+static void
 msm_renderer_destroy(struct virgl_context *vctx)
 {
    struct msm_context *mctx = to_msm_context(vctx);
@@ -326,8 +337,8 @@ msm_renderer_destroy(struct virgl_context *vctx)
    if (mctx->shmem)
       munmap(mctx->shmem, sizeof(*mctx->shmem));
 
-   _mesa_hash_table_destroy(mctx->resource_table, NULL);
-   _mesa_hash_table_destroy(mctx->blob_table, NULL);
+   _mesa_hash_table_destroy(mctx->resource_table, resource_delete_fxn);
+   _mesa_hash_table_destroy(mctx->blob_table, resource_delete_fxn);
    _mesa_hash_table_destroy(mctx->sq_to_ring_idx_table, NULL);
 
    close(mctx->fd);
@@ -521,7 +532,7 @@ msm_renderer_get_blob(struct virgl_context *vctx, uint32_t res_id, uint64_t blob
       return -EINVAL;
    }
 
-   struct msm_object *obj = msm_get_object_from_blob_id(mctx, blob_id);
+   struct msm_object *obj = msm_retrieve_object_from_blob_id(mctx, blob_id);
 
    /* If GEM_NEW fails, we can end up here without a backing obj: */
    if (!obj) {
