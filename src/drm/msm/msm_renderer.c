@@ -837,23 +837,33 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 {
    const struct msm_ccmd_gem_submit_req *req = to_msm_ccmd_gem_submit_req(hdr);
 
-   // TODO would be nice to avoid casting away the const, but that would
-   // require a copy (and malloc/free if too large to hold on stack)..
-   // casting away the const should be safe both with crosvm and qemu
-   struct drm_msm_gem_submit_bo *bos = (void *)req->payload;
-
    size_t sz = sizeof(*req);
    sz = size_add(sz, size_mul(req->nr_bos,  sizeof(struct drm_msm_gem_submit_bo)));
    sz = size_add(sz, size_mul(req->nr_cmds, sizeof(struct drm_msm_gem_submit_cmd)));
 
    /* Normally kernel would validate out of bounds situations and return -EFAULT,
-    * but since we are patching in the bo handles, we need to validate that the
+    * but since we are copying the bo handles, we need to validate that the
     * guest can't trigger us to make an out of bounds memory access:
     */
    if (sz > hdr->len) {
       drm_log("out of bounds: nr_bos=%u, nr_cmds=%u", req->nr_bos, req->nr_cmds);
       return -ENOSPC;
    }
+
+   const unsigned bo_limit = 8192 / sizeof(struct drm_msm_gem_submit_bo);
+   bool bos_on_stack = req->nr_bos < bo_limit;
+   struct drm_msm_gem_submit_bo _bos[bos_on_stack ? req->nr_bos : 0];
+   struct drm_msm_gem_submit_bo *bos;
+
+   if (bos_on_stack) {
+      bos = _bos;
+   } else {
+      bos = malloc(req->nr_bos * sizeof(bos[0]));
+      if (!bos)
+         return -ENOMEM;
+   }
+
+   memcpy(bos, req->payload, req->nr_bos * sizeof(bos[0]));
 
    for (uint32_t i = 0; i < req->nr_bos; i++)
       bos[i].handle = handle_from_res_id(mctx, bos[i].handle);
@@ -882,7 +892,7 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 
       if (!entry) {
          drm_log("unknown submitqueue: %u", args.queueid);
-         return 0;
+         goto out;
       }
 
       unsigned prio = (uintptr_t)entry->data;
@@ -890,6 +900,9 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
       drm_timeline_set_last_fence_fd(&mctx->timelines[prio], args.fence_fd);
    }
 
+out:
+   if (!bos_on_stack)
+      free(bos);
    return 0;
 }
 
