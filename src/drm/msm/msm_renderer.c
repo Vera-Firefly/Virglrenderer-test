@@ -810,6 +810,7 @@ msm_ccmd_gem_set_name(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 static void
 msm_dump_submit(struct drm_msm_gem_submit *req)
 {
+#ifndef NDEBUG
    drm_log("  flags=0x%x, queueid=%u", req->flags, req->queueid);
    for (unsigned i = 0; i < req->nr_bos; i++) {
       struct drm_msm_gem_submit_bo *bos = U642VOID(req->bos);
@@ -819,17 +820,12 @@ msm_dump_submit(struct drm_msm_gem_submit *req)
    for (unsigned i = 0; i < req->nr_cmds; i++) {
       struct drm_msm_gem_submit_cmd *cmds = U642VOID(req->cmds);
       struct drm_msm_gem_submit_cmd *cmd = &cmds[i];
-      struct drm_msm_gem_submit_reloc *relocs = U642VOID(cmd->relocs);
       drm_log("  cmd[%d]: type=%u, submit_idx=%u, submit_offset=%u, size=%u", i,
               cmd->type, cmd->submit_idx, cmd->submit_offset, cmd->size);
-      for (unsigned j = 0; j < cmd->nr_relocs; j++) {
-         struct drm_msm_gem_submit_reloc *r = &relocs[j];
-         drm_log("    reloc[%d]: submit_offset=%u, or=%08x, shift=%d, reloc_idx=%u"
-                 ", reloc_offset=%" PRIu64,
-                 j, r->submit_offset, r->or, r->shift, r->reloc_idx,
-                 (uint64_t)r->reloc_offset);
-      }
    }
+#else
+   (void)req;
+#endif
 }
 
 static int
