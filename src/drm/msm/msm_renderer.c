@@ -597,6 +597,8 @@ msm_context_rsp(struct msm_context *mctx, const struct msm_ccmd_req *hdr, unsign
 
    struct msm_ccmd_rsp *rsp = msm_context_rsp_noshadow(mctx, hdr);
 
+   assert(len >= sizeof(*rsp));
+
    /* With newer host and older guest, we could end up wanting a larger rsp struct
     * than guest expects, so allocate a shadow buffer in this case rather than
     * having to deal with this in all the different ccmd handlers.  This is similar
@@ -625,7 +627,7 @@ msm_ccmd_ioctl_simple(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 {
    const struct msm_ccmd_ioctl_simple_req *req = to_msm_ccmd_ioctl_simple_req(hdr);
    unsigned payload_len = _IOC_SIZE(req->cmd);
-   unsigned req_len = sizeof(*req) + payload_len;
+   unsigned req_len = size_add(sizeof(*req), payload_len);
 
    if (hdr->len != req_len) {
       drm_log("%u != %u", hdr->len, req_len);
@@ -654,7 +656,7 @@ msm_ccmd_ioctl_simple(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    unsigned rsp_len = sizeof(*rsp);
 
    if (req->cmd & IOC_OUT)
-      rsp_len += payload_len;
+      rsp_len = size_add(rsp_len, payload_len);
 
    rsp = msm_context_rsp(mctx, hdr, rsp_len);
 
@@ -952,7 +954,7 @@ msm_ccmd_submitqueue_query(struct msm_context *mctx, const struct msm_ccmd_req *
    const struct msm_ccmd_submitqueue_query_req *req =
       to_msm_ccmd_submitqueue_query_req(hdr);
    struct msm_ccmd_submitqueue_query_rsp *rsp =
-      msm_context_rsp(mctx, hdr, sizeof(*rsp) + req->len);
+      msm_context_rsp(mctx, hdr, size_add(sizeof(*rsp), req->len));
 
    if (!rsp)
       return -ENOMEM;
