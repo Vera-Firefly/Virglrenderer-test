@@ -505,7 +505,6 @@ struct vrend_sampler_view {
    GLenum target;
    GLuint val0, val1;
    GLint gl_swizzle[4];
-   GLenum depth_texture_mode;
    GLuint srgb_decode;
    GLuint levels;
    bool emulated_rect;
@@ -2389,10 +2388,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
         if (util_format_is_depth_or_stencil(view->format)) {
            if (vrend_state.use_core_profile == false) {
               /* setting depth texture mode is deprecated in core profile */
-              if (view->depth_texture_mode != GL_RED) {
-                 glTexParameteri(view->target, GL_DEPTH_TEXTURE_MODE, GL_RED);
-                 view->depth_texture_mode = GL_RED;
-              }
+              glTexParameteri(view->target, GL_DEPTH_TEXTURE_MODE, GL_RED);
            }
            if (has_feature(feat_stencil_texturing)) {
               const struct util_format_description *desc = util_format_description(view->format);
@@ -3196,10 +3192,7 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
             if (util_format_is_depth_or_stencil(view->format)) {
                if (vrend_state.use_core_profile == false) {
                   /* setting depth texture mode is deprecated in core profile */
-                  if (view->depth_texture_mode != GL_RED) {
-                     glTexParameteri(view->texture->target, GL_DEPTH_TEXTURE_MODE, GL_RED);
-                     view->depth_texture_mode = GL_RED;
-                  }
+                  glTexParameteri(view->texture->target, GL_DEPTH_TEXTURE_MODE, GL_RED);
                }
                if (has_feature(feat_stencil_texturing)) {
                   const struct util_format_description *desc = util_format_description(view->format);
