@@ -231,6 +231,10 @@ spec@arb_gpu_shader5@arb_gpu_shader5-xfb-streams,Fail
 spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
 spec@arb_gpu_shader5@linker@stream-different-zero-gs-fs,Fail
 spec@arb_gpu_shader5@linker@stream-invalid-prim-output,Fail
+spec@arb_internalformat_query2@all internalformat_<x>_size pname checks,Crash
+spec@arb_internalformat_query2@all internalformat_<x>_type pname checks,Crash
+spec@arb_internalformat_query2@image_format_compatibility_type pname checks,Crash
+spec@arb_internalformat_query2@max dimensions related pname checks,Crash
 spec@arb_occlusion_query@occlusion_query_conform,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi1,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi2,Fail
@@ -526,7 +530,7 @@ spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB16F- swizzled-
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB32F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA16F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA32F- swizzled- border color only,Fail
-spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Fail
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Crash
 spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGB9_E5,Fail
 spec@arb_texture_query_lod@execution@fs-texturequerylod-nearest-biased,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-07,Fail
@@ -831,8 +835,6 @@ spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2d,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2d_projvec4,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2dshadow,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 3d,Fail
-spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-read,Crash
-spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-write,Crash
 spec@glsl-1.30@execution@fs-texturelod-miplevels-biased,Fail
 spec@glsl-1.30@execution@interpolation@interpolation-mixed,Fail
 spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-distance,Fail

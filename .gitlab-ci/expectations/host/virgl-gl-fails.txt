@@ -550,8 +550,6 @@ spec@glsl-1.10@execution@samplers@glsl-fs-shadow1d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-07,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
-spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-read,Crash
-spec@glsl-1.30@execution@fs-large-local-array-out-of-bounds-write,Crash
 spec@glsl-1.30@execution@vs-isnan-and-more-comparison,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
