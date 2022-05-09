@@ -11126,6 +11126,34 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
    caps->v2.max_texture_image_units = MIN2(max, PIPE_MAX_SHADER_SAMPLER_VIEWS);
+
+   glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max);
+   // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
+   caps->v2.max_const_buffer_size[PIPE_SHADER_VERTEX] = max - 33;
+
+   glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &max);
+   // We can insert `vec4 clipp[8]`, `bool clip_plane_enabled`, `float winsys_adjust_y`,
+   // and `float alpha_ref_val`
+   caps->v2.max_const_buffer_size[PIPE_SHADER_FRAGMENT] = max - 35;
+
+   if (has_feature(feat_geometry_shader)) {
+      glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS, &max);
+      // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
+      caps->v2.max_const_buffer_size[PIPE_SHADER_GEOMETRY] = max - 33;
+   }
+
+   if (has_feature(feat_tessellation)) {
+      glGetIntegerv(GL_MAX_TESS_CONTROL_UNIFORM_COMPONENTS, &max);
+      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_CTRL] = max;
+      glGetIntegerv(GL_MAX_TESS_EVALUATION_UNIFORM_COMPONENTS, &max);
+      // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
+      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_EVAL] = max - 33;
+   }
+
+   if (has_feature(feat_compute_shader)) {
+      glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_COMPONENTS, &max);
+      caps->v2.max_const_buffer_size[PIPE_SHADER_COMPUTE] = max;
+   }
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
