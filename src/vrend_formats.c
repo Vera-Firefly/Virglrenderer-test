@@ -470,7 +470,13 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
 
     glTexImage2D(GL_TEXTURE_2D, 0, table[i].internalformat, 32, 32, 0, table[i].glformat, table[i].gltype, NULL);
     status = glGetError();
-    if (status == GL_INVALID_VALUE || status == GL_INVALID_ENUM || status == GL_INVALID_OPERATION) {
+    /* Currently possible errors are:
+     *  * GL_INVALID_VALUE
+     *  * GL_INVALID_ENUM
+     *  * GL_INVALID_OPERATION
+     *  * GL_OUT_OF_MEMORY
+     */
+    if (status != GL_NO_ERROR) {
       struct vrend_format_table *entry = NULL;
       uint8_t swizzle[4];
       binding = VIRGL_BIND_SAMPLER_VIEW | VIRGL_BIND_RENDER_TARGET;
