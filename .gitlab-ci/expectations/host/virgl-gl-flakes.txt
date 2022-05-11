@@ -349,7 +349,10 @@ KHR-GL43.vertex_attrib_binding.basic-inputI-case2
 
 shaders@glsl-uniform-interstage-limits@subdivide 5
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
 spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
@@ -357,9 +360,11 @@ spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
 spec@arb_shader_atomic_counter_ops@execution@add
 spec@arb_shader_atomic_counter_ops@execution@atomic-counter-array-out-of-bounds-access
 spec@arb_shader_image_load_store@execution@image-array-out-of-bounds-access-store
+spec@arb_shader_image_load_store@execution@image-array-out-of-bounds-access-load
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
+spec@arb_shader_storage_buffer_object@layout-std140-write-shader
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
 spec@ext_framebuffer_blit@fbo-blit-check-limits

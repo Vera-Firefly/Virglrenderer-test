@@ -26,6 +26,7 @@ spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
 spec@arb_gpu_shader5@texturegatheroffset@fs-rgba-3-int-2drect-const
 spec@arb_gpu_shader_int64@execution@built-in-functions@gs-min-i64vec2-int64_t
 spec@arb_shader_atomic_counter_ops@execution@add
+spec@arb_shader_atomic_counters@fragment-discard
 spec@arb_shader_image_load_store@indexing
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
