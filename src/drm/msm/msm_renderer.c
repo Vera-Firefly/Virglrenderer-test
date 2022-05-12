@@ -1028,7 +1028,7 @@ msm_ccmd_set_debuginfo(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 
    struct drm_msm_param set_cmdline = {
       .pipe = MSM_PIPE_3D0,
-      .param = MSM_PARAM_COMM,
+      .param = MSM_PARAM_CMDLINE,
       .value = VOID2U64(&req->payload[req->comm_len]),
       .len = req->cmdline_len,
    };
