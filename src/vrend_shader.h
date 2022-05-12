@@ -75,7 +75,6 @@ struct vrend_layout_info {
    unsigned sid : 16 ;
    unsigned location : 16 ;
    unsigned array_id : 16 ;
-   unsigned usage_mask : 5;
 };
 
 struct vrend_fs_shader_info {

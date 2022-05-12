@@ -2132,7 +2132,7 @@ get_blockname(char outvar[64], const char *stage_prefix, const struct vrend_shad
 static inline void
 get_blockvarname(char outvar[64], const char *stage_prefix, const struct vrend_shader_io *io, const char *postfix)
 {
-   snprintf(outvar, 64, "%sg%dA%d_%x%s", stage_prefix, io->first, io->array_id, io->usage_mask, postfix);
+   snprintf(outvar, 64, "%sg%dA%d%s", stage_prefix, io->first, io->array_id, postfix);
 }
 
 static void get_so_name(const struct dump_ctx *ctx, bool from_block, const struct vrend_shader_io *output, int index, char out_var[255], char *wm)
@@ -3938,13 +3938,11 @@ static void get_destination_info_generic(const struct dump_ctx *ctx,
 }
 
 static
-int find_io_index(int num_io, struct vrend_shader_io *io,
-                  int index, uint32_t usage_mask)
+int find_io_index(int num_io, struct vrend_shader_io *io, int index)
 {
    for (int j = 0; j < num_io; j++) {
       if (io[j].first <= index &&
-          io[j].last >= index &&
-          (io[j].usage_mask & usage_mask)) {
+          io[j].last >= index) {
          return j;
       }
    }
@@ -4032,7 +4030,7 @@ get_destination_info(struct dump_ctx *ctx,
 
       if (dst_reg->Register.File == TGSI_FILE_OUTPUT) {
          int j = find_io_index(ctx->num_outputs, ctx->outputs,
-                               dst_reg->Register.Index, dst_reg->Register.WriteMask);
+                               dst_reg->Register.Index);
 
          if (j < 0)
             return false;
@@ -4333,7 +4331,6 @@ get_source_info(struct dump_ctx *ctx,
       const struct tgsi_full_src_register *src = &inst->Src[i];
       struct vrend_strbuf *src_buf = &srcs[i];
       char swizzle[16] = "";
-      int usage_mask = 0;
       char *swizzle_writer = swizzle;
       char prefix[6] = "";
       char arrayname[16] = "";
@@ -4369,16 +4366,10 @@ get_source_info(struct dump_ctx *ctx,
       if (isfloatabsolute)
          swizzle_writer[swz_idx++] = ')';
 
-      usage_mask |= 1 << src->Register.SwizzleX;
-      usage_mask |= 1 << src->Register.SwizzleY;
-      usage_mask |= 1 << src->Register.SwizzleZ;
-      usage_mask |= 1 << src->Register.SwizzleW;
-
       get_source_swizzle(src, swizzle_writer + swz_idx);
 
       if (src->Register.File == TGSI_FILE_INPUT) {
-         int j = find_io_index(ctx->num_inputs, ctx->inputs,
-                                  src->Register.Index, usage_mask);
+         int j = find_io_index(ctx->num_inputs, ctx->inputs, src->Register.Index);
          if (j < 0)
             return false;
 
@@ -4454,8 +4445,7 @@ get_source_info(struct dump_ctx *ctx,
          }
          sinfo->override_no_wm[i] = input->override_no_wm;
       } else if (src->Register.File == TGSI_FILE_OUTPUT) {
-         int j = find_io_index(ctx->num_outputs, ctx->outputs, src->Register.Index,
-                           usage_mask);
+         int j = find_io_index(ctx->num_outputs, ctx->outputs, src->Register.Index);
          if (j < 0)
             return false;
 
@@ -4947,7 +4937,7 @@ static void rename_variables(unsigned nio, struct vrend_shader_io *io,
           (coord_replace & (1 << io[i].sid)))
          continue;
       char io_type =  io[i].name == TGSI_SEMANTIC_GENERIC ? 'g' : 'p';
-      snprintf(io[i].glsl_name, 64, "%s_%c%dA%d_%x", name_prefix, io_type, io[i].sid, io[i].array_id, io[i].usage_mask);
+      snprintf(io[i].glsl_name, 64, "%s_%c%dA%d", name_prefix, io_type, io[i].sid, io[i].array_id);
    }
 }
 
@@ -5095,14 +5085,9 @@ static void apply_prev_layout(const struct vrend_shader_key *key,
                   ++io;
                   ++i_input;
 
-               } else if ((io->usage_mask == 0xf) && (layout->usage_mask != 0xf)) {
-                  /* If we found the first input with all components, and a corresponding prev output that uses
-                   * less components  */
-                  already_found_one = true;
                }
 
                if (already_found_one) {
-                  io->usage_mask = (uint8_t)layout->usage_mask;
                   io->layout_location = layout->location;
                   io->array_id = layout->array_id;
                   io->num_components = 4;
@@ -7274,7 +7259,7 @@ static int emit_ios(const struct dump_ctx *ctx,
          uint64_t mask = 1ull << i;
          bool expecting = generic_ios->outputs_expected_mask & mask;
          if (expecting & !(generic_ios->outputs_emitted_mask & mask)) {
-            emit_hdrf(glsl_strbufs, "                              out vec4 %s_g%dA0_f%s;\n",
+            emit_hdrf(glsl_strbufs, "                              out vec4 %s_g%dA0%s;\n",
                       get_stage_output_name_prefix(ctx->prog_type), i,
                       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
          }
@@ -7444,7 +7429,6 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].sid = ctx->outputs[i].sid;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].location = ctx->outputs[i].layout_location;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].array_id = ctx->outputs[i].array_id;
-         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].usage_mask = ctx->outputs[i].usage_mask;
          sinfo->out.num_generic_and_patch++;
       }
 
@@ -7865,19 +7849,15 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_c%d", shader_in_prefix, ctx->inputs[i].sid);
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_c%d", shader_out_prefix, ctx->inputs[i].sid);
          } else if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC) {
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_g%dA%d_%x",
-                     shader_in_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id, ctx->inputs[i].usage_mask);
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%dA%d_%x",
-                     shader_out_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id, ctx->inputs[i].usage_mask);
+            snprintf(ctx->inputs[i].glsl_name, 64, "%s_g%dA%d",
+                     shader_in_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%dA%d", shader_out_prefix, ctx->inputs[i].sid,
+                     ctx->inputs[i].array_id);
          } else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_p%dA%d_%x",
-                     shader_in_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id, ctx->inputs[i].usage_mask);
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%dA%d_%x",
-                     shader_out_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id, ctx->inputs[i].usage_mask);
+            snprintf(ctx->inputs[i].glsl_name, 64, "%s_p%dA%d",
+                     shader_in_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%dA%d", shader_out_prefix, ctx->inputs[i].sid,
+                     ctx->inputs[i].array_id);
          } else {
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_%d", shader_in_prefix, ctx->inputs[i].first);
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_%d", shader_out_prefix, ctx->inputs[i].first);
