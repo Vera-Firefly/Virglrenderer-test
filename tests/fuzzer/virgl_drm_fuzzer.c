@@ -35,7 +35,7 @@ static void
 fuzz_write_context_fence(UNUSED void *cookie,
                          UNUSED uint32_t ctx_id,
                          UNUSED uint64_t queue_id,
-                         UNUSED void *fence_cookie)
+                         UNUSED uint64_t fence_id)
 {
 
 }

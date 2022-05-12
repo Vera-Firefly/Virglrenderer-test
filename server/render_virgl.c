@@ -71,13 +71,13 @@ static void
 render_virgl_cb_write_context_fence(UNUSED void *cookie,
                                     uint32_t ctx_id,
                                     uint64_t queue_id,
-                                    void *fence_cookie)
+                                    uint64_t fence_id)
 {
    struct render_context *ctx = render_virgl_lookup_context(ctx_id);
    assert(ctx);
 
    const uint32_t ring_idx = queue_id;
-   const uint32_t seqno = (uint32_t)pointer_to_uintptr(fence_cookie);
+   const uint32_t seqno = (uint32_t)fence_id;
    render_context_update_timeline(ctx, ring_idx, seqno);
 }
 

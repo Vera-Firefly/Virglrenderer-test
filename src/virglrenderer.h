@@ -78,7 +78,7 @@ struct virgl_renderer_callbacks {
    int (*get_drm_fd)(void *cookie);
 
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
-   void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint64_t queue_id, void *fence_cookie);
+   void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint64_t queue_id, uint64_t fence_id);
 
    /* version 0: a connected socket of type SOCK_SEQPACKET */
    int (*get_server_fd)(void *cookie, uint32_t version);

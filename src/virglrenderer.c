@@ -191,7 +191,7 @@ static void per_context_fence_retire(struct virgl_context *ctx,
    state.cbs->write_context_fence(state.cookie,
                                   ctx->ctx_id,
                                   queue_id,
-                                  fence_cookie);
+                                  (uint64_t)(uintptr_t)fence_cookie);
 }
 
 int virgl_renderer_context_create_with_flags(uint32_t ctx_id,

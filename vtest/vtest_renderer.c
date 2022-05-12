@@ -171,9 +171,9 @@ static void vtest_signal_sync_queue(struct vtest_sync_queue *queue,
 static void vtest_write_context_fence(UNUSED void *cookie,
                                       UNUSED uint32_t ctx_id,
                                       UNUSED uint64_t queue_id,
-                                      void *fence_cookie)
+                                      uint64_t fence_id)
 {
-   struct vtest_sync_queue_submit *submit = fence_cookie;
+   struct vtest_sync_queue_submit *submit = (void*)(uintptr_t)fence_id;
    vtest_signal_sync_queue(submit->sync_queue, submit);
 }
 
