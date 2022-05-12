@@ -43,5 +43,5 @@ proxy_log(const char *fmt, ...)
    line[len++] = '\n';
    line[len] = '\0';
 
-   virgl_log(line);
+   virgl_log("%s", line);
 }

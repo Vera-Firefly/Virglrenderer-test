@@ -33,6 +33,8 @@
 #include "config.h"
 #endif
 
+#include "util/macros.h"
+
 #include "virglrenderer.h"
 
 #define TRACE_WITH_PERFETTO 1
@@ -68,7 +70,7 @@ void flush_eventfd(int fd);
 virgl_debug_callback_type virgl_log_set_logger(virgl_debug_callback_type logger);
 void virgl_logv(const char *fmt, va_list va);
 
-static inline void virgl_log(const char *fmt, ...)
+static inline void PRINTFLIKE(1, 2) virgl_log(const char *fmt, ...)
 {
    va_list va;
    va_start(va, fmt);
