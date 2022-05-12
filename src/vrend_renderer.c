@@ -347,20 +347,20 @@ struct global_renderer_state {
 
    uint64_t features[feat_last / 64 + 1];
 
-   uint32_t finishing : 1;
-   uint32_t use_gles : 1;
-   uint32_t use_core_profile : 1;
-   uint32_t use_external_blob : 1;
-   uint32_t use_integer : 1;
+   bool finishing : 1;
+   bool use_gles : 1;
+   bool use_core_profile : 1;
+   bool use_external_blob : 1;
+   bool use_integer : 1;
    /* these appeared broken on at least one driver */
-   uint32_t use_explicit_locations : 1;
+   bool use_explicit_locations : 1;
    /* threaded sync */
-   uint32_t stop_sync_thread : 1;
+   bool stop_sync_thread : 1;
    /* async fence callback */
    bool use_async_fence_cb : 1;
 
 #ifdef HAVE_EPOXY_EGL_H
-   uint32_t use_egl_fence : 1;
+   bool use_egl_fence : 1;
 #endif
 };
 
@@ -453,7 +453,7 @@ struct vrend_shader_selector {
    struct pipe_reference reference;
 
    unsigned num_shaders;
-   unsigned type;
+   enum pipe_shader_type type;
    struct vrend_shader_info sinfo;
 
    struct vrend_shader *current;
@@ -950,7 +950,7 @@ static bool vrend_blit_needs_swizzle(enum virgl_formats src,
    return false;
 }
 
-static inline const char *pipe_shader_to_prefix(int shader_type)
+static inline const char *pipe_shader_to_prefix(enum pipe_shader_type shader_type)
 {
    switch (shader_type) {
    case PIPE_SHADER_VERTEX: return "vs";
@@ -1467,7 +1467,7 @@ static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
 }
 
 static int bind_sampler_locs(struct vrend_linked_shader_program *sprog,
-                             int shader_type, int next_sampler_id)
+                             enum pipe_shader_type shader_type, int next_sampler_id)
 {
    const struct vrend_shader_info *sinfo = &sprog->ss[shader_type]->sel->sinfo;
 
@@ -1513,7 +1513,7 @@ static int bind_sampler_locs(struct vrend_linked_shader_program *sprog,
 }
 
 static void bind_const_locs(struct vrend_linked_shader_program *sprog,
-                            int shader_type)
+                            enum pipe_shader_type shader_type)
 {
   if (sprog->ss[shader_type]->sel->sinfo.num_consts) {
      char name[32];
@@ -1524,7 +1524,7 @@ static void bind_const_locs(struct vrend_linked_shader_program *sprog,
 }
 
 static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
-                         int shader_type, int next_ubo_id)
+                         enum pipe_shader_type shader_type, int next_ubo_id)
 {
    if (!has_feature(feat_ubo))
       return next_ubo_id;
@@ -1553,7 +1553,7 @@ static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
 }
 
 static void bind_ssbo_locs(struct vrend_linked_shader_program *sprog,
-                           int shader_type)
+                           enum pipe_shader_type shader_type)
 {
    if (!has_feature(feat_ssbo))
       return;
@@ -1561,7 +1561,7 @@ static void bind_ssbo_locs(struct vrend_linked_shader_program *sprog,
 }
 
 static void bind_image_locs(struct vrend_linked_shader_program *sprog,
-                            int shader_type)
+                            enum pipe_shader_type shader_type)
 {
    int i;
    char name[32];
@@ -1659,7 +1659,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    int i;
    GLuint prog_id;
    GLint lret;
-   int last_shader;
+   enum pipe_shader_type last_shader;
    if (!sprog)
       return NULL;
 
@@ -1776,7 +1776,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    vrend_use_program(sub_ctx, prog_id);
 
    int next_ubo_id = 0, next_sampler_id = 0;
-   for (int shader_type = PIPE_SHADER_VERTEX; shader_type <= last_shader; shader_type++) {
+   for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX; shader_type <= last_shader; shader_type++) {
       if (!sprog->ss[shader_type])
          continue;
 
@@ -2099,14 +2099,14 @@ static GLuint convert_wrap(int wrap)
    }
 }
 
-static inline GLenum convert_mag_filter(unsigned int filter)
+static inline GLenum convert_mag_filter(enum pipe_tex_filter filter)
 {
    if (filter == PIPE_TEX_FILTER_NEAREST)
       return GL_NEAREST;
    return GL_LINEAR;
 }
 
-static inline GLenum convert_min_filter(unsigned int filter, unsigned int mip_filter)
+static inline GLenum convert_min_filter(enum pipe_tex_filter filter, enum pipe_tex_mipfilter mip_filter)
 {
    if (mip_filter == PIPE_TEX_MIPFILTER_NONE)
       return convert_mag_filter(filter);
@@ -2192,7 +2192,7 @@ int vrend_create_sampler_state(struct vrend_context *ctx,
    return 0;
 }
 
-static inline GLenum to_gl_swizzle(int swizzle)
+static inline GLenum to_gl_swizzle(enum pipe_swizzle swizzle)
 {
    switch (swizzle) {
    case PIPE_SWIZZLE_RED: return GL_RED;
@@ -2207,7 +2207,7 @@ static inline GLenum to_gl_swizzle(int swizzle)
    }
 }
 
-static inline int to_pipe_swizzle(GLenum swizzle)
+static inline enum pipe_swizzle to_pipe_swizzle(GLenum swizzle)
 {
    switch (swizzle) {
    case GL_RED: return PIPE_SWIZZLE_RED;
@@ -2318,7 +2318,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
          swizzle[3] = tex_conv_table[view->format].swizzle[swizzle[3]];
    }
 
-   for (unsigned i = 0; i < 4; ++i)
+   for (enum pipe_swizzle i = 0; i < 4; ++i)
       view->gl_swizzle[i] = to_gl_swizzle(swizzle[i]);
 
    if (!has_bit(view->texture->storage_bits, VREND_STORAGE_GL_BUFFER)) {
@@ -3446,10 +3446,10 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
                                         struct vrend_shader_selector *sel,
                                         struct vrend_shader_key *key)
 {
-   unsigned type = sel->type;
+   enum pipe_shader_type type = sel->type;
 
-   int prev_type = (type != PIPE_SHADER_VERTEX) ?
-            PIPE_SHADER_VERTEX : -1;
+   enum pipe_shader_type prev_type =
+      (type != PIPE_SHADER_VERTEX) ? PIPE_SHADER_VERTEX : PIPE_SHADER_INVALID;
 
    /* Gallium sends and binds the shaders in the reverse order, so if an
     * old shader is still bound we should ignore the "previous" (as in
@@ -3477,7 +3477,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    }
 
 
-   struct vrend_shader_selector *prev = prev_type != -1  ? sub_ctx->shaders[prev_type] : NULL;
+   struct vrend_shader_selector *prev = prev_type != PIPE_SHADER_INVALID ? sub_ctx->shaders[prev_type] : NULL;
    if (prev) {
       key->input = prev->sinfo.out;
       memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
@@ -3492,7 +3492,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          key->fs.available_color_in_bits = sub_ctx->shaders[prev_type]->current->var_sinfo.legacy_color_bits;
    }
 
-   int next_type = -1;
+   enum pipe_shader_type next_type = PIPE_SHADER_INVALID;
 
    if (type == PIPE_SHADER_FRAGMENT) {
       key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
@@ -3513,7 +3513,9 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
             break;
          case PIPE_SHADER_GEOMETRY:
             fs_prim_mode = prev->sinfo.gs_out_prim;
-         break;
+            break;
+         default:
+            break;
          }
       }
 
@@ -3551,7 +3553,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
      break;
    }
 
-   if (next_type != -1 && sub_ctx->shaders[next_type]) {
+   if (next_type != PIPE_SHADER_INVALID && sub_ctx->shaders[next_type]) {
       key->output = sub_ctx->shaders[next_type]->sinfo.in;
 
       /* FS gets the clip/cull info in the key from this shader, so
@@ -3584,7 +3586,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
                                          struct vrend_shader_selector *sel,
                                          struct vrend_shader_key *key)
 {
-   unsigned type = sel->type;
+   enum pipe_shader_type type = sel->type;
 
    if (vrend_state.use_core_profile) {
       int i;
@@ -3681,7 +3683,7 @@ static int vrend_shader_create(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SHADER, shader->sel->type);
          return -1;
       }
-   } else if (!ctx->shader_cfg.use_gles && shader->sel->type != TGSI_PROCESSOR_TESS_CTRL) {
+   } else if (!ctx->shader_cfg.use_gles && shader->sel->type != PIPE_SHADER_TESS_CTRL) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SHADER, shader->sel->type);
       return -1;
    }
@@ -3742,7 +3744,7 @@ static int vrend_shader_select(struct vrend_sub_context *sub_ctx,
 
 static void *vrend_create_shader_state(const struct pipe_stream_output_info *so_info,
                                        uint32_t req_local_mem,
-                                       unsigned pipe_shader_type)
+                                       enum pipe_shader_type pipe_shader_type)
 {
    struct vrend_shader_selector *sel = CALLOC_STRUCT(vrend_shader_selector);
 
@@ -3777,7 +3779,7 @@ int vrend_create_shader(struct vrend_context *ctx,
                         const struct pipe_stream_output_info *so_info,
                         uint32_t req_local_mem,
                         const char *shd_text, uint32_t offlen, uint32_t num_tokens,
-                        uint32_t type, uint32_t pkt_length)
+                        enum pipe_shader_type type, uint32_t pkt_length)
 {
    struct vrend_shader_selector *sel = NULL;
    int ret_handle;
@@ -3929,7 +3931,7 @@ error:
 }
 
 void vrend_bind_shader(struct vrend_context *ctx,
-                       uint32_t handle, uint32_t type)
+                       uint32_t handle, enum pipe_shader_type type)
 {
    struct vrend_shader_selector *sel;
 
@@ -4829,7 +4831,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
 
    uint8_t gles_emulate_query_texture_levels_mask = 0;
 
-   for (uint i = 0; i < PIPE_SHADER_TYPES; i++) {
+   for (enum pipe_shader_type i = 0; i < PIPE_SHADER_TYPES; i++) {
       struct vrend_shader_selector *sel = shaders[i];
       if (!sel)
          continue;
@@ -4930,7 +4932,7 @@ void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
    memcpy(prev_shader_ids, ctx->sub->prog_ids, PIPE_SHADER_TYPES * sizeof(uint32_t));
    struct vrend_linked_shader_program *prev_prog = ctx->sub->prog;
 
-   for (uint32_t type = 0; type < PIPE_SHADER_TYPES; ++type) {
+   for (enum pipe_shader_type type = 0; type < PIPE_SHADER_TYPES; ++type) {
       vrend_shader_state_reference(&prev_handles[type], ctx->sub->shaders[type]);
       vrend_bind_shader(ctx, handles[type], type);
    }
@@ -4941,7 +4943,7 @@ void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
    ctx->sub->cs_shader_dirty = true;
 
    /* undo state changes */
-   for (uint32_t type = 0; type < PIPE_SHADER_TYPES; ++type) {
+   for (enum pipe_shader_type type = 0; type < PIPE_SHADER_TYPES; ++type) {
       vrend_shader_state_reference(&ctx->sub->shaders[type], prev_handles[type]);
       vrend_shader_state_reference(&prev_handles[type], NULL);
    }
@@ -5038,7 +5040,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    if (vrend_state.use_gles) {
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
        * different prefix arrays */
-      for (unsigned i = PIPE_SHADER_VERTEX; i < PIPE_SHADER_COMPUTE; ++i) {
+      for (enum pipe_shader_type i = PIPE_SHADER_VERTEX; i < PIPE_SHADER_COMPUTE; ++i) {
          if (sub_ctx->prog->gles_use_query_texturelevel_mask & (1 << i)) {
             char loc_name[32];
             snprintf(loc_name, 32, "%s_texlod", pipe_shader_to_prefix(i));
@@ -6056,7 +6058,7 @@ void vrend_object_bind_rasterizer(struct vrend_context *ctx,
 }
 
 void vrend_bind_sampler_states(struct vrend_context *ctx,
-                               uint32_t shader_type,
+                               enum pipe_shader_type shader_type,
                                uint32_t start_slot,
                                uint32_t num_states,
                                const uint32_t *handles)
@@ -6650,10 +6652,10 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
       vrend_printf( "gl_version %d - es profile enabled\n", gl_ver);
       vrend_state.use_gles = true;
       /* for now, makes the rest of the code use the most GLES 3.x like path */
-      vrend_state.use_core_profile = 1;
+      vrend_state.use_core_profile = true;
    } else if (gl_ver > 30 && !epoxy_has_gl_extension("GL_ARB_compatibility")) {
       vrend_printf( "gl_version %d - core profile enabled\n", gl_ver);
-      vrend_state.use_core_profile = 1;
+      vrend_state.use_core_profile = true;
    } else {
       vrend_printf( "gl_version %d - compat profile\n", gl_ver);
    }
@@ -6767,7 +6769,6 @@ vrend_renderer_fini(void)
 
 static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 {
-   int i, j;
    struct vrend_streamout_object *obj, *tmp;
 
    vrend_clicbs->make_current(sub->gl_context);
@@ -6782,7 +6783,7 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
       while (sub->enabled_attribs_bitmask) {
-         i = u_bit_scan(&sub->enabled_attribs_bitmask);
+         uint32_t i = u_bit_scan(&sub->enabled_attribs_bitmask);
 
          glDisableVertexAttribArray(i);
       }
@@ -6809,19 +6810,19 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
       sub->prog->ref_context = NULL;
 
    vrend_free_programs(sub);
-   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      free(sub->consts[i].consts);
-      sub->consts[i].consts = NULL;
+   for (enum pipe_shader_type type = 0; type < PIPE_SHADER_TYPES; type++) {
+      free(sub->consts[type].consts);
+      sub->consts[type].consts = NULL;
 
-      for (j = 0; j < PIPE_MAX_SHADER_SAMPLER_VIEWS; j++) {
-         vrend_sampler_view_reference(&sub->views[i].views[j], NULL);
+      for (unsigned i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
+         vrend_sampler_view_reference(&sub->views[type].views[i], NULL);
       }
    }
 
    if (sub->zsurf)
       vrend_surface_reference(&sub->zsurf, NULL);
 
-   for (i = 0; i < sub->nr_cbufs; i++) {
+   for (int i = 0; i < sub->nr_cbufs; i++) {
       if (!sub->surf[i])
          continue;
       vrend_surface_reference(&sub->surf[i], NULL);

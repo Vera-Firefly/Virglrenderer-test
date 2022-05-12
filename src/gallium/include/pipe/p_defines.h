@@ -448,6 +448,7 @@ enum pipe_shader_type {
    PIPE_SHADER_TESS_EVAL,
    PIPE_SHADER_COMPUTE,
    PIPE_SHADER_TYPES,
+   PIPE_SHADER_INVALID,
 };
 
 /**

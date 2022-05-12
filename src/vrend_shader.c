@@ -110,7 +110,7 @@ struct vrend_shader_image {
 
 #define MAX_IMMEDIATE 1024
 struct immed {
-   int type;
+   enum tgsi_imm_type type;
    union imm {
       uint32_t ui;
       int32_t i;
@@ -131,25 +131,25 @@ struct vrend_shader_io {
    unsigned first : 16;
    unsigned last : 16;
    unsigned array_id : 10;
-   unsigned interpolate : 4;
-   unsigned location : 2;
+   enum tgsi_interpolate_mode interpolate : 4;
+   enum tgsi_interpolate_loc location : 2;
 
    unsigned array_offset : 8;
-   unsigned name : 8;
+   enum tgsi_semantic name : 8;
    unsigned stream : 2;
    unsigned usage_mask : 4;
-   unsigned type : 2;
+   enum vec_type type : 2;
    unsigned num_components : 3;
 
-   unsigned layout_location : 1;
-   unsigned invariant : 1;
-   unsigned precise : 1;
-   unsigned glsl_predefined_no_emit : 1;
-   unsigned glsl_no_index : 1;
-   unsigned glsl_gl_block : 1;
-   unsigned override_no_wm : 1;
-   unsigned is_int : 1;
-   unsigned fbfetch_used : 1;
+   unsigned layout_location : 16;
+   bool invariant : 1;
+   bool precise : 1;
+   bool glsl_predefined_no_emit : 1;
+   bool glsl_no_index : 1;
+   bool glsl_gl_block : 1;
+   bool override_no_wm : 1;
+   bool is_int : 1;
+   bool fbfetch_used : 1;
 };
 
 struct vrend_io_range {
@@ -190,7 +190,7 @@ struct dump_ctx {
    struct tgsi_iterate_context iter;
    const struct vrend_shader_cfg *cfg;
    struct tgsi_shader_info info;
-   int prog_type;
+   enum tgsi_processor_type prog_type;
    int size;
    struct vrend_glsl_strbufs glsl_strbufs;
    uint instno;
@@ -1024,7 +1024,7 @@ typedef enum
 } gl_varying_slot;
 
 static uint32_t
-varying_bit_from_semantic_and_index(int semantic, int index)
+varying_bit_from_semantic_and_index(enum tgsi_semantic semantic, int index)
 {
    switch (semantic) {
    case TGSI_SEMANTIC_POSITION:
@@ -1465,6 +1465,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
             }
          }
          break;
+      default:
+         vrend_printf("unhandled input semantic: %x\n", ctx->inputs[i].name);
+         break;
       }
 
       if (ctx->inputs[i].glsl_no_index)
@@ -1712,6 +1715,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
                ctx->shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
             }
          }
+         break;
+      default:
+         vrend_printf("unhandled output semantic: %x\n", ctx->outputs[i].name);
          break;
       }
 
@@ -2287,7 +2293,7 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
    int ndists;
    const char *prefix="";
 
-   if (ctx->prog_type == PIPE_SHADER_TESS_CTRL)
+   if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL)
       prefix = "gl_out[gl_InvocationID].";
    if (ctx->num_out_clip_dist == 0 && ctx->is_last_vertex_stage) {
       emit_buff(glsl_strbufs, "if (clip_plane_enabled) {\n");
@@ -5044,7 +5050,7 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
    int ndists;
    const char *prefix="";
 
-   if (ctx->prog_type == PIPE_SHADER_TESS_CTRL)
+   if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL)
       prefix = "gl_out[gl_InvocationID].";
 
    ndists = ctx->num_in_clip_dist;
@@ -5253,7 +5259,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
 
    sinfo.svec4 = VEC4;
 
-   if (ctx->prog_type == -1)
+   if (ctx->prog_type == (enum tgsi_processor_type) -1)
       ctx->prog_type = iter->processor.Processor;
 
    if (instno == 0) {
@@ -5847,7 +5853,7 @@ prolog(struct tgsi_iterate_context *iter)
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
 
-   if (ctx->prog_type == -1)
+   if (ctx->prog_type == (enum tgsi_processor_type) -1)
       ctx->prog_type = iter->processor.Processor;
 
    if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX &&
@@ -6056,7 +6062,7 @@ const char *vrend_shader_samplertypeconv(bool use_gles, int sampler_type)
    }
 }
 
-static const char *get_interp_string(const struct vrend_shader_cfg *cfg, int interpolate, bool flatshade)
+static const char *get_interp_string(const struct vrend_shader_cfg *cfg, enum tgsi_interpolate_mode interpolate, bool flatshade)
 {
    switch (interpolate) {
    case TGSI_INTERPOLATE_LINEAR:
@@ -6077,7 +6083,7 @@ static const char *get_interp_string(const struct vrend_shader_cfg *cfg, int int
    }
 }
 
-static const char *get_aux_string(unsigned location)
+static const char *get_aux_string(enum tgsi_interpolate_loc location)
 {
    switch (location) {
    case TGSI_INTERPOLATE_LOC_CENTER:
