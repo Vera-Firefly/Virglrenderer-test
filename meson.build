@@ -25,7 +25,7 @@ project(
    'virglrenderer', 'c',
    version: '0.9.0',
    license : 'MIT',
-   meson_version : '>= 0.49',
+   meson_version : '>= 0.53',
    default_options : ['buildtype=release', 'b_ndebug=if-release',
                       'warning_level=3', 'c_std=gnu11']
 )
@@ -56,28 +56,20 @@ warnings = [
    '-Wno-overlength-strings',
 ]
 
-foreach w : warnings
-   if cc.has_argument(w)
-      add_project_arguments(w, language : 'c')
-   endif
-endforeach
+add_project_arguments(cc.get_supported_arguments(warnings), language : 'c')
 
 flags = [
    '-fvisibility=hidden',
 ]
 
-foreach f : flags
-   if cc.has_argument(f)
-      add_project_arguments(f, language : 'c')
-   endif
-endforeach
+add_project_arguments(cc.get_supported_arguments(flags), language : 'c')
 
 prog_python = import('python').find_installation('python3')
 
 libdrm_dep = dependency('libdrm', version : '>=2.4.50')
 thread_dep = dependency('threads')
 epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
-m_dep = cc.find_library('m')
+m_dep = cc.find_library('m', required : false)
 
 conf_data = configuration_data()
 conf_data.set('VERSION', '0.8.1')
@@ -87,10 +79,9 @@ conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
 with_tracing = get_option('tracing')
 
 if with_tracing != 'none'
-  if not cc.compiles('void f(void* v){} int main () { void *dummy __attribute__((cleanup (f))) = 0;}')
-     error('Tracing requires compiler support for __attribute__((cleanup))')
-endif
-
+   if not cc.compiles('void f(void* v){} int main () { void *dummy __attribute__((cleanup (f))) = 0;}')
+      error('Tracing requires compiler support for __attribute__((cleanup))')
+   endif
 endif
 
 if with_tracing == 'percetto'
@@ -284,30 +275,12 @@ if with_render_server
    endif
 endif
 
-if cc.compiles('void __attribute__((hidden)) func() {}')
-   conf_data.set('HAVE_FUNC_ATTRIBUTE_VISIBILITY', 1)
-endif
-
 configure_file(input : 'config.h.meson',
                output : 'config.h',
                configuration : conf_data)
 
 add_project_arguments('-imacros', meson.build_root() / 'config.h', language : 'c')
 add_project_arguments('-DHAVE_CONFIG_H=1', language : 'c')
-
-pkgconf_data = configuration_data()
-pkgconf_data.set('PACKAGE_VERSION', meson.project_version())
-pkgconf_data.set('prefix', get_option('prefix'))
-pkgconf_data.set('exec_prefix', '${prefix}')
-pkgconf_data.set('libdir', '${prefix}/' + get_option('libdir'))
-pkgconf_data.set('includedir', '${prefix}/' + get_option('includedir'))
-
-pkg_config = configure_file(input : 'virglrenderer.pc.in',
-                            output : 'virglrenderer.pc',
-                            configuration : pkgconf_data)
-
-install_data(pkg_config,
-             install_dir: get_option('libdir') + '/pkgconfig')
 
 inc_configuration = include_directories(['.', 'src'])
 
@@ -327,32 +300,18 @@ if with_tests
    subdir('tests')
 endif
 
-lines = [
-   '',
-   'prefix:    ' + get_option('prefix'),
-   'libdir:    ' + get_option('libdir'),
-   '',
-   'c_args:    ' + (' ').join(get_option('c_args')),
-   '',
-]
-
-lines += 'egl:       ' + (have_egl ? 'yes' : 'no')
-lines += 'glx:       ' + (have_glx ? 'yes' : 'no')
-lines += ''
-lines += 'minigbm_alloc: ' + (with_minigbm_allocation ? 'yes' : 'no' )
-lines += ''
-lines += 'venus:     ' + (with_venus ? 'yes' : 'no' )
-lines += 'drm-msm:   ' + (with_drm_msm ? 'yes' : 'no' )
-lines += ''
-lines += 'render server: ' + (with_render_server ? 'yes' : 'no')
-if with_render_server
-lines += 'render server worker: ' + with_render_server_worker
-endif
-lines += ''
-lines += 'tests:     ' + (with_tests ? 'yes' : 'no' )
-lines += 'fuzzer:    ' + (with_fuzzer ? 'yes' : 'no' )
-lines += 'tracing:   ' + with_tracing
-
-indent = '   '
-summary = indent + ('\n' + indent).join(lines)
-message('\n\nConfiguration summary:\n@0@\n'.format(summary))
+summary({'prefix': get_option('prefix'),
+        'libdir': get_option('libdir'),
+        }, section: 'Directories')
+summary({'c_args': (' ').join(get_option('c_args')),
+        'egl': have_egl,
+        'glx': have_glx,
+        'minigbm_alloc': with_minigbm_allocation,
+        'venus': with_venus,
+        'drm-msm': with_drm_msm,
+        'render server': with_render_server,
+        'render server worker': with_render_server ? with_render_server_worker : 'none',
+        'tests': with_tests,
+        'fuzzer': with_fuzzer,
+        'tracing': with_tracing,
+        }, section: 'Configuration')

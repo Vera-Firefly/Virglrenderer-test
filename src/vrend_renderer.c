@@ -1776,7 +1776,9 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    vrend_use_program(sub_ctx, prog_id);
 
    int next_ubo_id = 0, next_sampler_id = 0;
-   for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX; shader_type <= last_shader; shader_type++) {
+   for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
+        shader_type <= last_shader;
+        shader_type++) {
       if (!sprog->ss[shader_type])
          continue;
 

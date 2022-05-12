@@ -235,6 +235,12 @@ libvirglrenderer = library(
    install : true
 )
 
+pkg = import('pkgconfig')
+pkg.generate(libvirglrenderer,
+   description: 'virgl GL renderer',
+   subdirs: 'virgl'
+)
+
 libvirglrenderer_dep = declare_dependency(
    link_with: libvirglrenderer,
    include_directories: libvirgl_inc,
