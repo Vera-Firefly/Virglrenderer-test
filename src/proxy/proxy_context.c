@@ -19,7 +19,7 @@
 struct proxy_fence {
    uint32_t flags;
    uint32_t seqno;
-   void *cookie;
+   uint64_t fence_id;
    struct list_head head;
 };
 
@@ -128,7 +128,7 @@ proxy_context_retire_timeline_fences_locked(struct proxy_context *ctx,
       if (!proxy_fence_is_signaled(fence, timeline->cur_seqno) && !force_retire_all)
          return false;
 
-      ctx->base.fence_retire(&ctx->base, ring_idx, (uintptr_t)fence->cookie);
+      ctx->base.fence_retire(&ctx->base, ring_idx, fence->fence_id);
 
       list_del(&fence->head);
       proxy_context_free_fence(ctx, fence);
@@ -214,8 +214,7 @@ proxy_context_submit_fence(struct virgl_context *base,
 
    fence->flags = flags;
    fence->seqno = timeline->next_seqno++;
-   // NOTE: fence_id is truncated on systems with 32-bit pointers.
-   fence->cookie = (void*)(uintptr_t)fence_id;
+   fence->fence_id = fence_id;
 
    if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
       mtx_lock(&ctx->timeline_mutex);
