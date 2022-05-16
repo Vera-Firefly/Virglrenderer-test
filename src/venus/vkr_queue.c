@@ -131,7 +131,8 @@ vkr_queue_sync_retire(struct vkr_context *ctx,
    struct vn_device_proc_table *vk = &dev->proc_table;
 
    if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-      ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
+      ctx->base.fence_retire(&ctx->base, sync->queue_id,
+                             (uintptr_t)sync->fence_cookie);
       vkr_device_free_queue_sync(dev, sync);
    } else {
       vk->DestroyFence(dev->base.handle.device, sync->fence, NULL);
@@ -225,7 +226,8 @@ vkr_queue_thread(void *arg)
       list_del(&sync->head);
 
       if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-         ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_cookie);
+         ctx->base.fence_retire(&ctx->base, sync->queue_id,
+                                (uintptr_t)sync->fence_cookie);
          vkr_device_free_queue_sync(queue->device, sync);
       } else {
          list_addtail(&sync->head, &queue->signaled_syncs);

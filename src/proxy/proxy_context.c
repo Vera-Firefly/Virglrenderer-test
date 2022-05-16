@@ -128,7 +128,7 @@ proxy_context_retire_timeline_fences_locked(struct proxy_context *ctx,
       if (!proxy_fence_is_signaled(fence, timeline->cur_seqno) && !force_retire_all)
          return false;
 
-      ctx->base.fence_retire(&ctx->base, ring_idx, fence->cookie);
+      ctx->base.fence_retire(&ctx->base, ring_idx, (uintptr_t)fence->cookie);
 
       list_del(&fence->head);
       proxy_context_free_fence(ctx, fence);

@@ -1201,7 +1201,7 @@ msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t q
     * already passed.. so just immediate signal:
     */
    if (queue_id == 0) {
-      vctx->fence_retire(vctx, queue_id, fence_cookie);
+      vctx->fence_retire(vctx, queue_id, fence_id);
       return 0;
    }
 

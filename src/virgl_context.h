@@ -53,7 +53,7 @@ struct virgl_context;
 
 typedef void (*virgl_context_fence_retire)(struct virgl_context *ctx,
                                            uint64_t queue_id,
-                                           void *fence_cookie);
+                                           uint64_t fence_id);
 
 /**
  * Base class for renderer contexts.  For example, vrend_decode_ctx is a

@@ -186,12 +186,12 @@ void virgl_renderer_fill_caps(uint32_t set, uint32_t version,
 
 static void per_context_fence_retire(struct virgl_context *ctx,
                                      uint64_t queue_id,
-                                     void *fence_cookie)
+                                     uint64_t fence_id)
 {
    state.cbs->write_context_fence(state.cookie,
                                   ctx->ctx_id,
                                   queue_id,
-                                  (uint64_t)(uintptr_t)fence_cookie);
+                                  fence_id);
 }
 
 int virgl_renderer_context_create_with_flags(uint32_t ctx_id,

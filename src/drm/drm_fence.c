@@ -81,7 +81,7 @@ thread_sync(void *arg)
       if (ret == 1) {
          drm_dbg("fence signaled: %p (%p)", fence, fence->fence_cookie);
          timeline->vctx->fence_retire(timeline->vctx, timeline->ring_idx,
-                                      fence->fence_cookie);
+                                      (uintptr_t)fence->fence_cookie);
          write_eventfd(timeline->eventfd, 1);
          drm_fence_destroy(fence);
       } else if (ret != 0) {
