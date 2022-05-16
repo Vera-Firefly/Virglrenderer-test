@@ -413,7 +413,7 @@ int virgl_renderer_context_create_fence(uint32_t ctx_id,
       return -EINVAL;
 
    assert(state.cbs->version >= 3 && state.cbs->write_context_fence);
-   return ctx->submit_fence(ctx, flags, queue_id, (void*)(uintptr_t)fence_id);
+   return ctx->submit_fence(ctx, flags, queue_id, fence_id);
 }
 
 void virgl_renderer_context_poll(uint32_t ctx_id)

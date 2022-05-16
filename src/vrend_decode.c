@@ -1761,14 +1761,15 @@ static void vrend_decode_ctx_retire_fences(UNUSED struct virgl_context *ctx)
 static int vrend_decode_ctx_submit_fence(struct virgl_context *ctx,
                                          uint32_t flags,
                                          uint64_t queue_id,
-                                         void *fence_cookie)
+                                         uint64_t fence_id)
 {
    struct vrend_decode_ctx *dctx = (struct vrend_decode_ctx *)ctx;
 
    if (queue_id)
       return -EINVAL;
 
-   return vrend_renderer_create_fence(dctx->grctx, flags, fence_cookie);
+   // NOTE: fence_id is truncated on systems with 32-bit pointers.
+   return vrend_renderer_create_fence(dctx->grctx, flags, (void*)(uintptr_t)fence_id);
 }
 
 static void vrend_decode_ctx_init_base(struct vrend_decode_ctx *dctx,

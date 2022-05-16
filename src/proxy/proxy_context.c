@@ -197,7 +197,7 @@ static int
 proxy_context_submit_fence(struct virgl_context *base,
                            uint32_t flags,
                            uint64_t queue_id,
-                           void *fence_cookie)
+                           uint64_t fence_id)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
    const uint64_t old_busy_mask = ctx->timeline_busy_mask;
@@ -214,7 +214,8 @@ proxy_context_submit_fence(struct virgl_context *base,
 
    fence->flags = flags;
    fence->seqno = timeline->next_seqno++;
-   fence->cookie = fence_cookie;
+   // NOTE: fence_id is truncated on systems with 32-bit pointers.
+   fence->cookie = (void*)(uintptr_t)fence_id;
 
    if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
       mtx_lock(&ctx->timeline_mutex);

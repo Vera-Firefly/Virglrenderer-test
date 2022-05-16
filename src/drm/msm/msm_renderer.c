@@ -1181,10 +1181,12 @@ msm_renderer_retire_fences(UNUSED struct virgl_context *vctx)
 
 static int
 msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t queue_id,
-                          void *fence_cookie)
+                          uint64_t fence_id)
 {
    struct msm_context *mctx = to_msm_context(vctx);
 
+   // NOTE: fence_id is truncated on systems with 32-bit pointers.
+   void *fence_cookie = (void*)(uintptr_t)fence_id;
    drm_dbg("flags=0x%x, queue_id=%" PRIu64 ", fence_cookie=%p", flags, queue_id,
            fence_cookie);
 

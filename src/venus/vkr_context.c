@@ -169,13 +169,14 @@ static int
 vkr_context_submit_fence(struct virgl_context *base,
                          uint32_t flags,
                          uint64_t queue_id,
-                         void *fence_cookie)
+                         uint64_t fence_id)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret;
 
    mtx_lock(&ctx->mutex);
-   ret = vkr_context_submit_fence_locked(base, flags, queue_id, fence_cookie);
+   // NOTE: fence_id is truncated on systems with 32-bit pointers.
+   ret = vkr_context_submit_fence_locked(base, flags, queue_id, (void*)(uintptr_t)fence_id);
    mtx_unlock(&ctx->mutex);
    return ret;
 }

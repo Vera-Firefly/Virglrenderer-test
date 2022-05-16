@@ -121,7 +121,7 @@ struct virgl_context {
    int (*submit_fence)(struct virgl_context *ctx,
                        uint32_t flags,
                        uint64_t queue_id,
-                       void *fence_cookie);
+                       uint64_t fence_id);
 };
 
 struct virgl_context_foreach_args {
