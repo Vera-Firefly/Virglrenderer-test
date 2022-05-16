@@ -2061,7 +2061,7 @@ static int vtest_submit_cmd2_batch(struct vtest_context *ctx,
       ret = virgl_renderer_context_create_fence(ctx->ctx_id,
                                                 VIRGL_RENDERER_FENCE_FLAG_MERGEABLE,
                                                 batch->sync_queue_id,
-                                                submit);
+                                                (uintptr_t)submit);
       if (ret) {
          vtest_free_sync_queue_submit(submit);
          return ret;

@@ -183,7 +183,7 @@ render_context_dispatch_submit_fence(struct render_context *ctx,
 
    assert(ring_idx < (uint32_t)ctx->timeline_count);
    int ret = virgl_renderer_context_create_fence(ctx->ctx_id, flags, ring_idx,
-                                                 uintptr_to_pointer(seqno));
+                                                 seqno);
 
    return !ret;
 }

@@ -406,14 +406,14 @@ int virgl_renderer_create_fence(int client_fence_id, UNUSED uint32_t ctx_id)
 int virgl_renderer_context_create_fence(uint32_t ctx_id,
                                         uint32_t flags,
                                         uint64_t queue_id,
-                                        void *fence_cookie)
+                                        uint64_t fence_id)
 {
    struct virgl_context *ctx = virgl_context_lookup(ctx_id);
    if (!ctx)
       return -EINVAL;
 
    assert(state.cbs->version >= 3 && state.cbs->write_context_fence);
-   return ctx->submit_fence(ctx, flags, queue_id, fence_cookie);
+   return ctx->submit_fence(ctx, flags, queue_id, (void*)(uintptr_t)fence_id);
 }
 
 void virgl_renderer_context_poll(uint32_t ctx_id)
