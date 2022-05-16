@@ -1506,11 +1506,11 @@ static int vrend_decode_pipe_resource_set_type(struct vrend_context *ctx, const 
 static void vrend_decode_ctx_init_base(struct vrend_decode_ctx *dctx,
                                        uint32_t ctx_id);
 
-static void vrend_decode_ctx_fence_retire(void *fence_cookie,
+static void vrend_decode_ctx_fence_retire(uint64_t fence_id,
                                           void *retire_data)
 {
    struct vrend_decode_ctx *dctx = retire_data;
-   dctx->base.fence_retire(&dctx->base, 0, (uintptr_t)fence_cookie);
+   dctx->base.fence_retire(&dctx->base, 0, fence_id);
 }
 
 struct virgl_context *vrend_renderer_context_create(uint32_t handle,
@@ -1768,8 +1768,7 @@ static int vrend_decode_ctx_submit_fence(struct virgl_context *ctx,
    if (queue_id)
       return -EINVAL;
 
-   // NOTE: fence_id is truncated on systems with 32-bit pointers.
-   return vrend_renderer_create_fence(dctx->grctx, flags, (void*)(uintptr_t)fence_id);
+   return vrend_renderer_create_fence(dctx->grctx, flags, fence_id);
 }
 
 static void vrend_decode_ctx_init_base(struct vrend_decode_ctx *dctx,

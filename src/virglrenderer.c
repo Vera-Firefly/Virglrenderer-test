@@ -524,11 +524,12 @@ void virgl_renderer_get_rect(int resource_id, struct iovec *iov, unsigned int nu
 }
 
 
-static void ctx0_fence_retire(void *fence_cookie,
-                              UNUSED void *retire_data)
+static void ctx0_fence_retire(uint64_t fence_id, UNUSED void *retire_data)
 {
-   const uint32_t fence_id = (uint32_t)(uintptr_t)fence_cookie;
-   state.cbs->write_fence(state.cookie, fence_id);
+   // ctx0 fence_id is created from uint32_t but stored internally as uint64_t,
+   // so casting back to uint32_t doesn't result in data loss.
+   assert((fence_id >> 32) == 0);
+   state.cbs->write_fence(state.cookie, (uint32_t)fence_id);
 }
 
 static virgl_renderer_gl_context create_gl_context(int scanout_idx, struct virgl_gl_ctx_param *param)

@@ -113,7 +113,7 @@ struct vrend_format_table {
    uint32_t flags;
 };
 
-typedef void (*vrend_context_fence_retire)(void *fence_cookie,
+typedef void (*vrend_context_fence_retire)(uint64_t fence_id,
                                            void *retire_data);
 
 struct vrend_if_cbs {
@@ -376,7 +376,7 @@ void vrend_renderer_set_fence_retire(struct vrend_context *ctx,
 
 int vrend_renderer_create_fence(struct vrend_context *ctx,
                                 uint32_t flags,
-                                void *fence_cookie);
+                                uint64_t fence_id);
 
 void vrend_renderer_check_fences(void);
 
