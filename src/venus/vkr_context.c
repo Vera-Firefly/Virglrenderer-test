@@ -124,7 +124,7 @@ static int
 vkr_context_submit_fence_locked(struct virgl_context *base,
                                 uint32_t flags,
                                 uint64_t queue_id,
-                                void *fence_cookie)
+                                uint64_t fence_id)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    struct vn_device_proc_table *vk;
@@ -138,7 +138,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    vk = &dev->proc_table;
 
    struct vkr_queue_sync *sync =
-      vkr_device_alloc_queue_sync(dev, flags, queue_id, fence_cookie);
+      vkr_device_alloc_queue_sync(dev, flags, queue_id, fence_id);
    if (!sync)
       return -ENOMEM;
 
@@ -175,8 +175,7 @@ vkr_context_submit_fence(struct virgl_context *base,
    int ret;
 
    mtx_lock(&ctx->mutex);
-   // NOTE: fence_id is truncated on systems with 32-bit pointers.
-   ret = vkr_context_submit_fence_locked(base, flags, queue_id, (void*)(uintptr_t)fence_id);
+   ret = vkr_context_submit_fence_locked(base, flags, queue_id, fence_id);
    mtx_unlock(&ctx->mutex);
    return ret;
 }
@@ -193,8 +192,7 @@ vkr_context_retire_fences_locked(struct virgl_context *base)
    /* retire syncs from destroyed devices */
    LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &ctx->signaled_syncs, head) {
       /* queue_id might have already get reused but is opaque to the clients */
-      ctx->base.fence_retire(&ctx->base, sync->queue_id,
-                             (uintptr_t)sync->fence_cookie);
+      ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_id);
       free(sync);
    }
    list_inithead(&ctx->signaled_syncs);
@@ -213,8 +211,7 @@ vkr_context_retire_fences_locked(struct virgl_context *base)
       vkr_queue_get_signaled_syncs(queue, &retired_syncs, &queue_empty);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
-         ctx->base.fence_retire(&ctx->base, sync->queue_id,
-                                (uintptr_t)sync->fence_cookie);
+         ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_id);
          vkr_device_free_queue_sync(dev, sync);
       }
 

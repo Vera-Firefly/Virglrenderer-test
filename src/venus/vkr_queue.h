@@ -14,7 +14,7 @@ struct vkr_queue_sync {
 
    uint32_t flags;
    uint64_t queue_id;
-   void *fence_cookie;
+   uint64_t fence_id;
 
    struct list_head head;
 };
@@ -88,7 +88,7 @@ struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,
                             uint32_t fence_flags,
                             uint64_t queue_id,
-                            void *fence_cookie);
+                            uint64_t fence_id);
 
 void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync);
