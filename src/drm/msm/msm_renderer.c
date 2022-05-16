@@ -1185,10 +1185,8 @@ msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t q
 {
    struct msm_context *mctx = to_msm_context(vctx);
 
-   // NOTE: fence_id is truncated on systems with 32-bit pointers.
-   void *fence_cookie = (void*)(uintptr_t)fence_id;
-   drm_dbg("flags=0x%x, queue_id=%" PRIu64 ", fence_cookie=%p", flags, queue_id,
-           fence_cookie);
+   drm_dbg("flags=0x%x, queue_id=%" PRIu64 ", fence_id=%" PRIu64, flags,
+           queue_id, fence_id);
 
    /* timeline is queue_id-1 (because queue_id 0 is host CPU timeline) */
    if (queue_id > nr_timelines) {
@@ -1205,7 +1203,7 @@ msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t q
       return 0;
    }
 
-   return drm_timeline_submit_fence(&mctx->timelines[queue_id - 1], flags, fence_cookie);
+   return drm_timeline_submit_fence(&mctx->timelines[queue_id - 1], flags, fence_id);
 }
 
 struct virgl_context *

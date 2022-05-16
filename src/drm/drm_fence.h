@@ -45,7 +45,7 @@ void drm_timeline_init(struct drm_timeline *timeline, struct virgl_context *vctx
 void drm_timeline_fini(struct drm_timeline *timeline);
 
 int drm_timeline_submit_fence(struct drm_timeline *timeline, uint32_t flags,
-                              void *fence_cookie);
+                              uint64_t fence_id);
 
 void drm_timeline_set_last_fence_fd(struct drm_timeline *timeline, int fd);
 

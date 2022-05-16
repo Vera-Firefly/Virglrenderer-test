@@ -22,7 +22,7 @@
 struct drm_fence {
    int fd;
    uint32_t flags;
-   void *fence_cookie;
+   uint64_t fence_id;
    struct list_head node;
 };
 
@@ -35,7 +35,7 @@ drm_fence_destroy(struct drm_fence *fence)
 }
 
 static struct drm_fence *
-drm_fence_create(int fd, uint32_t flags, void *fence_cookie)
+drm_fence_create(int fd, uint32_t flags, uint64_t fence_id)
 {
    struct drm_fence *fence = calloc(1, sizeof(*fence));
 
@@ -50,7 +50,7 @@ drm_fence_create(int fd, uint32_t flags, void *fence_cookie)
    }
 
    fence->flags = flags;
-   fence->fence_cookie = fence_cookie;
+   fence->fence_id = fence_id;
 
    return fence;
 }
@@ -79,9 +79,9 @@ thread_sync(void *arg)
       mtx_lock(&timeline->fence_mutex);
 
       if (ret == 1) {
-         drm_dbg("fence signaled: %p (%p)", fence, fence->fence_cookie);
+         drm_dbg("fence signaled: %p (%" PRIu64 ")", fence, fence->fence_id);
          timeline->vctx->fence_retire(timeline->vctx, timeline->ring_idx,
-                                      (uintptr_t)fence->fence_cookie);
+                                      fence->fence_id);
          write_eventfd(timeline->eventfd, 1);
          drm_fence_destroy(fence);
       } else if (ret != 0) {
@@ -138,18 +138,18 @@ drm_timeline_fini(struct drm_timeline *timeline)
 
 int
 drm_timeline_submit_fence(struct drm_timeline *timeline, uint32_t flags,
-                          void *fence_cookie)
+                          uint64_t fence_id)
 {
    if (timeline->last_fence_fd == -1)
       return -EINVAL;
 
    struct drm_fence *fence =
-      drm_fence_create(timeline->last_fence_fd, flags, fence_cookie);
+      drm_fence_create(timeline->last_fence_fd, flags, fence_id);
 
    if (!fence)
       return -ENOMEM;
 
-   drm_dbg("fence: %p (%p)", fence, fence->fence_cookie);
+   drm_dbg("fence: %p (%" PRIu64 ")", fence, fence->fence_id);
 
    mtx_lock(&timeline->fence_mutex);
    list_addtail(&fence->node, &timeline->pending_fences);
