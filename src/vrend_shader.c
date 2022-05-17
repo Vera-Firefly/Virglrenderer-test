@@ -80,6 +80,13 @@
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
 
+enum vrend_sysval_uniform {
+   UNIFORM_WINSYS_ADJUST_Y,
+   UNIFORM_CLIP_PLANE,
+   UNIFORM_ALPHA_REF_VAL,
+   UNIFORM_PSTIPPLE_SAMPLER,
+};
+
 enum vec_type {
    VEC_FLOAT = 0,
    VEC_INT = 1,
@@ -153,6 +160,7 @@ struct vrend_io_range {
 
 struct vrend_glsl_strbufs {
    int indent_level;
+   uint8_t required_sysval_uniform_decls;
    struct vrend_strbuf glsl_main;
    struct vrend_strbuf glsl_hdr;
    struct vrend_strbuf glsl_ver_ext;
@@ -283,7 +291,6 @@ struct dump_ctx {
    bool early_depth_stencil;
    bool has_file_memory;
    bool force_color_two_side;
-   bool winsys_adjust_y_emitted;
    bool gles_use_tex_query_level;
    bool has_pointsize_input;
    bool has_pointsize_output;
@@ -324,6 +331,13 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_SHADER_ATOMIC_FLOAT, "NV_shader_atomic_float"},
     { SHADER_REQ_CONSERVATIVE_DEPTH, "ARB_conservative_depth"},
     {SHADER_REQ_BLEND_EQUATION_ADVANCED, "KHR_blend_equation_advanced"},
+};
+
+const char *sysval_uniform_decl[] = {
+   [UNIFORM_WINSYS_ADJUST_Y] = "uniform float winsys_adjust_y;\n",
+   [UNIFORM_CLIP_PLANE] = "uniform bool clip_plane_enabled; uniform vec4 clipp[8];\n",
+   [UNIFORM_ALPHA_REF_VAL] = "uniform float alpha_ref_val;\n",
+   [UNIFORM_PSTIPPLE_SAMPLER] = "uniform sampler2D pstipple_sampler;\n",
 };
 
 enum vrend_type_qualifier {
@@ -1409,9 +1423,10 @@ iter_declaration(struct tgsi_iterate_context *iter,
          break;
       case TGSI_SEMANTIC_PCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if (ctx->cfg->use_gles)
+            if (ctx->cfg->use_gles) {
                name_prefix = "vec4(gl_PointCoord.x, mix(1.0 - gl_PointCoord.y, gl_PointCoord.y, clamp(winsys_adjust_y, 0.0, 1.0)), 0.0, 1.0)";
-            else
+               ctx->glsl_strbufs.required_sysval_uniform_decls |= BIT(UNIFORM_WINSYS_ADJUST_Y);
+            } else
                name_prefix = "vec4(gl_PointCoord, 0.0, 1.0)";
             ctx->inputs[i].glsl_predefined_no_emit = true;
             ctx->inputs[i].glsl_no_index = true;
@@ -1424,9 +1439,10 @@ iter_declaration(struct tgsi_iterate_context *iter,
       case TGSI_SEMANTIC_TEXCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
             if (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid)) {
-               if (ctx->cfg->use_gles)
+               if (ctx->cfg->use_gles) {
                   name_prefix = "vec4(gl_PointCoord.x, mix(1.0 - gl_PointCoord.y, gl_PointCoord.y, clamp(winsys_adjust_y, 0.0, 1.0)), 0.0, 1.0)";
-               else
+                  ctx->glsl_strbufs.required_sysval_uniform_decls |= BIT(UNIFORM_WINSYS_ADJUST_Y);
+               } else
                   name_prefix = "vec4(gl_PointCoord, 0.0, 1.0)";
                ctx->inputs[i].glsl_predefined_no_emit = true;
                ctx->inputs[i].glsl_no_index = true;
@@ -2052,6 +2068,7 @@ static void emit_alpha_test(const struct dump_ctx *ctx,
    case PIPE_FUNC_NOTEQUAL:
    case PIPE_FUNC_GEQUAL:
       snprintf(comp_buf, 128, "%s %s alpha_ref_val", "fsout_c0.w", atests[ctx->key->alpha_test]);
+      glsl_strbufs->required_sysval_uniform_decls |= BIT(UNIFORM_ALPHA_REF_VAL);
       break;
    default:
       vrend_printf( "invalid alpha-test: %x\n", ctx->key->alpha_test);
@@ -2066,6 +2083,7 @@ static void emit_pstipple_pass(struct vrend_glsl_strbufs *glsl_strbufs)
 {
    emit_buf(glsl_strbufs, "stip_temp = texture(pstipple_sampler, vec2(gl_FragCoord.x / 32.0, gl_FragCoord.y / 32.0)).x;\n");
    emit_buf(glsl_strbufs, "if (stip_temp > 0.0) {\n\tdiscard;\n}\n");
+   glsl_strbufs->required_sysval_uniform_decls |= BIT(UNIFORM_PSTIPPLE_SAMPLER);
 }
 
 static void emit_color_select(const struct dump_ctx *ctx,
@@ -2087,6 +2105,7 @@ static void emit_color_select(const struct dump_ctx *ctx,
 static void emit_prescale(struct vrend_glsl_strbufs *glsl_strbufs)
 {
    emit_buf(glsl_strbufs, "gl_Position.y = gl_Position.y * winsys_adjust_y;\n");
+   glsl_strbufs->required_sysval_uniform_decls |= BIT(UNIFORM_WINSYS_ADJUST_Y);
 }
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
@@ -2273,6 +2292,7 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
                    prefix, i, ctx->has_clipvertex ? "clipv_tmp" : "gl_Position", i);
       }
       emit_buff(glsl_strbufs, "}\n");
+      glsl_strbufs->required_sysval_uniform_decls |= BIT(UNIFORM_CLIP_PLANE);
    }
    ndists = ctx->num_out_clip_dist;
    if (has_prop)
@@ -6418,11 +6438,6 @@ static void emit_ios_streamout(const struct dump_ctx *ctx,
    }
 }
 
-static inline void emit_winsys_correction(struct vrend_glsl_strbufs *glsl_strbufs)
-{
-   emit_hdr(glsl_strbufs, "uniform float winsys_adjust_y;\n");
-}
-
 static void emit_ios_indirect_generics_output(const struct dump_ctx *ctx,
                                               struct vrend_glsl_strbufs *glsl_strbufs,
                                               const char *postfix)
@@ -6730,8 +6745,6 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    if (ctx->key->vs.fog_fixup_mask)
       emit_fog_fixup_hdr(ctx, glsl_strbufs);
 
-   emit_winsys_correction(glsl_strbufs);
-
    if (ctx->has_clipvertex && ctx->is_last_vertex_stage) {
       emit_hdrf(glsl_strbufs, "%svec4 clipv_tmp;\n", ctx->has_clipvertex_so ? "out " : "");
    }
@@ -6753,9 +6766,6 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
          snprintf(cull_buf, 64, "out float gl_CullDistance[%d];\n", num_cull_dists);
 
       if (ctx->is_last_vertex_stage) {
-         emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
-         emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
-
          emit_hdrf(glsl_strbufs, "%s%s", clip_buf, cull_buf);
       }
 
@@ -6787,8 +6797,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
                         struct vrend_glsl_strbufs *glsl_strbufs,
                         struct vrend_generic_ios *generic_ios,
                         struct vrend_texcoord_ios *texcoord_ios,
-                        uint32_t *num_interps,
-                        bool *winsys_adjust_y_emitted
+                        uint32_t *num_interps
                         )
 {
    uint32_t i;
@@ -6846,17 +6855,6 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
          snprintf(prefixes, sizeof(prefixes), "%s %s", prefix, auxprefix);
          emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_in, prefixes, &ctx->inputs[i], "in", "");
       }
-
-      if (ctx->cfg->use_gles && !ctx->winsys_adjust_y_emitted &&
-          (ctx->inputs[i].name == TGSI_SEMANTIC_PCOORD ||
-          (ctx->key->fs.coord_replace & (1 << ctx->inputs[i].sid)))){
-         *winsys_adjust_y_emitted = true;
-         emit_hdr(glsl_strbufs, "uniform float winsys_adjust_y;\n");
-      }
-   }
-
-   if (vrend_shader_needs_alpha_func(ctx->key)) {
-      emit_hdr(glsl_strbufs, "uniform float alpha_ref_val;\n");
    }
 
    if (ctx->key->color_two_side) {
@@ -7059,8 +7057,6 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
                             front_back_color_emitted_flags, force_color_two_side,
                             num_interps, can_emit_generic_geom);
 
-   emit_winsys_correction(glsl_strbufs);
-
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
 
    if (ctx->has_clipvertex) {
@@ -7084,11 +7080,6 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
 
       emit_hdrf(glsl_strbufs, "%s%s\n", clip_buf, cull_buf);
       emit_hdrf(glsl_strbufs, "vec4 clip_dist_temp[2];\n");
-   }
-
-   if (ctx->cfg->has_cull_distance) {
-       emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
-       emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
    }
 }
 
@@ -7179,15 +7170,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
                             front_back_color_emitted_flags, force_color_two_side,
                             num_interps, can_emit_generic_default);
 
-   emit_winsys_correction(glsl_strbufs);
-
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
    emit_ios_per_vertex_out(ctx, glsl_strbufs, "");
-
-   if (ctx->cfg->has_cull_distance && ctx->is_last_vertex_stage) {
-      emit_hdr(glsl_strbufs, "uniform bool clip_plane_enabled;\n");
-      emit_hdr(glsl_strbufs, "uniform vec4 clipp[8];\n");
-   }
 
    if (ctx->has_clipvertex && !ctx->key->gs_present) {
       emit_hdrf(glsl_strbufs, "%svec4 clipv_tmp;\n", ctx->has_clipvertex_so ? "out " : "");
@@ -7216,7 +7200,6 @@ static int emit_ios(const struct dump_ctx *ctx,
                     uint32_t *num_interps,
                     bool *has_pervertex,
                     bool *force_color_two_side,
-                    bool *winsys_adjust_y_emitted,
                     uint32_t *shadow_samp_mask)
 {
    *num_interps = 0;
@@ -7233,7 +7216,7 @@ static int emit_ios(const struct dump_ctx *ctx,
       emit_ios_vs(ctx, glsl_strbufs, generic_ios, texcoord_ios, num_interps, front_back_color_emitted_flags, force_color_two_side);
       break;
    case TGSI_PROCESSOR_FRAGMENT:
-      emit_ios_fs(ctx, glsl_strbufs, generic_ios, texcoord_ios, num_interps, winsys_adjust_y_emitted);
+      emit_ios_fs(ctx, glsl_strbufs, generic_ios, texcoord_ios, num_interps);
       break;
    case TGSI_PROCESSOR_GEOMETRY:
       emit_ios_geom(ctx, glsl_strbufs, generic_ios, texcoord_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
@@ -7284,7 +7267,7 @@ static int emit_ios(const struct dump_ctx *ctx,
 
    if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
        ctx->key->pstipple_tex == true) {
-      emit_hdr(glsl_strbufs, "uniform sampler2D pstipple_sampler;\nfloat stip_temp;\n");
+      emit_hdr(glsl_strbufs, "float stip_temp;\n");
    }
 
    return glsl_ver_required;
@@ -7489,6 +7472,14 @@ static void set_strbuffers(const struct vrend_glsl_strbufs* glsl_strbufs,
    strarray_addstrbuf(shader, &glsl_strbufs->glsl_main);
 }
 
+static void emit_required_sysval_uniforms(struct vrend_strbuf *block, uint32_t mask)
+{
+   while (mask) {
+      uint32_t i = u_bit_scan(&mask);
+      strbuf_append(block, sysval_uniform_decl[i]);
+   }
+}
+
 static bool vrend_patch_vertex_shader_interpolants(const struct vrend_shader_cfg *cfg,
                                             struct vrend_strarray *prog_strings,
                                             const struct vrend_shader_info *vs_info,
@@ -7598,7 +7589,6 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
                                     &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
-                                    &ctx.winsys_adjust_y_emitted,
                                     &ctx.shadow_samp_mask);
 
    if (strbuf_get_error(&ctx.glsl_strbufs.glsl_hdr))
@@ -7613,6 +7603,8 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    fill_sinfo(&ctx, sinfo);
    fill_var_sinfo(&ctx, var_sinfo);
 
+   emit_required_sysval_uniforms (&ctx.glsl_strbufs.glsl_hdr,
+                                  ctx.glsl_strbufs.required_sysval_uniform_decls);
    set_strbuffers(&ctx.glsl_strbufs, shader);
 
    if (ctx.prog_type == TGSI_PROCESSOR_GEOMETRY) {
@@ -7905,7 +7897,6 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
                                     &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
-                                    &ctx.winsys_adjust_y_emitted,
                                     &ctx.shadow_samp_mask);
 
    emit_buf(&ctx.glsl_strbufs, "void main() {\n");
@@ -7946,6 +7937,8 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
    emit_buf(&ctx.glsl_strbufs, "}\n");
 
    fill_sinfo(&ctx, sinfo);
+   emit_required_sysval_uniforms (&ctx.glsl_strbufs.glsl_hdr,
+                                  ctx.glsl_strbufs.required_sysval_uniform_decls);
    set_strbuffers(&ctx.glsl_strbufs, shader);
 
    VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
