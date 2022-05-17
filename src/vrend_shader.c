@@ -334,13 +334,6 @@ static const struct vrend_shader_table shader_req_table[] = {
     {SHADER_REQ_BLEND_EQUATION_ADVANCED, "KHR_blend_equation_advanced"},
 };
 
-const char *sysval_uniform_decl[] = {
-   [UNIFORM_WINSYS_ADJUST_Y] = "uniform float winsys_adjust_y;\n",
-   [UNIFORM_CLIP_PLANE] = "uniform bool clip_plane_enabled; uniform vec4 clipp[8];\n",
-   [UNIFORM_ALPHA_REF_VAL] = "uniform float alpha_ref_val;\n",
-   [UNIFORM_PSTIPPLE_SAMPLER] = "uniform sampler2D pstipple_sampler;\n",
-};
-
 enum vrend_type_qualifier {
    TYPE_CONVERSION_NONE = 0,
    FLOAT = 1,
@@ -7475,9 +7468,20 @@ static void set_strbuffers(const struct vrend_glsl_strbufs* glsl_strbufs,
 
 static void emit_required_sysval_uniforms(struct vrend_strbuf *block, uint32_t mask)
 {
-   while (mask) {
-      uint32_t i = u_bit_scan(&mask);
-      strbuf_append(block, sysval_uniform_decl[i]);
+   if (!mask)
+      return;
+
+   if (mask != BIT(UNIFORM_PSTIPPLE_SAMPLER)) {
+      strbuf_append(block, "layout (std140) uniform VirglBlock {\n");
+      strbuf_append(block, "\tvec4 clipp[8];\n");
+      strbuf_append(block, "\tfloat winsys_adjust_y;\n");
+      strbuf_append(block, "\tfloat alpha_ref_val;\n");
+      strbuf_append(block, "\tbool clip_plane_enabled;\n");
+      strbuf_append(block, "};\n");
+   }
+
+   if (mask & BIT(UNIFORM_PSTIPPLE_SAMPLER)) {
+      strbuf_append(block, "uniform sampler2D pstipple_sampler;\n");
    }
 }
 

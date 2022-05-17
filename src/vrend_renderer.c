@@ -364,6 +364,13 @@ struct global_renderer_state {
 #endif
 };
 
+struct sysval_uniform_block {
+   GLfloat clipp[VIRGL_NUM_CLIP_PLANES][4];
+   GLfloat winsys_adjust_y;
+   GLfloat alpha_ref_val;
+   GLfloat clip_plane_enabled;
+};
+
 static struct global_renderer_state vrend_state;
 
 static inline bool has_feature(enum features_id feature_id)
@@ -413,15 +420,11 @@ struct vrend_linked_shader_program {
    GLuint *attrib_locs;
    uint32_t shadow_samp_mask[PIPE_SHADER_TYPES];
 
-   GLuint vs_ws_adjust_loc;
-   float viewport_neg_val;
+   GLuint virgl_block_id;
+   GLuint virgl_block_bind;
+   GLuint ubo_sysval_buffer_id;
 
    GLint fs_stipple_loc;
-
-   GLint fs_alpha_ref_val_loc;
-
-   GLint clip_enabled_loc;
-   GLuint clip_locs[8];
 
    uint32_t images_used_mask[PIPE_SHADER_TYPES];
    GLint *img_locs[PIPE_SHADER_TYPES];
@@ -1764,11 +1767,6 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       sprog->fs_stipple_loc = glGetUniformLocation(prog_id, "pstipple_sampler");
    else
       sprog->fs_stipple_loc = -1;
-   if (vrend_shader_needs_alpha_func(&fs->key))
-      sprog->fs_alpha_ref_val_loc = glGetUniformLocation(prog_id, "alpha_ref_val");
-   else
-      sprog->fs_alpha_ref_val_loc = -1;
-   sprog->vs_ws_adjust_loc = glGetUniformLocation(prog_id, "winsys_adjust_y");
 
    vrend_use_program(sub_ctx, prog_id);
 
@@ -1786,6 +1784,22 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       bind_ssbo_locs(sprog, shader_type);
    }
 
+   sprog->virgl_block_id = glGetUniformBlockIndex(prog_id, "VirglBlock");
+   if (sprog->virgl_block_id != GL_INVALID_INDEX) {
+      sprog->virgl_block_bind = next_ubo_id++;
+      glUniformBlockBinding(prog_id, sprog->virgl_block_id, sprog->virgl_block_bind);
+
+      GLint virgl_block_size;
+      glGetActiveUniformBlockiv(prog_id, sprog->virgl_block_id,
+                                GL_UNIFORM_BLOCK_DATA_SIZE, &virgl_block_size);
+      assert((size_t) virgl_block_size >= sizeof(struct sysval_uniform_block));
+
+      glGenBuffers(1, &sprog->ubo_sysval_buffer_id);
+      glBindBuffer(GL_UNIFORM_BUFFER, sprog->ubo_sysval_buffer_id);
+      glBufferData(GL_UNIFORM_BUFFER, virgl_block_size, NULL, GL_DYNAMIC_DRAW);
+      glBindBuffer(GL_UNIFORM_BUFFER, 0);
+   }
+
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
       if (vs->sel->sinfo.num_inputs) {
          sprog->attrib_locs = calloc(vs->sel->sinfo.num_inputs, sizeof(uint32_t));
@@ -1799,13 +1813,6 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
          sprog->attrib_locs = NULL;
    }
 
-   if (has_feature(feat_cull_distance)) {
-      sprog->clip_enabled_loc = glGetUniformLocation(prog_id, "clip_plane_enabled");
-      for (i = 0; i < VIRGL_NUM_CLIP_PLANES; i++) {
-         snprintf(name, 32, "clipp[%d]", i);
-         sprog->clip_locs[i] = glGetUniformLocation(prog_id, name);
-      }
-   }
    return sprog;
 }
 
@@ -1865,6 +1872,10 @@ static void vrend_destroy_program(struct vrend_linked_shader_program *ent)
    int i;
    if (ent->ref_context && ent->ref_context->prog == ent)
       ent->ref_context->prog = NULL;
+
+   if (ent->virgl_block_id != GL_INVALID_INDEX) {
+      glDeleteBuffers(1, &ent->ubo_sysval_buffer_id);
+   }
 
    glDeleteProgram(ent->id);
    list_del(&ent->head);
@@ -4693,6 +4704,38 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
    }
 }
 
+static void
+vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
+{
+   if (sub_ctx->prog->virgl_block_id == GL_INVALID_INDEX)
+      return;
+
+   struct sysval_uniform_block virgl_uniform_block;
+   memset(&virgl_uniform_block, 0, sizeof(struct sysval_uniform_block));
+
+   if (vrend_state.use_core_profile)
+      virgl_uniform_block.alpha_ref_val = sub_ctx->dsa_state.alpha.ref_value;
+
+   virgl_uniform_block.winsys_adjust_y = sub_ctx->viewport_is_negative ? -1.f : 1.f;
+
+   if (has_feature(feat_cull_distance)) {
+      if (sub_ctx->rs_state.clip_plane_enable) {
+         virgl_uniform_block.clip_plane_enabled = 1.f;
+         for (int i = 0 ; i < VIRGL_NUM_CLIP_PLANES; i++) {
+            memcpy(&virgl_uniform_block.clipp[i],
+                   (const GLfloat *) &sub_ctx->ucp_state.ucp[i], sizeof(GLfloat) * 4);
+         }
+      } else {
+         virgl_uniform_block.clip_plane_enabled = 0.f;
+      }
+   }
+
+   glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
+   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(struct sysval_uniform_block),
+                   &virgl_uniform_block);
+   glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_program)
 {
    int next_ubo_id = 0, next_sampler_id = 0;
@@ -4714,16 +4757,17 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
       }
    }
 
+   if (sub_ctx->prog->virgl_block_id != GL_INVALID_INDEX)
+      glBindBufferRange(GL_UNIFORM_BUFFER, sub_ctx->prog->virgl_block_bind,
+                        sub_ctx->prog->ubo_sysval_buffer_id,
+                        0, sizeof(struct sysval_uniform_block));
+
    vrend_draw_bind_abo_shader(sub_ctx);
 
    if (vrend_state.use_core_profile && sub_ctx->prog->fs_stipple_loc != -1) {
       glActiveTexture(GL_TEXTURE0 + next_sampler_id);
       glBindTexture(GL_TEXTURE_2D, sub_ctx->parent->pstipple_tex_id);
       glUniform1i(sub_ctx->prog->fs_stipple_loc, next_sampler_id);
-   }
-
-   if (vrend_state.use_core_profile && sub_ctx->prog->fs_alpha_ref_val_loc != -1) {
-      glUniform1f(sub_ctx->prog->fs_alpha_ref_val_loc, sub_ctx->dsa_state.alpha.ref_value);
    }
 }
 
@@ -4949,7 +4993,6 @@ int vrend_draw_vbo(struct vrend_context *ctx,
                    uint32_t cso, uint32_t indirect_handle,
                    uint32_t indirect_draw_count_handle)
 {
-   int i;
    bool new_program = false;
    struct vrend_resource *indirect_res = NULL;
    struct vrend_resource *indirect_params_res = NULL;
@@ -5046,24 +5089,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    vrend_draw_bind_objects(sub_ctx, new_program);
-
-
-   float viewport_neg_val = sub_ctx->viewport_is_negative ? -1.0 : 1.0;
-   if (sub_ctx->prog->viewport_neg_val != viewport_neg_val) {
-      glUniform1f(sub_ctx->prog->vs_ws_adjust_loc, viewport_neg_val);
-      sub_ctx->prog->viewport_neg_val = viewport_neg_val;
-   }
-
-   if (has_feature(feat_cull_distance)) {
-      if (sub_ctx->rs_state.clip_plane_enable) {
-         glUniform1i(sub_ctx->prog->clip_enabled_loc, 1);
-         for (i = 0 ; i < 8; i++) {
-            glUniform4fv(sub_ctx->prog->clip_locs[i], 1, (const GLfloat *)&sub_ctx->ucp_state.ucp[i]);
-         }
-      } else {
-         glUniform1i(sub_ctx->prog->clip_enabled_loc, 0);
-      }
-   }
+   vrend_fill_sysval_uniform_block(sub_ctx);
 
    if (has_feature(feat_gles31_vertex_attrib_binding))
       vrend_draw_bind_vertex_binding(ctx, sub_ctx->ve);
@@ -5231,7 +5257,6 @@ int vrend_draw_vbo(struct vrend_context *ctx,
 
    if (use_advanced_blending)
       glDisable(GL_BLEND);
-
    return 0;
 }
 
@@ -10638,7 +10663,9 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
 
    if (has_feature(feat_ubo)) {
       glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &max);
-      caps->v1.max_uniform_blocks = max + 1;
+      /* GL_MAX_VERTEX_UNIFORM_BLOCKS is omitting the ordinary uniform block, add it
+       * also reduce by 1 as we might generate a VirglBlock helper uniform block */
+      caps->v1.max_uniform_blocks = max + 1 - 1;
    }
 
    if (has_feature(feat_depth_clamp))
@@ -11166,32 +11193,29 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
    caps->v2.max_texture_image_units = MIN2(max, PIPE_MAX_SHADER_SAMPLER_VIEWS);
 
+   /* Propagate the max of Uniform Components */
    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max);
-   // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
-   caps->v2.max_const_buffer_size[PIPE_SHADER_VERTEX] = max - 33;
+   caps->v2.max_const_buffer_size[PIPE_SHADER_VERTEX] = max * 4;
 
+   /* We might insert a `sampler2D pstipple_sampler` so reduce by 1 */
    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &max);
-   // We can insert `vec4 clipp[8]`, `bool clip_plane_enabled`, `float winsys_adjust_y`,
-   // and `float alpha_ref_val`
-   caps->v2.max_const_buffer_size[PIPE_SHADER_FRAGMENT] = max - 35;
+   caps->v2.max_const_buffer_size[PIPE_SHADER_FRAGMENT] = max * 4 - 1;
 
    if (has_feature(feat_geometry_shader)) {
       glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS, &max);
-      // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
-      caps->v2.max_const_buffer_size[PIPE_SHADER_GEOMETRY] = max - 33;
+      caps->v2.max_const_buffer_size[PIPE_SHADER_GEOMETRY] = max * 4;
    }
 
    if (has_feature(feat_tessellation)) {
       glGetIntegerv(GL_MAX_TESS_CONTROL_UNIFORM_COMPONENTS, &max);
-      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_CTRL] = max;
+      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_CTRL] = max * 4;
       glGetIntegerv(GL_MAX_TESS_EVALUATION_UNIFORM_COMPONENTS, &max);
-      // We can insert `vec4 clipp[8]` and `bool clip_plane_enabled`
-      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_EVAL] = max - 33;
+      caps->v2.max_const_buffer_size[PIPE_SHADER_TESS_EVAL] = max * 4;
    }
 
    if (has_feature(feat_compute_shader)) {
       glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_COMPONENTS, &max);
-      caps->v2.max_const_buffer_size[PIPE_SHADER_COMPUTE] = max;
+      caps->v2.max_const_buffer_size[PIPE_SHADER_COMPUTE] = max * 4;
    }
 }
 
