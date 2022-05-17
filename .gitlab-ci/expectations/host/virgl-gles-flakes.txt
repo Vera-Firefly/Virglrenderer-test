@@ -3,6 +3,7 @@ dEQP-GLES31.functional.draw_buffers_indexed.random.max_implementation_draw_buffe
 shaders@glsl-uniform-interstage-limits@subdivide 5
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
 spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
+spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
