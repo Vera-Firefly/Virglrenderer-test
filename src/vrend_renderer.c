@@ -9202,6 +9202,14 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
                       dst_res->id, dst_res->target, dst_level,
                       dstx, dsty, dstz,
                       src_box->width, src_box->height,src_box->depth);
+
+   // temporarily added to disable strict error checking and fix guests that are still using pre 20.x
+   // mesa/virgl drivers that generate an error here during window resizes:
+   //   "ERROR: GL_INVALID_VALUE in glCopyImageSubData(srcX or srcWidth exceeds image bounds)"
+   if (has_bit(src_res->storage_bits, VREND_STORAGE_GBM_BUFFER) &&
+       glGetError() != GL_NO_ERROR) {
+      vrend_printf("glCopyImageSubData maybe fail\n");
+   }
 }
 
 
