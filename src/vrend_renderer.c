@@ -338,6 +338,7 @@ struct global_renderer_state {
    int eventfd;
 
    uint32_t max_draw_buffers;
+   uint32_t max_texture_buffer_size;
    uint32_t max_texture_2d_size;
    uint32_t max_texture_3d_size;
    uint32_t max_texture_cube_size;
@@ -515,6 +516,7 @@ struct vrend_image_view {
    GLuint id;
    GLenum access;
    GLenum format;
+   uint32_t vformat;
    union {
       struct {
          unsigned first_layer:16;     /**< first layer to use for array textures */
@@ -3256,6 +3258,8 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
             unsigned size = view->val1 - view->val0 + 1;
             int blsize = util_format_get_blocksize(view->format);
 
+            if (offset + size > vrend_state.max_texture_buffer_size)
+               size = vrend_state.max_texture_buffer_size - offset;
             offset *= blsize;
             size *= blsize;
             glTexBufferRange(GL_TEXTURE_BUFFER, internalformat, view->texture->id, offset, size);
@@ -3301,6 +3305,7 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
          return;
       }
       iview->texture = res;
+      iview->vformat = format;
       iview->format = tex_conv_table[format].internalformat;
       iview->access = access;
       iview->u.buf.offset = layer_offset;
@@ -4650,8 +4655,23 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
          glBindBufferARB(GL_TEXTURE_BUFFER, iview->texture->id);
          glBindTexture(GL_TEXTURE_BUFFER, iview->texture->tbo_tex_id);
 
-         if (has_feature(feat_arb_or_gles_ext_texture_buffer))
-            glTexBuffer(GL_TEXTURE_BUFFER, format, iview->texture->id);
+         if (has_feature(feat_arb_or_gles_ext_texture_buffer)) {
+            if (has_feature(feat_texture_buffer_range)) {
+               /* Offset and size are given in byte, but the max_texture_buffer_size
+                * is given as texels, so we have to take the blocksize into account.
+                * To avoid an unsigned int overflow, we divide by blocksize,
+                */
+               int blsize = util_format_get_blocksize(iview->vformat);
+               unsigned offset = iview->u.buf.offset / blsize;
+               unsigned size = iview->u.buf.size / blsize;
+               if (offset + size > vrend_state.max_texture_buffer_size)
+                  size = vrend_state.max_texture_buffer_size - offset;
+               glTexBufferRange(GL_TEXTURE_BUFFER, format, iview->texture->id, iview->u.buf.offset,
+                                size * blsize);
+            } else {
+               glTexBuffer(GL_TEXTURE_BUFFER, format, iview->texture->id);
+            }
+         }
 
          tex_id = iview->texture->tbo_tex_id;
          level = first_layer = 0;
@@ -10726,7 +10746,7 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
 
    if (has_feature(feat_arb_or_gles_ext_texture_buffer)) {
       glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &max);
-      caps->v1.max_tbo_size = max;
+      vrend_state.max_texture_buffer_size = caps->v1.max_tbo_size = max;
    }
 
    if (has_feature(feat_texture_gather)) {
