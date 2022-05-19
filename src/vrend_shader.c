@@ -6262,20 +6262,32 @@ static void emit_image_decl(const struct dump_ctx *ctx,
    sname = tgsi_proc_to_prefix(ctx->prog_type);
    stc = vrend_shader_samplertypeconv(ctx->cfg->use_gles, image->decl.Resource);
 
-   if (!image->decl.Writable)
+
+   /* From ARB_shader_image_load_store:
+      Any image variable used for shader loads or atomic memory operations must
+      be declared with a format layout qualifier matching the format of its
+      associated image unit, ...  Otherwise, the access is considered to
+      involve a format mismatch, ...  Image variables used exclusively for
+      image stores need not include a format layout qualifier, but any declared
+      qualifier must match the image unit format to avoid a format mismatch. */
+   bool require_format_specifer = true;
+   if (!image->decl.Writable) {
       access = "readonly ";
-   else if (!image->decl.Format ||
+   } else if (!image->decl.Format ||
             (ctx->cfg->use_gles &&
              (image->decl.Format != PIPE_FORMAT_R32_FLOAT) &&
              (image->decl.Format != PIPE_FORMAT_R32_SINT) &&
-             (image->decl.Format != PIPE_FORMAT_R32_UINT)))
+             (image->decl.Format != PIPE_FORMAT_R32_UINT))) {
       access = "writeonly ";
+      require_format_specifer = formatstr[0] != '\0';
+   }
 
    if (ctx->cfg->use_gles) { /* TODO: enable on OpenGL 4.2 and up also */
       emit_hdrf(glsl_strbufs, "layout(binding=%d%s%s) ",
                i, formatstr[0] != '\0' ? ", " : ", rgba32f", formatstr);
-   } else if (formatstr[0] != '\0') {
-      emit_hdrf(glsl_strbufs, "layout(%s) ", formatstr);
+   } else if (require_format_specifer) {
+      emit_hdrf(glsl_strbufs, "layout(%s) ",
+                formatstr[0] != '\0' ? formatstr : "rgba32f");
    }
 
    if (range)
