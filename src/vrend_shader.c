@@ -7593,6 +7593,9 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    for (size_t i = 0; i < ARRAY_SIZE(ctx.src_bufs); ++i)
       strbuf_free(ctx.src_bufs + i);
 
+   for (size_t i = 0; i < ARRAY_SIZE(ctx.dst_bufs); ++i)
+      strbuf_free(ctx.dst_bufs + i);
+
    if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT)
       qsort(ctx.outputs, ctx.num_outputs, sizeof(struct vrend_shader_io), compare_sid);
 
