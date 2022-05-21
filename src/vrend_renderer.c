@@ -4815,7 +4815,9 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_TESS_EVAL], &tes_dirty);
    if (shaders[PIPE_SHADER_GEOMETRY])
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_GEOMETRY], &gs_dirty);
-   vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_FRAGMENT], &fs_dirty);
+
+   if (vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_FRAGMENT], &fs_dirty))
+      goto fail;
 
    // NOTE: run shader selection again as a workaround to #180 - "duplicated shader compilation"
    if (shaders[PIPE_SHADER_GEOMETRY])
@@ -4852,10 +4854,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
        !shaders[PIPE_SHADER_FRAGMENT]->current ||
        (shaders[PIPE_SHADER_GEOMETRY] && !shaders[PIPE_SHADER_GEOMETRY]->current) ||
        (shaders[PIPE_SHADER_TESS_CTRL] && !shaders[PIPE_SHADER_TESS_CTRL]->current) ||
-       (shaders[PIPE_SHADER_TESS_EVAL] && !shaders[PIPE_SHADER_TESS_EVAL]->current)) {
-      vrend_printf( "failure to compile shader variants: %s\n", sub_ctx->parent->debug_name);
-      return false;
-   }
+       (shaders[PIPE_SHADER_TESS_EVAL] && !shaders[PIPE_SHADER_TESS_EVAL]->current))
+      goto fail;
 
    GLuint vs_id = shaders[PIPE_SHADER_VERTEX]->current->id;
    GLuint fs_id = shaders[PIPE_SHADER_FRAGMENT]->current->id;
@@ -4911,6 +4911,10 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
    }
    sub_ctx->cs_shader_dirty = true;
    return new_program;
+
+fail:
+   vrend_printf( "failure to compile shader variants: %s\n", sub_ctx->parent->debug_name);
+   return false;
 }
 
 void vrend_link_program(struct vrend_context *ctx, uint32_t *handles)
