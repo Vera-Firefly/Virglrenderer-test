@@ -4755,10 +4755,16 @@ void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
    list_inithead(&shader->programs);
    strarray_alloc(&shader->glsl_strings, SHADER_MAX_STRINGS);
 
-   vrend_shader_create_passthrough_tcs(sub_ctx->parent, &sub_ctx->parent->shader_cfg,
-                                       sub_ctx->shaders[PIPE_SHADER_VERTEX]->tokens,
-                                       &shader->key, vrend_state.tess_factors, &sel->sinfo,
-                                       &shader->glsl_strings, vertices_per_patch);
+   if (!vrend_shader_create_passthrough_tcs(sub_ctx->parent, &sub_ctx->parent->shader_cfg,
+                                            sub_ctx->shaders[PIPE_SHADER_VERTEX]->tokens,
+                                            &shader->key, vrend_state.tess_factors, &sel->sinfo,
+                                            &shader->glsl_strings, vertices_per_patch)) {
+      strarray_free(&shader->glsl_strings, true);
+      FREE(shader);
+      vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, sel->type);
+      vrend_destroy_shader_selector(sel);
+      return;
+   }
    // Need to add inject the selected shader to the shader selector and then the code below
    // can continue
    sel->tokens = NULL;
