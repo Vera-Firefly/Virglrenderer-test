@@ -197,7 +197,7 @@ static void blit_get_swizzle(int tgsi_tex_target, unsigned flags,
    retval->is_array = false;
    switch (tgsi_tex_target) {
    case TGSI_TEXTURE_1D:
-      if (flags & (BLIT_USE_GLES | BLIT_USE_DEPTH)) {
+      if ((flags & (BLIT_USE_GLES | BLIT_USE_DEPTH)) == (BLIT_USE_GLES | BLIT_USE_DEPTH)) {
          retval->swizzle = ".xy";
          break;
       }

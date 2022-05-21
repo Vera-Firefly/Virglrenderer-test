@@ -237,7 +237,6 @@ spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@glSciss
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@glViewport,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@MS4,Fail
 spec@arb_framebuffer_object@fbo-blit-scaled-linear,ExpectedFail
-spec@arb_framebuffer_object@fbo-generatemipmap-1d rgb9_e5,Fail
 spec@arb_framebuffer_object@fbo-gl_pointcoord,Fail
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed,Crash
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get,Fail
