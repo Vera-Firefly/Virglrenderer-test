@@ -7314,7 +7314,7 @@ static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_variab
 {
    if (!ctx->num_interps)
       return true;
-   if (ctx->prog_type == TGSI_PROCESSOR_VERTEX || ctx->prog_type == TGSI_PROCESSOR_GEOMETRY)
+   if (ctx->prog_type != TGSI_PROCESSOR_FRAGMENT)
       return true;
 
    return fill_fragment_interpolants(ctx, &sinfo->fs_info);
