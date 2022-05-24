@@ -52,7 +52,7 @@ struct virgl_context_blob {
 struct virgl_context;
 
 typedef void (*virgl_context_fence_retire)(struct virgl_context *ctx,
-                                           uint64_t queue_id,
+                                           uint32_t ring_idx,
                                            uint64_t fence_id);
 
 /**
@@ -120,7 +120,7 @@ struct virgl_context {
    /* submit a fence to the queue identified by queue_id */
    int (*submit_fence)(struct virgl_context *ctx,
                        uint32_t flags,
-                       uint64_t queue_id,
+                       uint32_t ring_idx,
                        uint64_t fence_id);
 };
 

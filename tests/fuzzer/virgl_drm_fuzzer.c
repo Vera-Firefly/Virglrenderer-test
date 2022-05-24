@@ -34,7 +34,7 @@ fuzz_debug_callback(UNUSED const char *fmt, UNUSED va_list ap)
 static void
 fuzz_write_context_fence(UNUSED void *cookie,
                          UNUSED uint32_t ctx_id,
-                         UNUSED uint64_t queue_id,
+                         UNUSED uint32_t ring_idx,
                          UNUSED uint64_t fence_id)
 {
 

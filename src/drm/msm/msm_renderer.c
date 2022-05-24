@@ -1217,17 +1217,17 @@ msm_renderer_retire_fences(UNUSED struct virgl_context *vctx)
 }
 
 static int
-msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t queue_id,
+msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint32_t ring_idx,
                           uint64_t fence_id)
 {
    struct msm_context *mctx = to_msm_context(vctx);
 
-   drm_dbg("flags=0x%x, queue_id=%" PRIu64 ", fence_id=%" PRIu64, flags,
-           queue_id, fence_id);
+   drm_dbg("flags=0x%x, ring_idx=%" PRIu32 ", fence_id=%" PRIu64, flags,
+           ring_idx, fence_id);
 
-   /* timeline is queue_id-1 (because queue_id 0 is host CPU timeline) */
-   if (queue_id > nr_timelines) {
-      drm_log("invalid queue_id: %" PRIu64, queue_id);
+   /* timeline is ring_idx-1 (because ring_idx 0 is host CPU timeline) */
+   if (ring_idx > nr_timelines) {
+      drm_log("invalid ring_idx: %" PRIu32, ring_idx);
       return -EINVAL;
    }
 
@@ -1235,12 +1235,12 @@ msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint64_t q
     * meaning by the time ->submit_fence() is called, the fence has
     * already passed.. so just immediate signal:
     */
-   if (queue_id == 0) {
-      vctx->fence_retire(vctx, queue_id, fence_id);
+   if (ring_idx == 0) {
+      vctx->fence_retire(vctx, ring_idx, fence_id);
       return 0;
    }
 
-   return drm_timeline_submit_fence(&mctx->timelines[queue_id - 1], flags, fence_id);
+   return drm_timeline_submit_fence(&mctx->timelines[ring_idx - 1], flags, fence_id);
 }
 
 struct virgl_context *

@@ -78,7 +78,7 @@ struct virgl_renderer_callbacks {
    int (*get_drm_fd)(void *cookie);
 
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
-   void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint64_t queue_id, uint64_t fence_id);
+   void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint32_t ring_idx, uint64_t fence_id);
 
    /* version 0: a connected socket of type SOCK_SEQPACKET */
    int (*get_server_fd)(void *cookie, uint32_t version);
@@ -386,7 +386,7 @@ virgl_renderer_export_fence(uint32_t client_fence_id, int *fd);
 #define VIRGL_RENDERER_FENCE_FLAG_MERGEABLE      (1 << 0)
 VIRGL_EXPORT int virgl_renderer_context_create_fence(uint32_t ctx_id,
                                                      uint32_t flags,
-                                                     uint64_t queue_id,
+                                                     uint32_t ring_idx,
                                                      uint64_t fence_id);
 VIRGL_EXPORT void virgl_renderer_context_poll(uint32_t ctx_id); /* force fences */
 VIRGL_EXPORT int virgl_renderer_context_get_poll_fd(uint32_t ctx_id);

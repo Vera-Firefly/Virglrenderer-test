@@ -196,14 +196,12 @@ proxy_context_sync_thread(void *arg)
 static int
 proxy_context_submit_fence(struct virgl_context *base,
                            uint32_t flags,
-                           uint64_t queue_id,
+                           uint32_t ring_idx,
                            uint64_t fence_id)
 {
    struct proxy_context *ctx = (struct proxy_context *)base;
    const uint64_t old_busy_mask = ctx->timeline_busy_mask;
 
-   /* TODO fix virglrenderer to match virtio-gpu spec which uses ring_idx */
-   const uint32_t ring_idx = queue_id;
    if (ring_idx >= PROXY_CONTEXT_TIMELINE_COUNT)
       return -EINVAL;
 

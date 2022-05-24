@@ -123,7 +123,7 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
 static int
 vkr_context_submit_fence_locked(struct virgl_context *base,
                                 uint32_t flags,
-                                uint64_t queue_id,
+                                uint32_t ring_idx,
                                 uint64_t fence_id)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
@@ -131,14 +131,14 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    struct vkr_queue *queue;
    VkResult result;
 
-   queue = vkr_context_get_object(ctx, queue_id);
+   queue = vkr_context_get_object(ctx, ring_idx);
    if (!queue)
       return -EINVAL;
    struct vkr_device *dev = queue->device;
    vk = &dev->proc_table;
 
    struct vkr_queue_sync *sync =
-      vkr_device_alloc_queue_sync(dev, flags, queue_id, fence_id);
+      vkr_device_alloc_queue_sync(dev, flags, ring_idx, fence_id);
    if (!sync)
       return -ENOMEM;
 
@@ -168,14 +168,14 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
 static int
 vkr_context_submit_fence(struct virgl_context *base,
                          uint32_t flags,
-                         uint64_t queue_id,
+                         uint32_t ring_idx,
                          uint64_t fence_id)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret;
 
    mtx_lock(&ctx->mutex);
-   ret = vkr_context_submit_fence_locked(base, flags, queue_id, fence_id);
+   ret = vkr_context_submit_fence_locked(base, flags, ring_idx, fence_id);
    mtx_unlock(&ctx->mutex);
    return ret;
 }
