@@ -3533,12 +3533,8 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          : 0x0;
 
    } else {
-      if (sub_ctx->shaders[PIPE_SHADER_FRAGMENT]) {
-         struct vrend_shader *fs =
-               sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
-         key->fs_info = fs->var_sinfo.fs_info;
+      if (sub_ctx->shaders[PIPE_SHADER_FRAGMENT])
          next_type = PIPE_SHADER_FRAGMENT;
-      }
   }
 
    switch (type) {
@@ -3575,14 +3571,19 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          key->num_out_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_cull;
       }
 
-      if (type == PIPE_SHADER_VERTEX && next_type == PIPE_SHADER_FRAGMENT) {
-         if (sub_ctx->shaders[type]) {
-            uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
-            uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
+      if (next_type == PIPE_SHADER_FRAGMENT) {
+         struct vrend_shader *fs =
+               sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
+         key->fs_info = fs->var_sinfo.fs_info;
+         if (type == PIPE_SHADER_VERTEX) {
+            if (sub_ctx->shaders[type]) {
+               uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
+               uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
 
-            //We only want to issue the fixup for inputs not fed by the outputs of the
-            //previous stage
-            key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
+               // We only want to issue the fixup for inputs not fed by
+               // the outputs of the previous stage
+               key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
+            }
          }
       }
    }
