@@ -38,7 +38,6 @@
 
 /* start convert of tgsi to glsl */
 
-#define INTERP_PREFIX "                           "
 #define INVARI_PREFIX "invariant"
 
 #define SHADER_REQ_NONE 0
@@ -5944,7 +5943,7 @@ static const char *get_interp_string(const struct vrend_shader_cfg *cfg, int int
          return "flat ";
       /* fallthrough */
    default:
-      return NULL;
+      return "";
    }
 }
 
@@ -6489,6 +6488,46 @@ emit_ios_generic(const struct dump_ctx *ctx,
 
 typedef bool (*can_emit_generic_callback)(const struct vrend_shader_io *io);
 
+/* Front and back color of the same semantic ID must have the same interpolator
+ * specifiers, and it may happen, that one or the other shader doesn't define
+ * both, front and back color, so always compare these two as COLOR. */
+static inline
+enum tgsi_semantic get_semantic_to_compare(enum tgsi_semantic name)
+{
+   switch (name) {
+   case TGSI_SEMANTIC_COLOR:
+   case TGSI_SEMANTIC_BCOLOR:
+      return TGSI_SEMANTIC_COLOR;
+   default:
+      return name;
+   }
+}
+
+static const char *
+get_interpolator_prefix(struct vrend_strbuf *buf, uint32_t *num_interps,
+                        const struct vrend_shader_cfg *cfg, const struct vrend_shader_io *io,
+                        const struct vrend_fs_shader_info *fs_info, bool flatshade)
+{
+   if (io->name == TGSI_SEMANTIC_GENERIC ||
+       io->name == TGSI_SEMANTIC_TEXCOORD ||
+       io->name == TGSI_SEMANTIC_COLOR ||
+       io->name == TGSI_SEMANTIC_BCOLOR) {
+      (*num_interps)++;
+      enum tgsi_semantic name = get_semantic_to_compare(io->name);
+
+      for (int j = 0; j < fs_info->num_interps; ++j) {
+         if (get_semantic_to_compare(fs_info->interpinfo[j].semantic_name) == name &&
+             fs_info->interpinfo[j].semantic_index == io->sid) {
+            strbuf_fmt(buf, "%s %s",
+                       get_interp_string(cfg, fs_info->interpinfo[j].interpolate, flatshade),
+                       get_aux_string(fs_info->interpinfo[j].location));
+            return buf->buf;
+         }
+      }
+   }
+   return "";
+}
+
 static void
 emit_ios_generic_outputs(const struct dump_ctx *ctx,
                          struct vrend_glsl_strbufs *glsl_strbufs,
@@ -6503,6 +6542,10 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
    uint64_t fc_emitted = 0;
    uint64_t bc_emitted = 0;
 
+   char buffer[64];
+   struct vrend_strbuf buf;
+   strbuf_alloc_fixed(&buf, buffer, sizeof(buffer));
+
    for (i = 0; i < ctx->num_outputs; i++) {
 
       if (!ctx->outputs[i].glsl_predefined_no_emit) {
@@ -6510,14 +6553,10 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
          if (!can_emit_generic(&ctx->outputs[i]))
             continue;
 
-         const char *prefix = "";
-         if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC ||
-             ctx->outputs[i].name == TGSI_SEMANTIC_COLOR ||
-             ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR) {
-            (*num_interps)++;
-            /* ugly leave spaces to patch interp in later */
-            prefix = INTERP_PREFIX;
-         }
+         /* It is save to use buf here even though it is declared outside the loop, because
+          * when written it is reset, and the content is used within the iteration */
+         const char *prefix = get_interpolator_prefix(&buf, num_interps, ctx->cfg, &ctx->outputs[i],
+                                                      &ctx->key->fs_info, ctx->key->flatshade);
 
          if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR) {
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= FRONT_COLOR_EMITTED;
@@ -6609,6 +6648,17 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    if (ctx->key->color_two_side || ctx->force_color_two_side) {
       bool fcolor_emitted, bcolor_emitted;
 
+      enum tgsi_interpolate_mode interpolators[2] = {TGSI_INTERPOLATE_COLOR, TGSI_INTERPOLATE_COLOR};
+      enum tgsi_interpolate_loc interp_loc[2] = { TGSI_INTERPOLATE_LOC_CENTER, TGSI_INTERPOLATE_LOC_CENTER};
+      for (int k = 0; k < ctx->key->fs_info.num_interps; k++) {
+         const struct vrend_interp_info *interp_info = &ctx->key->fs_info.interpinfo[k];
+         if (interp_info->semantic_name == TGSI_SEMANTIC_COLOR ||
+             interp_info->semantic_name == TGSI_SEMANTIC_BCOLOR) {
+            interpolators[interp_info->semantic_index] = interp_info->interpolate;
+            interp_loc[interp_info->semantic_index] = interp_info->location;
+         }
+      }
+
       for (i = 0; i < ctx->num_outputs; i++) {
          if (ctx->outputs[i].sid >= 2)
             continue;
@@ -6619,11 +6669,17 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
          bcolor_emitted = front_back_color_emitted_flags[ctx->outputs[i].sid] & BACK_COLOR_EMITTED;
 
          if (fcolor_emitted && !bcolor_emitted) {
-            emit_hdrf(glsl_strbufs, "%sout vec4 vso_bc%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
+            emit_hdrf(glsl_strbufs, "%s %s out vec4 vso_bc%d;\n",
+                      get_interp_string(ctx->cfg, interpolators[ctx->outputs[i].sid], ctx->key->flatshade),
+                      get_aux_string(interp_loc[ctx->outputs[i].sid]),
+                      ctx->outputs[i].sid);
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= BACK_COLOR_EMITTED;
          }
          if (bcolor_emitted && !fcolor_emitted) {
-            emit_hdrf(glsl_strbufs, "%sout vec4 vso_c%d;\n", INTERP_PREFIX, ctx->outputs[i].sid);
+            emit_hdrf(glsl_strbufs, "%s %s out vec4 vso_c%d;\n",
+                      get_interp_string(ctx->cfg, interpolators[ctx->outputs[i].sid], ctx->key->flatshade),
+                      get_aux_string(interp_loc[ctx->outputs[i].sid]),
+                      ctx->outputs[i].sid);
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= FRONT_COLOR_EMITTED;
          }
       }
@@ -6927,8 +6983,6 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
              ctx->outputs[i].name == TGSI_SEMANTIC_COLOR ||
              ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR) {
             (*num_interps)++;
-            /* ugly leave spaces to patch interp in later */
-            prefix = INTERP_PREFIX;
          }
 
          emit_hdrf(glsl_strbufs, "layout (stream = %d) %s%s%sout vec4 %s;\n", ctx->outputs[i].stream, prefix,
@@ -7079,6 +7133,22 @@ static void emit_ios_cs(const struct dump_ctx *ctx,
    }
 }
 
+static void emit_interp_info(struct vrend_glsl_strbufs *glsl_strbufs,
+                             const struct vrend_shader_cfg *cfg,
+                             const struct vrend_fs_shader_info *fs_info,
+                             enum tgsi_semantic semantic, int sid, bool flatshade)
+{
+   for (int j = 0; j < fs_info->num_interps; ++j) {
+      if (fs_info->interpinfo[j].semantic_name == semantic &&
+          fs_info->interpinfo[j].semantic_index == sid) {
+         emit_hdrf(glsl_strbufs, "%s %s ",
+                   get_interp_string(cfg, fs_info->interpinfo[j].interpolate, flatshade),
+                   get_aux_string(fs_info->interpinfo[j].location));
+         break;
+      }
+   }
+}
+
 static int emit_ios(const struct dump_ctx *ctx,
                     struct vrend_glsl_strbufs *glsl_strbufs,
                     struct vrend_generic_ios *generic_ios,
@@ -7125,11 +7195,14 @@ static int emit_ios(const struct dump_ctx *ctx,
 
    if (generic_ios->outputs_expected_mask &&
        (generic_ios->outputs_expected_mask != generic_ios->outputs_emitted_mask)) {
+
       for (int i = 0; i < 64; ++i) {
          uint64_t mask = 1ull << i;
          bool expecting = generic_ios->outputs_expected_mask & mask;
          if (expecting & !(generic_ios->outputs_emitted_mask & mask)) {
-            emit_hdrf(glsl_strbufs, "                              out vec4 %s_g%dA0%s;\n",
+            emit_interp_info(glsl_strbufs, ctx->cfg, &ctx->key->fs_info,
+                             TGSI_SEMANTIC_GENERIC, i, ctx->key->flatshade);
+            emit_hdrf(glsl_strbufs, "out vec4 %s_g%dA0%s;\n",
                       get_stage_output_name_prefix(ctx->prog_type), i,
                       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
          }
@@ -7142,7 +7215,9 @@ static int emit_ios(const struct dump_ctx *ctx,
          uint8_t mask = 1u << i;
          bool expecting = texcoord_ios->outputs_expected_mask & mask;
          if (expecting & !(texcoord_ios->outputs_emitted_mask & mask)) {
-            emit_hdrf(glsl_strbufs, "                              out vec4 %s_t%d%s;\n",
+            emit_interp_info(glsl_strbufs, ctx->cfg, &ctx->key->fs_info,
+                             TGSI_SEMANTIC_TEXCOORD, i, ctx->key->flatshade);
+            emit_hdrf(glsl_strbufs, "out vec4 %s_t%d%s;\n",
                       get_stage_output_name_prefix(ctx->prog_type), i,
                       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
          }
@@ -7367,13 +7442,6 @@ static void emit_required_sysval_uniforms(struct vrend_strbuf *block, uint32_t m
    }
 }
 
-static bool vrend_patch_vertex_shader_interpolants(const struct vrend_shader_cfg *cfg,
-                                            struct vrend_strarray *prog_strings,
-                                            const struct vrend_shader_info *vs_info,
-                                            const struct vrend_fs_shader_info *fs_info,
-                                            const char *oprefix,
-                                            bool flatshade);
-
 static int compare_sid(const void *lhs, const void *rhs)
 {
    const struct vrend_shader_io *l = (struct vrend_shader_io *)lhs;
@@ -7474,6 +7542,14 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    if (ctx.prog_type == TGSI_PROCESSOR_FRAGMENT)
       qsort(ctx.outputs, ctx.num_outputs, sizeof(struct vrend_shader_io), compare_sid);
 
+   const struct vrend_fs_shader_info *fs_info = &key->fs_info;
+
+   if (fs_info->num_interps && fs_info->has_sample_input &&
+       ((cfg->use_gles && cfg->glsl_version < 320) ||
+        cfg->glsl_version >= 320)) {
+      ctx.shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+   }
+
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
                                     &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
@@ -7497,28 +7573,6 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
                                   ctx.glsl_strbufs.required_sysval_uniform_decls);
    set_strbuffers(&ctx.glsl_strbufs, shader);
 
-   if (ctx.prog_type == TGSI_PROCESSOR_GEOMETRY) {
-      vrend_patch_vertex_shader_interpolants(cfg,
-                                             shader,
-                                             sinfo,
-                                             &key->fs_info, "gso",
-                                             key->flatshade);
-   } else if (!key->gs_present &&
-              ctx.prog_type == TGSI_PROCESSOR_TESS_EVAL) {
-      vrend_patch_vertex_shader_interpolants(cfg,
-                                             shader,
-                                             sinfo,
-                                             &key->fs_info, "teo",
-                                             key->flatshade);
-   } else if (!key->gs_present && !key->tes_present &&
-              ctx.prog_type == TGSI_PROCESSOR_VERTEX) {
-      vrend_patch_vertex_shader_interpolants(cfg,
-                                             shader,
-                                             sinfo,
-                                             &key->fs_info, "vso",
-                                             key->flatshade);
-   }
-
    VREND_DEBUG(dbg_shader_glsl, rctx, "GLSL:");
    VREND_DEBUG_EXT(dbg_shader_glsl, rctx, strarray_dump(shader));
    VREND_DEBUG(dbg_shader_glsl, rctx, "\n");
@@ -7531,107 +7585,6 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    free(ctx.so_names);
    free(ctx.temp_ranges);
    return false;
-}
-
-static void replace_interp(struct vrend_strarray *program,
-                           const char *var_name,
-                           const char *pstring, const char *auxstring)
-{
-   int mylen = strlen(INTERP_PREFIX) + strlen("out float ");
-
-   char *ptr = program->strings[SHADER_STRING_HDR].buf;
-   do {
-      char *p = strstr(ptr, var_name);
-      if (!p)
-         break;
-
-      ptr = p - mylen;
-
-      memset(ptr, ' ', strlen(INTERP_PREFIX));
-      memcpy(ptr, pstring, strlen(pstring));
-      memcpy(ptr + strlen(pstring), auxstring, strlen(auxstring));
-
-      ptr = p + strlen(var_name);
-   } while (1);
-}
-
-static const char *gpu_shader5_string = "#extension GL_ARB_gpu_shader5 : require\n";
-
-static void require_gpu_shader5(struct vrend_strarray *program)
-{
-   strbuf_append(&program->strings[SHADER_STRING_VER_EXT], gpu_shader5_string);
-}
-
-static const char *gpu_shader5_and_msinterp_string =
-      "#extension GL_OES_gpu_shader5 : require\n"
-      "#extension GL_OES_shader_multisample_interpolation : require\n";
-
-static void require_gpu_shader5_and_msinterp(struct vrend_strarray *program)
-{
-   strbuf_append(&program->strings[SHADER_STRING_VER_EXT], gpu_shader5_and_msinterp_string);
-}
-
-static bool vrend_patch_vertex_shader_interpolants(
-                                            const struct vrend_shader_cfg *cfg,
-                                            struct vrend_strarray *prog_strings,
-                                            const struct vrend_shader_info *vs_info,
-                                            const struct vrend_fs_shader_info *fs_info,
-                                            const char *oprefix, bool flatshade)
-{
-   int i;
-   const char *pstring, *auxstring;
-   char glsl_name[64];
-   if (!vs_info || !fs_info)
-      return true;
-
-   if (!fs_info->num_interps)
-      return true;
-
-   if (fs_info->has_sample_input) {
-      if (!cfg->use_gles && (cfg->glsl_version >= 320))
-         require_gpu_shader5(prog_strings);
-
-      if (cfg->use_gles && (cfg->glsl_version < 320))
-         require_gpu_shader5_and_msinterp(prog_strings);
-   }
-
-   for (i = 0; i < fs_info->num_interps; i++) {
-      pstring = get_interp_string(cfg, fs_info->interpinfo[i].interpolate, flatshade);
-      if (!pstring)
-         continue;
-
-      auxstring = get_aux_string(fs_info->interpinfo[i].location);
-
-      switch (fs_info->interpinfo[i].semantic_name) {
-      case TGSI_SEMANTIC_COLOR:
-      case TGSI_SEMANTIC_BCOLOR:
-         /* color is a bit trickier */
-         if (fs_info->glsl_ver < 140) {
-            if (fs_info->interpinfo[i].semantic_index == 1) {
-               replace_interp(prog_strings, "gl_FrontSecondaryColor", pstring, auxstring);
-               replace_interp(prog_strings, "gl_BackSecondaryColor", pstring, auxstring);
-            } else {
-               replace_interp(prog_strings, "gl_FrontColor", pstring, auxstring);
-               replace_interp(prog_strings, "gl_BackColor", pstring, auxstring);
-            }
-         } else {
-            snprintf(glsl_name, 64, "%s_c%d", oprefix, fs_info->interpinfo[i].semantic_index);
-            replace_interp(prog_strings, glsl_name, pstring, auxstring);
-            snprintf(glsl_name, 64, "%s_bc%d",  oprefix, fs_info->interpinfo[i].semantic_index);
-            replace_interp(prog_strings, glsl_name, pstring, auxstring);
-         }
-         break;
-      case TGSI_SEMANTIC_GENERIC:
-         snprintf(glsl_name, 64, "%s_g%d", oprefix, fs_info->interpinfo[i].semantic_index);
-         replace_interp(prog_strings, glsl_name, pstring, auxstring);
-         break;
-      default:
-         vrend_printf("unhandled semantic: %x\n", fs_info->interpinfo[i].semantic_name);
-         return false;
-      }
-   }
-
-   return true;
 }
 
 static boolean

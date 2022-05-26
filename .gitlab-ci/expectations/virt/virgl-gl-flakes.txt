@@ -41,8 +41,6 @@ spec@ext_framebuffer_object@fbo-stencil-gl_stencil_index16-drawpixels
 spec@ext_texture_snorm@multisample-formats 2 gl_ext_texture_snorm
 spec@ext_timer_query@time-elapsed
 spec@glsl-1.10@execution@glsl-fs-max-array-access-function
-spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontcolor-flat-vertex
-spec@glsl-1.10@execution@interpolation@interpolation-none-gl_frontsecondarycolor-smooth-none
 spec@glsl-1.10@execution@variable-indexing@fs-uniform-array-mat2-row-rd
 spec@glsl-1.50@execution@built-in-functions@gs-op-bitor-neg-ivec4-int
 spec@glsl-1.50@execution@built-in-functions@gs-op-bitxor-neg-uint-uvec2
