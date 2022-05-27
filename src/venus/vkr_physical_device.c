@@ -366,10 +366,15 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
    VkPhysicalDeviceGroupProperties *orig_props = args->pPhysicalDeviceGroupProperties;
    if (orig_props) {
       args->pPhysicalDeviceGroupProperties =
-         malloc(sizeof(*orig_props) * *args->pPhysicalDeviceGroupCount);
+         calloc(*args->pPhysicalDeviceGroupCount, sizeof(*orig_props));
       if (!args->pPhysicalDeviceGroupProperties) {
          args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
          return;
+      }
+
+      for (uint32_t i = 0; i < *args->pPhysicalDeviceGroupCount; i++) {
+         args->pPhysicalDeviceGroupProperties[i].sType =
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES;
       }
    }
 
