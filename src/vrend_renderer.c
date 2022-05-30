@@ -2176,7 +2176,9 @@ int vrend_create_sampler_state(struct vrend_context *ctx,
          }
 
          apply_sampler_border_color(state->ids[i], templ->border_color.ui);
-         glSamplerParameteri(state->ids[i], GL_TEXTURE_SRGB_DECODE_EXT, i == 0 ? GL_SKIP_DECODE_EXT : GL_DECODE_EXT);
+         if (has_feature(feat_texture_srgb_decode))
+            glSamplerParameteri(state->ids[i], GL_TEXTURE_SRGB_DECODE_EXT,
+                                i == 0 ? GL_SKIP_DECODE_EXT : GL_DECODE_EXT);
       }
    }
    ret_handle = vrend_renderer_object_insert(ctx, state, handle,
