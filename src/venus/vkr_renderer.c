@@ -29,7 +29,10 @@ vkr_get_capset(void *capset)
          vkr_extension_get_spec_version("VK_EXT_command_serialization");
       c->vk_mesa_venus_protocol_spec_version =
          vkr_extension_get_spec_version("VK_MESA_venus_protocol");
-      /* TODO always true once Mesa resolves its performance issue */
+      /* After https://gitlab.freedesktop.org/virgl/virglrenderer/-/merge_requests/688,
+       * this flag is used to indicate render server config, and will be needed until drm
+       * virtio-gpu blob mem gets fixed to attach_resource before resource_map.
+       */
       c->supports_blob_id_0 = (bool)(vkr_renderer_flags & VKR_RENDERER_RENDER_SERVER);
 
       uint32_t ext_mask[VN_INFO_EXTENSION_MAX_NUMBER / 32 + 1] = { 0 };
