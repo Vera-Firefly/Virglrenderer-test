@@ -45,6 +45,8 @@ vkr_get_capset(void *capset)
       /* set bit 0 to enable the extension mask(s) */
       assert(!(c->vk_extension_mask1[0] & 0x1u));
       c->vk_extension_mask1[0] |= 0x1u;
+
+      c->allow_vk_wait_syncs = 1;
    }
 
    return sizeof(*c);

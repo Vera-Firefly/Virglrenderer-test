@@ -445,19 +445,12 @@ vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch,
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
-   /* Being single-threaded, we cannot afford potential blocking calls.  It
-    * also leads to GPU lost when the wait never returns and can only be
-    * unblocked by a following command (e.g., vkCmdWaitEvents that is
-    * unblocked by a following vkSetEvent).
-    */
-   if (args->timeout) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    vn_replace_vkWaitForFences_args_handle(args);
    args->ret = vk->WaitForFences(args->device, args->fenceCount, args->pFences,
                                  args->waitAll, args->timeout);
+
+   if (args->ret == VK_ERROR_DEVICE_LOST)
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
 }
 
 static void
@@ -493,14 +486,11 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
-   /* no blocking call */
-   if (args->timeout) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
-      return;
-   }
-
    vn_replace_vkWaitSemaphores_args_handle(args);
    args->ret = vk->WaitSemaphores(args->device, args->pWaitInfo, args->timeout);
+
+   if (args->ret == VK_ERROR_DEVICE_LOST)
+      vkr_cs_decoder_set_fatal(&ctx->decoder);
 }
 
 static void

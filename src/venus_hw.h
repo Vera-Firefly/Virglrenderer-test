@@ -47,6 +47,13 @@ struct virgl_renderer_capset_venus {
     * extensions are assumed to be supported by the renderer side protocol.
     */
    uint32_t vk_extension_mask1[32];
+
+   /* The single-threaded renderer cannot afford potential blocking calls. It
+    * also leads to GPU lost if the wait depends on a following command. This
+    * capset allows such blocking calls to passthrough from the clients, and
+    * shifts the responsibilities to the client drivers.
+    */
+   uint32_t allow_vk_wait_syncs;
 };
 #endif
 
