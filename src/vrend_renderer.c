@@ -3724,6 +3724,7 @@ static int vrend_shader_select(struct vrend_sub_context *sub_ctx,
       r = vrend_shader_create(sub_ctx->parent, shader, &key);
       if (r) {
          sel->current = NULL;
+         strarray_free(&shader->glsl_strings, true);
          FREE(shader);
          return r;
       }
