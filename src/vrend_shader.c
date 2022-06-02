@@ -141,7 +141,6 @@ struct vrend_shader_io {
    enum vec_type type : 2;
    unsigned num_components : 3;
 
-   unsigned layout_location : 16;
    bool invariant : 1;
    bool precise : 1;
    bool glsl_predefined_no_emit : 1;
@@ -1241,7 +1240,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].interpolate = decl->Interp.Interpolate;
       ctx->inputs[i].location = decl->Interp.Location;
       ctx->inputs[i].first = decl->Range.First;
-      ctx->inputs[i].layout_location = 0;
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->inputs[i].usage_mask = decl->Declaration.UsageMask;
@@ -1522,7 +1520,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->outputs[i].precise = false;
       ctx->outputs[i].first = decl->Range.First;
       ctx->outputs[i].last = decl->Range.Last;
-      ctx->outputs[i].layout_location = 0;
       ctx->outputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->outputs[i].usage_mask = decl->Declaration.UsageMask;
       ctx->outputs[i].num_components = 4;
@@ -6425,10 +6422,6 @@ emit_ios_generic(const struct dump_ctx *ctx,
    if (io->overlapping_array)
       return;
 
-   if (io->layout_location > 0) {
-      snprintf(layout, sizeof(layout), "layout(location = %d)\n", io->layout_location - 1);
-   }
-
    if (io->usage_mask != 0xf && io->name == TGSI_SEMANTIC_GENERIC)
       t = type[io->num_components - 1];
 
@@ -6604,11 +6597,6 @@ emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
 {
    const char type[4][6] = {"float", " vec2", " vec3", " vec4"};
    const char *t = " vec4";
-
-   if (io->layout_location > 0) {
-      /* we need to define a layout here because interleaved arrays might be emited */
-      emit_hdrf(glsl_strbufs, "layout(location = %d)\n", io->layout_location - 1);
-   }
 
    if (io->usage_mask != 0xf)
       t = type[io->num_components - 1];
@@ -7383,7 +7371,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
           !ctx->outputs[i].overlapping_array) {
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].name = ctx->outputs[i].name;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].sid = ctx->outputs[i].sid;
-         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].location = ctx->outputs[i].layout_location;
+         sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].location = 0;
          sinfo->generic_outputs_layout[sinfo->out.num_generic_and_patch].array_id = ctx->outputs[i].array_id;
          sinfo->out.num_generic_and_patch++;
       }
@@ -7627,7 +7615,6 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].interpolate = decl->Interp.Interpolate;
       ctx->inputs[i].location = decl->Interp.Location;
       ctx->inputs[i].first = decl->Range.First;
-      ctx->inputs[i].layout_location = 0;
       ctx->inputs[i].last = decl->Range.Last;
       ctx->inputs[i].array_id = decl->Declaration.Array ? decl->Array.ArrayID : 0;
       ctx->inputs[i].usage_mask = decl->Declaration.UsageMask;
