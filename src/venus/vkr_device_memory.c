@@ -136,6 +136,9 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    VkImportMemoryFdInfoKHR local_import_info = { .fd = -1 };
    VkExportMemoryAllocateInfo *export_info = vkr_find_struct(
       args->pAllocateInfo->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
+   const bool no_dma_buf_export =
+      !export_info ||
+      !(export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
    struct vkr_device_memory *mem = NULL;
    const uint32_t mem_type_index = args->pAllocateInfo->memoryTypeIndex;
    const uint32_t property_flags =
@@ -170,8 +173,13 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
     */
    VkExportMemoryAllocateInfo local_export_info;
    if ((property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) && !res_info) {
+      /* An implementation can support dma_buf import along with opaque fd export/import.
+       * If the client driver is using external memory and requesting dma_buf, without
+       * dma_buf fd export support, we must use gbm bo import path instead of forcing
+       * opaque fd export. e.g. the client driver uses external memory for wsi image.
+       */
       if (dev->physical_device->is_dma_buf_fd_export_supported ||
-          dev->physical_device->is_opaque_fd_export_supported) {
+          (dev->physical_device->is_opaque_fd_export_supported && no_dma_buf_export)) {
          VkExternalMemoryHandleTypeFlagBits handle_type =
             dev->physical_device->is_dma_buf_fd_export_supported
                ? VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT
