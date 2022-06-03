@@ -156,8 +156,6 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
          (props.externalMemoryProperties.externalMemoryFeatures &
           VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT) &&
          (props.externalMemoryProperties.exportFromImportedHandleTypes &
-          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) &&
-         (props.externalMemoryProperties.exportFromImportedHandleTypes &
           VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
    }
 
@@ -168,10 +166,7 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
          (props.externalMemoryProperties.externalMemoryFeatures &
           VK_EXTERNAL_MEMORY_FEATURE_EXPORTABLE_BIT) &&
          (props.externalMemoryProperties.exportFromImportedHandleTypes &
-          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) &&
-         (!physical_dev->EXT_external_memory_dma_buf ||
-          (props.externalMemoryProperties.exportFromImportedHandleTypes &
-           VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT));
+          VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT);
    }
 
    if (!physical_dev->is_dma_buf_fd_export_supported &&

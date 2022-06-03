@@ -157,17 +157,19 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       prev_of_res_info->pNext = (const struct VkBaseInStructure *)&local_import_info;
    }
 
-   /* XXX Force dma_buf export or gbm bo import until:
-    * - a new extension that supports direct export from host visible memory
-    * - client capable of consuming opaque fd
+   /* XXX Force dma_buf/opaque fd export or gbm bo import until a new extension that
+    * supports direct export from host visible memory
     *
     * Most VkImage and VkBuffer are non-external while most VkDeviceMemory are external
     * if allocated with a host visible memory type. We still violate the spec by binding
     * external memory to non-external image or buffer, which needs spec changes with a
     * new extension.
+    *
+    * Skip forcing external if a valid VkImportMemoryResourceInfoMESA is provided, since
+    * the mapping will be directly set up from the existing virgl resource.
     */
    VkExportMemoryAllocateInfo local_export_info;
-   if (property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+   if ((property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) && !res_info) {
       if (dev->physical_device->is_dma_buf_fd_export_supported ||
           dev->physical_device->is_opaque_fd_export_supported) {
          VkExternalMemoryHandleTypeFlagBits handle_type =
@@ -185,8 +187,8 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
             export_info = &local_export_info;
             ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
          }
-      } else if (!res_info && dev->physical_device->EXT_external_memory_dma_buf) {
-         /* For non-import case, we allocate gbm bo to force import. */
+      } else if (dev->physical_device->EXT_external_memory_dma_buf) {
+         /* Allocate gbm bo to force dma_buf fd import. */
          VkResult result;
 
          if (export_info) {
