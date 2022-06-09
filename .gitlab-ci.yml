@@ -11,7 +11,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 581257
+  MESA_PIPELINE_ID: 608303
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
   # Per-pipeline artifact storage on MinIO
@@ -32,7 +32,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: 7339ad2ed3b974f074053e49331551f71709150d
+    ref: 6b9b28f94eb9b356f8b66b9d75368f5c2ebf0ca7
     file:
       - '/.gitlab-ci/image-tags.yml'
 

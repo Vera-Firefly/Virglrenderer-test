@@ -21,6 +21,7 @@ dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two
 dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two_samples.multisample_texture_2,Fail
 dEQP-GLES3.functional.clipping.line.wide_line_clip_viewport_center,Fail
 dEQP-GLES3.functional.clipping.line.wide_line_clip_viewport_corner,Fail
+dEQP-GLES3.functional.draw_buffers_indexed.random.max_required_draw_buffers.9,Fail
 dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag,Fail
 dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_dst_x,Fail
 dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_src_dst_x,Fail
@@ -247,10 +248,6 @@ spec@arb_gpu_shader5@arb_gpu_shader5-xfb-streams,Fail
 spec@arb_gpu_shader5@execution@precise@fs-fract-of-nan,Fail
 spec@arb_gpu_shader5@linker@stream-different-zero-gs-fs,Fail
 spec@arb_gpu_shader5@linker@stream-invalid-prim-output,Fail
-spec@arb_internalformat_query2@all internalformat_<x>_size pname checks,Crash
-spec@arb_internalformat_query2@all internalformat_<x>_type pname checks,Crash
-spec@arb_internalformat_query2@image_format_compatibility_type pname checks,Crash
-spec@arb_internalformat_query2@max dimensions related pname checks,Crash
 spec@arb_occlusion_query@occlusion_query_conform,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi1,Fail
 spec@arb_occlusion_query@occlusion_query_conform@GetObjivAval_multi2,Fail
@@ -566,7 +563,7 @@ spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB16F- swizzled-
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGB32F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA16F- swizzled- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor-swizzled@GL_RGBA32F- swizzled- border color only,Fail
-spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Crash
+spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch,Fail
 spec@arb_texture_multisample@arb_texture_multisample-dsa-texelfetch@Texture type: GL_RGB9_E5,Fail
 spec@arb_texture_query_lod@execution@fs-texturequerylod-nearest-biased,Fail
 spec@arb_texture_rectangle@glsl-fs-shadow2drect-07,Fail
