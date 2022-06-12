@@ -72,6 +72,7 @@ void
 virgl_resource_table_cleanup(void)
 {
    util_hash_table_destroy(virgl_resource_table);
+   virgl_resource_table = NULL;
    memset(&pipe_callbacks, 0, sizeof(pipe_callbacks));
 }
 

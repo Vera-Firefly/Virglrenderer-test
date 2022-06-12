@@ -53,6 +53,7 @@ void
 virgl_context_table_cleanup(void)
 {
    util_hash_table_destroy(virgl_context_table);
+   virgl_context_table = NULL;
 }
 
 void
