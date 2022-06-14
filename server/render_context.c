@@ -182,8 +182,7 @@ render_context_dispatch_submit_fence(struct render_context *ctx,
    const uint32_t seqno = req->submit_fence.seqno;
 
    assert(ring_idx < (uint32_t)ctx->timeline_count);
-   int ret = virgl_renderer_context_create_fence(ctx->ctx_id, flags, ring_idx,
-                                                 seqno);
+   int ret = virgl_renderer_context_create_fence(ctx->ctx_id, flags, ring_idx, seqno);
 
    return !ret;
 }
@@ -399,21 +398,34 @@ render_context_fini(struct render_context *ctx)
    render_socket_fini(&ctx->socket);
 }
 
+static void
+render_context_set_thread_name(uint32_t ctx_id, const char *ctx_name)
+{
+   char thread_name[16];
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "virgl-%d-%s", ctx_id, ctx_name);
+   u_thread_setname(thread_name);
+}
+
 static bool
 render_context_init_name(struct render_context *ctx,
                          uint32_t ctx_id,
                          const char *ctx_name)
 {
-   const size_t name_size = strlen(ctx_name) + 16;
-   ctx->name = malloc(name_size);
+   ctx->name_len = strlen(ctx_name);
+   ctx->name = malloc(ctx->name_len + 1);
    if (!ctx->name)
       return false;
 
-   ctx->name_len = snprintf(ctx->name, name_size, "virgl-%d-%s", ctx_id, ctx_name);
-   if (ctx->name_len >= name_size)
-      ctx->name_len = name_size - 1;
+   strcpy(ctx->name, ctx_name);
 
-   u_thread_setname(ctx->name);
+   render_context_set_thread_name(ctx_id, ctx_name);
+
+#ifdef _GNU_SOURCE
+   /* Sets the guest app executable name used by mesa to load app-specific driver
+    * configuration. */
+   program_invocation_name = ctx->name;
+   program_invocation_short_name = ctx->name;
+#endif
 
    return true;
 }
