@@ -5073,6 +5073,109 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
    }
 }
 
+/* TGSI possibly emits VS, TES, TCS, and GEOM outputs with layouts (i.e.
+ * it gives components), but it doesn't do so for the corresponding inputs from
+ * TXS, GEOM, abd TES, so that we have to apply the output layouts from the
+ * previous shader stage to the according inputs.
+ */
+
+static void apply_prev_layout(const struct vrend_shader_key *key,
+                              struct vrend_shader_io inputs[],
+                              uint32_t *num_inputs)
+{
+   /* Walk through all inputs and see whether we have a corresonding output from
+    * the previous shader that uses a different layout. It may even be that one
+    * input be the combination of two inputs. */
+
+   for (unsigned i = 0; i < *num_inputs; ++i ) {
+      unsigned i_input = i;
+      struct vrend_shader_io *io = &inputs[i];
+
+      if (io->name == TGSI_SEMANTIC_GENERIC || io->name == TGSI_SEMANTIC_PATCH) {
+
+         bool already_found_one = false;
+         const struct vrend_layout_info *layout = key->prev_stage_generic_and_patch_outputs_layout;
+         for (unsigned generic_index = 0; generic_index  < key->input.num_generic_and_patch; ++generic_index, ++layout) {
+
+            /* Identify by sid and arrays_id  */
+            if (io->sid == layout->sid &&
+                (io->array_id == layout->array_id) &&
+                (io->name == layout->name)) {
+
+               /* We have already one IO with the same SID and arrays ID, so we need to duplicate it */
+               if (already_found_one) {
+                  memmove(io + 1, io, (*num_inputs - i_input) * sizeof(struct vrend_shader_io));
+                  (*num_inputs)++;
+                  ++io;
+                  ++i_input;
+
+               }
+
+               if (already_found_one) {
+                  io->layout_location = layout->location;
+                  io->array_id = layout->array_id;
+                  io->num_components = 4;
+                  if (io->num_components == 1)
+                     io->override_no_wm = true;
+                  if (i_input < *num_inputs - 1) {
+                     already_found_one = (io[1].sid != layout->sid || io[1].array_id != layout->array_id);
+                  }
+               }
+            }
+         }
+      }
+      ++io;
+      ++i_input;
+   }
+}
+
+static void evaluate_layout_overlays(unsigned nio, struct vrend_shader_io *io,
+                                     const char *name_prefix, unsigned coord_replace)
+{
+   int next_loc = 1;
+
+   /* IO elements may be emitted for the same location but with
+    * non-overlapping swizzles, therefore, we modify the name of
+    * the variable to include the swizzle mask.
+    *
+    * Since TGSI also emits inputs that have no masks but are still at the
+    * same location, we also need to add an array ID.
+    */
+
+   for (unsigned i = 0; i < nio - 1; ++i) {
+      if ((io[i].name != TGSI_SEMANTIC_GENERIC &&
+          io[i].name != TGSI_SEMANTIC_PATCH) ||
+          io[i].usage_mask == 0xf ||
+          io[i].layout_location > 0 ||
+          io[i].overlapping_array)
+         continue;
+
+      for (unsigned j = i + 1; j < nio ; ++j) {
+         if ((io[j].name != TGSI_SEMANTIC_GENERIC &&
+             io[j].name != TGSI_SEMANTIC_PATCH) ||
+             io[j].usage_mask == 0xf ||
+             io[j].layout_location > 0 ||
+             io[j].overlapping_array)
+            continue;
+
+         /* Do the definition ranges overlap? */
+         if (io[i].last < io[j].first || io[i].first > io[j].last)
+            continue;
+
+         /* Overlapping ranges require explicite layouts and if they start at the
+          * same index thet location must be equal */
+         if (io[i].first == io[j].first) {
+            io[j].layout_location = io[i].layout_location = next_loc++;
+         } else {
+            io[i].layout_location = next_loc++;
+            io[j].layout_location = next_loc++;
+         }
+      }
+   }
+
+   rename_variables(nio, io, name_prefix, coord_replace);
+}
+
 static
 void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
 {
@@ -5089,6 +5192,8 @@ void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static void handle_io_arrays(struct dump_ctx *ctx)
 {
+   bool require_enhanced_layouts = false;
+
    /* If the guest sent real IO arrays then we declare them individually,
     * and have to do some work to deal with overlapping values, regions and
     * enhanced layouts */
@@ -5099,13 +5204,33 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       renumber_io_arrays(ctx->num_inputs, ctx->inputs);
       renumber_io_arrays(ctx->num_outputs, ctx->outputs);
 
+   }
+
+
+   /* In these shaders the inputs don't have the layout component information
+       * therefore, copy the info from the prev shaders output */
+   if (ctx->prog_type == TGSI_PROCESSOR_GEOMETRY ||
+       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ||
+       ctx->prog_type == TGSI_PROCESSOR_TESS_EVAL)
+      apply_prev_layout(ctx->key, ctx->inputs, &ctx->num_inputs);
+
+   if (ctx->guest_sent_io_arrays)  {
+      if (ctx->num_inputs > 0)
+         evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
+                                      get_stage_input_name_prefix(ctx, ctx->prog_type),
+                                      ctx->key->fs.coord_replace);
+
+      if (ctx->num_outputs > 0)
+         evaluate_layout_overlays(ctx->num_outputs, ctx->outputs,
+                                  get_stage_output_name_prefix(ctx->prog_type), 0);
    } else {
       /* The guest didn't send real arrays, do we might have to add a big array
-       * for all generic and another for patch inputs */
+       * for all generic and another ofr patch inputs */
       rewrite_io_ranged(ctx);
       rewrite_components(ctx->num_inputs, ctx->inputs,
                          get_stage_input_name_prefix(ctx, ctx->prog_type),
                          ctx->key->fs.coord_replace, true);
+
       rewrite_components(ctx->num_outputs, ctx->outputs,
                          get_stage_output_name_prefix(ctx->prog_type), 0, true);
    }
