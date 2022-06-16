@@ -1483,9 +1483,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_BCOLOR)
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_bc%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC)
-            snprintf(ctx->inputs[i].glsl_name, 128, "%s_g%dA%d", name_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
+            snprintf(ctx->inputs[i].glsl_name, 128, "%s_g%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
-            snprintf(ctx->inputs[i].glsl_name, 128, "%s_p%dA%d", name_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
+            snprintf(ctx->inputs[i].glsl_name, 128, "%s_p%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_TEXCOORD)
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->inputs[i].sid);
          else
@@ -1734,9 +1734,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR)
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_bc%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH)
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%dA%d", name_prefix, ctx->outputs[i].sid, ctx->outputs[i].array_id);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%dA%d", name_prefix, ctx->outputs[i].sid, ctx->outputs[i].array_id);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_TEXCOORD)
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->outputs[i].sid);
          else
@@ -2155,13 +2155,13 @@ static const struct vrend_shader_io *get_io_slot(const struct vrend_shader_io *s
 static inline void
 get_blockname(char outvar[64], const char *stage_prefix, const struct vrend_shader_io *io)
 {
-   snprintf(outvar, 64, "block_%sg%dA%d", stage_prefix, io->sid, io->array_id);
+   snprintf(outvar, 64, "block_%sg%d", stage_prefix, io->sid);
 }
 
 static inline void
 get_blockvarname(char outvar[64], const char *stage_prefix, const struct vrend_shader_io *io, const char *postfix)
 {
-   snprintf(outvar, 64, "%sg%dA%d%s", stage_prefix, io->first, io->array_id, postfix);
+   snprintf(outvar, 64, "%sg%d%s", stage_prefix, io->first, postfix);
 }
 
 static void get_so_name(const struct dump_ctx *ctx, bool from_block, const struct vrend_shader_io *output, int index, char out_var[255], char *wm)
@@ -4967,7 +4967,7 @@ static void rename_variables(unsigned nio, struct vrend_shader_io *io,
           (coord_replace & (1 << io[i].sid)))
          continue;
       char io_type =  io[i].name == TGSI_SEMANTIC_GENERIC ? 'g' : 'p';
-      snprintf(io[i].glsl_name, 64, "%s_%c%dA%d", name_prefix, io_type, io[i].sid, io[i].array_id);
+      snprintf(io[i].glsl_name, 64, "%s_%c%d", name_prefix, io_type, io[i].sid);
    }
 }
 
@@ -5079,109 +5079,6 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
    }
 }
 
-/* TGSI possibly emits VS, TES, TCS, and GEOM outputs with layouts (i.e.
- * it gives components), but it doesn't do so for the corresponding inputs from
- * TXS, GEOM, abd TES, so that we have to apply the output layouts from the
- * previous shader stage to the according inputs.
- */
-
-static void apply_prev_layout(const struct vrend_shader_key *key,
-                              struct vrend_shader_io inputs[],
-                              uint32_t *num_inputs)
-{
-   /* Walk through all inputs and see whether we have a corresonding output from
-    * the previous shader that uses a different layout. It may even be that one
-    * input be the combination of two inputs. */
-
-   for (unsigned i = 0; i < *num_inputs; ++i ) {
-      unsigned i_input = i;
-      struct vrend_shader_io *io = &inputs[i];
-
-      if (io->name == TGSI_SEMANTIC_GENERIC || io->name == TGSI_SEMANTIC_PATCH) {
-
-         bool already_found_one = false;
-         const struct vrend_layout_info *layout = key->prev_stage_generic_and_patch_outputs_layout;
-         for (unsigned generic_index = 0; generic_index  < key->input.num_generic_and_patch; ++generic_index, ++layout) {
-
-            /* Identify by sid and arrays_id  */
-            if (io->sid == layout->sid &&
-                (io->array_id == layout->array_id) &&
-                (io->name == layout->name)) {
-
-               /* We have already one IO with the same SID and arrays ID, so we need to duplicate it */
-               if (already_found_one) {
-                  memmove(io + 1, io, (*num_inputs - i_input) * sizeof(struct vrend_shader_io));
-                  (*num_inputs)++;
-                  ++io;
-                  ++i_input;
-
-               }
-
-               if (already_found_one) {
-                  io->layout_location = layout->location;
-                  io->array_id = layout->array_id;
-                  io->num_components = 4;
-                  if (io->num_components == 1)
-                     io->override_no_wm = true;
-                  if (i_input < *num_inputs - 1) {
-                     already_found_one = (io[1].sid != layout->sid || io[1].array_id != layout->array_id);
-                  }
-               }
-            }
-         }
-      }
-      ++io;
-      ++i_input;
-   }
-}
-
-static void evaluate_layout_overlays(unsigned nio, struct vrend_shader_io *io,
-                                     const char *name_prefix, unsigned coord_replace)
-{
-   int next_loc = 1;
-
-   /* IO elements may be emitted for the same location but with
-    * non-overlapping swizzles, therefore, we modify the name of
-    * the variable to include the swizzle mask.
-    *
-    * Since TGSI also emits inputs that have no masks but are still at the
-    * same location, we also need to add an array ID.
-    */
-
-   for (unsigned i = 0; i < nio - 1; ++i) {
-      if ((io[i].name != TGSI_SEMANTIC_GENERIC &&
-          io[i].name != TGSI_SEMANTIC_PATCH) ||
-          io[i].usage_mask == 0xf ||
-          io[i].layout_location > 0 ||
-          io[i].overlapping_array)
-         continue;
-
-      for (unsigned j = i + 1; j < nio ; ++j) {
-         if ((io[j].name != TGSI_SEMANTIC_GENERIC &&
-             io[j].name != TGSI_SEMANTIC_PATCH) ||
-             io[j].usage_mask == 0xf ||
-             io[j].layout_location > 0 ||
-             io[j].overlapping_array)
-            continue;
-
-         /* Do the definition ranges overlap? */
-         if (io[i].last < io[j].first || io[i].first > io[j].last)
-            continue;
-
-         /* Overlapping ranges require explicite layouts and if they start at the
-          * same index thet location must be equal */
-         if (io[i].first == io[j].first) {
-            io[j].layout_location = io[i].layout_location = next_loc++;
-         } else {
-            io[i].layout_location = next_loc++;
-            io[j].layout_location = next_loc++;
-         }
-      }
-   }
-
-   rename_variables(nio, io, name_prefix, coord_replace);
-}
-
 static
 void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
 {
@@ -5198,8 +5095,6 @@ void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static void handle_io_arrays(struct dump_ctx *ctx)
 {
-   bool require_enhanced_layouts = false;
-
    /* If the guest sent real IO arrays then we declare them individually,
     * and have to do some work to deal with overlapping values, regions and
     * enhanced layouts */
@@ -5210,33 +5105,13 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       renumber_io_arrays(ctx->num_inputs, ctx->inputs);
       renumber_io_arrays(ctx->num_outputs, ctx->outputs);
 
-   }
-
-
-   /* In these shaders the inputs don't have the layout component information
-       * therefore, copy the info from the prev shaders output */
-   if (ctx->prog_type == TGSI_PROCESSOR_GEOMETRY ||
-       ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ||
-       ctx->prog_type == TGSI_PROCESSOR_TESS_EVAL)
-      apply_prev_layout(ctx->key, ctx->inputs, &ctx->num_inputs);
-
-   if (ctx->guest_sent_io_arrays)  {
-      if (ctx->num_inputs > 0)
-         evaluate_layout_overlays(ctx->num_inputs, ctx->inputs,
-                                      get_stage_input_name_prefix(ctx, ctx->prog_type),
-                                      ctx->key->fs.coord_replace);
-
-      if (ctx->num_outputs > 0)
-         evaluate_layout_overlays(ctx->num_outputs, ctx->outputs,
-                                  get_stage_output_name_prefix(ctx->prog_type), 0);
    } else {
       /* The guest didn't send real arrays, do we might have to add a big array
-       * for all generic and another ofr patch inputs */
+       * for all generic and another for patch inputs */
       rewrite_io_ranged(ctx);
       rewrite_components(ctx->num_inputs, ctx->inputs,
                          get_stage_input_name_prefix(ctx, ctx->prog_type),
                          ctx->key->fs.coord_replace, true);
-
       rewrite_components(ctx->num_outputs, ctx->outputs,
                          get_stage_output_name_prefix(ctx->prog_type), 0, true);
    }
@@ -7288,9 +7163,7 @@ static void emit_interp_info(struct vrend_glsl_strbufs *glsl_strbufs,
 struct sematic_info {
    enum tgsi_semantic name;
    const char prefix;
-   const char *postfix;
 };
-
 
 static void emit_match_interfaces(struct vrend_glsl_strbufs *glsl_strbufs,
                                   const struct dump_ctx *ctx,
@@ -7304,9 +7177,9 @@ static void emit_match_interfaces(struct vrend_glsl_strbufs *glsl_strbufs,
       int i = u_bit_scan64(&mask);
       emit_interp_info(glsl_strbufs, ctx->cfg, &ctx->key->fs_info,
                        semantic->name, i, ctx->key->flatshade);
-      emit_hdrf(glsl_strbufs, "out vec4 %s_%c%d%s%s;\n",
+      emit_hdrf(glsl_strbufs, "out vec4 %s_%c%d%s;\n",
                 get_stage_output_name_prefix(ctx->prog_type),
-                semantic->prefix, i, semantic->postfix,
+                semantic->prefix, i,
                 ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL ? "[]" : "");
          }
 }
@@ -7355,8 +7228,8 @@ static int emit_ios(const struct dump_ctx *ctx,
       return glsl_ver_required;
    }
 
-   const struct sematic_info generic = {TGSI_SEMANTIC_GENERIC, 'g', "A0"};
-   const struct sematic_info texcoord = {TGSI_SEMANTIC_TEXCOORD, 't', ""};
+   const struct sematic_info generic = {TGSI_SEMANTIC_GENERIC, 'g'};
+   const struct sematic_info texcoord = {TGSI_SEMANTIC_TEXCOORD, 't'};
 
    emit_match_interfaces(glsl_strbufs, ctx, &generic_ios->match, &generic);
    emit_match_interfaces(glsl_strbufs, ctx, &texcoord_ios->match, &texcoord);
@@ -7822,15 +7695,11 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_c%d", shader_in_prefix, ctx->inputs[i].sid);
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_c%d", shader_out_prefix, ctx->inputs[i].sid);
          } else if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC) {
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_g%dA%d",
-                     shader_in_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%dA%d", shader_out_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id);
+            snprintf(ctx->inputs[i].glsl_name, 64, "%s_g%d", shader_in_prefix, ctx->inputs[i].sid);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%d", shader_out_prefix, ctx->inputs[i].sid);
          } else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_p%dA%d",
-                     shader_in_prefix, ctx->inputs[i].sid, ctx->inputs[i].array_id);
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%dA%d", shader_out_prefix, ctx->inputs[i].sid,
-                     ctx->inputs[i].array_id);
+            snprintf(ctx->inputs[i].glsl_name, 64, "%s_p%d", shader_in_prefix, ctx->inputs[i].sid);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%d", shader_out_prefix, ctx->inputs[i].sid);
          } else {
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_%d", shader_in_prefix, ctx->inputs[i].first);
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_%d", shader_out_prefix, ctx->inputs[i].first);
