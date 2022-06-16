@@ -10936,8 +10936,15 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
                     (GLint*)(caps->v2.max_atomic_counters + PIPE_SHADER_VERTEX));
       glGetIntegerv(GL_MAX_VERTEX_ATOMIC_COUNTER_BUFFERS,
                     (GLint*)(caps->v2.max_atomic_counter_buffers + PIPE_SHADER_VERTEX));
-      glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTERS,
-                    (GLint*)(caps->v2.max_atomic_counters + PIPE_SHADER_FRAGMENT));
+
+      /* OpenGL ES doesn't have the atomicCounter*() operations, force lowering to ssbo */
+      if (gles_ver > 0) {
+         caps->v2.max_atomic_counters[PIPE_SHADER_FRAGMENT] = 0;
+      } else {
+         glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTERS,
+                       (GLint*)(caps->v2.max_atomic_counters + PIPE_SHADER_FRAGMENT));
+      }
+
       glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTER_BUFFERS,
                     (GLint*)(caps->v2.max_atomic_counter_buffers + PIPE_SHADER_FRAGMENT));
 

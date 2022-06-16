@@ -273,8 +273,6 @@ spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
-spec@arb_shader_atomic_counter_ops@execution@add,Fail
-spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail
 spec@arb_shader_atomic_counters@fragment-discard,Fail
 spec@arb_shader_atomic_counters@function-argument,Fail
 spec@arb_shader_image_load_store@early-z,ExpectedFail
@@ -419,11 +417,10 @@ spec@arb_shader_image_load_store@semantics,Fail
 spec@arb_shader_image_load_store@semantics@imageStore/Vertex shader/rgba32f/image1D test,Fail
 spec@arb_shader_storage_buffer_object@execution@indirect,Fail
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref,Fail
-spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,ExpectedFail
-spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int,Fail
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
 spec@arb_shader_storage_buffer_object@maxblocks,Fail
+spec@arb_shader_storage_buffer_object@minmax,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgradcube,ExpectedFail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,ExpectedFail
 spec@arb_shader_texture_lod@execution@glsl-fs-shadow2dgradarb-07,Fail
