@@ -52,6 +52,13 @@ option(
   description : 'enable the validation layer for venus'
 )
 
+option(
+  'check-gl-errors',
+  type : 'boolean',
+  value : 'true',
+  description : 'treat host-side gl errors as fatal'
+)
+
 # NOTE: expecting some slight fencing changes between host and guest
 # once ring_idx is plumbed through crosvm (ie. synchronizing between
 # host CPU and guest CPU will be a separate fence timeline)

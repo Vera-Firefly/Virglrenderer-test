@@ -251,6 +251,11 @@ if with_drm_msm
 endif
 with_drm = with_drm_msm
 
+with_check_gl_errors = get_option('check-gl-errors')
+if with_check_gl_errors
+   conf_data.set('CHECK_GL_ERRORS', 1)
+endif
+
 with_render_server = get_option('render-server')
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')

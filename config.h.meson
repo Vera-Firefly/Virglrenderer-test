@@ -31,6 +31,7 @@
 #mesondefine HAVE_PTHREAD_SETAFFINITY
 #mesondefine HAVE_EPOXY_EGL_H
 #mesondefine HAVE_EPOXY_GLX_H
+#mesondefine CHECK_GL_ERRORS
 #mesondefine ENABLE_MINIGBM_ALLOCATION
 #mesondefine ENABLE_VENUS
 #mesondefine ENABLE_VENUS_VALIDATE

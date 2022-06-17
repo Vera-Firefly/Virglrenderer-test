@@ -6572,11 +6572,19 @@ bool vrend_check_no_error(struct vrend_context *ctx)
       return true;
 
    while (err != GL_NO_ERROR) {
+#ifdef CHECK_GL_ERRORS
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNKNOWN, err);
+#else
+      vrend_printf("GL error reported (%d) for context %d\n", err, ctx->ctx_id);
+#endif
       err = glGetError();
    }
 
+#ifdef CHECK_GL_ERRORS
    return false;
+#else
+   return true;
+#endif
 }
 
 const struct virgl_resource_pipe_callbacks *
