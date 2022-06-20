@@ -564,11 +564,20 @@ static int make_current(virgl_renderer_gl_context ctx)
    return state.cbs->make_current(state.cookie, 0, ctx);
 }
 
+static int get_drm_fd(void)
+{
+   if (state.cbs->get_drm_fd)
+      return state.cbs->get_drm_fd(state.cookie);
+
+   return -1;
+}
+
 static const struct vrend_if_cbs vrend_cbs = {
    ctx0_fence_retire,
    create_gl_context,
    destroy_gl_context,
    make_current,
+   get_drm_fd,
 };
 
 static int
