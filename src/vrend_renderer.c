@@ -3726,10 +3726,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 
    if (prev) {
       if (!prev->sinfo.separable_program || !sel->sinfo.separable_program) {
-         key->input = prev->sinfo.out;
-         memcpy(key->prev_stage_generic_and_patch_outputs_layout,
-            prev->sinfo.generic_outputs_layout,
-            prev->sinfo.out.num_generic_and_patch * sizeof (struct vrend_layout_info));
+         key->require_input_arrays = prev->sinfo.has_output_arrays;
          memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
       }
 
@@ -3804,7 +3801,12 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    if (next_type != PIPE_SHADER_INVALID && sub_ctx->shaders[next_type]) {
       if (!sub_ctx->shaders[next_type]->sinfo.separable_program ||
           !sel->sinfo.separable_program) {
-         key->output = sub_ctx->shaders[next_type]->sinfo.in;
+         struct vrend_shader_selector *next = sub_ctx->shaders[next_type];
+
+         key->use_pervertex_in = next->sinfo.use_pervertex_in;
+         key->require_output_arrays = next->sinfo.has_input_arrays;
+         key->out_generic_expected_mask = next->sinfo.in_generic_emitted_mask;
+         key->out_texcoord_expected_mask = next->sinfo.in_texcoord_emitted_mask;
       }
 
       /* FS gets the clip/cull info in the key from this shader, so

@@ -87,25 +87,24 @@ struct vrend_fs_shader_info {
 };
 
 struct vrend_shader_info_out {
-   uint64_t num_indirect_generic : 8;
-   uint64_t num_indirect_patch : 8;
-   uint64_t num_generic_and_patch : 8;
-   uint64_t guest_sent_io_arrays : 1;
+   uint8_t num_generic_and_patch;
+   uint8_t num_indirect_generic;
+   uint8_t num_indirect_patch;
+   bool guest_sent_io_arrays;
 };
 
 struct vrend_shader_info_in {
    uint64_t generic_emitted_mask;
    uint64_t texcoord_emitted_mask;
-   uint32_t num_indirect_generic : 8;
-   uint32_t num_indirect_patch : 8;
-   uint32_t use_pervertex : 1;
+   bool indirect_generic_or_patch : 1;
+   bool use_pervertex : 1;
 };
 
 
 struct vrend_shader_info {
    uint32_t invariant_outputs[4];
-   struct vrend_shader_info_out out;
-   struct vrend_shader_info_in in;
+   uint64_t in_generic_emitted_mask;
+   uint64_t in_texcoord_emitted_mask;
 
    struct vrend_layout_info generic_outputs_layout[64];
    struct vrend_array *sampler_arrays;
@@ -138,6 +137,9 @@ struct vrend_shader_info {
    uint8_t tes_point_mode : 1;
    uint8_t gles_use_tex_query_level : 1;
    uint8_t separable_program : 1;
+   uint8_t has_input_arrays : 1;
+   uint8_t has_output_arrays : 1;
+   uint8_t use_pervertex_in : 1;
 };
 
 struct vrend_variable_shader_info {
@@ -151,12 +153,12 @@ struct vrend_variable_shader_info {
 };
 
 struct vrend_shader_key {
+   uint64_t out_generic_expected_mask;
+   uint64_t out_texcoord_expected_mask;
+
    uint32_t force_invariant_inputs[4];
 
    struct vrend_fs_shader_info fs_info;
-   struct vrend_shader_info_out input;
-   struct vrend_shader_info_in output;
-   struct vrend_layout_info prev_stage_generic_and_patch_outputs_layout[64];
 
    union {
       struct {
@@ -202,7 +204,9 @@ struct vrend_shader_key {
    uint8_t tcs_present : 1;
    uint8_t tes_present : 1;
    uint8_t flatshade : 1;
-
+   uint8_t require_input_arrays : 1;
+   uint8_t require_output_arrays : 1;
+   uint8_t use_pervertex_in : 1;
 };
 
 struct vrend_shader_cfg {
