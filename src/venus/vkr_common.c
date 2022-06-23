@@ -67,7 +67,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_separate_stencil_usage = true,
    .EXT_shader_viewport_index_layer = true,
    /* promoted to VK_VERSION_1_3 */
-   .KHR_copy_commands2 = false,
+   .KHR_copy_commands2 = true,
    .KHR_dynamic_rendering = false,
    .KHR_format_feature_flags2 = false,
    .KHR_maintenance4 = false,

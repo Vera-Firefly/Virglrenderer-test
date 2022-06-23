@@ -292,11 +292,25 @@ vkr_dispatch_vkCmdCopyBuffer(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_dispatch_vkCmdCopyBuffer2(UNUSED struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkCmdCopyBuffer2 *args)
+{
+   VKR_CMD_CALL(CmdCopyBuffer2, args, args->pCopyBufferInfo);
+}
+
+static void
 vkr_dispatch_vkCmdCopyImage(UNUSED struct vn_dispatch_context *dispatch,
                             struct vn_command_vkCmdCopyImage *args)
 {
    VKR_CMD_CALL(CmdCopyImage, args, args->srcImage, args->srcImageLayout, args->dstImage,
                 args->dstImageLayout, args->regionCount, args->pRegions);
+}
+
+static void
+vkr_dispatch_vkCmdCopyImage2(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdCopyImage2 *args)
+{
+   VKR_CMD_CALL(CmdCopyImage2, args, args->pCopyImageInfo);
 }
 
 static void
@@ -308,6 +322,13 @@ vkr_dispatch_vkCmdBlitImage(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_dispatch_vkCmdBlitImage2(UNUSED struct vn_dispatch_context *dispatch,
+                             struct vn_command_vkCmdBlitImage2 *args)
+{
+   VKR_CMD_CALL(CmdBlitImage2, args, args->pBlitImageInfo);
+}
+
+static void
 vkr_dispatch_vkCmdCopyBufferToImage(UNUSED struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdCopyBufferToImage *args)
 {
@@ -316,11 +337,25 @@ vkr_dispatch_vkCmdCopyBufferToImage(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_dispatch_vkCmdCopyBufferToImage2(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdCopyBufferToImage2 *args)
+{
+   VKR_CMD_CALL(CmdCopyBufferToImage2, args, args->pCopyBufferToImageInfo);
+}
+
+static void
 vkr_dispatch_vkCmdCopyImageToBuffer(UNUSED struct vn_dispatch_context *dispatch,
                                     struct vn_command_vkCmdCopyImageToBuffer *args)
 {
    VKR_CMD_CALL(CmdCopyImageToBuffer, args, args->srcImage, args->srcImageLayout,
                 args->dstBuffer, args->regionCount, args->pRegions);
+}
+
+static void
+vkr_dispatch_vkCmdCopyImageToBuffer2(UNUSED struct vn_dispatch_context *dispatch,
+                                     struct vn_command_vkCmdCopyImageToBuffer2 *args)
+{
+   VKR_CMD_CALL(CmdCopyImageToBuffer2, args, args->pCopyImageToBufferInfo);
 }
 
 static void
@@ -370,6 +405,13 @@ vkr_dispatch_vkCmdResolveImage(UNUSED struct vn_dispatch_context *dispatch,
 {
    VKR_CMD_CALL(CmdResolveImage, args, args->srcImage, args->srcImageLayout,
                 args->dstImage, args->dstImageLayout, args->regionCount, args->pRegions);
+}
+
+static void
+vkr_dispatch_vkCmdResolveImage2(UNUSED struct vn_dispatch_context *dispatch,
+                                struct vn_command_vkCmdResolveImage2 *args)
+{
+   VKR_CMD_CALL(CmdResolveImage2, args, args->pResolveImageInfo);
 }
 
 static void
@@ -784,10 +826,15 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdDispatch = vkr_dispatch_vkCmdDispatch;
    dispatch->dispatch_vkCmdDispatchIndirect = vkr_dispatch_vkCmdDispatchIndirect;
    dispatch->dispatch_vkCmdCopyBuffer = vkr_dispatch_vkCmdCopyBuffer;
+   dispatch->dispatch_vkCmdCopyBuffer2 = vkr_dispatch_vkCmdCopyBuffer2;
    dispatch->dispatch_vkCmdCopyImage = vkr_dispatch_vkCmdCopyImage;
+   dispatch->dispatch_vkCmdCopyImage2 = vkr_dispatch_vkCmdCopyImage2;
    dispatch->dispatch_vkCmdBlitImage = vkr_dispatch_vkCmdBlitImage;
+   dispatch->dispatch_vkCmdBlitImage2 = vkr_dispatch_vkCmdBlitImage2;
    dispatch->dispatch_vkCmdCopyBufferToImage = vkr_dispatch_vkCmdCopyBufferToImage;
+   dispatch->dispatch_vkCmdCopyBufferToImage2 = vkr_dispatch_vkCmdCopyBufferToImage2;
    dispatch->dispatch_vkCmdCopyImageToBuffer = vkr_dispatch_vkCmdCopyImageToBuffer;
+   dispatch->dispatch_vkCmdCopyImageToBuffer2 = vkr_dispatch_vkCmdCopyImageToBuffer2;
    dispatch->dispatch_vkCmdUpdateBuffer = vkr_dispatch_vkCmdUpdateBuffer;
    dispatch->dispatch_vkCmdFillBuffer = vkr_dispatch_vkCmdFillBuffer;
    dispatch->dispatch_vkCmdClearColorImage = vkr_dispatch_vkCmdClearColorImage;
@@ -795,6 +842,7 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkCmdClearDepthStencilImage;
    dispatch->dispatch_vkCmdClearAttachments = vkr_dispatch_vkCmdClearAttachments;
    dispatch->dispatch_vkCmdResolveImage = vkr_dispatch_vkCmdResolveImage;
+   dispatch->dispatch_vkCmdResolveImage2 = vkr_dispatch_vkCmdResolveImage2;
    dispatch->dispatch_vkCmdSetEvent = vkr_dispatch_vkCmdSetEvent;
    dispatch->dispatch_vkCmdResetEvent = vkr_dispatch_vkCmdResetEvent;
    dispatch->dispatch_vkCmdWaitEvents = vkr_dispatch_vkCmdWaitEvents;
