@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[89];
+      bool enabled[90];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -28,6 +28,7 @@ struct vn_info_extension_table {
          bool EXT_host_query_reset;
          bool EXT_image_drm_format_modifier;
          bool EXT_image_robustness;
+         bool EXT_image_view_min_lod;
          bool EXT_index_type_uint8;
          bool EXT_inline_uniform_block;
          bool EXT_line_rasterization;
@@ -116,8 +117,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 89;
-static const struct vn_info_extension _vn_info_extensions[89] = {
+static const uint32_t _vn_info_extension_count = 90;
+static const struct vn_info_extension _vn_info_extensions[90] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
@@ -132,6 +133,7 @@ static const struct vn_info_extension _vn_info_extensions[89] = {
    { "VK_EXT_host_query_reset", 262, 1 },
    { "VK_EXT_image_drm_format_modifier", 159, 2 },
    { "VK_EXT_image_robustness", 336, 1 },
+   { "VK_EXT_image_view_min_lod", 392, 1 },
    { "VK_EXT_index_type_uint8", 266, 1 },
    { "VK_EXT_inline_uniform_block", 139, 1 },
    { "VK_EXT_line_rasterization", 260, 1 },
