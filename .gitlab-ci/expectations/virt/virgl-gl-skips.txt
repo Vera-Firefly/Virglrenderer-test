@@ -61,7 +61,6 @@ spec@ext_gpu_shader4@execution@texelfetch@vs-texelfetch-isampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@vs-texelfetch-sampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@vs-texelfetch-usampler1darray
 spec@ext_texture_array@texsubimage array
-spec@glsl-1.30@exe
 spec@glsl-1.30@execution@texelfetchoffset@vs-texelfetch-sampler1darray
 spec@glsl-1.30@execution@texelfetch@vs-texelfetch-sampler1darray
 spec@glsl-1.50@execution@interface-blocks-api-access-members

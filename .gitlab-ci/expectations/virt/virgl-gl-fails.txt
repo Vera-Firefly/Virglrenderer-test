@@ -529,6 +529,16 @@ spec@glsl-1.10@execution@samplers@glsl-fs-shadow1d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-07,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-08,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
+spec@glsl-1.30@execution@texelfetch@fs-texelfetch-isampler1darray,Fail
+spec@glsl-1.30@execution@texelfetch@fs-texelfetch-sampler1darray,Fail
+spec@glsl-1.30@execution@texelfetch@fs-texelfetch-usampler1darray,Fail
+spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-isampler1darray,Fail
+spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-sampler1darray,Fail
+spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-usampler1darray,Fail
+spec@glsl-1.30@execution@texelfetchoffset@vs-texelfetch-isampler1darray,Fail
+spec@glsl-1.30@execution@texelfetchoffset@vs-texelfetch-usampler1darray,Fail
+spec@glsl-1.30@execution@texelfetch@vs-texelfetch-isampler1darray,Fail
+spec@glsl-1.30@execution@texelfetch@vs-texelfetch-usampler1darray,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
 spec@glsl-1.50@execution@variable-indexing@gs-input-array-float-index-rd,Fail
