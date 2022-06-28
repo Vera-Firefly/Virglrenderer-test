@@ -1526,9 +1526,6 @@ static void bind_const_locs(struct vrend_linked_shader_program *sprog,
 static int bind_ubo_locs(struct vrend_linked_shader_program *sprog,
                          enum pipe_shader_type shader_type, int next_ubo_id)
 {
-   if (!has_feature(feat_ubo))
-      return next_ubo_id;
-
    const struct vrend_shader_info *sinfo = &sprog->ss[shader_type]->sel->sinfo;
    if (sinfo->ubo_used_mask) {
       const char *prefix = pipe_shader_to_prefix(shader_type);
@@ -3049,9 +3046,6 @@ void vrend_set_uniform_buffer(struct vrend_context *ctx,
 {
    struct vrend_resource *res;
 
-   if (!has_feature(feat_ubo))
-      return;
-
    struct pipe_constant_buffer *cbs = &ctx->sub->cbs[shader][index];
    const uint32_t mask = 1u << index;
 
@@ -4523,9 +4517,6 @@ static int vrend_draw_bind_ubo_shader(struct vrend_sub_context *sub_ctx,
    uint32_t mask, dirty, update;
    struct pipe_constant_buffer *cb;
    struct vrend_resource *res;
-
-   if (!has_feature(feat_ubo))
-      return next_ubo_id;
 
    mask = sub_ctx->prog->ubo_used_mask[shader_type];
    dirty = sub_ctx->const_bufs_dirty[shader_type];
@@ -6748,7 +6739,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
       vrend_state.use_egl_fence = virgl_egl_supports_fences(egl);
 #endif
 
-   if (!vrend_check_no_error(vrend_state.ctx0)) {
+   if (!vrend_check_no_error(vrend_state.ctx0) || !has_feature(feat_ubo)) {
       vrend_renderer_fini();
       return EINVAL;
    }
