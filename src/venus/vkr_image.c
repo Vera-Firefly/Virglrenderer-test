@@ -186,6 +186,33 @@ vkr_dispatch_vkDestroySamplerYcbcrConversion(
    vkr_sampler_ycbcr_conversion_destroy_and_remove(dispatch->data, args);
 }
 
+static void
+vkr_dispatch_vkGetDeviceImageMemoryRequirements(
+   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_command_vkGetDeviceImageMemoryRequirements *args)
+{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
+   vn_replace_vkGetDeviceImageMemoryRequirements_args_handle(args);
+   vk->GetDeviceImageMemoryRequirements(args->device, args->pInfo,
+                                        args->pMemoryRequirements);
+}
+
+static void
+vkr_dispatch_vkGetDeviceImageSparseMemoryRequirements(
+   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_command_vkGetDeviceImageSparseMemoryRequirements *args)
+{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
+   vn_replace_vkGetDeviceImageSparseMemoryRequirements_args_handle(args);
+   vk->GetDeviceImageSparseMemoryRequirements(args->device, args->pInfo,
+                                              args->pSparseMemoryRequirementCount,
+                                              args->pSparseMemoryRequirements);
+}
+
 void
 vkr_context_init_image_dispatch(struct vkr_context *ctx)
 {
@@ -208,6 +235,10 @@ vkr_context_init_image_dispatch(struct vkr_context *ctx)
 
    dispatch->dispatch_vkGetImageDrmFormatModifierPropertiesEXT =
       vkr_dispatch_vkGetImageDrmFormatModifierPropertiesEXT;
+   dispatch->dispatch_vkGetDeviceImageMemoryRequirements =
+      vkr_dispatch_vkGetDeviceImageMemoryRequirements;
+   dispatch->dispatch_vkGetDeviceImageSparseMemoryRequirements =
+      vkr_dispatch_vkGetDeviceImageSparseMemoryRequirements;
 }
 
 void

@@ -131,6 +131,19 @@ vkr_dispatch_vkDestroyBufferView(struct vn_dispatch_context *dispatch,
    vkr_buffer_view_destroy_and_remove(dispatch->data, args);
 }
 
+static void
+vkr_dispatch_vkGetDeviceBufferMemoryRequirements(
+   UNUSED struct vn_dispatch_context *ctx,
+   struct vn_command_vkGetDeviceBufferMemoryRequirements *args)
+{
+   struct vkr_device *dev = vkr_device_from_handle(args->device);
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
+   vn_replace_vkGetDeviceBufferMemoryRequirements_args_handle(args);
+   vk->GetDeviceBufferMemoryRequirements(args->device, args->pInfo,
+                                         args->pMemoryRequirements);
+}
+
 void
 vkr_context_init_buffer_dispatch(struct vkr_context *ctx)
 {
@@ -147,6 +160,8 @@ vkr_context_init_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkGetBufferOpaqueCaptureAddress =
       vkr_dispatch_vkGetBufferOpaqueCaptureAddress;
    dispatch->dispatch_vkGetBufferDeviceAddress = vkr_dispatch_vkGetBufferDeviceAddress;
+   dispatch->dispatch_vkGetDeviceBufferMemoryRequirements =
+      vkr_dispatch_vkGetDeviceBufferMemoryRequirements;
 }
 
 void
