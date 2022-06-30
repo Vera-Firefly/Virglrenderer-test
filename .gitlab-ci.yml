@@ -14,9 +14,14 @@ variables:
   MESA_PIPELINE_ID: 660995
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
-  # Per-pipeline artifact storage on MinIO
-  PIPELINE_ARTIFACTS_BASE: ${MINIO_HOST}/artifacts/${CI_PROJECT_PATH}/${CI_PIPELINE_ID}
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
+  # per-pipeline artifact storage on MinIO
+  PIPELINE_ARTIFACTS_BASE: ${MINIO_HOST}/artifacts/${CI_PROJECT_PATH}/${CI_PIPELINE_ID}
+  # per-job artifact storage on MinIO
+  JOB_ARTIFACTS_BASE: ${PIPELINE_ARTIFACTS_BASE}/${CI_JOB_ID}
+  # reference images stored for traces
+  PIGLIT_REPLAY_REFERENCE_IMAGES_BASE: "${MINIO_HOST}/mesa-tracie-results/${FDO_UPSTREAM_REPO}"
+
 
 include:
   - project: 'freedesktop/ci-templates'
@@ -145,8 +150,11 @@ make check venus:
   extends:
     - .set-image-base-tag
   before_script:
+    - echo -n "${CI_JOB_JWT}" > "${CI_JOB_JWT_FILE}"
+    - unset CI_JOB_JWT
     - export CI_JOB_NAME_SANITIZED="$(echo $CI_JOB_NAME | tr ' /' '--')"
   variables:
+    CI_JOB_JWT_FILE: /minio_jwt
     MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_X86_TEST_GL_TAG}
   script:
@@ -276,3 +284,14 @@ piglit-gles-virt:
     VIRGL_HOST_API: GLES
     GPU_VERSION: virgl-gles
     CROSVM_GPU_ARGS: *deqp-gles-crosvm-gpu-args
+
+virgl-traces:
+  extends:
+    - .piglit-virt
+  variables:
+    GPU_VERSION: virgl-gl
+    CROSVM_GPU_ARGS: *deqp-gl-crosvm-gpu-args
+    EGL_PLATFORM: "surfaceless"
+    PIGLIT_REPLAY_DESCRIPTION_FILE: "${CI_PROJECT_DIR}/install/traces-virgl.yml"
+    PIGLIT_REPLAY_DEVICE_NAME: "gl-virgl"
+    PIGLIT_RESULTS: "virgl-replay"
