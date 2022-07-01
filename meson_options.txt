@@ -85,6 +85,13 @@ option(
 )
 
 option(
+  'video',
+  type : 'boolean',
+  value : 'false',
+  description : 'enable support for hardware video acceleration'
+)
+
+option(
   'tests',
   type : 'boolean',
   value : 'false',

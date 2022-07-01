@@ -742,6 +742,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          renderer_flags |= VREND_USE_ASYNC_FENCE_CB;
       if (flags & VIRGL_RENDERER_USE_EXTERNAL_BLOB)
          renderer_flags |= VREND_USE_EXTERNAL_BLOB;
+      if (flags & VIRGL_RENDERER_USE_VIDEO)
+         renderer_flags |= VREND_USE_VIDEO;
 
       ret = vrend_renderer_init(&vrend_cbs, renderer_flags);
       if (ret)

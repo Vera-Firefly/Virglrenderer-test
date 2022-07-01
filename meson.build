@@ -280,6 +280,13 @@ if with_render_server
    endif
 endif
 
+with_video = get_option('video')
+if with_video
+  conf_data.set('ENABLE_VIDEO', 1)
+  libva_dep = dependency('libva')
+  libvadrm_dep = dependency('libva-drm')
+endif
+
 configure_file(input : 'config.h.meson',
                output : 'config.h',
                configuration : conf_data)
@@ -316,6 +323,7 @@ summary({'c_args': (' ').join(get_option('c_args')),
         'drm-msm': with_drm_msm,
         'render server': with_render_server,
         'render server worker': with_render_server ? with_render_server_worker : 'none',
+        'video': with_video,
         'tests': with_tests,
         'fuzzer': with_fuzzer,
         'tracing': with_tracing,

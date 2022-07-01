@@ -82,6 +82,15 @@ static const char *command_names[VIRGL_MAX_COMMANDS] = {
    "GET_MEMORY_INFO",
    "SEND_STRING_MARKER",
    "LINK_SHADER",
+   "CREATE_VIDEO_CODEC",
+   "DESTROY_VIDEO_CODEC",
+   "CREATE_VIDEO_BUFFER",
+   "DESTROY_VIDEO_BUFFER",
+   "BEGIN_FRAME",
+   "DECODE_MACROBLOCK",
+   "DECODE_BITSTREAM",
+   "ENCODE_BITSTREAM",
+   "END_FRAME",
 };
 
 static const char *object_type_names[VIRGL_MAX_OBJECTS] = {

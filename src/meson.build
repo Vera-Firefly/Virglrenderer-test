@@ -160,6 +160,13 @@ proxy_sources = [
    'proxy/proxy_socket.c',
 ]
 
+video_sources = [
+   'virgl_video.c',
+   'virgl_video.h',
+   'vrend_video.c',
+   'vrend_video.h',
+]
+
 virgl_depends = [
    gallium_dep,
    epoxy_dep,
@@ -204,6 +211,11 @@ endif
 
 if with_render_server
    virgl_sources += proxy_sources
+endif
+
+if with_video
+  virgl_sources += video_sources
+  virgl_depends += [libva_dep, libvadrm_dep]
 endif
 
 libvirgl = static_library(

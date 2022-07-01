@@ -140,6 +140,10 @@ struct virgl_renderer_callbacks {
  */
 #define VIRGL_RENDERER_DRM           (1 << 10)
 
+/* Video encode/decode */
+#define VIRGL_RENDERER_USE_VIDEO     (1 << 11)
+
+
 #endif /* VIRGL_RENDERER_UNSTABLE_APIS */
 
 VIRGL_EXPORT int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks *cb);

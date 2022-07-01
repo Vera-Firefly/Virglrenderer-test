@@ -64,6 +64,10 @@
 #include <epoxy/glx.h>
 #endif
 
+#ifdef ENABLE_VIDEO
+#include <vrend_video.h>
+#endif
+
 /*
  * VIRGL_RENDERER_CAPSET_VIRGL has version 0 and 1, but they are both
  * virgl_caps_v1 and are exactly the same.
@@ -747,6 +751,10 @@ struct vrend_context {
 
    struct list_head sub_ctxs;
    struct list_head vrend_resources;
+
+#ifdef ENABLE_VIDEO
+   struct vrend_video_context *video;
+#endif
 
    struct vrend_sub_context *sub;
    struct vrend_sub_context *sub0;
@@ -7080,6 +7088,15 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
       return EINVAL;
    }
 
+#ifdef ENABLE_VIDEO
+   if (flags & VREND_USE_VIDEO) {
+        if (vrend_clicbs->get_drm_fd)
+            vrend_video_init(vrend_clicbs->get_drm_fd());
+        else
+            vrend_printf("video disabled due to missing get_drm_fd\n");
+   }
+#endif
+
    return 0;
 }
 
@@ -7095,6 +7112,10 @@ vrend_renderer_fini(void)
 
    vrend_free_fences();
    vrend_blitter_fini();
+
+#ifdef ENABLE_VIDEO
+   vrend_video_fini();
+#endif
 
    vrend_destroy_context(vrend_state.ctx0);
 
@@ -7209,6 +7230,10 @@ void vrend_destroy_context(struct vrend_context *ctx)
 
    vrend_free_fences_for_context(ctx);
 
+#ifdef ENABLE_VIDEO
+   vrend_video_destroy_context(ctx->video);
+#endif
+
    LIST_FOR_EACH_ENTRY_SAFE(untyped_res, untyped_res_tmp, &ctx->untyped_resources, head)
       free(untyped_res);
    vrend_ctx_resource_fini_table(ctx->res_hash);
@@ -7239,6 +7264,10 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    list_inithead(&grctx->sub_ctxs);
    list_inithead(&grctx->vrend_resources);
+
+#ifdef ENABLE_VIDEO
+   grctx->video = vrend_video_create_context(grctx);
+#endif
 
    grctx->res_hash = vrend_ctx_resource_init_table();
    list_inithead(&grctx->untyped_resources);
@@ -11561,6 +11590,12 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_separate_shader_objects))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_SSO;
+
+#ifdef ENABLE_VIDEO
+   vrend_video_fill_caps(caps);
+#else
+   caps->v2.num_video_caps = 0;
+#endif
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
@@ -12310,3 +12345,11 @@ void vrend_context_emit_string_marker(struct vrend_context *ctx, GLsizei length,
                                  length, message);
     }
 }
+
+#ifdef ENABLE_VIDEO
+struct vrend_video_context *vrend_context_get_video_ctx(struct vrend_context *ctx)
+{
+    return ctx->video;
+}
+#endif
+
