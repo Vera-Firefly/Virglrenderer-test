@@ -422,6 +422,9 @@ void vrend_check_texture_storage(struct vrend_format_table *table);
 void vrend_check_texture_multisample(struct vrend_format_table *table,
                                      bool enable_storage);
 
+struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx,
+                                                     int res_handle);
+
 void vrend_renderer_resource_destroy(struct vrend_resource *res);
 
 static inline void

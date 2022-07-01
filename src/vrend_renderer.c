@@ -790,7 +790,6 @@ struct vrend_context {
    void *fence_retire_data;
 };
 
-static struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx, int res_handle);
 static void vrend_pause_render_condition(struct vrend_context *ctx, bool pause);
 static void vrend_update_viewport_state(struct vrend_sub_context *sub_ctx);
 static void vrend_update_scissor_state(struct vrend_sub_context *sub_ctx);
@@ -11769,7 +11768,7 @@ void vrend_renderer_detach_res_ctx(struct vrend_context *ctx,
    vrend_ctx_resource_remove(ctx->res_hash, res->res_id);
 }
 
-static struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx, int res_handle)
+struct vrend_resource *vrend_renderer_ctx_res_lookup(struct vrend_context *ctx, int res_handle)
 {
    return vrend_ctx_resource_lookup(ctx->res_hash, res_handle);
 }
