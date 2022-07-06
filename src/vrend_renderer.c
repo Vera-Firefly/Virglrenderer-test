@@ -107,6 +107,7 @@ struct vrend_query {
    GLuint index;
    GLuint gltype;
    struct vrend_context *ctx;
+   int sub_ctx_id;
    struct vrend_resource *res;
    bool fake_samples_passed;
 };
@@ -10081,14 +10082,56 @@ static bool vrend_check_query(struct vrend_query *query)
    return true;
 }
 
+static struct vrend_sub_context *vrend_renderer_find_sub_ctx(struct vrend_context *ctx,
+                                                             int sub_ctx_id)
+{
+   struct vrend_sub_context *sub;
+
+   if (ctx->sub && ctx->sub->sub_ctx_id == sub_ctx_id)
+      return ctx->sub;
+
+   LIST_FOR_EACH_ENTRY(sub, &ctx->sub_ctxs, head) {
+      if (sub->sub_ctx_id == sub_ctx_id)
+         return sub;
+   }
+
+   return NULL;
+}
+
+static bool vrend_hw_switch_context_with_sub(struct vrend_context *ctx, int sub_ctx_id)
+{
+   if (!ctx)
+      return false;
+
+   if (ctx == vrend_state.current_ctx && sub_ctx_id == ctx->sub->sub_ctx_id &&
+       ctx->ctx_switch_pending == false) {
+      return true;
+   }
+
+   if (ctx->ctx_id != 0 && ctx->in_error)
+      return false;
+
+   struct vrend_sub_context *sub = vrend_renderer_find_sub_ctx(ctx, sub_ctx_id);
+   if (!sub)
+      return false;
+
+   ctx->sub = sub;
+
+   ctx->ctx_switch_pending = true;
+   vrend_finish_context_switch(ctx);
+
+   vrend_state.current_ctx = ctx;
+   return true;
+}
+
 static void vrend_renderer_check_queries(void)
 {
    struct vrend_query *query, *stor;
 
    LIST_FOR_EACH_ENTRY_SAFE(query, stor, &vrend_state.waiting_query_list, waiting_queries) {
-      if (!vrend_hw_switch_context(query->ctx, true)) {
-         vrend_printf("failed to switch to context (%d) for query %u\n",
-                      query->ctx->ctx_id, query->id);
+      if (!vrend_hw_switch_context_with_sub(query->ctx, query->sub_ctx_id)) {
+         vrend_printf("failed to switch to context (%d) with sub (%d) for query %u\n",
+                      query->ctx->ctx_id, query->sub_ctx_id, query->id);
       }
       else if (!vrend_check_query(query)) {
          continue;
@@ -10183,6 +10226,7 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
    q->type = query_type;
    q->index = query_index;
    q->ctx = ctx;
+   q->sub_ctx_id = ctx->sub->sub_ctx_id;
    q->fake_samples_passed = fake_samples_passed;
 
    vrend_resource_reference(&q->res, res);
@@ -11582,18 +11626,10 @@ void vrend_renderer_destroy_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
 
 void vrend_renderer_set_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
 {
-   struct vrend_sub_context *sub;
-   /* find the sub ctx */
-
-   if (ctx->sub && ctx->sub->sub_ctx_id == sub_ctx_id)
-      return;
-
-   LIST_FOR_EACH_ENTRY(sub, &ctx->sub_ctxs, head) {
-      if (sub->sub_ctx_id == sub_ctx_id) {
-         ctx->sub = sub;
-         vrend_clicbs->make_current(sub->gl_context);
-         break;
-      }
+   struct vrend_sub_context *sub = vrend_renderer_find_sub_ctx(ctx, sub_ctx_id);
+   if (sub && ctx->sub != sub) {
+      ctx->sub = sub;
+      vrend_clicbs->make_current(sub->gl_context);
    }
 }
 
