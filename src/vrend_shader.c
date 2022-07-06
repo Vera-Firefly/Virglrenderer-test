@@ -1463,8 +1463,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
                break;
             }
          }
-         /* fallthrough */
-      case TGSI_SEMANTIC_TESSCOORD:
          if (ctx->inputs[i].first != ctx->inputs[i].last ||
              ctx->inputs[i].array_id > 0) {
             ctx->guest_sent_io_arrays = true;
@@ -1711,7 +1709,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
          /* fallthrough */
       case TGSI_SEMANTIC_GENERIC:
       case TGSI_SEMANTIC_TEXCOORD:
-      case TGSI_SEMANTIC_TESSCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX)
             if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
                color_offset = -1;
@@ -7703,7 +7700,6 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
 
       case TGSI_SEMANTIC_PATCH:
       case TGSI_SEMANTIC_GENERIC:
-      case TGSI_SEMANTIC_TESSCOORD:
          if (ctx->inputs[i].first != ctx->inputs[i].last ||
              ctx->inputs[i].array_id > 0) {
             ctx->guest_sent_io_arrays = true;
