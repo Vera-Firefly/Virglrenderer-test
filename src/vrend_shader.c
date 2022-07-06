@@ -1444,6 +1444,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          break;
       case TGSI_SEMANTIC_PATCH:
+         if (iter->processor.Processor == TGSI_PROCESSOR_TESS_EVAL)
+            name_prefix = "patch";
+         /* fallthrough */
       case TGSI_SEMANTIC_GENERIC:
       case TGSI_SEMANTIC_TEXCOORD:
          if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
@@ -1493,7 +1496,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC)
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_g%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
-            snprintf(ctx->inputs[i].glsl_name, 128, "%s_p%d", name_prefix, ctx->inputs[i].sid);
+            snprintf(ctx->inputs[i].glsl_name, 128, "%s%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_TEXCOORD)
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->inputs[i].sid);
          else
@@ -1703,10 +1706,12 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          break;
       case TGSI_SEMANTIC_PATCH:
+         if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL)
+            name_prefix = "patch";
+         /* fallthrough */
       case TGSI_SEMANTIC_GENERIC:
       case TGSI_SEMANTIC_TEXCOORD:
       case TGSI_SEMANTIC_TESSCOORD:
-
          if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX)
             if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
                color_offset = -1;
@@ -1741,7 +1746,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR)
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_bc%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH)
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%d", name_prefix, ctx->outputs[i].sid);
+            snprintf(ctx->outputs[i].glsl_name, 64, "%s%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC)
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%d", name_prefix, ctx->outputs[i].sid);
          else if (ctx->outputs[i].name == TGSI_SEMANTIC_TEXCOORD)
@@ -7728,9 +7733,6 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
          } else if (ctx->inputs[i].name == TGSI_SEMANTIC_GENERIC) {
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_g%d", shader_in_prefix, ctx->inputs[i].sid);
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_g%d", shader_out_prefix, ctx->inputs[i].sid);
-         } else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH) {
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_p%d", shader_in_prefix, ctx->inputs[i].sid);
-            snprintf(ctx->outputs[i].glsl_name, 64, "%s_p%d", shader_out_prefix, ctx->inputs[i].sid);
          } else {
             snprintf(ctx->outputs[i].glsl_name, 64, "%s_%d", shader_in_prefix, ctx->inputs[i].first);
             snprintf(ctx->inputs[i].glsl_name, 64, "%s_%d", shader_out_prefix, ctx->inputs[i].first);
