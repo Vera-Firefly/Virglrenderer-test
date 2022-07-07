@@ -3727,6 +3727,10 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    if (prev) {
       if (!prev->sinfo.separable_program || !sel->sinfo.separable_program) {
          key->require_input_arrays = prev->sinfo.has_output_arrays;
+         key->in_generic_expected_mask = prev->sinfo.out_generic_emitted_mask;
+         key->in_texcoord_expected_mask = prev->sinfo.out_texcoord_emitted_mask;
+         key->in_patch_expected_mask = prev->sinfo.out_patch_emitted_mask;
+
          memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
       }
 

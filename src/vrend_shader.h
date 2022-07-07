@@ -106,6 +106,9 @@ struct vrend_shader_info {
    uint64_t in_generic_emitted_mask;
    uint64_t in_texcoord_emitted_mask;
 
+   uint64_t out_generic_emitted_mask;
+   uint64_t out_patch_emitted_mask;
+
    struct vrend_layout_info generic_outputs_layout[64];
    struct vrend_array *sampler_arrays;
    struct vrend_array *image_arrays;
@@ -133,6 +136,7 @@ struct vrend_shader_info {
    int num_sampler_arrays;
    int num_image_arrays;
 
+   uint8_t out_texcoord_emitted_mask;
    uint8_t ubo_indirect : 1;
    uint8_t tes_point_mode : 1;
    uint8_t gles_use_tex_query_level : 1;
@@ -155,6 +159,10 @@ struct vrend_variable_shader_info {
 struct vrend_shader_key {
    uint64_t out_generic_expected_mask;
    uint64_t out_texcoord_expected_mask;
+
+   uint64_t in_generic_expected_mask;
+   uint64_t in_texcoord_expected_mask;
+   uint64_t in_patch_expected_mask;
 
    uint32_t force_invariant_inputs[4];
 

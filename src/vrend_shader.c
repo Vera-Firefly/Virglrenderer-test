@@ -257,6 +257,7 @@ struct dump_ctx {
    int abo_offsets[32];
 
    uint64_t shader_req_bits;
+   uint64_t patches_emitted_mask;
 
    struct pipe_stream_output_info *so;
    char **so_names;
@@ -4901,8 +4902,8 @@ make_array_from_semantic(struct vrend_shader_io *io, int start_index,
       if (io[i].name == semantic && (io[i].sid - last_sid == 1)) {
          io[i].glsl_predefined_no_emit = true;
          last_sid = io[i].sid;
-         io_out_range->last = i;
-         io[i].array_offset = io[i].first - io_out_range->first;
+         io[i].array_offset = io[i].sid - io_out_range->sid;
+         io_out_range->last = io_out_range->first + io[i].array_offset;
          io[i].overlapping_array = io_out_range;
       } else {
          break;
@@ -5074,6 +5075,88 @@ static void handle_io_arrays(struct dump_ctx *ctx)
    }
 }
 
+static int
+compare_shader_io(const void *vlhs, const void *vrhs)
+{
+   struct vrend_shader_io *lhs = (struct vrend_shader_io *)vlhs;
+   struct vrend_shader_io *rhs = (struct vrend_shader_io *)vrhs;
+
+   if (lhs->name < rhs->name)
+      return -1;
+   if (lhs->name > rhs->name)
+      return 1;
+   return lhs->sid - rhs->sid;
+}
+
+static void
+add_missing_semantic_inputs(struct vrend_shader_io *inputs, int *num_inputs,
+                            int *next_location, uint64_t sids_missing,
+                            const char *prefix, char *type_prefix,
+                            enum tgsi_semantic name)
+{
+
+   while (sids_missing) {
+      int sid = u_bit_scan64(&sids_missing);
+      struct vrend_shader_io *io = &inputs[*num_inputs];
+      io->first = io->last = (*next_location)++;
+      io->name = name;
+      io->sid = sid;
+      io->type = VEC_FLOAT;
+      snprintf(io->glsl_name, 128, "%s%s%d", prefix, type_prefix, sid);
+      (*num_inputs)++;
+   }
+}
+
+static int
+add_missing_inputs(const struct dump_ctx *ctx, struct vrend_shader_io *inputs,
+                   int num_inputs)
+{
+   uint64_t generics_declared = 0;
+   uint64_t patches_declared = 0;
+   uint8_t texcoord_declared = 0;
+
+   int next_location = 0;
+   for (int i = 0; i < num_inputs; ++i) {
+      for (int k = inputs[i].first; k <= inputs[i].last; ++k) {
+         switch (inputs[i].name) {
+         case TGSI_SEMANTIC_GENERIC:
+            generics_declared |= 1ull << inputs[i].sid;
+            break;
+         case TGSI_SEMANTIC_PATCH:
+            patches_declared |= 1ull << inputs[i].sid;
+            break;
+         case TGSI_SEMANTIC_TEXCOORD:
+            texcoord_declared |= 1ull << inputs[i].sid;
+            break;
+         default:
+            ;
+         }
+      }
+      if (next_location < inputs[i].last)
+         next_location = inputs[i].last;
+   }
+   ++next_location;
+
+   uint64_t generics_missing = ctx->key->in_generic_expected_mask & ~generics_declared;
+   uint64_t patches_missing = ctx->key->in_patch_expected_mask & ~patches_declared;
+   uint64_t texcoord_missing = ctx->key->in_texcoord_expected_mask & ~texcoord_declared;
+
+   const char *prefix = get_stage_input_name_prefix(ctx, ctx->prog_type);
+   add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
+                               generics_missing, prefix, "_g",
+                               TGSI_SEMANTIC_GENERIC);
+   add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
+                               texcoord_missing, prefix, "_t",
+                               TGSI_SEMANTIC_TEXCOORD);
+   add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
+                               patches_missing, "patch", "",
+                               TGSI_SEMANTIC_PATCH);
+
+   qsort(inputs, num_inputs, sizeof(struct vrend_shader_io),
+         compare_shader_io);
+   return num_inputs;
+}
+
 
 static boolean
 iter_instruction(struct tgsi_iterate_context *iter,
@@ -5095,6 +5178,8 @@ iter_instruction(struct tgsi_iterate_context *iter,
       ctx->prog_type = iter->processor.Processor;
 
    if (instno == 0) {
+      if (ctx->prog_type != TGSI_PROCESSOR_VERTEX)
+         ctx->num_inputs = add_missing_inputs(ctx, ctx->inputs, ctx->num_inputs);
       handle_io_arrays(ctx);
 
       /* Vertex shader inputs are not send as arrays, but the access may still be
@@ -6574,11 +6659,12 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
       *force_color_two_side = 1;
 }
 
-static void
+static uint64_t
 emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
                const char *prefix, const struct vrend_shader_io *io,
                const char *inout, int size, bool emit_location)
 {
+   uint64_t emitted_patches = 0;
 
    /* We start these locations from 32 and proceed downwards, to avoid
     * conflicting with generic IO locations. */
@@ -6587,10 +6673,14 @@ emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
 
    if (io->last == io->first) {
       emit_hdrf(glsl_strbufs, "%s %s vec4 %s;\n", prefix, inout, io->glsl_name);
+      emitted_patches |= 1ul << io->sid;
    } else {
       emit_hdrf(glsl_strbufs, "%s %s vec4 %s[%d];\n", prefix, inout,
                 io->glsl_name, size);
+      uint64_t mask = (1ul << size) - 1;
+      emitted_patches |= mask << io->sid;
    }
+   return emitted_patches;
 }
 
 static bool
@@ -7013,6 +7103,7 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
                          struct vrend_glsl_strbufs *glsl_strbufs,
                          struct vrend_generic_ios *generic_ios,
                          struct vrend_texcoord_ios *texcoord_ios,
+                         uint64_t *emitted_out_patches_mask,
                          bool *has_pervertex)
 {
    uint32_t i;
@@ -7030,20 +7121,22 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
       }
    }
 
+   uint64_t emitted_patches = 0;
+
    emit_hdrf(glsl_strbufs, "layout(vertices = %d) out;\n", ctx->tcs_vertices_out);
 
    if (ctx->patch_ios.output_range.used)
-      emit_ios_patch(glsl_strbufs, "patch", &ctx->patch_ios.output_range.io, "out",
-                     ctx->patch_ios.output_range.io.last -
-                        ctx->patch_ios.output_range.io.first + 1,
-                     ctx->separable_program);
+      emitted_patches |= emit_ios_patch(glsl_strbufs, "patch", &ctx->patch_ios.output_range.io, "out",
+                                        ctx->patch_ios.output_range.io.last - ctx->patch_ios.output_range.io.first + 1,
+                                        ctx->separable_program);
 
    for (i = 0; i < ctx->num_outputs; i++) {
       if (!ctx->outputs[i].glsl_predefined_no_emit) {
          if (ctx->outputs[i].name == TGSI_SEMANTIC_PATCH) {
-            emit_ios_patch(glsl_strbufs, "patch", &ctx->outputs[i], "out",
-                           ctx->outputs[i].last - ctx->outputs[i].first + 1,
-                           ctx->separable_program);
+
+            emitted_patches |= emit_ios_patch(glsl_strbufs, "patch", &ctx->outputs[i], "out",
+                                              ctx->outputs[i].last - ctx->outputs[i].first + 1,
+                                              ctx->separable_program);
          } else
             emit_ios_generic(ctx, glsl_strbufs, generic_ios, texcoord_ios, io_out, "", &ctx->outputs[i], "out", "[]");
       } else if (ctx->outputs[i].invariant || ctx->outputs[i].precise) {
@@ -7056,6 +7149,8 @@ static void emit_ios_tcs(const struct dump_ctx *ctx,
 
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
    emit_ios_per_vertex_out(ctx, glsl_strbufs, " gl_out[]");
+
+   *emitted_out_patches_mask = emitted_patches;
 }
 
 static void emit_ios_tes(const struct dump_ctx *ctx,
@@ -7171,6 +7266,7 @@ static int emit_ios(const struct dump_ctx *ctx,
                     struct vrend_glsl_strbufs *glsl_strbufs,
                     struct vrend_generic_ios *generic_ios,
                     struct vrend_texcoord_ios *texcoord_ios,
+                    uint64_t *patches_emitted_mask,
                     uint8_t front_back_color_emitted_flags[],
                     uint32_t *num_interps,
                     bool *has_pervertex,
@@ -7197,7 +7293,7 @@ static int emit_ios(const struct dump_ctx *ctx,
       emit_ios_geom(ctx, glsl_strbufs, generic_ios, texcoord_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
       break;
    case TGSI_PROCESSOR_TESS_CTRL:
-      emit_ios_tcs(ctx, glsl_strbufs, generic_ios, texcoord_ios, has_pervertex);
+      emit_ios_tcs(ctx, glsl_strbufs, generic_ios, texcoord_ios, patches_emitted_mask, has_pervertex);
       break;
    case TGSI_PROCESSOR_TESS_EVAL:
       emit_ios_tes(ctx, glsl_strbufs, generic_ios, texcoord_ios, front_back_color_emitted_flags, num_interps, has_pervertex, force_color_two_side);
@@ -7326,6 +7422,10 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
 
    sinfo->has_output_arrays = ctx->has_output_arrays;
    sinfo->has_input_arrays = ctx->has_input_arrays;
+
+   sinfo->out_generic_emitted_mask = ctx->generic_ios.match.outputs_emitted_mask;
+   sinfo->out_texcoord_emitted_mask = ctx->texcoord_ios.match.outputs_emitted_mask;
+   sinfo->out_patch_emitted_mask = ctx->patches_emitted_mask;
 
    sinfo->num_inputs = ctx->num_inputs;
    sinfo->num_outputs = ctx->num_outputs;
@@ -7531,7 +7631,8 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
 
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
-                                    &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
+                                    &ctx.texcoord_ios, &ctx.patches_emitted_mask,
+                                    ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
                                     &ctx.shadow_samp_mask);
@@ -7707,7 +7808,8 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
 
    emit_header(&ctx, &ctx.glsl_strbufs);
    ctx.glsl_ver_required = emit_ios(&ctx, &ctx.glsl_strbufs, &ctx.generic_ios,
-                                    &ctx.texcoord_ios, ctx.front_back_color_emitted_flags,
+                                    &ctx.texcoord_ios, &ctx.patches_emitted_mask,
+                                    ctx.front_back_color_emitted_flags,
                                     &ctx.num_interps, &ctx.has_pervertex,
                                     &ctx.force_color_two_side,
                                     &ctx.shadow_samp_mask);
