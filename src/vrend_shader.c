@@ -6376,13 +6376,11 @@ emit_ios_generic(const struct dump_ctx *ctx,
                  const struct vrend_shader_io *io, const char *inout,
                  const char *postfix)
 {
-   const char *atype[3][4] =  {
-      {"float", " vec2", " vec3", " vec4"},
-      {"  int", "ivec2", "ivec3", "ivec4"},
-      {" uint", "uvec2", "uvec3", "uvec4"},
+   const char *atype[3] =  {
+      " vec4", "ivec4", "uvec4"
    };
-   const char **type = atype[io->type];
-   const char *t = type[3];
+
+   const char *t = atype[io->type];
 
    char layout[128] = "";
 
@@ -6393,9 +6391,6 @@ emit_ios_generic(const struct dump_ctx *ctx,
        !(ctx->prog_type == TGSI_PROCESSOR_FRAGMENT && strcmp(inout, "in") != 0)) {
       snprintf(layout, sizeof(layout), "layout(location = %d)\n", io->sid);
    }
-
-   if (io->usage_mask != 0xf && io->name == TGSI_SEMANTIC_GENERIC)
-      t = type[io->num_components - 1];
 
    if (io->first == io->last) {
       emit_hdr(glsl_strbufs, layout);
@@ -6584,22 +6579,18 @@ emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
                const char *prefix, const struct vrend_shader_io *io,
                const char *inout, int size, bool emit_location)
 {
-   const char type[4][6] = {"float", " vec2", " vec3", " vec4"};
-   const char *t = " vec4";
-
-   if (io->usage_mask != 0xf)
-      t = type[io->num_components - 1];
 
    /* We start these locations from 32 and proceed downwards, to avoid
     * conflicting with generic IO locations. */
    if (emit_location)
       emit_hdrf(glsl_strbufs, "layout(location = %d) ", 32 - io->sid);
 
-   if (io->last == io->first)
-      emit_hdrf(glsl_strbufs, "%s %s %s %s;\n", prefix, inout, t, io->glsl_name);
-   else
-      emit_hdrf(glsl_strbufs, "%s %s %s %s[%d];\n", prefix, inout, t,
+   if (io->last == io->first) {
+      emit_hdrf(glsl_strbufs, "%s %s vec4 %s;\n", prefix, inout, io->glsl_name);
+   } else {
+      emit_hdrf(glsl_strbufs, "%s %s vec4 %s[%d];\n", prefix, inout,
                 io->glsl_name, size);
+   }
 }
 
 static bool
