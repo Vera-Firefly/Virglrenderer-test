@@ -1233,7 +1233,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
          if (ctx->inputs[j].name == decl->Semantic.Name &&
              ctx->inputs[j].sid == decl->Semantic.Index &&
              ctx->inputs[j].first == decl->Range.First &&
-             ctx->inputs[j].usage_mask  == decl->Declaration.UsageMask &&
              ((!decl->Declaration.Array && ctx->inputs[j].array_id == 0) ||
               (ctx->inputs[j].array_id  == decl->Array.ArrayID)))
             return true;
@@ -1517,7 +1516,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
          if (ctx->outputs[j].name == decl->Semantic.Name &&
              ctx->outputs[j].sid == decl->Semantic.Index &&
              ctx->outputs[j].first == decl->Range.First &&
-             ctx->outputs[j].usage_mask == decl->Declaration.UsageMask &&
              ((!decl->Declaration.Array && ctx->outputs[j].array_id == 0) ||
               (ctx->outputs[j].array_id  == decl->Array.ArrayID)))
             return true;
@@ -4973,59 +4971,6 @@ rewrite_io_ranged(struct dump_ctx *ctx)
 
 }
 
-
-static void rename_variables(unsigned nio, struct vrend_shader_io *io,
-                             const char *name_prefix, unsigned coord_replace)
-{
-   /* Rename the generic and patch variables after applying all identifications */
-   for (unsigned i = 0; i < nio; ++i) {
-      if ((io[i].name != TGSI_SEMANTIC_GENERIC &&
-          io[i].name != TGSI_SEMANTIC_PATCH) ||
-          (coord_replace & (1 << io[i].sid)))
-         continue;
-      char io_type =  io[i].name == TGSI_SEMANTIC_GENERIC ? 'g' : 'p';
-      snprintf(io[i].glsl_name, 64, "%s_%c%d", name_prefix, io_type, io[i].sid);
-   }
-}
-
-static
-void rewrite_components(unsigned nio, struct vrend_shader_io *io,
-                        const char *name_prefix, unsigned coord_replace,
-                        bool no_input_arrays)
-{
-   if (!nio)
-      return;
-
-   for (unsigned i = 0; i < nio - 1; ++i) {
-      if ((io[i].name != TGSI_SEMANTIC_GENERIC &&
-           io[i].name != TGSI_SEMANTIC_PATCH) ||
-          io[i].glsl_predefined_no_emit)
-         continue;
-
-      for (unsigned j = i + 1; j < nio;  ++j) {
-         if ((io[j].name != TGSI_SEMANTIC_GENERIC &&
-              io[j].name != TGSI_SEMANTIC_PATCH) ||
-             io[j].glsl_predefined_no_emit)
-            continue;
-         if (io[i].first == io[j].first)
-            io[j].glsl_predefined_no_emit = true;
-      }
-   }
-
-   for (unsigned i = 0; i < nio; ++i) {
-      if ((io[i].name != TGSI_SEMANTIC_GENERIC &&
-           io[i].name != TGSI_SEMANTIC_PATCH) ||
-          !no_input_arrays)
-         continue;
-
-      io[i].usage_mask = 0xf;
-      io[i].num_components = 4;
-      io[i].override_no_wm = false;
-   }
-
-   rename_variables(nio, io, name_prefix, coord_replace);
-}
-
 static
 void rewrite_vs_pos_array(struct dump_ctx *ctx)
 {
@@ -5126,11 +5071,6 @@ static void handle_io_arrays(struct dump_ctx *ctx)
       /* The guest didn't send real arrays, do we might have to add a big array
        * for all generic and another for patch inputs */
       rewrite_io_ranged(ctx);
-      rewrite_components(ctx->num_inputs, ctx->inputs,
-                         get_stage_input_name_prefix(ctx, ctx->prog_type),
-                         ctx->key->fs.coord_replace, true);
-      rewrite_components(ctx->num_outputs, ctx->outputs,
-                         get_stage_output_name_prefix(ctx->prog_type), 0, true);
    }
 }
 
