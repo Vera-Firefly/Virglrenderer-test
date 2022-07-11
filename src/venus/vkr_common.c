@@ -110,6 +110,8 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_shader_stencil_export = true,
    .EXT_transform_feedback = true,
    .EXT_vertex_attribute_divisor = true,
+   /* vendor extensions */
+   .VALVE_mutable_descriptor_type = true,
 };
 
 void
