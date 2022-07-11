@@ -9,6 +9,7 @@ spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glView
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
 spec@arb_shader_atomic_counter_ops@execution@add
+spec@arb_shader_atomic_counters@function-argument
 spec@arb_shader_image_load_store@atomicity
 spec@arb_shader_image_load_store@atomicity@imageAtomicAdd
 spec@arb_shader_image_load_store@atomicity@imageAtomicAnd
@@ -29,6 +30,7 @@ spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier
 spec@arb_shader_image_load_store@host-mem-barrier@Uniform buffer/RaW/full barrier test/4x4
 spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier test/4x4
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
+spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader
 spec@arb_shader_storage_buffer_object@layout-std430-write-shader
