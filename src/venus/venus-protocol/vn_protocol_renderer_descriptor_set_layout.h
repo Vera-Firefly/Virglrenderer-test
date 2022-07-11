@@ -137,6 +137,14 @@ vn_decode_VkDescriptorSetLayoutCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
             vn_decode_VkDescriptorSetLayoutBindingFlagsCreateInfo_self_temp(dec, (VkDescriptorSetLayoutBindingFlagsCreateInfo *)pnext);
         }
         break;
+    case VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_VALVE:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkMutableDescriptorTypeCreateInfoVALVE));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkDescriptorSetLayoutCreateInfo_pnext_temp(dec);
+            vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_self_temp(dec, (VkMutableDescriptorTypeCreateInfoVALVE *)pnext);
+        }
+        break;
     default:
         /* unexpected struct */
         pnext = NULL;
@@ -203,6 +211,9 @@ vn_replace_VkDescriptorSetLayoutCreateInfo_handle(VkDescriptorSetLayoutCreateInf
             break;
         case VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO:
             vn_replace_VkDescriptorSetLayoutBindingFlagsCreateInfo_handle_self((VkDescriptorSetLayoutBindingFlagsCreateInfo *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_VALVE:
+            vn_replace_VkMutableDescriptorTypeCreateInfoVALVE_handle_self((VkMutableDescriptorTypeCreateInfoVALVE *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */
