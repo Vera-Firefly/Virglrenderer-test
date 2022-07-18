@@ -32,6 +32,8 @@
 
 #define VIRGL_NUM_CLIP_PLANES 8
 
+#define VREND_POLYGON_STIPPLE_SIZE 32
+
 #define VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH \
    ((PIPE_MAX_SHADER_SAMPLER_VIEWS + 63) / 64)
 
@@ -193,7 +195,7 @@ struct vrend_shader_key {
    uint8_t num_in_clip : 4;
    uint8_t num_out_cull : 4;
    uint8_t num_out_clip : 4;
-   uint8_t pstipple_tex : 1;
+   uint8_t pstipple_enabled : 1;
    uint8_t add_alpha_test : 1;
    uint8_t color_two_side : 1;
    uint8_t gs_present : 1;

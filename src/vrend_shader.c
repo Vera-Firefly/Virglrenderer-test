@@ -2108,8 +2108,17 @@ static void emit_alpha_test(const struct dump_ctx *ctx,
 
 static void emit_pstipple_pass(struct vrend_glsl_strbufs *glsl_strbufs)
 {
-   emit_buf(glsl_strbufs, "stip_temp = texture(pstipple_sampler, vec2(gl_FragCoord.x / 32.0, gl_FragCoord.y / 32.0)).x;\n");
-   emit_buf(glsl_strbufs, "if (stip_temp > 0.0) {\n\tdiscard;\n}\n");
+   static_assert(VREND_POLYGON_STIPPLE_SIZE == 32,
+         "According to the spec stipple size must be 32");
+
+   const int mask = VREND_POLYGON_STIPPLE_SIZE - 1;
+
+   emit_buf(glsl_strbufs, "{\n");
+   emit_buff(glsl_strbufs, "   int spx = int(gl_FragCoord.x) & %d;\n", mask);
+   emit_buff(glsl_strbufs, "   int spy = int(gl_FragCoord.y) & %d;\n", mask);
+   emit_buf(glsl_strbufs, "   stip_temp = stipple_pattern[spy] & (0x80000000u >> spx);\n");
+   emit_buf(glsl_strbufs, "   if (stip_temp == 0u) {\n      discard;\n   }\n");
+   emit_buf(glsl_strbufs, "}\n");
    glsl_strbufs->required_sysval_uniform_decls |= BIT(UNIFORM_PSTIPPLE_SAMPLER);
 }
 
@@ -2569,7 +2578,7 @@ static void emit_cbuf_colorspace_convert(const struct dump_ctx *ctx,
 static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
                                       struct vrend_glsl_strbufs *glsl_strbufs)
 {
-    if (ctx->key->pstipple_tex)
+    if (ctx->key->pstipple_enabled)
        emit_pstipple_pass(glsl_strbufs);
 
     if (ctx->key->fs.cbufs_are_a8_bitmask)
@@ -7299,8 +7308,8 @@ static int emit_ios(const struct dump_ctx *ctx,
    glsl_ver_required = emit_ios_common(ctx, glsl_strbufs, shadow_samp_mask);
 
    if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT &&
-       ctx->key->pstipple_tex == true) {
-      emit_hdr(glsl_strbufs, "float stip_temp;\n");
+       ctx->key->pstipple_enabled) {
+      emit_hdr(glsl_strbufs, "uint stip_temp;\n");
    }
 
    return glsl_ver_required;
@@ -7511,18 +7520,14 @@ static void emit_required_sysval_uniforms(struct vrend_strbuf *block, uint32_t m
    if (!mask)
       return;
 
-   if (mask != BIT(UNIFORM_PSTIPPLE_SAMPLER)) {
-      strbuf_append(block, "layout (std140) uniform VirglBlock {\n");
-      strbuf_append(block, "\tvec4 clipp[8];\n");
-      strbuf_append(block, "\tfloat winsys_adjust_y;\n");
-      strbuf_append(block, "\tfloat alpha_ref_val;\n");
-      strbuf_append(block, "\tbool clip_plane_enabled;\n");
-      strbuf_append(block, "};\n");
-   }
+   strbuf_append(block, "layout (std140) uniform VirglBlock {\n");
+   strbuf_append(block, "\tvec4 clipp[8];\n");
+   strbuf_appendf(block, "\tuint stipple_pattern[%d];\n", VREND_POLYGON_STIPPLE_SIZE);
+   strbuf_append(block, "\tfloat winsys_adjust_y;\n");
+   strbuf_append(block, "\tfloat alpha_ref_val;\n");
+   strbuf_append(block, "\tbool clip_plane_enabled;\n");
+   strbuf_append(block, "};\n");
 
-   if (mask & BIT(UNIFORM_PSTIPPLE_SAMPLER)) {
-      strbuf_append(block, "uniform sampler2D pstipple_sampler;\n");
-   }
 }
 
 static int compare_sid(const void *lhs, const void *rhs)

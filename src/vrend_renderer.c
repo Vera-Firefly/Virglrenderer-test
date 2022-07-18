@@ -367,6 +367,7 @@ struct global_renderer_state {
 
 struct sysval_uniform_block {
    GLfloat clipp[VIRGL_NUM_CLIP_PLANES][4];
+   GLuint stipple_pattern[VREND_POLYGON_STIPPLE_SIZE][4];
    GLfloat winsys_adjust_y;
    GLfloat alpha_ref_val;
    GLfloat clip_plane_enabled;
@@ -428,8 +429,6 @@ struct vrend_linked_shader_program {
    GLuint separate_virgl_block_id[PIPE_SHADER_TYPES];
    GLint virgl_block_bind;
    GLint ubo_sysval_buffer_id;
-
-   GLint fs_stipple_loc;
 
    uint32_t images_used_mask[PIPE_SHADER_TYPES];
    GLint *img_locs[PIPE_SHADER_TYPES];
@@ -733,6 +732,7 @@ struct vrend_sub_context {
    int prim_mode;
    bool drawing;
    struct vrend_context *parent;
+   GLuint stipple_pattern[VREND_POLYGON_STIPPLE_SIZE];
 };
 
 struct vrend_untyped_resource {
@@ -753,9 +753,6 @@ struct vrend_context {
    /* has this ctx gotten an error? */
    bool in_error;
    bool ctx_switch_pending;
-   bool pstip_inited;
-
-   GLuint pstipple_tex_id;
 
    enum virgl_ctx_errors last_error;
 
@@ -1333,19 +1330,6 @@ static void vrend_use_program(struct vrend_linked_shader_program *program)
            glBindProgramPipeline(0);
        glUseProgram(id);
    }
-}
-
-static void vrend_init_pstipple_texture(struct vrend_context *ctx)
-{
-   glGenTextures(1, &ctx->pstipple_tex_id);
-   glBindTexture(GL_TEXTURE_2D, ctx->pstipple_tex_id);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 32, 32, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-   ctx->pstip_inited = true;
 }
 
 static void vrend_depth_test_enable(struct vrend_context *ctx, bool depth_test_enable)
@@ -2030,11 +2014,6 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
        sprog->id.program = prog_id;
 
    list_addtail(&sprog->head, &sub_ctx->gl_programs[vs->id & VREND_PROGRAM_NQUEUE_MASK]);
-
-   if (fs->key.pstipple_tex)
-      sprog->fs_stipple_loc = glGetUniformLocation(fs_id, "pstipple_sampler");
-   else
-      sprog->fs_stipple_loc = -1;
 
    sprog->virgl_block_bind = -1;
    sprog->ubo_sysval_buffer_id = -1;
@@ -3893,7 +3872,7 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
          }
       }
 
-      key->pstipple_tex = sub_ctx->rs_state.poly_stipple_enable;
+      key->pstipple_enabled = sub_ctx->rs_state.poly_stipple_enable;
       key->color_two_side = sub_ctx->rs_state.light_twoside;
 
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
@@ -4976,8 +4955,13 @@ vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
    struct sysval_uniform_block virgl_uniform_block;
    memset(&virgl_uniform_block, 0, sizeof(struct sysval_uniform_block));
 
-   if (vrend_state.use_core_profile)
+   if (vrend_state.use_core_profile) {
       virgl_uniform_block.alpha_ref_val = sub_ctx->dsa_state.alpha.ref_value;
+
+      /* std140 aligns array elements at 16 byte */
+      for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
+         virgl_uniform_block.stipple_pattern[i][0] = sub_ctx->stipple_pattern[i];
+   }
 
    virgl_uniform_block.winsys_adjust_y = sub_ctx->viewport_is_negative ? -1.f : 1.f;
 
@@ -5030,12 +5014,6 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
    vrend_draw_bind_abo_shader(sub_ctx);
 
    vrend_set_active_pipeline_stage(sub_ctx->prog, PIPE_SHADER_FRAGMENT);
-
-   if (vrend_state.use_core_profile && sub_ctx->prog->fs_stipple_loc != -1) {
-      glActiveTexture(GL_TEXTURE0 + next_sampler_id);
-      glBindTexture(GL_TEXTURE_2D, sub_ctx->parent->pstipple_tex_id);
-      glUniform1i(sub_ctx->prog->fs_stipple_loc, next_sampler_id);
-   }
 }
 
 static
@@ -6230,9 +6208,6 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
          glEnable(GL_POLYGON_STIPPLE);
       else
          glDisable(GL_POLYGON_STIPPLE);
-   } else if (state->poly_stipple_enable) {
-      if (!ctx->pstip_inited)
-         vrend_init_pstipple_texture(ctx);
    }
 
    if (state->point_quad_rasterization) {
@@ -7190,11 +7165,6 @@ void vrend_destroy_context(struct vrend_context *ctx)
       vrend_state.current_hw_ctx = NULL;
    }
 
-   if (vrend_state.use_core_profile) {
-      if (ctx->pstip_inited)
-         glDeleteTextures(1, &ctx->pstipple_tex_id);
-      ctx->pstip_inited = false;
-   }
    vrend_clicbs->make_current(ctx->sub->gl_context);
    /* reset references on framebuffers */
    vrend_set_framebuffer_state(ctx, 0, NULL, 0);
@@ -9210,34 +9180,11 @@ void vrend_set_polygon_stipple(struct vrend_context *ctx,
                                struct pipe_poly_stipple *ps)
 {
    if (vrend_state.use_core_profile) {
-      static const unsigned bit31 = 1u << 31;
-      GLubyte *stip = calloc(1, 1024);
-      int i, j;
-
-      if (!ctx->pstip_inited)
-         vrend_init_pstipple_texture(ctx);
-
-      if (!stip)
-         return;
-
-      for (i = 0; i < 32; i++) {
-         for (j = 0; j < 32; j++) {
-            if (ps->stipple[i] & (bit31 >> j))
-               stip[i * 32 + j] = 0;
-            else
-               stip[i * 32 + j] = 255;
-         }
-      }
-
-      glBindTexture(GL_TEXTURE_2D, ctx->pstipple_tex_id);
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 32, 32,
-                      GL_RED, GL_UNSIGNED_BYTE, stip);
-      glBindTexture(GL_TEXTURE_2D, 0);
-
-      free(stip);
-      return;
+      memcpy(ctx->sub->stipple_pattern, ps->stipple,
+             VREND_POLYGON_STIPPLE_SIZE * sizeof(GLuint));
+   } else {
+      glPolygonStipple((const GLubyte *)ps->stipple);
    }
-   glPolygonStipple((const GLubyte *)ps->stipple);
 }
 
 void vrend_set_clip_state(struct vrend_context *ctx, struct pipe_clip_state *ucp)
@@ -11552,9 +11499,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max);
    caps->v2.max_const_buffer_size[PIPE_SHADER_VERTEX] = max * 4;
 
-   /* We might insert a `sampler2D pstipple_sampler` so reduce by 1 */
    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &max);
-   caps->v2.max_const_buffer_size[PIPE_SHADER_FRAGMENT] = max * 4 - 1;
+   caps->v2.max_const_buffer_size[PIPE_SHADER_FRAGMENT] = max * 4;
 
    if (has_feature(feat_geometry_shader)) {
       glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS, &max);
