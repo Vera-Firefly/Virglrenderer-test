@@ -783,6 +783,20 @@ vkr_dispatch_vkCmdEndConditionalRenderingEXT(
    VKR_CMD_CALL(CmdEndConditionalRenderingEXT, args);
 }
 
+static void
+vkr_dispatch_vkCmdBeginRendering(UNUSED struct vn_dispatch_context *ctx,
+                                 struct vn_command_vkCmdBeginRendering *args)
+{
+   VKR_CMD_CALL(CmdBeginRendering, args, args->pRenderingInfo);
+}
+
+static void
+vkr_dispatch_vkCmdEndRendering(UNUSED struct vn_dispatch_context *ctx,
+                               struct vn_command_vkCmdEndRendering *args)
+{
+   VKR_CMD_CALL(CmdEndRendering, args);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -892,6 +906,10 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkCmdSetStencilOp = vkr_dispatch_vkCmdSetStencilOp;
    dispatch->dispatch_vkCmdSetStencilTestEnable = vkr_dispatch_vkCmdSetStencilTestEnable;
    dispatch->dispatch_vkCmdSetViewportWithCount = vkr_dispatch_vkCmdSetViewportWithCount;
+
+   /* VK_KHR_dynamic_rendering */
+   dispatch->dispatch_vkCmdBeginRendering = vkr_dispatch_vkCmdBeginRendering;
+   dispatch->dispatch_vkCmdEndRendering = vkr_dispatch_vkCmdEndRendering;
 
    /* VK_EXT_extended_dynamic_state2 */
    dispatch->dispatch_vkCmdSetRasterizerDiscardEnable =
