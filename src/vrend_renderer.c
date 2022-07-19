@@ -10115,7 +10115,11 @@ static bool vrend_hw_switch_context_with_sub(struct vrend_context *ctx, int sub_
    if (!sub)
       return false;
 
-   ctx->sub = sub;
+   /* force the gl context switch to occur */
+   if (ctx->sub != sub) {
+      vrend_state.current_hw_ctx = NULL;
+      ctx->sub = sub;
+   }
 
    ctx->ctx_switch_pending = true;
    vrend_finish_context_switch(ctx);
