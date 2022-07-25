@@ -4678,7 +4678,9 @@ get_source_info(struct dump_ctx *ctx,
          }
 
          /* build up a vec4 of immediates */
-         strbuf_fmt(src_buf, "%s(%s%s(", get_string(imm_stypeprefix), prefix, get_string(vtype));
+         strbuf_fmt(src_buf, "%s%s(%s(", prefix,
+                    get_string(imm_stypeprefix), get_string(vtype));
+
          for (uint32_t j = 0; j < 4; j++) {
             if (j == 0)
                idx = src->Register.SwizzleX;
