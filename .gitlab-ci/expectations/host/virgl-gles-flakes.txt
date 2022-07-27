@@ -19,16 +19,6 @@ spec@arb_shader_image_load_store@atomicity@imageAtomicMax
 spec@arb_shader_image_load_store@atomicity@imageAtomicMin
 spec@arb_shader_image_load_store@atomicity@imageAtomicOr
 spec@arb_shader_image_load_store@atomicity@imageAtomicXor
-spec@arb_shader_image_load_store@host-mem-barrier@Atomic counter/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Atomic counter/RaW/one bit barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Element array/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Image/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Image/RaW/one bit barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Indirect/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Indirect/RaW/one bit barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Texture fetch/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Uniform buffer/RaW/full barrier test/4x4
-spec@arb_shader_image_load_store@host-mem-barrier@Vertex array/RaW/full barrier test/4x4
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicadd-int
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
