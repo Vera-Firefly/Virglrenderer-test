@@ -11141,6 +11141,13 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
 
+   /* glamor reject llvmpipe, and since the renderer string is
+    * composed of "virgl" and this renderer string we have to
+    * hide the "llvmpipe" part */
+   char *llvmpipe_string = strstr(caps->v2.renderer, "llvmpipe");
+   if (llvmpipe_string)
+      memcpy(llvmpipe_string, "LLVMPIPE", 8);
+
    glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, range);
    caps->v2.min_aliased_point_size = range[0];
    caps->v2.max_aliased_point_size = range[1];
