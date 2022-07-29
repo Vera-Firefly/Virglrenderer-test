@@ -27,8 +27,12 @@ spec@arb_depth_texture@depthstencil-render-miplevels 146 d=z16
 spec@arb_depth_texture@depthstencil-render-miplevels 585 d=z16
 spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
 spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
 spec@arb_framebuffer_object@arb_framebuffer_object-depth-stencil-blit stencil gl_stencil_index1
 spec@arb_framebuffer_srgb@blit renderbuffer linear_to_srgb upsample disabled clear
@@ -42,6 +46,8 @@ spec@arb_gpu_shader5@texturegatheroffsets@vs-rgb-1-int-2d
 spec@arb_gpu_shader5@texturegatheroffset@vs-r-0-unorm-2darray
 spec@arb_gpu_shader5@texturegatheroffset@vs-rgb-2-uint-2drect-const
 spec@arb_shader_atomic_counter_ops@execution@add
+spec@arb_shader_atomic_counters@fragment-discard
+spec@arb_shader_atomic_counters@function-argument
 spec@arb_shader_image_load_store@atomicity
 spec@arb_shader_image_load_store@atomicity@imageAtomicAdd
 spec@arb_shader_image_load_store@atomicity@imageAtomicAnd

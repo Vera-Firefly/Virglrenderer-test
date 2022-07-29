@@ -214,12 +214,6 @@ spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled@GL_RGB565- swizzled- border color only,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@Basic,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query@discard,Fail
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-query,Fail
@@ -279,8 +273,6 @@ spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
-spec@arb_shader_atomic_counters@fragment-discard,Fail
-spec@arb_shader_atomic_counters@function-argument,Fail
 spec@arb_shader_image_load_store@bitcast,Fail
 spec@arb_shader_image_load_store@bitcast@r11f_g11f_b10f to rgba8_snorm bitcast test,Fail
 spec@arb_shader_image_load_store@bitcast@r32f to rgba8_snorm bitcast test,Fail
