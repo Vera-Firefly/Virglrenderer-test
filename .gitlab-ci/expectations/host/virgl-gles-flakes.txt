@@ -4,6 +4,10 @@ shaders@glsl-uniform-interstage-limits@subdivide 5
 shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
 spec@arb_fragment_layer_viewport@viewport-gs-writes-in-range
 spec@arb_fragment_layer_viewport@layer-gs-writes-in-range
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4
+spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glViewport
 spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-roundup-samples
