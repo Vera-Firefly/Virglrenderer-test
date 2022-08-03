@@ -6475,13 +6475,13 @@ emit_ios_generic(const struct dump_ctx *ctx,
 
    if (ctx->separable_program && io->name == TGSI_SEMANTIC_GENERIC &&
        !(ctx->prog_type == TGSI_PROCESSOR_FRAGMENT && strcmp(inout, "in") != 0)) {
-      snprintf(layout, sizeof(layout), "layout(location = %d)\n", io->sid);
+      snprintf(layout, sizeof(layout), "layout(location = %d) ", 31 - io->sid);
    }
 
    if (io->first == io->last) {
       emit_hdr(glsl_strbufs, layout);
       /* ugly leave spaces to patch interp in later */
-      emit_hdrf(glsl_strbufs, "%s%s\n%s  %s %s %s%s;\n",
+      emit_hdrf(glsl_strbufs, "%s%s %s  %s %s %s%s;\n",
                 io->precise ? "precise" : "",
                 io->invariant ? "invariant" : "",
                 prefix,
@@ -6670,7 +6670,7 @@ emit_ios_patch(struct vrend_glsl_strbufs *glsl_strbufs,
    /* We start these locations from 32 and proceed downwards, to avoid
     * conflicting with generic IO locations. */
    if (emit_location)
-      emit_hdrf(glsl_strbufs, "layout(location = %d) ", 32 - io->sid);
+      emit_hdrf(glsl_strbufs, "layout(location = %d) ", io->sid);
 
    if (io->last == io->first) {
       emit_hdrf(glsl_strbufs, "%s %s vec4 %s;\n", prefix, inout, io->glsl_name);
