@@ -3812,27 +3812,27 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          key->require_output_arrays = next->sinfo.has_input_arrays;
          key->out_generic_expected_mask = next->sinfo.in_generic_emitted_mask;
          key->out_texcoord_expected_mask = next->sinfo.in_texcoord_emitted_mask;
-      }
 
-      /* FS gets the clip/cull info in the key from this shader, so
-       * we can avoid re-translating this shader by not updating the
-       * info in the key */
-      if (next_type != PIPE_SHADER_FRAGMENT) {
-         key->num_out_clip = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_clip;
-         key->num_out_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_cull;
-      }
+         /* FS gets the clip/cull info in the key from this shader, so
+          * we can avoid re-translating this shader by not updating the
+          * info in the key */
+         if (next_type != PIPE_SHADER_FRAGMENT) {
+            key->num_out_clip = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_clip;
+            key->num_out_cull = sub_ctx->shaders[next_type]->current->var_sinfo.num_in_cull;
+         }
 
-      if (next_type == PIPE_SHADER_FRAGMENT) {
-         struct vrend_shader *fs =
-               sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
-         key->fs_info = fs->var_sinfo.fs_info;
-         if (type == PIPE_SHADER_VERTEX && sub_ctx->shaders[type]) {
-            uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
-            uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
+         if (next_type == PIPE_SHADER_FRAGMENT) {
+            struct vrend_shader *fs =
+                  sub_ctx->shaders[PIPE_SHADER_FRAGMENT]->current;
+            key->fs_info = fs->var_sinfo.fs_info;
+            if (type == PIPE_SHADER_VERTEX && sub_ctx->shaders[type]) {
+               uint32_t fog_input = sub_ctx->shaders[next_type]->sinfo.fog_input_mask;
+               uint32_t fog_output = sub_ctx->shaders[type]->sinfo.fog_output_mask;
 
-            // We only want to issue the fixup for inputs not fed by
-            // the outputs of the previous stage
-            key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
+               // We only want to issue the fixup for inputs not fed by
+               // the outputs of the previous stage
+               key->vs.fog_fixup_mask = (fog_input ^ fog_output) & fog_input;
+            }
          }
       }
    }
