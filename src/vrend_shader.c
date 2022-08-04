@@ -80,6 +80,8 @@
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
 
+#define MAX_VARYING 32
+
 enum vrend_sysval_uniform {
    UNIFORM_WINSYS_ADJUST_Y,
    UNIFORM_CLIP_PLANE,
@@ -7533,6 +7535,102 @@ static int compare_sid(const void *lhs, const void *rhs)
    return l->sid - r->sid;
 }
 
+struct sso_scan_ctx {
+   struct tgsi_iterate_context iter;
+   const struct vrend_shader_cfg *cfg;
+   uint8_t max_generic_in_sid;
+   uint8_t max_patch_in_sid;
+   uint8_t max_generic_out_sid;
+   uint8_t max_patch_out_sid;
+   bool separable_program;
+   bool unsupported_io;
+};
+
+static boolean
+iter_prop_for_separable(struct tgsi_iterate_context *iter,
+          struct tgsi_full_property *prop)
+{
+   struct sso_scan_ctx *ctx = (struct sso_scan_ctx *) iter;
+
+   if (prop->Property.PropertyName == TGSI_PROPERTY_SEPARABLE_PROGRAM)
+      ctx->separable_program = prop->u[0].Data != 0;
+   return true;
+}
+
+static boolean
+iter_decl_for_overlap(struct tgsi_iterate_context *iter,
+                      struct tgsi_full_declaration *decl)
+{
+   struct sso_scan_ctx *ctx = (struct sso_scan_ctx *) iter;
+
+   /* VS inputs and FS outputs are of no interest
+    * when it comes to IO matching */
+   if (decl->Declaration.File == TGSI_FILE_INPUT &&
+       iter->processor.Processor == TGSI_PROCESSOR_VERTEX)
+      return true;
+
+   if (decl->Declaration.File == TGSI_FILE_OUTPUT &&
+       iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT)
+      return true;
+
+   switch (decl->Semantic.Name) {
+   case TGSI_SEMANTIC_PATCH:
+      if (decl->Declaration.File == TGSI_FILE_INPUT) {
+         if (ctx->max_patch_in_sid < decl->Semantic.Index)
+            ctx->max_patch_in_sid = decl->Semantic.Index;
+      } else {
+         if (ctx->max_patch_out_sid < decl->Semantic.Index)
+            ctx->max_patch_out_sid = decl->Semantic.Index;
+      }
+      break;
+   case TGSI_SEMANTIC_GENERIC:
+      if (decl->Declaration.File == TGSI_FILE_INPUT) {
+         if (ctx->max_generic_in_sid < decl->Semantic.Index)
+            ctx->max_generic_in_sid = decl->Semantic.Index;
+      } else {
+         if (ctx->max_generic_out_sid < decl->Semantic.Index)
+            ctx->max_generic_out_sid = decl->Semantic.Index;
+      }
+      break;
+   case TGSI_SEMANTIC_COLOR:
+   case TGSI_SEMANTIC_CLIPVERTEX:
+   case TGSI_SEMANTIC_BCOLOR:
+   case TGSI_SEMANTIC_TEXCOORD:
+   case TGSI_SEMANTIC_FOG:
+      /* These are semantics that need to be matched by name and since we can't
+       * guarantee that they exist in all the stages of separable shaders
+       * we can't emit the shader as SSO */
+      ctx->unsupported_io = true;
+      break;
+   default:
+      ;
+   }
+   return true;
+}
+
+
+bool vrend_shader_query_separable_program(const struct tgsi_token *tokens,
+                                          const struct vrend_shader_cfg *cfg)
+{
+   struct sso_scan_ctx ctx = {0};
+   ctx.cfg = cfg;
+   ctx.iter.iterate_property = iter_prop_for_separable;
+   ctx.iter.iterate_declaration = iter_decl_for_overlap;
+   tgsi_iterate_shader(tokens, &ctx.iter);
+
+   /* Since we have to match by location, and have to handle generics and patches
+    * at in the limited range of 32 locations, we have to make sure that the
+    * the generics range and the patch range don't overlap. In addition, to
+    * work around that radeonsi doesn't support patch locations above 30 we have
+    * to check that limit too. */
+   bool supports_separable = !ctx.unsupported_io &&
+                             (ctx.max_generic_in_sid + ctx.max_patch_in_sid < MAX_VARYING) &&
+                             (ctx.max_generic_out_sid + ctx.max_patch_out_sid < MAX_VARYING) &&
+                             (ctx.max_patch_in_sid < ctx.cfg->max_shader_patch_varyings) &&
+                             (ctx.max_patch_out_sid < ctx.cfg->max_shader_patch_varyings);
+   return ctx.separable_program && supports_separable;
+}
+
 bool vrend_convert_shader(const struct vrend_context *rctx,
                           const struct vrend_shader_cfg *cfg,
                           const struct tgsi_token *tokens,
@@ -7546,6 +7644,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    boolean bret;
 
    memset(&ctx, 0, sizeof(struct dump_ctx));
+   ctx.cfg = cfg;
 
    /* First pass to deal with edge cases. */
    ctx.iter.iterate_declaration = iter_decls;

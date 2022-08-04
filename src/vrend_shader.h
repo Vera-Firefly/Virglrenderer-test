@@ -266,6 +266,9 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *ctx,
 
 bool vrend_shader_needs_alpha_func(const struct vrend_shader_key *key);
 
+bool vrend_shader_query_separable_program(const struct tgsi_token *tokens,
+                                          const struct vrend_shader_cfg *cfg);
+
 static inline bool vrend_shader_sampler_views_mask_get(
    const uint64_t mask[static VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH],
    int index)

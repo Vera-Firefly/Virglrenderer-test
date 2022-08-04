@@ -4019,15 +4019,13 @@ static int vrend_finish_shader(struct vrend_context *ctx,
                                struct vrend_shader_selector *sel,
                                const struct tgsi_token *tokens)
 {
-   int r;
-
    sel->tokens = tgsi_dup_tokens(tokens);
 
-   r = vrend_shader_select(ctx->sub, sel, NULL);
-   if (r) {
-      return EINVAL;
-   }
-   return 0;
+   if (!ctx->shader_cfg.use_gles && sel->type != PIPE_SHADER_COMPUTE)
+      sel->sinfo.separable_program =
+            vrend_shader_query_separable_program(sel->tokens, &ctx->shader_cfg);
+
+   return vrend_shader_select(ctx->sub, sel, NULL) ? EINVAL : 0;
 }
 
 int vrend_create_shader(struct vrend_context *ctx,
