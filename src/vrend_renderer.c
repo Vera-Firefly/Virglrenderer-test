@@ -11551,6 +11551,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
       glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_COMPONENTS, &max);
       caps->v2.max_const_buffer_size[PIPE_SHADER_COMPUTE] = max * 4;
    }
+
+   if (has_feature(feat_separate_shader_objects))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_SSO;
 }
 
 void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
