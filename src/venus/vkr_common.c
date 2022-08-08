@@ -87,7 +87,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_shader_demote_to_helper_invocation = true,
    .EXT_subgroup_size_control = false,
    .EXT_texel_buffer_alignment = false,
-   .EXT_texture_compression_astc_hdr = false,
+   .EXT_texture_compression_astc_hdr = true,
    .EXT_tooling_info = false,
    .EXT_ycbcr_2plane_444_formats = false,
    /* KHR extensions */
