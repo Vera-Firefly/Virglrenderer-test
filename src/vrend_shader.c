@@ -77,6 +77,7 @@
 #define SHADER_REQ_BLEND_EQUATION_ADVANCED (1ULL << 33)
 #define SHADER_REQ_EXPLICIT_ATTRIB_LOCATION (1ULL << 34)
 #define SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION (1ULL << 35)
+#define SHADER_REQ_TEXTURE_SHADOW_LOD (1ULL << 36)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -343,6 +344,7 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_SHADER_ATOMIC_FLOAT, "NV_shader_atomic_float"},
     { SHADER_REQ_CONSERVATIVE_DEPTH, "ARB_conservative_depth"},
     {SHADER_REQ_BLEND_EQUATION_ADVANCED, "KHR_blend_equation_advanced"},
+    { SHADER_REQ_TEXTURE_SHADOW_LOD, "EXT_texture_shadow_lod"},
 };
 
 enum vrend_type_qualifier {
@@ -3132,9 +3134,10 @@ static void translate_tex(struct dump_ctx *ctx,
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
       /* On GLES we emulate the 1D array by using a 2D array, for this
-       * there is no shadow lookup with bias. To avoid that compiling an
-       * invalid shader results in a crash we ignore the bias value */
-      if (!(ctx->cfg->use_gles &&
+       * there is no shadow lookup with bias unless EXT_texture_shadow_lod is used.
+       * To avoid that compiling an invalid shader results in a crash we ignore
+       * the bias value */
+      if (!(ctx->cfg->use_gles && !ctx->cfg->has_texture_shadow_lod &&
             TGSI_TEXTURE_SHADOW1D_ARRAY == inst->Texture.Texture))
          strbuf_appendf(&bias_buf, ", %s.w", srcs[0]);
       break;
@@ -3222,6 +3225,19 @@ static void translate_tex(struct dump_ctx *ctx,
 
    const char *bias = bias_buf.buf;
    const char *offset = offset_buf.buf;
+
+   // EXT_texture_shadow_lod defines a few more functions handling bias
+   if (bias &&
+       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY))
+      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
+
+   // EXT_texture_shadow_lod also adds the missing textureOffset for 2DArrayShadow in GLES
+   if ((bias || offset) && ctx->cfg->use_gles &&
+       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY))
+      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
 
    if (inst->Texture.NumOffsets == 1) {
       if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
@@ -6003,6 +6019,9 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
             emit_ext(glsl_strbufs, "EXT_shader_framebuffer_fetch_non_coherent", "require");
 
       }
+
+      if (ctx->shader_req_bits & SHADER_REQ_TEXTURE_SHADOW_LOD)
+         emit_ext(glsl_strbufs, "EXT_texture_shadow_lod", "require");
 
       if (ctx->shader_req_bits & SHADER_REQ_LODQ)
          emit_ext(glsl_strbufs, "EXT_texture_query_lod", "require");

@@ -762,7 +762,6 @@ spec@glsl-1.30@execution@tex-miplevel-selection texture() 2darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 2d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 2dshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 3d,Fail
-spec@glsl-1.30@execution@tex-miplevel-selection texture(bias) 1darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() cubearray,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() cubearrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() cube,Fail
@@ -815,7 +814,6 @@ spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 2dshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureoffset 3d,Fail
-spec@glsl-1.30@execution@tex-miplevel-selection textureoffset(bias) 1darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureproj 1d,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureproj 1d_projvec4,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection textureproj 1dshadow,Fail
