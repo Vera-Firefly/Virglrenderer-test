@@ -342,6 +342,7 @@ struct global_renderer_state {
    uint32_t max_texture_2d_size;
    uint32_t max_texture_3d_size;
    uint32_t max_texture_cube_size;
+   uint32_t max_shader_patch_varyings;
 
    /* inferred GL caching type */
    uint32_t inferred_gl_caching_type;
@@ -7227,6 +7228,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->res_hash = vrend_ctx_resource_init_table();
    list_inithead(&grctx->untyped_resources);
 
+   grctx->shader_cfg.max_shader_patch_varyings = vrend_state.max_shader_patch_varyings;
    grctx->shader_cfg.use_gles = vrend_state.use_gles;
    grctx->shader_cfg.use_core_profile = vrend_state.use_core_profile;
    grctx->shader_cfg.use_explicit_locations = vrend_state.use_explicit_locations;
@@ -11207,6 +11209,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
       caps->v2.max_shader_patch_varyings = max / 4;
    } else
       caps->v2.max_shader_patch_varyings = 0;
+
+   vrend_state.max_shader_patch_varyings = caps->v2.max_shader_patch_varyings;
 
    if (has_feature(feat_texture_gather)) {
        glGetIntegerv(GL_MIN_PROGRAM_TEXTURE_GATHER_OFFSET, &caps->v2.min_texture_gather_offset);
