@@ -3180,13 +3180,14 @@ static void translate_tex(struct dump_ctx *ctx,
       }
    }
 
+   char buf[255];
+   const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
+
    /* We have to unnormalize the coordinate for all but the texel fetch instruction */
    if (inst->Instruction.Opcode != TGSI_OPCODE_TXF &&
        vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_emulated_rect_mask, sinfo->sreg_index)) {
 
-      char buf[255];
       const char *bias = "";
-      const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
 
       /* No LOD for these texture types, but on GLES we emulate RECT by using
        * a normal 2D texture, so we have to give LOD 0 */
