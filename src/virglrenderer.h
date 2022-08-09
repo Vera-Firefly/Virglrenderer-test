@@ -312,12 +312,6 @@ VIRGL_EXPORT int virgl_renderer_get_poll_fd(void);
 
 VIRGL_EXPORT int virgl_renderer_execute(void *execute_args, uint32_t execute_size);
 
-/*
- * These are unstable APIs for development only. Use these for development/testing purposes
- * only, not in production
- */
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
-
 #define VIRGL_RENDERER_CONTEXT_FLAG_CAPSET_ID_MASK 0xff
 
 VIRGL_EXPORT int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
@@ -367,6 +361,12 @@ VIRGL_EXPORT int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint3
 
 VIRGL_EXPORT int
 virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd);
+
+/*
+ * These are unstable APIs for development only. Use these for development/testing purposes
+ * only, not in production
+ */
+#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 
 struct virgl_renderer_resource_import_blob_args
 {
