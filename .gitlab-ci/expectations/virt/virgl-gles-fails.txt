@@ -273,7 +273,6 @@ spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
-spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail
 spec@arb_shader_image_load_store@bitcast,Fail
 spec@arb_shader_image_load_store@bitcast@r11f_g11f_b10f to rgba8_snorm bitcast test,Fail
 spec@arb_shader_image_load_store@bitcast@r32f to rgba8_snorm bitcast test,Fail
