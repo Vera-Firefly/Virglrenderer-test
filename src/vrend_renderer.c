@@ -452,6 +452,7 @@ struct vrend_shader {
    struct vrend_strarray glsl_strings;
    GLuint id;
    GLuint program_id; /* only used for separable shaders */
+   GLuint last_pipeline_id;
    uint32_t uid;
    bool is_compiled;
    bool is_linked; /* only used for separable shaders */
@@ -1267,6 +1268,7 @@ static bool vrend_compile_shader(struct vrend_sub_context *sub_ctx,
 
    if (shader->sel->sinfo.separable_program) {
        shader->program_id = glCreateProgram();
+       shader->last_pipeline_id = 0xffffffff;
        glProgramParameteri(shader->program_id, GL_PROGRAM_SEPARABLE, GL_TRUE);
        glAttachShader(shader->program_id, shader->id);
    }
@@ -1664,6 +1666,9 @@ static void rebind_ubo_and_sampler_locs(struct vrend_linked_shader_program *spro
 
       next_sampler_id = bind_sampler_locs(sprog, shader_type, next_sampler_id);
       next_ubo_id = bind_ubo_locs(sprog, shader_type, next_ubo_id);
+
+      if (sprog->is_pipeline)
+         sprog->ss[shader_type]->last_pipeline_id = sprog->id.pipeline;
    }
 
    /* Now `next_ubo_id` is the last ubo id, which is used for the VirglBlock. */
@@ -5187,11 +5192,23 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
            * because it's shared across multiple pipelines and some things like
            * transform feedback require relinking, so we have to make sure the
            * blocks are bound. */
-          int last_shader = tes_id ? PIPE_SHADER_TESS_EVAL :
-                                     (gs_id ? PIPE_SHADER_GEOMETRY :
-                                              PIPE_SHADER_FRAGMENT);
-          vrend_use_program(prog);
-          rebind_ubo_and_sampler_locs(prog, last_shader);
+          enum pipe_shader_type last_shader = tes_id ? PIPE_SHADER_TESS_EVAL :
+                (gs_id ? PIPE_SHADER_GEOMETRY :
+                         PIPE_SHADER_FRAGMENT);
+          bool need_rebind = false;
+
+          for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
+               shader_type <= last_shader && !need_rebind;
+               shader_type++) {
+             if (!prog->ss[shader_type])
+                continue;
+             need_rebind |= prog->ss[shader_type]->last_pipeline_id != prog->id.pipeline;
+          }
+
+          if (need_rebind) {
+             vrend_use_program(prog);
+             rebind_ubo_and_sampler_locs(prog, last_shader);
+          }
       }
 
       sub_ctx->last_shader_idx = sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] ? PIPE_SHADER_TESS_EVAL : (sub_ctx->shaders[PIPE_SHADER_GEOMETRY] ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
