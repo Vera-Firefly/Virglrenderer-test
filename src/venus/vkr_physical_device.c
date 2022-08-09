@@ -16,7 +16,7 @@
 static struct gbm_device *vkr_gbm_dev;
 
 static void
-vkr_gbm_device_init_once()
+vkr_gbm_device_init_once(void)
 {
    struct virgl_gbm *vkr_gbm = virgl_gbm_init(-1);
    if (!vkr_gbm) {

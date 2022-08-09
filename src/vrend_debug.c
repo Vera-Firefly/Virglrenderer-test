@@ -165,7 +165,7 @@ int vrend_get_debug_flags(const char *flagstring)
    return retval;
 }
 
-void vrend_init_debug_flags()
+void vrend_init_debug_flags(void)
 {
    if (!vrend_debug_flags_initalized)  {
       vrend_debug_flags_initalized = 1;

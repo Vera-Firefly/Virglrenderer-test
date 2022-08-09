@@ -684,7 +684,7 @@ void vrend_check_texture_multisample(struct vrend_format_table *table,
    }
 }
 
-bool vrend_check_framebuffer_mixed_color_attachements()
+bool vrend_check_framebuffer_mixed_color_attachements(void)
 {
    GLuint tex_id[2];
    GLuint fb_id;

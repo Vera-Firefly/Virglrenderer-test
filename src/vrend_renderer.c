@@ -6936,7 +6936,7 @@ vrend_renderer_get_pipe_callbacks(void)
    return &callbacks;
 }
 
-static bool use_integer() {
+static bool use_integer(void) {
    if (getenv("VIRGL_USE_INTEGER"))
       return true;
 

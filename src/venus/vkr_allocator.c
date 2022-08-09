@@ -132,7 +132,7 @@ vkr_allocator_allocate_memory(struct virgl_resource *res)
 }
 
 void
-vkr_allocator_fini()
+vkr_allocator_fini(void)
 {
    if (!vkr_allocator_initialized)
       return;
@@ -152,7 +152,7 @@ vkr_allocator_fini()
 }
 
 int
-vkr_allocator_init()
+vkr_allocator_init(void)
 {
    VkResult res;
 
