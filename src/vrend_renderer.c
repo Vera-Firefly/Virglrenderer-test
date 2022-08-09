@@ -11460,7 +11460,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
              !vrend_winsys_different_gpu())
             caps->v2.capability_bits |= VIRGL_CAP_ARB_BUFFER_STORAGE;
       }
-      caps->v2.capability_bits |= VIRGL_CAP_V2_SCANOUT_USES_GBM;
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_SCANOUT_USES_GBM;
    }
 #endif
 
