@@ -1650,9 +1650,10 @@ static void bind_virgl_block_loc(struct vrend_linked_shader_program *sprog,
    }
 }
 
-static void rebind_ubo_locs(struct vrend_linked_shader_program *sprog,
-                            enum pipe_shader_type last_shader)
+static void rebind_ubo_and_sampler_locs(struct vrend_linked_shader_program *sprog,
+                                        enum pipe_shader_type last_shader)
 {
+   int next_sampler_id = 0;
    int next_ubo_id = 0;
 
    for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
@@ -1661,6 +1662,7 @@ static void rebind_ubo_locs(struct vrend_linked_shader_program *sprog,
       if (!sprog->ss[shader_type])
          continue;
 
+      next_sampler_id = bind_sampler_locs(sprog, shader_type, next_sampler_id);
       next_ubo_id = bind_ubo_locs(sprog, shader_type, next_ubo_id);
    }
 
@@ -2021,19 +2023,17 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
 
    vrend_use_program(sprog);
 
-   int next_sampler_id = 0;
    for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
         shader_type <= last_shader;
         shader_type++) {
       if (!sprog->ss[shader_type])
          continue;
 
-      next_sampler_id = bind_sampler_locs(sprog, shader_type, next_sampler_id);
       bind_const_locs(sprog, shader_type);
       bind_image_locs(sprog, shader_type);
       bind_ssbo_locs(sprog, shader_type);
    }
-   rebind_ubo_locs(sprog, last_shader);
+   rebind_ubo_and_sampler_locs(sprog, last_shader);
 
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
       if (vs->sel->sinfo.num_inputs) {
@@ -5190,7 +5190,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
           int last_shader = tes_id ? PIPE_SHADER_TESS_EVAL :
                                      (gs_id ? PIPE_SHADER_GEOMETRY :
                                               PIPE_SHADER_FRAGMENT);
-          rebind_ubo_locs(prog, last_shader);
+          vrend_use_program(prog);
+          rebind_ubo_and_sampler_locs(prog, last_shader);
       }
 
       sub_ctx->last_shader_idx = sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] ? PIPE_SHADER_TESS_EVAL : (sub_ctx->shaders[PIPE_SHADER_GEOMETRY] ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
