@@ -319,6 +319,7 @@ vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
       .memoryResourceAllocationSize = VK_TRUE,
       .globalFencing = VK_FALSE,
       .largeRing = VK_TRUE,
+      .syncFdFencing = VK_TRUE,
    };
 
    vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(args);
