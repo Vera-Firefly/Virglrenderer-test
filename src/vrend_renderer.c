@@ -11670,7 +11670,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_arb_buffer_storage) && !vrend_state.use_external_blob) {
       const char *vendor = (const char *)glGetString(GL_VENDOR);
-      bool is_mesa = ((strstr(renderer, "Mesa") != NULL) || (strstr(renderer, "DRM") != NULL));
+      bool is_mesa = ((strstr(renderer, "Mesa") != NULL) || (strstr(renderer, "DRM") != NULL) ||
+                      (strstr(renderer, "llvmpipe") != NULL));
       /*
        * Intel GPUs (aside from Atom, which doesn't expose GL4.5) are cache-coherent.
        * Mesa AMDGPUs use write-combine mappings for coherent/persistent memory (see
@@ -11685,6 +11686,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
             vrend_state.inferred_gl_caching_type = VIRGL_RENDERER_MAP_CACHE_CACHED;
          else if (strstr(vendor, "AMD") != NULL)
             vrend_state.inferred_gl_caching_type = VIRGL_RENDERER_MAP_CACHE_WC;
+         else if (strstr(vendor, "Mesa") != NULL)
+            vrend_state.inferred_gl_caching_type = VIRGL_RENDERER_MAP_CACHE_CACHED;
       } else {
          /* This is an educated guess since things don't explode with VMX + Nvidia. */
          if (strstr(renderer, "Quadro K2200") != NULL)
