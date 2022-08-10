@@ -10092,6 +10092,7 @@ void vrend_renderer_blit(struct vrend_context *ctx,
 {
    unsigned int comp_flags = 0;
    struct vrend_resource *src_res, *dst_res;
+   int src_width, src_height, dst_width, dst_height;
    src_res = vrend_renderer_ctx_res_lookup(ctx, src_handle);
    dst_res = vrend_renderer_ctx_res_lookup(ctx, dst_handle);
 
@@ -10154,6 +10155,11 @@ void vrend_renderer_blit(struct vrend_context *ctx,
       !(vrend_resource_needs_srgb_decode(src_res, info->src.format) ||
         vrend_resource_needs_srgb_encode(dst_res, info->dst.format));
 
+   src_width  = u_minify(src_res->base.width0,  info->src.level);
+   src_height = u_minify(src_res->base.height0, info->src.level);
+   dst_width  = u_minify(dst_res->base.width0,  info->dst.level);
+   dst_height = u_minify(dst_res->base.height0, info->dst.level);
+
    /* The Gallium blit function can be called for a general blit that may
     * scale, convert the data, and apply some rander states, or it is called via
     * glCopyImageSubData. If the src or the dst image are equal, or the two
@@ -10168,6 +10174,10 @@ void vrend_renderer_blit(struct vrend_context *ctx,
        !info->scissor_enable && (info->filter == PIPE_TEX_FILTER_NEAREST) &&
        !info->alpha_blend && (info->mask == PIPE_MASK_RGBA) &&
        src_res->base.nr_samples == dst_res->base.nr_samples &&
+       info->src.box.x + info->src.box.width  <= src_width &&
+       info->dst.box.x + info->dst.box.width  <= dst_width &&
+       info->src.box.y + info->src.box.height <= src_height &&
+       info->dst.box.y + info->dst.box.height <= dst_height &&
        info->src.box.width == info->dst.box.width &&
        info->src.box.height == info->dst.box.height &&
        info->src.box.depth == info->dst.box.depth) {
