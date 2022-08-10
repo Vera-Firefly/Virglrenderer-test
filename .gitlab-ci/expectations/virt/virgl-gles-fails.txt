@@ -273,6 +273,7 @@ spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
+spec@arb_shader_atomic_counter_ops@execution@all_touch_test,Fail
 spec@arb_shader_image_load_store@bitcast,Fail
 spec@arb_shader_image_load_store@bitcast@r11f_g11f_b10f to rgba8_snorm bitcast test,Fail
 spec@arb_shader_image_load_store@bitcast@r32f to rgba8_snorm bitcast test,Fail
@@ -307,7 +308,6 @@ spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,Expected
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
 spec@arb_shader_storage_buffer_object@layout-std430-write-shader,Fail
 spec@arb_shader_storage_buffer_object@maxblocks,Fail
-spec@arb_shader_storage_buffer_object@minmax,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgradcube,ExpectedFail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,ExpectedFail
 spec@arb_shader_texture_lod@execution@glsl-fs-shadow2dgradarb-07,Fail
@@ -2475,9 +2475,6 @@ spec@!opengl 1.0@gl-1.0-logicop@GL_NOOP,Fail
 spec@!opengl 1.0@gl-1.0-logicop@GL_NOOP_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-spot-light,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,ExpectedFail
-spec@!opengl 1.0@rasterpos,Crash
-spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
-spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@clipflat,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center bottom PV: FIRST,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center middle PV: FIRST,Fail
@@ -3173,13 +3170,15 @@ spec@!opengl 1.1@polygon-mode-offset@config 6: Expected blue pixel in center,Fai
 spec@!opengl 1.1@polygon-mode-offset@config 6: Expected white pixel on right edge,Fail
 spec@!opengl 1.1@polygon-mode-offset@config 6: Expected white pixel on top edge,Fail
 spec@!opengl 1.1@polygon-mode-offset,ExpectedFail
+spec@!opengl 1.0@rasterpos,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@read-front clear-front-first,Crash
 spec@!opengl 1.1@read-front clear-front-first samples=2,Crash
 spec@!opengl 1.1@read-front clear-front-first samples=4,Crash
 spec@!opengl 1.1@read-front,Crash
 spec@!opengl 1.1@read-front samples=2,Crash
 spec@!opengl 1.1@read-front samples=4,ExpectedFail
-spec@!opengl 1.1@streaming-texture-leak,Crash
 spec@!opengl 1.1@teximage-colors gl_alpha16@Exact upload-download of GL_ALPHA16,Fail
 spec@!opengl 1.1@teximage-colors gl_r16_snorm@Exact upload-download of GL_R16_SNORM,Fail
 spec@!opengl 1.1@teximage-colors gl_r8_snorm@Exact upload-download of GL_R8_SNORM,Fail
