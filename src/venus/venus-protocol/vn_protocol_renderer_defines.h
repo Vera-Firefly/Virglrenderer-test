@@ -22,6 +22,7 @@
 #define VK_STRUCTURE_TYPE_MEMORY_RESOURCE_PROPERTIES_MESA ((VkStructureType)1000384001)
 #define VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA ((VkStructureType)1000384002)
 #define VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA ((VkStructureType)1000384003)
+#define VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_RESOURCE_INFO_100000_MESA ((VkStructureType)1000384004)
 
 typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCreateInstance_EXT = 0,
@@ -326,16 +327,18 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCmdDrawIndirectByteCountEXT_EXT = 186,
     VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT = 193,
     VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
-    VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT = 238,
-    VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT = 239,
+    VK_COMMAND_TYPE_vkImportSemaphoreFdKHR_EXT = 242,
+    VK_COMMAND_TYPE_vkGetSemaphoreFdKHR_EXT = 243,
     VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT = 240,
     VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT = 241,
+    VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT = 238,
+    VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT = 239,
     VK_COMMAND_TYPE_vkGetImageDrmFormatModifierPropertiesEXT_EXT = 187,
-    VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
-    VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
     VK_COMMAND_TYPE_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_EXT = 235,
     VK_COMMAND_TYPE_vkGetCalibratedTimestampsEXT_EXT = 236,
     VK_COMMAND_TYPE_vkCmdSetLineStippleEXT_EXT = 237,
+    VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
+    VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
     VK_COMMAND_TYPE_vkExecuteCommandStreamsMESA_EXT = 180,
@@ -344,6 +347,9 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkNotifyRingMESA_EXT = 190,
     VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT = 191,
     VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT = 192,
+    VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT = 244,
+    VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT = 245,
+    VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT = 246,
     VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT = 195,
 } VkCommandTypeEXT;
 
@@ -403,6 +409,7 @@ typedef struct VkVenusExperimentalFeatures100000MESA {
     VkBool32 memoryResourceAllocationSize;
     VkBool32 globalFencing;
     VkBool32 largeRing;
+    VkBool32 syncFdFencing;
 } VkVenusExperimentalFeatures100000MESA;
 
 typedef struct VkMemoryResourceAllocationSizeProperties100000MESA {
@@ -410,6 +417,13 @@ typedef struct VkMemoryResourceAllocationSizeProperties100000MESA {
     void* pNext;
     uint64_t allocationSize;
 } VkMemoryResourceAllocationSizeProperties100000MESA;
+
+typedef struct VkImportSemaphoreResourceInfo100000MESA {
+    VkStructureType sType;
+    const void* pNext;
+    VkSemaphore semaphore;
+    uint32_t resourceId;
+} VkImportSemaphoreResourceInfo100000MESA;
 
 struct vn_command_vkCreateInstance {
     const VkInstanceCreateInfo* pCreateInfo;
@@ -1556,6 +1570,21 @@ struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties {
     VkExternalSemaphoreProperties* pExternalSemaphoreProperties;
 };
 
+struct vn_command_vkGetSemaphoreFdKHR {
+    VkDevice device;
+    const VkSemaphoreGetFdInfoKHR* pGetFdInfo;
+    int* pFd;
+
+    VkResult ret;
+};
+
+struct vn_command_vkImportSemaphoreFdKHR {
+    VkDevice device;
+    const VkImportSemaphoreFdInfoKHR* pImportSemaphoreFdInfo;
+
+    VkResult ret;
+};
+
 struct vn_command_vkGetPhysicalDeviceExternalFenceProperties {
     VkPhysicalDevice physicalDevice;
     const VkPhysicalDeviceExternalFenceInfo* pExternalFenceInfo;
@@ -2145,6 +2174,21 @@ struct vn_command_vkGetMemoryResourcePropertiesMESA {
     VkResult ret;
 };
 
+struct vn_command_vkResetFenceResource100000MESA {
+    VkDevice device;
+    VkFence fence;
+};
+
+struct vn_command_vkWaitSemaphoreResource100000MESA {
+    VkDevice device;
+    VkSemaphore semaphore;
+};
+
+struct vn_command_vkImportSemaphoreResource100000MESA {
+    VkDevice device;
+    const VkImportSemaphoreResourceInfo100000MESA* pImportSemaphoreResourceInfo;
+};
+
 struct vn_command_vkGetVenusExperimentalFeatureData100000MESA {
     size_t* pDataSize;
     void* pData;
@@ -2310,6 +2354,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetMemoryFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdKHR *args);
     void (*dispatch_vkGetMemoryFdPropertiesKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdPropertiesKHR *args);
     void (*dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalSemaphoreProperties *args);
+    void (*dispatch_vkGetSemaphoreFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetSemaphoreFdKHR *args);
+    void (*dispatch_vkImportSemaphoreFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkImportSemaphoreFdKHR *args);
     void (*dispatch_vkGetPhysicalDeviceExternalFenceProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalFenceProperties *args);
     void (*dispatch_vkGetFenceFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetFenceFdKHR *args);
     void (*dispatch_vkImportFenceFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkImportFenceFdKHR *args);
@@ -2398,6 +2444,9 @@ struct vn_dispatch_context {
     void (*dispatch_vkNotifyRingMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkNotifyRingMESA *args);
     void (*dispatch_vkWriteRingExtraMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWriteRingExtraMESA *args);
     void (*dispatch_vkGetMemoryResourcePropertiesMESA)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryResourcePropertiesMESA *args);
+    void (*dispatch_vkResetFenceResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkResetFenceResource100000MESA *args);
+    void (*dispatch_vkWaitSemaphoreResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWaitSemaphoreResource100000MESA *args);
+    void (*dispatch_vkImportSemaphoreResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkImportSemaphoreResource100000MESA *args);
     void (*dispatch_vkGetVenusExperimentalFeatureData100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args);
 };
 

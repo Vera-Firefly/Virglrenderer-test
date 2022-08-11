@@ -197,7 +197,9 @@ struct vn_device_proc_table {
    PFN_vkGetQueryPoolResults GetQueryPoolResults;
    PFN_vkGetRenderAreaGranularity GetRenderAreaGranularity;
    PFN_vkGetSemaphoreCounterValue GetSemaphoreCounterValue;
+   PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
    PFN_vkImportFenceFdKHR ImportFenceFdKHR;
+   PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
    PFN_vkInvalidateMappedMemoryRanges InvalidateMappedMemoryRanges;
    PFN_vkMapMemory MapMemory;
    PFN_vkMergePipelineCaches MergePipelineCaches;
@@ -627,8 +629,14 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_2 ? VN_GDPA(dev, vkGetSemaphoreCounterValue) :
       ext_table->KHR_timeline_semaphore ? VN_GDPA(dev, vkGetSemaphoreCounterValueKHR) :
       NULL;
+   proc_table->GetSemaphoreFdKHR =
+      ext_table->KHR_external_semaphore_fd ? VN_GDPA(dev, vkGetSemaphoreFdKHR) :
+      NULL;
    proc_table->ImportFenceFdKHR =
       ext_table->KHR_external_fence_fd ? VN_GDPA(dev, vkImportFenceFdKHR) :
+      NULL;
+   proc_table->ImportSemaphoreFdKHR =
+      ext_table->KHR_external_semaphore_fd ? VN_GDPA(dev, vkImportSemaphoreFdKHR) :
       NULL;
    proc_table->InvalidateMappedMemoryRanges = VN_GDPA(dev, vkInvalidateMappedMemoryRanges);
    proc_table->MapMemory = VN_GDPA(dev, vkMapMemory);

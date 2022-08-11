@@ -276,12 +276,17 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkNotifyRingMESA_EXT: return "vkNotifyRingMESA";
     case VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT: return "vkWriteRingExtraMESA";
     case VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT: return "vkGetMemoryResourcePropertiesMESA";
+    case VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT: return "vkResetFenceResource100000MESA";
+    case VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT: return "vkWaitSemaphoreResource100000MESA";
+    case VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT: return "vkImportSemaphoreResource100000MESA";
     case VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT: return "vkGetVenusExperimentalFeatureData100000MESA";
     case VK_COMMAND_TYPE_vkGetDeviceProcAddr_EXT: return "vkGetDeviceProcAddr";
     case VK_COMMAND_TYPE_vkGetInstanceProcAddr_EXT: return "vkGetInstanceProcAddr";
     case VK_COMMAND_TYPE_vkMapMemory_EXT: return "vkMapMemory";
     case VK_COMMAND_TYPE_vkGetMemoryFdKHR_EXT: return "vkGetMemoryFdKHR";
     case VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT: return "vkGetMemoryFdPropertiesKHR";
+    case VK_COMMAND_TYPE_vkGetSemaphoreFdKHR_EXT: return "vkGetSemaphoreFdKHR";
+    case VK_COMMAND_TYPE_vkImportSemaphoreFdKHR_EXT: return "vkImportSemaphoreFdKHR";
     case VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT: return "vkGetFenceFdKHR";
     case VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT: return "vkImportFenceFdKHR";
     case VK_COMMAND_TYPE_vkUpdateDescriptorSetWithTemplate_EXT: return "vkUpdateDescriptorSetWithTemplate";
@@ -289,7 +294,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     }
 }
 
-static void (*const vn_dispatch_table[242])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[247])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -523,6 +528,9 @@ static void (*const vn_dispatch_table[242])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkNotifyRingMESA_EXT] = vn_dispatch_vkNotifyRingMESA,
     [VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT] = vn_dispatch_vkWriteRingExtraMESA,
     [VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT] = vn_dispatch_vkGetMemoryResourcePropertiesMESA,
+    [VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT] = vn_dispatch_vkResetFenceResource100000MESA,
+    [VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT] = vn_dispatch_vkWaitSemaphoreResource100000MESA,
+    [VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT] = vn_dispatch_vkImportSemaphoreResource100000MESA,
     [VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT] = vn_dispatch_vkGetVenusExperimentalFeatureData100000MESA,
 };
 
@@ -538,7 +546,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 242 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 247 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);
