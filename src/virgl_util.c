@@ -187,9 +187,14 @@ void trace_init(void)
 #endif
 
 #if ENABLE_TRACING == TRACE_WITH_PERFETTO
+static void on_tracing_state_change(bool enabled) {
+    virgl_log("%s: tracing state change: %d\n", __func__, enabled);
+}
+
 void trace_init(void)
 {
    struct vperfetto_min_config config = {
+      .on_tracing_state_change = on_tracing_state_change,
       .init_flags = VPERFETTO_INIT_FLAG_USE_SYSTEM_BACKEND,
             .filename = NULL,
             .shmem_size_hint_kb = 32 * 1024,
