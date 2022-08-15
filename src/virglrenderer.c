@@ -408,6 +408,7 @@ int virgl_renderer_context_create_fence(uint32_t ctx_id,
                                         uint64_t queue_id,
                                         uint64_t fence_id)
 {
+   TRACE_FUNC();
    struct virgl_context *ctx = virgl_context_lookup(ctx_id);
    if (!ctx)
       return -EINVAL;
@@ -1099,6 +1100,7 @@ int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint32_t *map_info
 int
 virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd)
 {
+   TRACE_FUNC();
    struct virgl_resource *res = virgl_resource_lookup(res_id);
    if (!res)
       return EINVAL;
