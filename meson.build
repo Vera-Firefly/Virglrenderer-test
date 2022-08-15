@@ -52,6 +52,7 @@ warnings = [
    '-Werror=implicit-function-declaration',
    '-Werror=missing-prototypes',
    '-Wmissing-prototypes',
+   '-Werror=incompatible-pointer-types',
    '-Werror=int-to-pointer-cast',
    '-Wno-overlength-strings',
 ]
