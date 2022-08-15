@@ -145,7 +145,7 @@ enum features_id
    feat_depth_clamp,
    feat_draw_instance,
    feat_dual_src_blend,
-   feat_egl_image_external,
+   feat_egl_image,
    feat_egl_image_storage,
    feat_enhanced_layouts,
    feat_fb_no_attach,
@@ -248,7 +248,7 @@ static const  struct {
    FEAT(dual_src_blend, 33, UNAVAIL,  "GL_ARB_blend_func_extended", "GL_EXT_blend_func_extended" ),
    FEAT(depth_clamp, 32, UNAVAIL, "GL_ARB_depth_clamp", "GL_EXT_depth_clamp", "GL_NV_depth_clamp"),
    FEAT(enhanced_layouts, 44, UNAVAIL, "GL_ARB_enhanced_layouts"),
-   FEAT(egl_image_external, UNAVAIL, UNAVAIL, "GL_OES_EGL_image_external"),
+   FEAT(egl_image, UNAVAIL, UNAVAIL, "GL_OES_EGL_image"),
    FEAT(egl_image_storage, UNAVAIL, UNAVAIL, "GL_EXT_EGL_image_storage"),
    FEAT(fb_no_attach, 43, 31,  "GL_ARB_framebuffer_no_attachments" ),
    FEAT(framebuffer_fetch, UNAVAIL, UNAVAIL,  "GL_EXT_shader_framebuffer_fetch" ),
@@ -7794,8 +7794,9 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       if (has_bit(gr->storage_bits, VREND_STORAGE_GL_IMMUTABLE) &&
           has_feature(feat_egl_image_storage)) {
          glEGLImageTargetTexStorageEXT(gr->target, (GLeglImageOES) image_oes, NULL);
-      } else if (has_feature(feat_egl_image_external)) {
+      } else if (has_feature(feat_egl_image)) {
          gr->storage_bits &= ~VREND_STORAGE_GL_IMMUTABLE;
+         assert(gr->target == GL_TEXTURE_2D);
          glEGLImageTargetTexture2DOES(gr->target, (GLeglImageOES) image_oes);
          if ((format == VIRGL_FORMAT_NV12 ||
               format == VIRGL_FORMAT_NV21 ||
@@ -7804,7 +7805,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
             vrend_printf("glEGLImageTargetTexture2DOES maybe fail\n");
          }
       } else {
-         vrend_printf( "missing GL_OES_EGL_image_external extensions\n");
+         vrend_printf( "missing GL_OES_EGL_image extensions\n");
          glBindTexture(gr->target, 0);
          return EINVAL;
       }
