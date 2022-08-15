@@ -170,7 +170,12 @@ vkr_{create_func_name}_create_array(
    if (vkr_{create_func_name}_init_array(ctx, args, arr) != VK_SUCCESS)
       return args->ret;
 
-   if (vkr_{create_func_name}_create_driver_handles(ctx, args, arr) != VK_SUCCESS) {{
+   if (vkr_{create_func_name}_create_driver_handles(ctx, args, arr) < VK_SUCCESS) {{
+      /* In case the client expects a reply, clear all returned handles to
+       * VK_NULL_HANDLE.
+       */
+      memset(args->{create_objs}, 0,
+             args->{create_count} * sizeof(args->{create_objs}[0]));
       object_array_fini(arr);
       return args->ret;
    }}
@@ -234,14 +239,22 @@ static inline void
 vkr_{create_func_name}_add_array(
    struct vkr_context *ctx,
    struct vkr_device *dev,
-   struct object_array *arr)
+   struct object_array *arr,
+   {vk_type} *args_{create_objs})
 {{
    for (uint32_t i = 0; i < arr->count; i++) {{
       struct vkr_{vkr_type} *obj = arr->objects[i];
 
       obj->base.handle.{vkr_type} = (({vk_type} *)arr->handle_storage)[i];
 
-      vkr_device_add_object(ctx, dev, &obj->base);
+      /* Individual pipelines may fail creation. */
+      if (obj->base.handle.{vkr_type} == VK_NULL_HANDLE) {{
+         free(obj);
+         arr->objects[i] = NULL;
+         args_{create_objs}[i] = VK_NULL_HANDLE;
+      }} else {{
+         vkr_device_add_object(ctx, dev, &obj->base);
+      }}
    }}
 
    arr->objects_stolen = true;
