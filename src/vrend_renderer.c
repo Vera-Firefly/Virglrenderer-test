@@ -433,6 +433,7 @@ struct vrend_linked_shader_program {
 
    GLuint separate_virgl_block_id[PIPE_SHADER_TYPES];
    GLint virgl_block_bind;
+   uint32_t sysvalue_data_cookie;
    GLint ubo_sysval_buffer_id;
 
    uint32_t images_used_mask[PIPE_SHADER_TYPES];
@@ -739,6 +740,7 @@ struct vrend_sub_context {
    bool drawing;
    struct vrend_context *parent;
    struct sysval_uniform_block sysvalue_data;
+   uint32_t sysvalue_data_cookie;
 };
 
 struct vrend_untyped_resource {
@@ -3125,6 +3127,7 @@ void vrend_set_viewport_states(struct vrend_context *ctx,
             ctx->sub->viewport_is_negative = viewport_is_negative;
             ctx->sub->sysvalue_data.winsys_adjust_y =
                   viewport_is_negative ? -1.f : 1.f;
+            ctx->sub->sysvalue_data_cookie++;
          }
       }
    }
@@ -4973,10 +4976,13 @@ vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
    if (sub_ctx->prog->virgl_block_bind == -1)
       return;   
 
-   glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
-   glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(struct sysval_uniform_block),
-                   &sub_ctx->sysvalue_data);
-   glBindBuffer(GL_UNIFORM_BUFFER, 0);
+   if (sub_ctx->sysvalue_data_cookie != sub_ctx->prog->sysvalue_data_cookie) {
+      glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
+      glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(struct sysval_uniform_block),
+                      &sub_ctx->sysvalue_data);
+      glBindBuffer(GL_UNIFORM_BUFFER, 0);
+      sub_ctx->prog->sysvalue_data_cookie = sub_ctx->sysvalue_data_cookie;
+   }
 }
 
 static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_program)
@@ -6020,8 +6026,11 @@ void vrend_object_bind_dsa(struct vrend_context *ctx,
    }
    ctx->sub->dsa_state = *state;
    ctx->sub->dsa = state;
-   ctx->sub->sysvalue_data.alpha_ref_val = state->alpha.ref_value;
 
+   if (ctx->sub->sysvalue_data.alpha_ref_val != state->alpha.ref_value) {
+      ctx->sub->sysvalue_data.alpha_ref_val = state->alpha.ref_value;
+      ctx->sub->sysvalue_data_cookie++;
+   }
 
    vrend_hw_emit_dsa(ctx);
 }
@@ -6272,12 +6281,12 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
             glDisable(GL_CLIP_PLANE0 + i);
       }
 
+      ctx->sub->sysvalue_data_cookie++;
       if (ctx->sub->rs_state.clip_plane_enable) {
          ctx->sub->sysvalue_data.clip_plane_enabled = 1.f;
       } else {
          ctx->sub->sysvalue_data.clip_plane_enabled = 0.f;
       }
-
    }
    if (vrend_state.use_core_profile == false) {
       glLineStipple(state->line_stipple_factor, state->line_stipple_pattern);
@@ -9225,7 +9234,7 @@ void vrend_set_polygon_stipple(struct vrend_context *ctx,
       /* std140 aligns array elements at 16 byte */
       for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
          ctx->sub->sysvalue_data.stipple_pattern[i][0] = ps->stipple[i];
-
+      ctx->sub->sysvalue_data_cookie++;
    } else {
       glPolygonStipple((const GLubyte *)ps->stipple);
    }
@@ -9235,6 +9244,8 @@ void vrend_set_clip_state(struct vrend_context *ctx, struct pipe_clip_state *ucp
 {
    if (vrend_state.use_core_profile) {
       ctx->sub->ucp_state = *ucp;
+
+      ctx->sub->sysvalue_data_cookie++;
       for (int i = 0 ; i < VIRGL_NUM_CLIP_PLANES; i++) {
          memcpy(&ctx->sub->sysvalue_data.clipp[i],
                 (const GLfloat *) &ctx->sub->ucp_state.ucp[i], sizeof(GLfloat) * 4);
@@ -11918,6 +11929,7 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
    sub->object_hash = vrend_object_init_ctx_table();
 
    sub->sysvalue_data.winsys_adjust_y = 1.f;
+   sub->sysvalue_data_cookie = 1;
 
    ctx->sub = sub;
    list_add(&sub->head, &ctx->sub_ctxs);
