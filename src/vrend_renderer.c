@@ -738,7 +738,6 @@ struct vrend_sub_context {
    int prim_mode;
    bool drawing;
    struct vrend_context *parent;
-   GLuint stipple_pattern[VREND_POLYGON_STIPPLE_SIZE];
    struct sysval_uniform_block sysvalue_data;
 };
 
@@ -3122,8 +3121,11 @@ void vrend_set_viewport_states(struct vrend_context *ctx,
       }
 
       if (idx == 0) {
-         if (ctx->sub->viewport_is_negative != viewport_is_negative)
+         if (ctx->sub->viewport_is_negative != viewport_is_negative) {
             ctx->sub->viewport_is_negative = viewport_is_negative;
+            ctx->sub->sysvalue_data.winsys_adjust_y =
+                  viewport_is_negative ? -1.f : 1.f;
+         }
       }
    }
 }
@@ -4969,36 +4971,11 @@ static void
 vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
 {
    if (sub_ctx->prog->virgl_block_bind == -1)
-      return;
-
-   struct sysval_uniform_block  *virgl_uniform_block = &sub_ctx->sysvalue_data;
-   memset(virgl_uniform_block, 0, sizeof(struct sysval_uniform_block));
-
-   if (vrend_state.use_core_profile) {
-      virgl_uniform_block->alpha_ref_val = sub_ctx->dsa_state.alpha.ref_value;
-
-      /* std140 aligns array elements at 16 byte */
-      for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
-         virgl_uniform_block->stipple_pattern[i][0] = sub_ctx->stipple_pattern[i];
-   }
-
-   virgl_uniform_block->winsys_adjust_y = sub_ctx->viewport_is_negative ? -1.f : 1.f;
-
-   if (has_feature(feat_cull_distance)) {
-      if (sub_ctx->rs_state.clip_plane_enable) {
-         virgl_uniform_block->clip_plane_enabled = 1.f;
-         for (int i = 0 ; i < VIRGL_NUM_CLIP_PLANES; i++) {
-            memcpy(&virgl_uniform_block->clipp[i],
-                   (const GLfloat *) &sub_ctx->ucp_state.ucp[i], sizeof(GLfloat) * 4);
-         }
-      } else {
-         virgl_uniform_block->clip_plane_enabled = 0.f;
-      }
-   }
+      return;   
 
    glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(struct sysval_uniform_block),
-                   virgl_uniform_block);
+                   &sub_ctx->sysvalue_data);
    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -6043,6 +6020,8 @@ void vrend_object_bind_dsa(struct vrend_context *ctx,
    }
    ctx->sub->dsa_state = *state;
    ctx->sub->dsa = state;
+   ctx->sub->sysvalue_data.alpha_ref_val = state->alpha.ref_value;
+
 
    vrend_hw_emit_dsa(ctx);
 }
@@ -6292,6 +6271,13 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
          else
             glDisable(GL_CLIP_PLANE0 + i);
       }
+
+      if (ctx->sub->rs_state.clip_plane_enable) {
+         ctx->sub->sysvalue_data.clip_plane_enabled = 1.f;
+      } else {
+         ctx->sub->sysvalue_data.clip_plane_enabled = 0.f;
+      }
+
    }
    if (vrend_state.use_core_profile == false) {
       glLineStipple(state->line_stipple_factor, state->line_stipple_pattern);
@@ -9235,8 +9221,11 @@ void vrend_set_polygon_stipple(struct vrend_context *ctx,
                                struct pipe_poly_stipple *ps)
 {
    if (vrend_state.use_core_profile) {
-      memcpy(ctx->sub->stipple_pattern, ps->stipple,
-             VREND_POLYGON_STIPPLE_SIZE * sizeof(GLuint));
+
+      /* std140 aligns array elements at 16 byte */
+      for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
+         ctx->sub->sysvalue_data.stipple_pattern[i][0] = ps->stipple[i];
+
    } else {
       glPolygonStipple((const GLubyte *)ps->stipple);
    }
@@ -9246,6 +9235,10 @@ void vrend_set_clip_state(struct vrend_context *ctx, struct pipe_clip_state *ucp
 {
    if (vrend_state.use_core_profile) {
       ctx->sub->ucp_state = *ucp;
+      for (int i = 0 ; i < VIRGL_NUM_CLIP_PLANES; i++) {
+         memcpy(&ctx->sub->sysvalue_data.clipp[i],
+                (const GLfloat *) &ctx->sub->ucp_state.ucp[i], sizeof(GLfloat) * 4);
+      }
    } else {
       int i, j;
       GLdouble val[4];
@@ -11923,6 +11916,8 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
    list_inithead(&sub->streamout_list);
 
    sub->object_hash = vrend_object_init_ctx_table();
+
+   sub->sysvalue_data.winsys_adjust_y = 1.f;
 
    ctx->sub = sub;
    list_add(&sub->head, &ctx->sub_ctxs);
