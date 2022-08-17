@@ -739,6 +739,7 @@ struct vrend_sub_context {
    bool drawing;
    struct vrend_context *parent;
    GLuint stipple_pattern[VREND_POLYGON_STIPPLE_SIZE];
+   struct sysval_uniform_block sysvalue_data;
 };
 
 struct vrend_untyped_resource {
@@ -4970,34 +4971,34 @@ vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
    if (sub_ctx->prog->virgl_block_bind == -1)
       return;
 
-   struct sysval_uniform_block virgl_uniform_block;
-   memset(&virgl_uniform_block, 0, sizeof(struct sysval_uniform_block));
+   struct sysval_uniform_block  *virgl_uniform_block = &sub_ctx->sysvalue_data;
+   memset(virgl_uniform_block, 0, sizeof(struct sysval_uniform_block));
 
    if (vrend_state.use_core_profile) {
-      virgl_uniform_block.alpha_ref_val = sub_ctx->dsa_state.alpha.ref_value;
+      virgl_uniform_block->alpha_ref_val = sub_ctx->dsa_state.alpha.ref_value;
 
       /* std140 aligns array elements at 16 byte */
       for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
-         virgl_uniform_block.stipple_pattern[i][0] = sub_ctx->stipple_pattern[i];
+         virgl_uniform_block->stipple_pattern[i][0] = sub_ctx->stipple_pattern[i];
    }
 
-   virgl_uniform_block.winsys_adjust_y = sub_ctx->viewport_is_negative ? -1.f : 1.f;
+   virgl_uniform_block->winsys_adjust_y = sub_ctx->viewport_is_negative ? -1.f : 1.f;
 
    if (has_feature(feat_cull_distance)) {
       if (sub_ctx->rs_state.clip_plane_enable) {
-         virgl_uniform_block.clip_plane_enabled = 1.f;
+         virgl_uniform_block->clip_plane_enabled = 1.f;
          for (int i = 0 ; i < VIRGL_NUM_CLIP_PLANES; i++) {
-            memcpy(&virgl_uniform_block.clipp[i],
+            memcpy(&virgl_uniform_block->clipp[i],
                    (const GLfloat *) &sub_ctx->ucp_state.ucp[i], sizeof(GLfloat) * 4);
          }
       } else {
-         virgl_uniform_block.clip_plane_enabled = 0.f;
+         virgl_uniform_block->clip_plane_enabled = 0.f;
       }
    }
 
    glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(struct sysval_uniform_block),
-                   &virgl_uniform_block);
+                   virgl_uniform_block);
    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
