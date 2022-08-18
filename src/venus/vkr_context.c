@@ -191,8 +191,8 @@ vkr_context_retire_fences_locked(struct virgl_context *base)
 
    /* retire syncs from destroyed devices */
    LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &ctx->signaled_syncs, head) {
-      /* queue_id might have already get reused but is opaque to the clients */
-      ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_id);
+      /* ring_idx might have already get reused but is opaque to the clients */
+      ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
       free(sync);
    }
    list_inithead(&ctx->signaled_syncs);
@@ -211,7 +211,7 @@ vkr_context_retire_fences_locked(struct virgl_context *base)
       vkr_queue_get_signaled_syncs(queue, &retired_syncs, &queue_empty);
 
       LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
-         ctx->base.fence_retire(&ctx->base, sync->queue_id, sync->fence_id);
+         ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
          vkr_device_free_queue_sync(dev, sync);
       }
 
