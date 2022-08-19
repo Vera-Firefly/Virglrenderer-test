@@ -580,7 +580,7 @@ parse_register_bracket(
    struct parsed_bracket *brackets)
 {
    const char *cur;
-   uint uindex;
+   int index;
 
    memset(brackets, 0, sizeof(struct parsed_bracket));
 
@@ -624,11 +624,11 @@ parse_register_bracket(
          brackets->index = 0;
    }
    else {
-      if (!parse_uint( &ctx->cur, &uindex )) {
-         report_error( ctx, "Expected literal unsigned integer" );
+      if (!parse_int( &ctx->cur, &index )) {
+         report_error( ctx, "Expected literal integer" );
          return FALSE;
       }
-      brackets->index = (int) uindex;
+      brackets->index = index;
       brackets->ind_file = TGSI_FILE_NULL;
       brackets->ind_index = 0;
    }
