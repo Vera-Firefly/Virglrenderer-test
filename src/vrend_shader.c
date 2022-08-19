@@ -369,11 +369,12 @@ struct dest_info {
   enum vrend_type_qualifier udstconv;
   enum vrend_type_qualifier idstconv;
   bool dst_override_no_wm[2];
+  int32_t dest_index;
 };
 
 struct source_info {
    enum vrend_type_qualifier svec4;
-   uint32_t sreg_index;
+   int32_t sreg_index;
    bool tg4_has_component;
    bool override_no_wm[3];
    bool override_no_cast[3];
@@ -3554,11 +3555,18 @@ translate_store(const struct dump_ctx *ctx,
                 const struct tgsi_full_instruction *inst,
                 struct source_info *sinfo,
                 const char *srcs[4],
+                const struct dest_info *dinfo,
                 const char *dst)
 {
    const struct tgsi_full_dst_register *dst_reg = &inst->Dst[0];
 
+   assert(dinfo->dest_index >= 0);
    if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
+
+      /* bail out if we want to write to a non-existing image */
+      if (!((1 << dinfo->dest_index) & ctx->images_used_mask))
+            return;
+
       bool is_ms = false;
       enum vrend_type_qualifier coord_prefix = get_coord_prefix(ctx->images[dst_reg->Register.Index].decl.Resource, &is_ms, ctx->cfg->use_gles);
       enum tgsi_return_type itype;
@@ -3651,7 +3659,7 @@ static void emit_load_mem(struct vrend_glsl_strbufs *glsl_strbufs, const char *d
 }
 
 
-static void
+static bool
 translate_load(const struct dump_ctx *ctx,
                struct vrend_glsl_strbufs *glsl_strbufs,
                uint8_t ssbo_memory_qualifier[],
@@ -3665,6 +3673,12 @@ translate_load(const struct dump_ctx *ctx,
 {
    const struct tgsi_full_src_register *src = &inst->Src[0];
    if (src->Register.File == TGSI_FILE_IMAGE) {
+
+      /* Bail out if we want to load from an image that is not actually used */
+      assert(sinfo->sreg_index >= 0);
+      if (!((1 << sinfo->sreg_index) & ctx->images_used_mask))
+            return false;
+
       bool is_ms = false;
       enum vrend_type_qualifier coord_prefix = get_coord_prefix(ctx->images[sinfo->sreg_index].decl.Resource, &is_ms, ctx->cfg->use_gles);
       enum vrend_type_qualifier dtypeprefix = TYPE_CONVERSION_NONE;
@@ -3770,6 +3784,7 @@ translate_load(const struct dump_ctx *ctx,
    } else if (src->Register.File == TGSI_FILE_HW_ATOMIC) {
       emit_buff(glsl_strbufs, "%s = uintBitsToFloat(atomicCounter(%s));\n", dst, srcs[0]);
    }
+   return true;
 }
 
 static const char *get_atomic_opname(int tgsi_opcode, bool *is_cas)
@@ -4229,6 +4244,7 @@ get_destination_info(struct dump_ctx *ctx,
                strbuf_fmt(&dst_bufs[i], "%simg%d[%d]", cname, basearrayidx, dst_reg->Register.Index - basearrayidx);
          } else
             strbuf_fmt(&dst_bufs[i], "%simg%d", cname, dst_reg->Register.Index);
+         dinfo->dest_index = dst_reg->Register.Index;
       } else if (dst_reg->Register.File == TGSI_FILE_BUFFER) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
@@ -4241,6 +4257,7 @@ get_destination_info(struct dump_ctx *ctx,
                strbuf_fmt(&dst_bufs[i], "%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str, dst_reg->Register.Index - base, cname, base);
          } else
             strbuf_fmt(&dst_bufs[i], "%sssbocontents%d", cname, dst_reg->Register.Index);
+         dinfo->dest_index = dst_reg->Register.Index;
       } else if (dst_reg->Register.File == TGSI_FILE_MEMORY) {
          strbuf_fmt(&dst_bufs[i], "values");
       } else if (dst_reg->Register.File == TGSI_FILE_ADDRESS) {
@@ -5160,7 +5177,6 @@ add_missing_inputs(const struct dump_ctx *ctx, struct vrend_shader_io *inputs,
    return num_inputs;
 }
 
-
 static boolean
 iter_instruction(struct tgsi_iterate_context *iter,
                  struct tgsi_full_instruction *inst)
@@ -5712,8 +5728,10 @@ iter_instruction(struct tgsi_iterate_context *iter,
             return false;
          srcs[1] = ctx->src_bufs[1].buf;
       }
-      translate_store(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier,
-                      inst, &sinfo, srcs, dsts[0]);
+      /* Don't try to write to dest with a negative index. */
+      if (dinfo.dest_index >= 0)
+         translate_store(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier,
+                         inst, &sinfo, srcs, &dinfo, dsts[0]);
       break;
    case TGSI_OPCODE_LOAD:
       if (ctx->cfg->use_gles) {
@@ -5721,8 +5739,12 @@ iter_instruction(struct tgsi_iterate_context *iter,
             return false;
          srcs[1] = ctx->src_bufs[1].buf;
       }
-      translate_load(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier, ctx->images,
-                     inst, &sinfo, &dinfo, srcs, dsts[0], writemask);
+      /* Replace an obvious out-of-bounds load with loading zero. */
+      if (sinfo.sreg_index < 0 ||
+          !translate_load(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier, ctx->images,
+                          inst, &sinfo, &dinfo, srcs, dsts[0], writemask)) {
+         emit_buff(&ctx->glsl_strbufs, "%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n", dsts[0], writemask);
+      }
       break;
    case TGSI_OPCODE_ATOMUADD:
    case TGSI_OPCODE_ATOMXCHG:
