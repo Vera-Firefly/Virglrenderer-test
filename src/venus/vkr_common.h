@@ -35,7 +35,7 @@
 #include "vkr_renderer.h"
 
 /* cap instance and device api versions to this */
-#define VKR_MAX_API_VERSION VK_API_VERSION_1_2
+#define VKR_MAX_API_VERSION VK_API_VERSION_1_3
 
 #define VKR_DEBUG(category) (unlikely(vkr_debug_flags & VKR_DEBUG_##category))
 
