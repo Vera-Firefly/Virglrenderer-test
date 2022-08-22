@@ -341,8 +341,6 @@ spec@arb_texture_cube_map_array@fbo-generatemipmap-cubemap array s3tc_dxt1,Fail
 spec@arb_texture_float@fbo-blending-formats,Fail
 spec@arb_texture_float@fbo-blending-formats@GL_ALPHA16F_ARB,Fail
 spec@arb_texture_float@fbo-blending-formats@GL_ALPHA32F_ARB,Fail
-spec@arb_texture_float@fbo-blending-formats@GL_INTENSITY16F_ARB,Fail
-spec@arb_texture_float@fbo-blending-formats@GL_INTENSITY32F_ARB,Fail
 spec@arb_texture_float@fbo-blending-formats@GL_RGB32F,Fail
 spec@arb_texture_float@fbo-clear-formats,Fail
 spec@arb_texture_float@fbo-clear-formats@GL_ALPHA16F_ARB,Fail
@@ -507,11 +505,6 @@ spec@ext_framebuffer_multisample@upsample 4 stencil,Fail
 spec@ext_framebuffer_object@fbo-blending-formats,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA12,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA16,Fail
-spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY12,Fail
-spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY16,Fail
-spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY4,Fail
-spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY8,Fail
-spec@ext_framebuffer_object@fbo-blending-formats@GL_INTENSITY,Fail
 spec@ext_framebuffer_object@fbo-blending-snorm,Fail
 spec@ext_framebuffer_object@fbo-clear-formats,Fail
 spec@ext_framebuffer_object@fbo-clear-formats@GL_ALPHA12,Fail
@@ -597,10 +590,6 @@ spec@ext_texture_shared_exponent@texwrap formats bordercolor,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor@GL_RGB9_E5- border color only,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor-swizzled,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor-swizzled@GL_RGB9_E5- swizzled- border color only,Fail
-spec@ext_texture_snorm@fbo-blending-formats,Fail
-spec@ext_texture_snorm@fbo-blending-formats@GL_INTENSITY16_SNORM,Fail
-spec@ext_texture_snorm@fbo-blending-formats@GL_INTENSITY8_SNORM,Fail
-spec@ext_texture_snorm@fbo-blending-formats@GL_INTENSITY_SNORM,Fail
 spec@ext_texture_snorm@multisample-formats 2 gl_ext_texture_snorm,Fail
 spec@ext_texture_snorm@multisample-formats 4 gl_ext_texture_snorm,Fail
 spec@ext_texture_snorm@texwrap formats bordercolor,Fail
@@ -3222,7 +3211,6 @@ spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@gl-2.0-large-point-fs,Fail
 spec@!opengl 2.0@gl-2.0-vertexattribpointer,Crash
 spec@!opengl 2.0@occlusion-query-discard,Fail
-spec@!opengl 3.0@required-texture-attachment-formats,Fail
 spec@!opengl 3.0@sampler-cube-shadow,Fail
 spec@!opengl 3.2@gl-3.2-adj-prims cull-back pv-first,ExpectedFail
 spec@!opengl 3.2@gl-3.2-adj-prims cull-front pv-first,ExpectedFail
