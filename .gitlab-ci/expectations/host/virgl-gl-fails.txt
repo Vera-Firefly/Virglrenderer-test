@@ -217,11 +217,6 @@ spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled@GL_RGB565- swizzled- border color only,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Basic,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@glScissor,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@MS4,Fail
-spec@arb_framebuffer_no_attachments@arb_framebuffer_no_attachments-atomic@Per-sample,Fail
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed,Crash
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get,Fail
 spec@arb_occlusion_query@occlusion_query_conform,Fail
