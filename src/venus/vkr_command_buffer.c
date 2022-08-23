@@ -797,6 +797,23 @@ vkr_dispatch_vkCmdEndRendering(UNUSED struct vn_dispatch_context *ctx,
    VKR_CMD_CALL(CmdEndRendering, args);
 }
 
+static void
+vkr_dispatch_vkCmdDrawMultiEXT(UNUSED struct vn_dispatch_context *dispatch,
+                               struct vn_command_vkCmdDrawMultiEXT *args)
+{
+   VKR_CMD_CALL(CmdDrawMultiEXT, args, args->drawCount, args->pVertexInfo,
+                args->instanceCount, args->firstInstance, args->stride);
+}
+
+static void
+vkr_dispatch_vkCmdDrawMultiIndexedEXT(UNUSED struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkCmdDrawMultiIndexedEXT *args)
+{
+   VKR_CMD_CALL(CmdDrawMultiIndexedEXT, args, args->drawCount, args->pIndexInfo,
+                args->instanceCount, args->firstInstance, args->stride,
+                args->pVertexOffset);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -926,4 +943,8 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkCmdBeginConditionalRenderingEXT;
    dispatch->dispatch_vkCmdEndConditionalRenderingEXT =
       vkr_dispatch_vkCmdEndConditionalRenderingEXT;
+
+   /* VK_EXT_multi_draw */
+   dispatch->dispatch_vkCmdDrawMultiEXT = vkr_dispatch_vkCmdDrawMultiEXT;
+   dispatch->dispatch_vkCmdDrawMultiIndexedEXT = vkr_dispatch_vkCmdDrawMultiIndexedEXT;
 }

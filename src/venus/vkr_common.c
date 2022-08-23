@@ -106,6 +106,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_image_view_min_lod = true,
    .EXT_index_type_uint8 = true,
    .EXT_line_rasterization = true,
+   .EXT_multi_draw = true,
    .EXT_primitive_topology_list_restart = true,
    .EXT_provoking_vertex = true,
    .EXT_queue_family_foreign = true,
