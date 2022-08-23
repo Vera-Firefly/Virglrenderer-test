@@ -30,6 +30,7 @@ spec@arb_shader_storage_buffer_object@layout-std140-write-shader
 spec@arb_shader_storage_buffer_object@layout-std430-write-shader
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
+spec@ext_timer_query@time-elapsed
 spec@ext_framebuffer_blit@fbo-blit-check-limits
 spec@ext_framebuffer_blit@fbo-sys-blit
 spec@ext_framebuffer_blit@fbo-sys-sub-blit

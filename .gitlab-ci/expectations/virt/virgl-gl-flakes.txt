@@ -34,6 +34,7 @@ spec@arb_shader_storage_buffer_object@execution@ssbo-atomicexchange-int
 spec@arb_texture_rg@fbo-rg-gl_rg
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
+spec@ext_timer_query@time-elapsed
 spec@ext_framebuffer_blit@fbo-blit-check-limits
 spec@ext_framebuffer_blit@fbo-sys-blit
 spec@ext_framebuffer_blit@fbo-sys-sub-blit

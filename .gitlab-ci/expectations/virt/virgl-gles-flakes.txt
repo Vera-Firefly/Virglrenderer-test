@@ -68,6 +68,7 @@ spec@arb_texture_view@rendering-target
 spec@arb_texture_view@rendering-target@1D view rendering
 spec@arb_timer_query@query gl_timestamp
 spec@arb_timer_query@timestamp-get
+spec@ext_timer_query@time-elapsed
 spec@arb_uniform_buffer_object@rendering-array
 spec@ext_framebuffer_blit@fbo-blit-check-limits
 spec@ext_framebuffer_blit@fbo-sys-blit
