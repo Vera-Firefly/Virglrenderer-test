@@ -42,6 +42,14 @@ enum vkr_context_validate_level {
    VKR_CONTEXT_VALIDATE_FULL,
 };
 
+struct vkr_cpu_sync {
+   uint32_t flags;
+   uint32_t ring_idx;
+   uint64_t fence_id;
+
+   struct list_head head;
+};
+
 struct vkr_context {
    struct virgl_context base;
 
@@ -62,6 +70,7 @@ struct vkr_context {
    int fence_eventfd;
    struct list_head busy_queues;
    struct list_head signaled_syncs;
+   struct list_head signaled_cpu_syncs;
 
    struct vkr_queue *sync_queues[64];
 

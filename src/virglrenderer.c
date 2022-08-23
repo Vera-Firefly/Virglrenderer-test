@@ -605,11 +605,29 @@ void *virgl_renderer_get_cursor_data(uint32_t resource_id, uint32_t *width, uint
                                              height);
 }
 
+static bool
+virgl_context_foreach_retire_fences(struct virgl_context *ctx,
+                                    UNUSED void* data)
+{
+   /* vrend contexts are polled explicitly by the caller */
+   if (ctx->capset_id != VIRGL_RENDERER_CAPSET_VIRGL &&
+       ctx->capset_id != VIRGL_RENDERER_CAPSET_VIRGL2)
+   {
+      assert(ctx->retire_fences);
+      ctx->retire_fences(ctx);
+   }
+   return true;
+}
+
 void virgl_renderer_poll(void)
 {
    TRACE_FUNC();
    if (state.vrend_initialized)
       vrend_renderer_poll();
+
+   struct virgl_context_foreach_args args;
+   args.callback = virgl_context_foreach_retire_fences;
+   virgl_context_foreach(&args);
 }
 
 void virgl_renderer_cleanup(UNUSED void *cookie)

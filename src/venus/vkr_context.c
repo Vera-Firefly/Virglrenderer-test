@@ -120,6 +120,22 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    vkr_context_init_command_buffer_dispatch(ctx);
 }
 
+static struct vkr_cpu_sync *
+vkr_alloc_cpu_sync(uint32_t flags, uint32_t ring_idx, uint64_t fence_id)
+{
+   struct vkr_cpu_sync *sync;
+   sync = malloc(sizeof(*sync));
+   if (!sync)
+      return NULL;
+
+   sync->flags = flags;
+   sync->fence_id = fence_id;
+   sync->ring_idx = ring_idx;
+   list_inithead(&sync->head);
+
+   return sync;
+}
+
 static int
 vkr_context_submit_fence_locked(struct virgl_context *base,
                                 uint32_t flags,
@@ -127,15 +143,32 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
                                 uint64_t fence_id)
 {
    struct vkr_context *ctx = (struct vkr_context *)base;
-   struct vn_device_proc_table *vk;
-   struct vkr_queue *queue;
    VkResult result;
 
-   queue = vkr_context_get_object(ctx, ring_idx);
-   if (!queue)
+   if (ring_idx >= ARRAY_SIZE(ctx->sync_queues)) {
+      vkr_log("invalid sync ring_idx %u", ring_idx);
       return -EINVAL;
+   }
+
+   if (ring_idx == 0) {
+      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
+         ctx->base.fence_retire(&ctx->base, ring_idx, fence_id);
+      } else {
+         struct vkr_cpu_sync *sync = vkr_alloc_cpu_sync(flags, ring_idx, fence_id);
+         if (!sync)
+            return -ENOMEM;
+
+         list_addtail(&sync->head, &ctx->signaled_cpu_syncs);
+      }
+      return 0;
+   } else if (!ctx->sync_queues[ring_idx]) {
+      vkr_log("invalid ring_idx %u", ring_idx);
+      return -EINVAL;
+   }
+
+   struct vkr_queue *queue = ctx->sync_queues[ring_idx];
    struct vkr_device *dev = queue->device;
-   vk = &dev->proc_table;
+   struct vn_device_proc_table *vk = &dev->proc_table;
 
    struct vkr_queue_sync *sync =
       vkr_device_alloc_queue_sync(dev, flags, ring_idx, fence_id);
@@ -174,6 +207,10 @@ vkr_context_submit_fence(struct virgl_context *base,
    struct vkr_context *ctx = (struct vkr_context *)base;
    int ret;
 
+   /* always merge fences */
+   assert(!(flags & ~VIRGL_RENDERER_FENCE_FLAG_MERGEABLE));
+   flags = VIRGL_RENDERER_FENCE_FLAG_MERGEABLE;
+
    mtx_lock(&ctx->mutex);
    ret = vkr_context_submit_fence_locked(base, flags, ring_idx, fence_id);
    mtx_unlock(&ctx->mutex);
@@ -196,6 +233,14 @@ vkr_context_retire_fences_locked(struct virgl_context *base)
       free(sync);
    }
    list_inithead(&ctx->signaled_syncs);
+
+   /* retire syncs from CPU timeline */
+   struct vkr_cpu_sync *cpu_sync, *cpu_sync_tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (cpu_sync, cpu_sync_tmp, &ctx->signaled_cpu_syncs, head) {
+      ctx->base.fence_retire(&ctx->base, cpu_sync->ring_idx, cpu_sync->fence_id);
+      free(cpu_sync);
+   }
+   list_inithead(&ctx->signaled_cpu_syncs);
 
    /* flush first and once because the per-queue sync threads might write to
     * it any time
@@ -538,6 +583,10 @@ vkr_context_destroy(struct virgl_context *base)
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
       free(sync);
 
+   struct vkr_queue_sync *cpu_sync, *cpu_sync_tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (cpu_sync, cpu_sync_tmp, &ctx->signaled_cpu_syncs, head)
+      free(cpu_sync);
+
    if (ctx->fence_eventfd >= 0)
       close(ctx->fence_eventfd);
 
@@ -645,6 +694,7 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    list_inithead(&ctx->rings);
    list_inithead(&ctx->busy_queues);
    list_inithead(&ctx->signaled_syncs);
+   list_inithead(&ctx->signaled_cpu_syncs);
 
    return &ctx->base;
 
