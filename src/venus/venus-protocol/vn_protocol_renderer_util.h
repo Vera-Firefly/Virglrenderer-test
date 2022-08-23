@@ -62,6 +62,8 @@ struct vn_device_proc_table {
    PFN_vkCmdDrawIndirect CmdDrawIndirect;
    PFN_vkCmdDrawIndirectByteCountEXT CmdDrawIndirectByteCountEXT;
    PFN_vkCmdDrawIndirectCount CmdDrawIndirectCount;
+   PFN_vkCmdDrawMultiEXT CmdDrawMultiEXT;
+   PFN_vkCmdDrawMultiIndexedEXT CmdDrawMultiIndexedEXT;
    PFN_vkCmdEndConditionalRenderingEXT CmdEndConditionalRenderingEXT;
    PFN_vkCmdEndQuery CmdEndQuery;
    PFN_vkCmdEndQueryIndexedEXT CmdEndQueryIndexedEXT;
@@ -337,6 +339,12 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->CmdDrawIndirectCount =
       api_version >= VK_API_VERSION_1_2 ? VN_GDPA(dev, vkCmdDrawIndirectCount) :
       ext_table->KHR_draw_indirect_count ? VN_GDPA(dev, vkCmdDrawIndirectCountKHR) :
+      NULL;
+   proc_table->CmdDrawMultiEXT =
+      ext_table->EXT_multi_draw ? VN_GDPA(dev, vkCmdDrawMultiEXT) :
+      NULL;
+   proc_table->CmdDrawMultiIndexedEXT =
+      ext_table->EXT_multi_draw ? VN_GDPA(dev, vkCmdDrawMultiIndexedEXT) :
       NULL;
    proc_table->CmdEndConditionalRenderingEXT =
       ext_table->EXT_conditional_rendering ? VN_GDPA(dev, vkCmdEndConditionalRenderingEXT) :

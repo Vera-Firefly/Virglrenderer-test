@@ -339,6 +339,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCmdSetLineStippleEXT_EXT = 237,
     VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
     VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
+    VK_COMMAND_TYPE_vkCmdDrawMultiEXT_EXT = 247,
+    VK_COMMAND_TYPE_vkCmdDrawMultiIndexedEXT_EXT = 248,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
     VK_COMMAND_TYPE_vkExecuteCommandStreamsMESA_EXT = 180,
@@ -1247,6 +1249,25 @@ struct vn_command_vkCmdDrawIndexed {
     uint32_t firstIndex;
     int32_t vertexOffset;
     uint32_t firstInstance;
+};
+
+struct vn_command_vkCmdDrawMultiEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t drawCount;
+    const VkMultiDrawInfoEXT* pVertexInfo;
+    uint32_t instanceCount;
+    uint32_t firstInstance;
+    uint32_t stride;
+};
+
+struct vn_command_vkCmdDrawMultiIndexedEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t drawCount;
+    const VkMultiDrawIndexedInfoEXT* pIndexInfo;
+    uint32_t instanceCount;
+    uint32_t firstInstance;
+    uint32_t stride;
+    const int32_t* pVertexOffset;
 };
 
 struct vn_command_vkCmdDrawIndirect {
@@ -2311,6 +2332,8 @@ struct vn_dispatch_context {
     void (*dispatch_vkCmdBindVertexBuffers)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdBindVertexBuffers *args);
     void (*dispatch_vkCmdDraw)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDraw *args);
     void (*dispatch_vkCmdDrawIndexed)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDrawIndexed *args);
+    void (*dispatch_vkCmdDrawMultiEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDrawMultiEXT *args);
+    void (*dispatch_vkCmdDrawMultiIndexedEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDrawMultiIndexedEXT *args);
     void (*dispatch_vkCmdDrawIndirect)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDrawIndirect *args);
     void (*dispatch_vkCmdDrawIndexedIndirect)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDrawIndexedIndirect *args);
     void (*dispatch_vkCmdDispatch)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdDispatch *args);

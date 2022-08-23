@@ -497,6 +497,20 @@ vn_decode_VkSamplerCreateFlagBits(struct vn_cs_decoder *dec, VkSamplerCreateFlag
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+/* enum VkPipelineLayoutCreateFlagBits */
+
+static inline void
+vn_encode_VkPipelineLayoutCreateFlagBits(struct vn_cs_encoder *enc, const VkPipelineLayoutCreateFlagBits *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkPipelineLayoutCreateFlagBits(struct vn_cs_decoder *dec, VkPipelineLayoutCreateFlagBits *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
 /* enum VkPipelineCacheCreateFlagBits */
 
 static inline void
@@ -563,6 +577,20 @@ vn_encode_VkDescriptorSetLayoutCreateFlagBits(struct vn_cs_encoder *enc, const V
 
 static inline void
 vn_decode_VkDescriptorSetLayoutCreateFlagBits(struct vn_cs_decoder *dec, VkDescriptorSetLayoutCreateFlagBits *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+/* enum VkInstanceCreateFlagBits */
+
+static inline void
+vn_encode_VkInstanceCreateFlagBits(struct vn_cs_encoder *enc, const VkInstanceCreateFlagBits *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkInstanceCreateFlagBits(struct vn_cs_decoder *dec, VkInstanceCreateFlagBits *val)
 {
     vn_decode_int32_t(dec, (int32_t *)val);
 }
