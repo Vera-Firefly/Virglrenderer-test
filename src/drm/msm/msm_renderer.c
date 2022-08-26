@@ -131,6 +131,7 @@ struct msm_object {
    bool exported   : 1;
    bool exportable : 1;
    struct virgl_resource *res;
+   void *map;
 };
 
 static struct msm_object *
@@ -418,6 +419,9 @@ msm_renderer_detach_resource(struct virgl_context *vctx, struct virgl_resource *
    }
 
    msm_remove_object(mctx, obj);
+
+   if (obj->map)
+      munmap(obj->map, obj->size);
 
    gem_close(mctx->fd, obj->handle);
 
@@ -916,18 +920,15 @@ out:
 }
 
 static int
-msm_ccmd_gem_upload(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
+map_object(struct msm_context *mctx, struct msm_object *obj)
 {
-   const struct msm_ccmd_gem_upload_req *req = to_msm_ccmd_gem_upload_req(hdr);
    uint64_t offset;
    int ret;
 
-   if (req->pad || !valid_payload_len(req)) {
-      drm_log("Invalid upload ccmd");
-      return -EINVAL;
-   }
+   if (obj->map)
+      return 0;
 
-   uint32_t handle = handle_from_res_id(mctx, req->res_id);
+   uint32_t handle = handle_from_res_id(mctx, obj->res_id);
    ret = gem_info(mctx, handle, MSM_INFO_GET_OFFSET, &offset);
    if (ret) {
       drm_log("alloc failed: %s", strerror(errno));
@@ -935,15 +936,39 @@ msm_ccmd_gem_upload(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    }
 
    uint8_t *map =
-      mmap(0, req->len + req->off, PROT_READ | PROT_WRITE, MAP_SHARED, mctx->fd, offset);
+      mmap(0, obj->size, PROT_READ | PROT_WRITE, MAP_SHARED, mctx->fd, offset);
    if (map == MAP_FAILED) {
       drm_log("mmap failed: %s", strerror(errno));
       return -ENOMEM;
    }
 
-   memcpy(&map[req->off], req->payload, req->len);
+   obj->map = map;
 
-   munmap(map, req->len);
+   return 0;
+}
+
+static int
+msm_ccmd_gem_upload(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
+{
+   const struct msm_ccmd_gem_upload_req *req = to_msm_ccmd_gem_upload_req(hdr);
+   int ret;
+
+   if (req->pad || !valid_payload_len(req)) {
+      drm_log("Invalid upload ccmd");
+      return -EINVAL;
+   }
+
+   struct msm_object *obj = msm_get_object_from_res_id(mctx, req->res_id);
+   if (!obj) {
+      drm_log("No obj: res_id=%u", req->res_id);
+      return -ENOENT;
+   }
+
+   ret = map_object(mctx, obj);
+   if (ret)
+      return ret;
+
+   memcpy(&obj->map[req->off], req->payload, req->len);
 
    return 0;
 }
