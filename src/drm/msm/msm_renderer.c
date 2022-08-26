@@ -766,7 +766,15 @@ msm_ccmd_gem_set_iova(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    }
 
    uint64_t iova = req->iova;
-   ret = gem_info(mctx, obj->handle, MSM_INFO_SET_IOVA, &iova);
+   if (iova) {
+      TRACE_SCOPE_BEGIN("SET_IOVA");
+      ret = gem_info(mctx, obj->handle, MSM_INFO_SET_IOVA, &iova);
+      TRACE_SCOPE_END("SET_IOVA");
+   } else {
+      TRACE_SCOPE_BEGIN("CLEAR_IOVA");
+      ret = gem_info(mctx, obj->handle, MSM_INFO_SET_IOVA, &iova);
+      TRACE_SCOPE_END("CLEAR_IOVA");
+   }
    if (ret) {
       drm_log("SET_IOVA failed: %d (%s)", ret, strerror(errno));
       goto out_error;
@@ -1103,6 +1111,8 @@ submit_cmd_dispatch(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    drm_dbg("%s: hdr={cmd=%u, len=%u, seqno=%u, rsp_off=0x%x)", ccmd->name, hdr->cmd,
            hdr->len, hdr->seqno, hdr->rsp_off);
 
+   TRACE_SCOPE_BEGIN(ccmd->name);
+
    /* If the request length from the guest is smaller than the expected
     * size, ie. newer host and older guest, we need to make a copy of
     * the request with the new fields at the end zero initialized.
@@ -1117,6 +1127,8 @@ submit_cmd_dispatch(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    } else {
       ret = ccmd->handler(mctx, hdr);
    }
+
+   TRACE_SCOPE_END(ccmd->name);
 
    if (ret) {
       drm_log("%s: dispatch failed: %d (%s)", ccmd->name, ret, strerror(errno));
