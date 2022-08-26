@@ -437,7 +437,6 @@ int virgl_renderer_context_get_poll_fd(uint32_t ctx_id)
 
 void virgl_renderer_force_ctx_0(void)
 {
-   TRACE_FUNC();
    if (state.vrend_initialized)
       vrend_renderer_force_ctx_0();
 }

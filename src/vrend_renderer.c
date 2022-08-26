@@ -11906,6 +11906,7 @@ void *vrend_renderer_get_cursor_contents(struct pipe_resource *pres,
 
 void vrend_renderer_force_ctx_0(void)
 {
+   TRACE_FUNC();
    vrend_state.current_ctx = NULL;
    vrend_state.current_hw_ctx = NULL;
    vrend_hw_switch_context(vrend_state.ctx0, true);
