@@ -100,6 +100,18 @@ struct vrend_shader_info_in {
    bool use_pervertex : 1;
 };
 
+struct vrend_shader_io_array {
+   enum tgsi_semantic name : 6;
+   uint32_t sid : 6;
+   uint32_t size : 6;
+   uint32_t array_id : 6;
+   uint32_t padding : 8;
+};
+
+struct vrend_shader_io_array_info {
+   uint32_t num_arrays;
+   struct vrend_shader_io_array layout[16];
+};
 
 struct vrend_shader_info {
    uint32_t invariant_outputs[4];
@@ -109,7 +121,8 @@ struct vrend_shader_info {
    uint64_t out_generic_emitted_mask;
    uint64_t out_patch_emitted_mask;
 
-   struct vrend_layout_info generic_outputs_layout[64];
+   struct vrend_shader_io_array_info output_arrays;
+
    struct vrend_array *sampler_arrays;
    struct vrend_array *image_arrays;
    char **so_names;
@@ -167,6 +180,7 @@ struct vrend_shader_key {
    uint32_t force_invariant_inputs[4];
 
    struct vrend_fs_shader_info fs_info;
+   struct vrend_shader_io_array_info in_arrays;
 
    union {
       struct {

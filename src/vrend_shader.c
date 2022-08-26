@@ -153,6 +153,7 @@ struct vrend_shader_io {
    bool override_no_wm : 1;
    bool is_int : 1;
    bool fbfetch_used : 1;
+   bool needs_override : 1;
 };
 
 struct vrend_io_range {
@@ -1205,7 +1206,7 @@ map_overlapping_io_array(struct vrend_shader_io io[static 64],
                          const struct tgsi_full_declaration *decl)
 {
    struct vrend_shader_io *overlap_io = find_overlapping_io(io, num_io, decl);
-   if (overlap_io) {
+   if (overlap_io && !overlap_io->needs_override) {
       int delta = new_io->first - overlap_io->first;
       if (delta >= 0) {
          new_io->array_offset = delta;
@@ -1238,14 +1239,17 @@ iter_declaration(struct tgsi_iterate_context *iter,
              ctx->inputs[j].sid == decl->Semantic.Index &&
              ctx->inputs[j].first == decl->Range.First &&
              ((!decl->Declaration.Array && ctx->inputs[j].array_id == 0) ||
-              (ctx->inputs[j].array_id  == decl->Array.ArrayID)))
+              (ctx->inputs[j].array_id  == decl->Array.ArrayID))) {
             return true;
+         }
       }
+
       i = ctx->num_inputs++;
       if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
          vrend_printf( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
          return false;
       }
+
       if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
          ctx->attrib_input_mask |= (1 << decl->Range.First);
          ctx->inputs[i].type = get_type(ctx->key->vs.attrib_signed_int_bitmask,
@@ -1275,6 +1279,27 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
 
       map_overlapping_io_array(ctx->inputs, &ctx->inputs[i], ctx->num_inputs, decl);
+
+      if (!ctx->inputs[i].glsl_predefined_no_emit) {
+
+         /* If the output of the previous shader contained arrays we
+          * have to check whether a non-array input here should be part
+          * of an array */
+         for (uint32_t j = 0; j < ctx->key->in_arrays.num_arrays; j++) {
+            const struct vrend_shader_io_array *array = &ctx->key->in_arrays.layout[j];
+
+            if (array->name == decl->Semantic.Name &&
+                array->sid <= decl->Semantic.Index &&
+                array->sid + array->size >= decl->Semantic.Index) {
+               ctx->inputs[i].sid = array->sid;
+               ctx->inputs[i].last = ctx->inputs[i].first + array->size;
+               fprintf(stderr, "sync array %d.%d [%d %d]\n",
+                       ctx->inputs[i].name, ctx->inputs[i].sid, ctx->inputs[i].first, ctx->inputs[i].last);
+
+               break;
+            }
+         }
+      }
 
       if (ctx->inputs[i].first != ctx->inputs[i].last)
          ctx->glsl_ver_required = require_glsl_ver(ctx, 150);
@@ -5112,16 +5137,36 @@ static void
 add_missing_semantic_inputs(struct vrend_shader_io *inputs, int *num_inputs,
                             int *next_location, uint64_t sids_missing,
                             const char *prefix, char *type_prefix,
-                            enum tgsi_semantic name)
+                            enum tgsi_semantic name,
+                            const struct vrend_shader_key *key)
 {
 
    while (sids_missing) {
       int sid = u_bit_scan64(&sids_missing);
       struct vrend_shader_io *io = &inputs[*num_inputs];
-      io->first = io->last = (*next_location)++;
-      io->name = name;
       io->sid = sid;
+      io->last = io->first = *next_location;
+      io->name = name;
       io->type = VEC_FLOAT;
+      uint32_t sids_added = 1 << sid;
+
+
+      for (uint32_t j = 0; j < key->in_arrays.num_arrays; j++) {
+         const struct vrend_shader_io_array *array = &key->in_arrays.layout[j];
+         if (array->name == name &&
+             array->sid <= sid &&
+             array->sid + array->size >= sid) {
+            io->last = io->first + array->size;
+            io->sid = array->sid;
+            sids_added = ((1u << array->size) - 1) << sid;
+            break;
+         }
+      }
+
+      (*next_location) += io->last - io->first + 1;
+
+      sids_missing &= ~sids_added;
+
       snprintf(io->glsl_name, 128, "%s%s%d", prefix, type_prefix, sid);
       (*num_inputs)++;
    }
@@ -5137,16 +5182,18 @@ add_missing_inputs(const struct dump_ctx *ctx, struct vrend_shader_io *inputs,
 
    int next_location = 0;
    for (int i = 0; i < num_inputs; ++i) {
-      for (int k = inputs[i].first; k <= inputs[i].last; ++k) {
+      int offset = 0;
+      for (int k = inputs[i].first; k <= inputs[i].last; ++k, ++offset) {
+         int sid = inputs[i].sid + offset;
          switch (inputs[i].name) {
          case TGSI_SEMANTIC_GENERIC:
-            generics_declared |= 1ull << inputs[i].sid;
+            generics_declared |= 1ull << sid;
             break;
          case TGSI_SEMANTIC_PATCH:
-            patches_declared |= 1ull << inputs[i].sid;
+            patches_declared |= 1ull << sid;
             break;
          case TGSI_SEMANTIC_TEXCOORD:
-            texcoord_declared |= 1ull << inputs[i].sid;
+            texcoord_declared |= 1ull << sid;
             break;
          default:
             ;
@@ -5164,13 +5211,13 @@ add_missing_inputs(const struct dump_ctx *ctx, struct vrend_shader_io *inputs,
    const char *prefix = get_stage_input_name_prefix(ctx, ctx->prog_type);
    add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
                                generics_missing, prefix, "_g",
-                               TGSI_SEMANTIC_GENERIC);
+                               TGSI_SEMANTIC_GENERIC, ctx->key);
    add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
                                texcoord_missing, prefix, "_t",
-                               TGSI_SEMANTIC_TEXCOORD);
+                               TGSI_SEMANTIC_TEXCOORD, ctx->key);
    add_missing_semantic_inputs(inputs, &num_inputs, &next_location,
                                patches_missing, "patch", "",
-                               TGSI_SEMANTIC_PATCH);
+                               TGSI_SEMANTIC_PATCH, ctx->key);
 
    qsort(inputs, num_inputs, sizeof(struct vrend_shader_io),
          compare_shader_io);
@@ -7504,6 +7551,22 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
       }
    }
    sinfo->gles_use_tex_query_level = ctx->gles_use_tex_query_level;
+
+   if (ctx->guest_sent_io_arrays) {
+      sinfo->output_arrays.num_arrays = 0;
+      for (unsigned i = 0; i < ctx->num_outputs; ++i) {
+         const struct vrend_shader_io *io = &ctx->outputs[i];
+         if (io->array_id  > 0) {
+            struct vrend_shader_io_array *array =
+                  &sinfo->output_arrays.layout[sinfo->output_arrays.num_arrays];
+            array->sid = io->sid;
+            array->size = io->last - io->first;
+            array->name = io->name;
+            array->array_id = io->array_id;
+            ++sinfo->output_arrays.num_arrays;
+         }
+      }
+   }
 }
 
 static bool allocate_strbuffers(struct vrend_glsl_strbufs* glsl_strbufs)
@@ -7681,7 +7744,6 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
          (ctx.iter.processor.Processor == TGSI_PROCESSOR_VERTEX &&  !key->gs_present && !key->tes_present);
 
    ctx.num_inputs = 0;
-
    ctx.iter.prolog = prolog;
    ctx.iter.iterate_instruction = iter_instruction;
    ctx.iter.iterate_declaration = iter_declaration;
@@ -7733,6 +7795,14 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    bret = tgsi_iterate_shader(tokens, &ctx.iter);
    if (bret == false)
       goto fail;
+
+   if (!ctx.cfg->use_gles &&
+      ( key->in_arrays.num_arrays > 0 ) &&
+       (ctx.prog_type == TGSI_PROCESSOR_GEOMETRY ||
+        ctx.prog_type == TGSI_PROCESSOR_TESS_CTRL ||
+        ctx.prog_type == TGSI_PROCESSOR_TESS_EVAL)) {
+      ctx.shader_req_bits |= SHADER_REQ_ARRAYS_OF_ARRAYS;
+   }
 
    for (size_t i = 0; i < ARRAY_SIZE(ctx.src_bufs); ++i)
       strbuf_free(ctx.src_bufs + i);
