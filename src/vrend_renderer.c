@@ -3421,6 +3421,48 @@ void vrend_set_num_vbo(struct vrend_context *ctx,
    vrend_set_num_vbo_sub(ctx->sub, num_vbo);
 }
 
+static GLenum vrend_get_arb_format(enum virgl_formats format)
+{
+   switch (format) {
+   case VIRGL_FORMAT_A8_UNORM: return GL_R8;
+   case VIRGL_FORMAT_A8_SINT: return GL_R8I;
+   case VIRGL_FORMAT_A8_UINT: return GL_R8UI;
+   case VIRGL_FORMAT_L8_UNORM: return GL_R8;
+   case VIRGL_FORMAT_L8_SINT: return GL_R8I;
+   case VIRGL_FORMAT_L8_UINT: return GL_R8UI;
+   case VIRGL_FORMAT_L16_UNORM: return GL_R16F;
+   case VIRGL_FORMAT_L16_SINT: return GL_R16I;
+   case VIRGL_FORMAT_L16_UINT: return GL_R16UI;
+   case VIRGL_FORMAT_L16_FLOAT: return GL_R16F;
+   case VIRGL_FORMAT_L32_SINT: return GL_R32F;
+   case VIRGL_FORMAT_L32_UINT: return GL_R32I;
+   case VIRGL_FORMAT_L32_FLOAT: return GL_R32UI;
+   case VIRGL_FORMAT_L8A8_UNORM: return GL_RG8;
+   case VIRGL_FORMAT_L8A8_SINT: return GL_RG8I;
+   case VIRGL_FORMAT_L8A8_UINT: return GL_RG8UI;
+   case VIRGL_FORMAT_L16A16_UNORM: return GL_RG16;
+   case VIRGL_FORMAT_L16A16_SINT: return GL_RG16I;
+   case VIRGL_FORMAT_L16A16_UINT: return GL_RG16UI;
+   case VIRGL_FORMAT_L16A16_FLOAT: return GL_RG16F;
+   case VIRGL_FORMAT_L32A32_FLOAT: return GL_RG32F;
+   case VIRGL_FORMAT_L32A32_SINT: return GL_RG32I;
+   case VIRGL_FORMAT_L32A32_UINT: return GL_RG32UI;
+   case VIRGL_FORMAT_I8_UNORM: return GL_R8;
+   case VIRGL_FORMAT_I8_SINT: return GL_R8I;
+   case VIRGL_FORMAT_I8_UINT: return GL_R8UI;
+   case VIRGL_FORMAT_I16_UNORM: return GL_R16;
+   case VIRGL_FORMAT_I16_SINT: return GL_R16I;
+   case VIRGL_FORMAT_I16_UINT: return GL_R16UI;
+   case VIRGL_FORMAT_I16_FLOAT: return GL_R16F;
+   case VIRGL_FORMAT_I32_FLOAT: return GL_R32F;
+   case VIRGL_FORMAT_I32_SINT: return GL_R32I;
+   case VIRGL_FORMAT_I32_UINT: return GL_R32UI;
+   default:
+      vrend_printf("Texture format %s unsupported for texture buffers\n", util_format_name(format));
+      return GL_R8;
+   }
+}
+
 void vrend_set_single_sampler_view(struct vrend_context *ctx,
                                    uint32_t shader_type,
                                    uint32_t index,
@@ -3508,6 +3550,12 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
 
          glBindTexture(GL_TEXTURE_BUFFER, view->texture->tbo_tex_id);
          internalformat = tex_conv_table[view->format].internalformat;
+
+         if (internalformat == GL_NONE ||
+             (vrend_state.use_gles && internalformat == GL_ALPHA8)) {
+            internalformat = vrend_get_arb_format(view->format);
+         }
+
          if (has_feature(feat_texture_buffer_range)) {
             unsigned offset = view->val0;
             unsigned size = view->val1 - view->val0 + 1;
@@ -3857,6 +3905,78 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    }
 }
 
+static bool vrend_get_swizzle(struct vrend_sampler_view *view,
+                              GLint swizzle[4])
+{
+   const static GLint OOOR[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
+   const static GLint RRR1[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+   const static GLint RRRG[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
+   const static GLint RRRR[] = {GL_RED, GL_RED, GL_RED, GL_RED};
+   const static GLint RGBA[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+
+   switch (view->format) {
+   case VIRGL_FORMAT_A8_UNORM:
+   case VIRGL_FORMAT_A8_SINT:
+   case VIRGL_FORMAT_A8_UINT:
+   case VIRGL_FORMAT_A16_UNORM:
+   case VIRGL_FORMAT_A16_SINT:
+   case VIRGL_FORMAT_A16_UINT:
+   case VIRGL_FORMAT_A16_FLOAT:
+   case VIRGL_FORMAT_A32_SINT:
+   case VIRGL_FORMAT_A32_UINT:
+   case VIRGL_FORMAT_A32_FLOAT:
+      memcpy(swizzle, OOOR, 4 * sizeof(GLuint));
+      return true;
+   case VIRGL_FORMAT_L8_UNORM:
+   case VIRGL_FORMAT_L8_SINT:
+   case VIRGL_FORMAT_L8_UINT:
+   case VIRGL_FORMAT_L16_UNORM:
+   case VIRGL_FORMAT_L16_SINT:
+   case VIRGL_FORMAT_L16_UINT:
+   case VIRGL_FORMAT_L16_FLOAT:
+   case VIRGL_FORMAT_L32_SINT:
+   case VIRGL_FORMAT_L32_UINT:
+   case VIRGL_FORMAT_L32_FLOAT:
+      memcpy(swizzle, RRR1, 4 * sizeof(GLuint));
+      return true;
+   case VIRGL_FORMAT_L8A8_UNORM:
+   case VIRGL_FORMAT_L8A8_SINT:
+   case VIRGL_FORMAT_L8A8_UINT:
+   case VIRGL_FORMAT_L16A16_UNORM:
+   case VIRGL_FORMAT_L16A16_SINT:
+   case VIRGL_FORMAT_L16A16_UINT:
+   case VIRGL_FORMAT_L16A16_FLOAT:
+   case VIRGL_FORMAT_L32A32_FLOAT:
+   case VIRGL_FORMAT_L32A32_SINT:
+   case VIRGL_FORMAT_L32A32_UINT:
+      memcpy(swizzle, RRRG, 4 * sizeof(GLuint));
+      return true;
+   case VIRGL_FORMAT_I8_UNORM:
+   case VIRGL_FORMAT_I8_SINT:
+   case VIRGL_FORMAT_I8_UINT:
+   case VIRGL_FORMAT_I16_UNORM:
+   case VIRGL_FORMAT_I16_SINT:
+   case VIRGL_FORMAT_I16_UINT:
+   case VIRGL_FORMAT_I16_FLOAT:
+   case VIRGL_FORMAT_I32_FLOAT:
+   case VIRGL_FORMAT_I32_SINT:
+   case VIRGL_FORMAT_I32_UINT:
+      memcpy(swizzle, RRRR, 4 * sizeof(GLuint));
+      return true;
+   default:
+      if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
+         swizzle[0] = tex_conv_table[view->format].swizzle[0];
+         swizzle[1] = tex_conv_table[view->format].swizzle[1];
+         swizzle[2] = tex_conv_table[view->format].swizzle[2];
+         swizzle[3] = tex_conv_table[view->format].swizzle[3];
+         return true;
+      } else {
+         return false;
+      }
+   }
+}
+
+
 static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
                                          struct vrend_shader_selector *sel,
                                          struct vrend_shader_key *key)
@@ -3927,14 +4047,15 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
          vrend_shader_sampler_views_mask_set(key->sampler_views_emulated_rect_mask, i);
       }
 
-      if (view->texture->target == GL_TEXTURE_BUFFER &&
-         tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
-
-         vrend_shader_sampler_views_mask_set(key->sampler_views_lower_swizzle_mask, i);
-         key->tex_swizzle[i] = to_pipe_swizzle(view->gl_swizzle[0])  |
-               to_pipe_swizzle(view->gl_swizzle[1]) << 3 |
-               to_pipe_swizzle(view->gl_swizzle[2]) << 6 |
-               to_pipe_swizzle(view->gl_swizzle[3]) << 9;
+      if (view->texture->target == GL_TEXTURE_BUFFER) {
+         GLint swizzle[4];
+         if (vrend_get_swizzle(view, swizzle)) {
+            vrend_shader_sampler_views_mask_set(key->sampler_views_lower_swizzle_mask, i);
+            key->tex_swizzle[i] = to_pipe_swizzle(swizzle[0])  |
+                                  to_pipe_swizzle(swizzle[1]) << 3 |
+                                  to_pipe_swizzle(swizzle[2]) << 6 |
+                                  to_pipe_swizzle(swizzle[3]) << 9;
+         }
       }
    }
 }
@@ -4934,6 +5055,11 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
 
          /* glTexBuffer doesn't accept GL_RGBA8_SNORM, find an appropriate replacement. */
          uint32_t format = (iview->format == GL_RGBA8_SNORM) ? GL_RGBA8UI : iview->format;
+
+         if (format == GL_NONE ||
+             (vrend_state.use_gles && format == GL_ALPHA8)) {
+            format = vrend_get_arb_format(iview->vformat);
+         }
 
          glBindBufferARB(GL_TEXTURE_BUFFER, iview->texture->id);
          glBindTexture(GL_TEXTURE_BUFFER, iview->texture->tbo_tex_id);
