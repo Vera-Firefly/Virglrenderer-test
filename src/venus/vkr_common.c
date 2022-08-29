@@ -83,7 +83,8 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_inline_uniform_block = true,
    .EXT_pipeline_creation_cache_control = true,
    .EXT_pipeline_creation_feedback = false,
-   .EXT_private_data = false, /* implementation in driver */
+   /* TODO(VK_EXT_private_data): Support natively in the guest */
+   .EXT_private_data = true,
    .EXT_shader_demote_to_helper_invocation = true,
    .EXT_subgroup_size_control = true,
    .EXT_texel_buffer_alignment = true,
