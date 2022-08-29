@@ -4737,6 +4737,24 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
       struct vrend_sampler_view *tview = sviews->views[i];
       if ((dirty & (1 << i)) && tview) {
          if (sub_ctx->prog->shadow_samp_mask[shader_type] & (1 << i)) {
+            struct vrend_texture *tex = (struct vrend_texture *)tview->texture;
+
+            /* The modes LUMINANCE, INTENSITY, and ALPHA only apply when a depth texture
+             * is used by a sampler that returns an RGBA value, i.e. by sampler*D, if
+             * the texture is queries by using sampler*Shadow then these swizzles must
+             * not be applied, therefore, reset the swizzled to the default */
+            static const GLint swizzle[] = {GL_RED,GL_GREEN,GL_BLUE,GL_ALPHA};
+            if (memcmp(tex->cur_swizzle, swizzle, 4 * sizeof(GLint))) {
+               if (vrend_state.use_gles) {
+                  for (unsigned int i = 0; i < 4; ++i) {
+                     glTexParameteri(tview->texture->target, GL_TEXTURE_SWIZZLE_R + i, swizzle[i]);
+                  }
+               } else {
+                  glTexParameteriv(tview->texture->target, GL_TEXTURE_SWIZZLE_RGBA, swizzle);
+               }
+               memcpy(tex->cur_swizzle, swizzle, 4 * sizeof(GLint));
+            }
+
             glUniform4f(sub_ctx->prog->shadow_samp_mask_locs[shader_type][sampler_index],
                         (tview->gl_swizzle[0] == GL_ZERO || tview->gl_swizzle[0] == GL_ONE) ? 0.0 : 1.0,
                         (tview->gl_swizzle[1] == GL_ZERO || tview->gl_swizzle[1] == GL_ONE) ? 0.0 : 1.0,
