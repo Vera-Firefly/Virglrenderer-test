@@ -82,7 +82,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_image_robustness = true,
    .EXT_inline_uniform_block = true,
    .EXT_pipeline_creation_cache_control = true,
-   .EXT_pipeline_creation_feedback = false,
+   .EXT_pipeline_creation_feedback = true,
    /* TODO(VK_EXT_private_data): Support natively in the guest */
    .EXT_private_data = true,
    .EXT_shader_demote_to_helper_invocation = true,
