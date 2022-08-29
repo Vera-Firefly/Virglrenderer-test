@@ -3296,7 +3296,19 @@ static void translate_tex(struct dump_ctx *ctx,
                int swz = (packed_swizzles >> (i * 3)) & 7;
                switch (swz) {
                case PIPE_SWIZZLE_ZERO : emit_buf(&ctx->glsl_strbufs,  "0.0"); break;
-               case PIPE_SWIZZLE_ONE : emit_buf(&ctx->glsl_strbufs,  "1.0"); break;
+               case PIPE_SWIZZLE_ONE :
+                  switch (dtypeprefix) {
+                  case UINT_BITS_TO_FLOAT:
+                     emit_buf(&ctx->glsl_strbufs,  "uintBitsToFloat(1u)");
+                     break;
+                  case INT_BITS_TO_FLOAT:
+                     emit_buf(&ctx->glsl_strbufs,  "intBitsToFloat(1)");
+                     break;
+                  default:
+                     emit_buf(&ctx->glsl_strbufs,  "1.0");
+                     break;
+                  }
+                  break;
                default:
                   emit_buff(&ctx->glsl_strbufs,  "val%s", get_swizzle_string(swz));
                }
