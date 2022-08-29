@@ -5454,7 +5454,8 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_arit_op2("+");
       break;
    case TGSI_OPCODE_UADD:
-      emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(ivec4((uvec4(%s) + uvec4(%s))))%s);\n", dsts[0], get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), srcs[0], srcs[1], writemask);
+      emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(uvec4(%s) + uvec4(%s))%s);\n", dsts[0],
+            get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), srcs[0], srcs[1], writemask);
       break;
    case TGSI_OPCODE_SUB:
       emit_arit_op2("-");
