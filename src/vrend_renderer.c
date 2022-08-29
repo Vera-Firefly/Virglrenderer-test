@@ -197,6 +197,7 @@ enum features_id
    feat_texture_gather,
    feat_texture_multisample,
    feat_texture_query_lod,
+   feat_texture_shadow_lod,
    feat_texture_srgb_decode,
    feat_texture_storage,
    feat_texture_view,
@@ -300,6 +301,7 @@ static const  struct {
    FEAT(texture_gather, 40, 31,  "GL_ARB_texture_gather" ),
    FEAT(texture_multisample, 32, 31,  "GL_ARB_texture_multisample" ),
    FEAT(texture_query_lod, 40, UNAVAIL, "GL_ARB_texture_query_lod", "GL_EXT_texture_query_lod"),
+   FEAT(texture_shadow_lod, UNAVAIL, UNAVAIL, "GL_EXT_texture_shadow_lod"),
    FEAT(texture_srgb_decode, UNAVAIL, UNAVAIL,  "GL_EXT_texture_sRGB_decode" ),
    FEAT(texture_storage, 42, 30,  "GL_ARB_texture_storage" ),
    FEAT(texture_view, 43, UNAVAIL,  "GL_ARB_texture_view", "GL_OES_texture_view", "GL_EXT_texture_view" ),
@@ -11729,6 +11731,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (vrend_winsys_different_gpu())
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DIFFERENT_GPU;
+
+   if (has_feature(feat_texture_shadow_lod))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_TEXTURE_SHADOW_LOD;
 
    // we use capability bits (not a version of protocol), because
    // we disable this on client side if virglrenderer is used under
