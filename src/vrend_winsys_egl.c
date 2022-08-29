@@ -459,7 +459,7 @@ int virgl_egl_make_context_current(struct virgl_egl *egl, virgl_renderer_gl_cont
    EGLContext egl_ctx = (EGLContext)virglctx;
 
    return eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,
-                         egl_ctx);
+                         egl_ctx) ? 0 : -1;
 }
 
 virgl_renderer_gl_context virgl_egl_get_current_context(UNUSED struct virgl_egl *egl)
