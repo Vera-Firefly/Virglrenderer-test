@@ -109,6 +109,7 @@ struct vrend_shader_image {
    struct tgsi_declaration_image decl;
    enum tgsi_return_type image_return;
    bool vflag;
+   bool coherent;
 };
 
 #define MAX_IMMEDIATE 1024
@@ -3547,6 +3548,20 @@ static bool is_integer_memory(const struct dump_ctx *ctx, enum tgsi_file_type fi
    return false;
 }
 
+static void set_image_qualifier(struct vrend_shader_image images[],
+                                uint32_t image_used_mask,
+                                const struct tgsi_full_instruction *inst,
+                                uint32_t reg_index, bool indirect)
+{
+   if (inst->Memory.Qualifier == TGSI_MEMORY_COHERENT) {
+      if (indirect) {
+         while (image_used_mask)
+            images[u_bit_scan(&image_used_mask)].coherent = true;
+      } else
+         images[reg_index].coherent = true;
+   }
+}
+
 static void set_memory_qualifier(uint8_t ssbo_memory_qualifier[],
                                  uint32_t ssbo_used_mask,
                                  const struct tgsi_full_instruction *inst,
@@ -3577,6 +3592,7 @@ static void
 translate_store(const struct dump_ctx *ctx,
                 struct vrend_glsl_strbufs *glsl_strbufs,
                 uint8_t ssbo_memory_qualifier[],
+                struct vrend_shader_image images[],
                 const struct tgsi_full_instruction *inst,
                 struct source_info *sinfo,
                 const char *srcs[4],
@@ -3591,6 +3607,8 @@ translate_store(const struct dump_ctx *ctx,
       /* bail out if we want to write to a non-existing image */
       if (!((1 << dinfo->dest_index) & ctx->images_used_mask))
             return;
+
+      set_image_qualifier(images, ctx->images_used_mask, inst, inst->Src[0].Register.Index, inst->Src[0].Register.Indirect);
 
       bool is_ms = false;
       enum vrend_type_qualifier coord_prefix = get_coord_prefix(ctx->images[dst_reg->Register.Index].decl.Resource, &is_ms, ctx->cfg->use_gles);
@@ -3683,7 +3701,6 @@ static void emit_load_mem(struct vrend_glsl_strbufs *glsl_strbufs, const char *d
    }
 }
 
-
 static bool
 translate_load(const struct dump_ctx *ctx,
                struct vrend_glsl_strbufs *glsl_strbufs,
@@ -3703,6 +3720,9 @@ translate_load(const struct dump_ctx *ctx,
       assert(sinfo->sreg_index >= 0);
       if (!((1 << sinfo->sreg_index) & ctx->images_used_mask))
             return false;
+
+      set_image_qualifier(images, ctx->images_used_mask, inst, inst->Src[0].Register.Index, inst->Src[0].Register.Indirect);
+
 
       bool is_ms = false;
       enum vrend_type_qualifier coord_prefix = get_coord_prefix(ctx->images[sinfo->sreg_index].decl.Resource, &is_ms, ctx->cfg->use_gles);
@@ -5777,7 +5797,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       }
       /* Don't try to write to dest with a negative index. */
       if (dinfo.dest_index >= 0)
-         translate_store(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier,
+         translate_store(ctx, &ctx->glsl_strbufs, ctx->ssbo_memory_qualifier, ctx->images,
                          inst, &sinfo, srcs, &dinfo, dsts[0]);
       break;
    case TGSI_OPCODE_LOAD:
@@ -6260,6 +6280,7 @@ static void emit_image_decl(const struct dump_ctx *ctx,
    const char *sname, *stc, *formatstr;
    enum tgsi_return_type itype;
    const char *volatile_str = image->vflag ? "volatile " : "";
+   const char *coherent_str = image->coherent ? "coherent " : "";
    const char *precision = ctx->cfg->use_gles ? "highp " : "";
    const char *access = "";
    formatstr = get_internalformat_string(image->decl.Format, &itype);
@@ -6296,11 +6317,11 @@ static void emit_image_decl(const struct dump_ctx *ctx,
    }
 
    if (range)
-      emit_hdrf(glsl_strbufs, "%s%suniform %s%cimage%s %simg%d[%d];\n",
-               access, volatile_str, precision, ptc, stc, sname, i, range);
+      emit_hdrf(glsl_strbufs, "%s%s%suniform %s%cimage%s %simg%d[%d];\n",
+               access, volatile_str, coherent_str, precision, ptc, stc, sname, i, range);
    else
-      emit_hdrf(glsl_strbufs, "%s%suniform %s%cimage%s %simg%d;\n",
-               access, volatile_str, precision, ptc, stc, sname, i);
+      emit_hdrf(glsl_strbufs, "%s%s%suniform %s%cimage%s %simg%d;\n",
+               access, volatile_str, coherent_str, precision, ptc, stc, sname, i);
 }
 
 static int emit_ios_common(const struct dump_ctx *ctx,
