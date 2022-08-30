@@ -438,7 +438,7 @@ enum virgl_formats {
 #define VIRGL_CAP_QBO                  (1 << 16)
 #define VIRGL_CAP_TRANSFER             (1 << 17)
 #define VIRGL_CAP_FBO_MIXED_COLOR_FORMATS  (1 << 18)
-#define VIRGL_CAP_FAKE_FP64            (1 << 19)
+#define VIRGL_CAP_HOST_IS_GLES         (1 << 19)
 #define VIRGL_CAP_BIND_COMMAND_ARGS    (1 << 20)
 #define VIRGL_CAP_MULTI_DRAW_INDIRECT  (1 << 21)
 #define VIRGL_CAP_INDIRECT_PARAMS      (1 << 22)
@@ -451,6 +451,9 @@ enum virgl_formats {
 #define VIRGL_CAP_BGRA_SRGB_IS_EMULATED (1 << 29)
 #define VIRGL_CAP_CLEAR_TEXTURE        (1 << 30)
 #define VIRGL_CAP_ARB_BUFFER_STORAGE   (1 << 31)
+
+// Legacy alias
+#define VIRGL_CAP_FAKE_FP64            VIRGL_CAP_HOST_IS_GLES
 
 /* These are used by the capability_bits_v2 field in virgl_caps_v2. */
 #define VIRGL_CAP_V2_BLEND_EQUATION       (1 << 0)
