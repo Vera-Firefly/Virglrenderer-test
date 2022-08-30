@@ -79,4 +79,5 @@ bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool b
 bool virgl_egl_export_signaled_fence(struct virgl_egl *egl, int *out_fd);
 bool virgl_egl_export_fence(struct virgl_egl *egl, EGLSyncKHR fence, int *out_fd);
 bool virgl_egl_different_gpu(struct virgl_egl *egl);
+const char *virgl_egl_error_string(EGLint error);
 #endif
