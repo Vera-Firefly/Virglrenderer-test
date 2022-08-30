@@ -75,7 +75,7 @@ void *virgl_egl_aux_plane_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo
 bool virgl_egl_supports_fences(struct virgl_egl *egl);
 EGLSyncKHR virgl_egl_fence_create(struct virgl_egl *egl);
 void virgl_egl_fence_destroy(struct virgl_egl *egl, EGLSyncKHR fence);
-bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, uint64_t timeout);
+bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool blocking);
 bool virgl_egl_export_signaled_fence(struct virgl_egl *egl, int *out_fd);
 bool virgl_egl_export_fence(struct virgl_egl *egl, EGLSyncKHR fence, int *out_fd);
 bool virgl_egl_different_gpu(struct virgl_egl *egl);

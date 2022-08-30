@@ -6642,18 +6642,13 @@ static void vrend_free_fences_for_context(struct vrend_context *ctx)
 
 static bool do_wait(struct vrend_fence *fence, bool can_block)
 {
-   bool done = false;
-   int timeout = can_block ? 1000000000 : 0;
-
 #ifdef HAVE_EPOXY_EGL_H
-   if (vrend_state.use_egl_fence) {
-      do {
-         done = virgl_egl_client_wait_fence(egl, fence->eglsyncobj, timeout);
-      } while (!done && can_block);
-      return done;
-   }
+   if (vrend_state.use_egl_fence)
+      return virgl_egl_client_wait_fence(egl, fence->eglsyncobj, can_block);
 #endif
 
+   bool done = false;
+   int timeout = can_block ? 1000000000 : 0;
    do {
       GLenum glret = glClientWaitSync(fence->glsyncobj, 0, timeout);
       if (glret == GL_WAIT_FAILED) {
