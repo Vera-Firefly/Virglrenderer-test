@@ -2803,8 +2803,6 @@ static void emit_txqs(struct dump_ctx *ctx,
 static const char *get_tex_inst_ext(const struct tgsi_full_instruction *inst)
 {
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_LODQ:
-      return "QueryLOD";
    case TGSI_OPCODE_TXP:
       if (inst->Texture.Texture == TGSI_TEXTURE_CUBE ||
           inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY ||
@@ -2971,6 +2969,57 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
    return true;
 }
 
+static void
+emit_lodq(struct dump_ctx *ctx,
+          const struct tgsi_full_instruction *inst,
+          const struct source_info *sinfo,
+          const struct dest_info *dinfo,
+          const char *srcs[4],
+          const char *dst,
+          const char *writemask)
+{
+   ctx->shader_req_bits |= SHADER_REQ_LODQ;
+
+   set_texture_reqs(ctx, inst, sinfo->sreg_index);
+
+   emit_buff(&ctx->glsl_strbufs, "%s = %s(textureQueryLOD(%s, ",
+          dst, get_string(dinfo->dstconv), srcs[1]);
+
+   switch (inst->Texture.Texture) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_1D_ARRAY:
+   case TGSI_TEXTURE_SHADOW1D:
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      if (ctx->cfg->use_gles)
+         emit_buff(&ctx->glsl_strbufs, "vec2(%s.x, 0)", srcs[0]);
+      else
+         emit_buff(&ctx->glsl_strbufs, "%s.x", srcs[0]);
+      break;
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_2D_ARRAY:
+   case TGSI_TEXTURE_2D_MSAA:
+   case TGSI_TEXTURE_2D_ARRAY_MSAA:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+   case TGSI_TEXTURE_SHADOWRECT:
+      emit_buff(&ctx->glsl_strbufs, "%s.xy", srcs[0]);
+      break;
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_SHADOWCUBE:
+   case TGSI_TEXTURE_SHADOWCUBE_ARRAY:
+   case TGSI_TEXTURE_CUBE_ARRAY:
+      emit_buff(&ctx->glsl_strbufs, "%s.xyz", srcs[0]);
+      break;
+   default:
+      emit_buff(&ctx->glsl_strbufs, "%s", srcs[0]);
+      break;
+   }
+
+   emit_buff(&ctx->glsl_strbufs, ")%s);\n", writemask);
+}
+
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
 static void translate_tex(struct dump_ctx *ctx,
                           const struct tgsi_full_instruction *inst,
@@ -3011,9 +3060,6 @@ static void translate_tex(struct dump_ctx *ctx,
    default:
       break;
    }
-
-   if (inst->Instruction.Opcode == TGSI_OPCODE_LODQ)
-      ctx->shader_req_bits |= SHADER_REQ_LODQ;
 
    switch (inst->Texture.Texture) {
    case TGSI_TEXTURE_1D:
@@ -5528,8 +5574,10 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_TXF:
    case TGSI_OPCODE_TG4:
    case TGSI_OPCODE_TXP:
-   case TGSI_OPCODE_LODQ:
       translate_tex(ctx, inst, &sinfo, &dinfo, srcs, dsts[0], writemask);
+      break;
+   case TGSI_OPCODE_LODQ:
+      emit_lodq(ctx, inst, &sinfo, &dinfo, srcs, dsts[0], writemask);
       break;
    case TGSI_OPCODE_TXQ:
       emit_txq(ctx, inst, sinfo.sreg_index, srcs, dsts[0], writemask);
