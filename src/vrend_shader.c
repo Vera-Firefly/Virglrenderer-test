@@ -2981,11 +2981,11 @@ static void translate_tex(struct dump_ctx *ctx,
                           const char *writemask)
 {
    enum vrend_type_qualifier txfi = TYPE_CONVERSION_NONE;
-   unsigned twm = TGSI_WRITEMASK_NONE, gwm = TGSI_WRITEMASK_NONE;
+   const char *src_swizzle;
    enum vrend_type_qualifier dtypeprefix = TYPE_CONVERSION_NONE;
    bool is_shad;
 
-   int sampler_index;
+   int sampler_index = 1;
    const char *tex_ext;
 
    struct vrend_strbuf bias_buf;
@@ -3012,8 +3012,6 @@ static void translate_tex(struct dump_ctx *ctx,
       break;
    }
 
-   sampler_index = 1;
-
    if (inst->Instruction.Opcode == TGSI_OPCODE_LODQ)
       ctx->shader_req_bits |= SHADER_REQ_LODQ;
 
@@ -3021,21 +3019,21 @@ static void translate_tex(struct dump_ctx *ctx,
    case TGSI_TEXTURE_1D:
    case TGSI_TEXTURE_BUFFER:
       if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
-         twm = TGSI_WRITEMASK_NONE;
+         src_swizzle = "";
       else
-         twm = TGSI_WRITEMASK_X;
+         src_swizzle = ".x";
       txfi = INT;
       break;
    case TGSI_TEXTURE_1D_ARRAY:
-      twm = TGSI_WRITEMASK_XY;
+      src_swizzle = ".xy";
       txfi = IVEC2;
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
       if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
-         twm = TGSI_WRITEMASK_NONE;
+         src_swizzle = "";
       else
-         twm = TGSI_WRITEMASK_XY;
+         src_swizzle = ".xy";
       txfi = IVEC2;
       break;
    case TGSI_TEXTURE_SHADOW1D:
@@ -3044,24 +3042,24 @@ static void translate_tex(struct dump_ctx *ctx,
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_3D:
       if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
-         twm = TGSI_WRITEMASK_NONE;
+         src_swizzle = "";
       else if (inst->Instruction.Opcode == TGSI_OPCODE_TG4)
-         twm = TGSI_WRITEMASK_XY;
+         src_swizzle = ".xy";
       else
-         twm = TGSI_WRITEMASK_XYZ;
+         src_swizzle = ".xyz";
       txfi = IVEC3;
       break;
    case TGSI_TEXTURE_CUBE:
    case TGSI_TEXTURE_2D_ARRAY:
-      twm = TGSI_WRITEMASK_XYZ;
+      src_swizzle = ".xyz";
       txfi = IVEC3;
       break;
    case TGSI_TEXTURE_2D_MSAA:
-      twm = TGSI_WRITEMASK_XY;
+      src_swizzle = ".xy";
       txfi = IVEC2;
       break;
    case TGSI_TEXTURE_2D_ARRAY_MSAA:
-      twm = TGSI_WRITEMASK_XYZ;
+      src_swizzle = ".xyz";
       txfi = IVEC3;
       break;
 
@@ -3073,39 +3071,11 @@ static void translate_tex(struct dump_ctx *ctx,
       if (inst->Instruction.Opcode == TGSI_OPCODE_TG4 &&
           inst->Texture.Texture != TGSI_TEXTURE_CUBE_ARRAY &&
           inst->Texture.Texture != TGSI_TEXTURE_SHADOWCUBE_ARRAY)
-         twm = TGSI_WRITEMASK_XYZ;
+         src_swizzle = ".xyz";
       else
-         twm = TGSI_WRITEMASK_NONE;
+         src_swizzle = "";
       txfi = TYPE_CONVERSION_NONE;
       break;
-   }
-
-   if (inst->Instruction.Opcode == TGSI_OPCODE_TXD) {
-      switch (inst->Texture.Texture) {
-      case TGSI_TEXTURE_1D:
-      case TGSI_TEXTURE_SHADOW1D:
-      case TGSI_TEXTURE_1D_ARRAY:
-      case TGSI_TEXTURE_SHADOW1D_ARRAY:
-         gwm = TGSI_WRITEMASK_X;
-         break;
-      case TGSI_TEXTURE_2D:
-      case TGSI_TEXTURE_SHADOW2D:
-      case TGSI_TEXTURE_2D_ARRAY:
-      case TGSI_TEXTURE_SHADOW2D_ARRAY:
-      case TGSI_TEXTURE_RECT:
-      case TGSI_TEXTURE_SHADOWRECT:
-         gwm = TGSI_WRITEMASK_XY;
-         break;
-      case TGSI_TEXTURE_3D:
-      case TGSI_TEXTURE_CUBE:
-      case TGSI_TEXTURE_SHADOWCUBE:
-      case TGSI_TEXTURE_CUBE_ARRAY:
-         gwm = TGSI_WRITEMASK_XYZ;
-         break;
-      default:
-         gwm = TGSI_WRITEMASK_NONE;
-         break;
-      }
    }
 
    switch (inst->Instruction.Opcode) {
@@ -3138,14 +3108,35 @@ static void translate_tex(struct dump_ctx *ctx,
          strbuf_appendf(&bias_buf, ", int(%s.w)", srcs[0]);
       break;
    case TGSI_OPCODE_TXD:
-      if (ctx->cfg->use_gles && (inst->Texture.Texture == TGSI_TEXTURE_1D ||
-                                 inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D ||
-                                 inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY ||
-                                 inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY))
-         strbuf_appendf(&bias_buf, ", vec2(%s%s, 0), vec2(%s%s, 0)", srcs[1], get_wm_string(gwm), srcs[2], get_wm_string(gwm));
-      else
-         strbuf_appendf(&bias_buf, ", %s%s, %s%s", srcs[1], get_wm_string(gwm), srcs[2], get_wm_string(gwm));
       sampler_index = 3;
+      switch (inst->Texture.Texture) {
+      case TGSI_TEXTURE_1D:
+      case TGSI_TEXTURE_SHADOW1D:
+      case TGSI_TEXTURE_1D_ARRAY:
+      case TGSI_TEXTURE_SHADOW1D_ARRAY:
+         if (ctx->cfg->use_gles)
+            strbuf_appendf(&bias_buf, ", vec2(%s.x, 0), vec2(%s.x, 0)", srcs[1], srcs[2]);
+         else
+            strbuf_appendf(&bias_buf, ", %s.x, %s.x", srcs[1], srcs[2]);
+         break;
+      case TGSI_TEXTURE_2D:
+      case TGSI_TEXTURE_SHADOW2D:
+      case TGSI_TEXTURE_2D_ARRAY:
+      case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      case TGSI_TEXTURE_RECT:
+      case TGSI_TEXTURE_SHADOWRECT:
+         strbuf_appendf(&bias_buf, ", %s.xy, %s.xy", srcs[1], srcs[2]);
+         break;
+      case TGSI_TEXTURE_3D:
+      case TGSI_TEXTURE_CUBE:
+      case TGSI_TEXTURE_SHADOWCUBE:
+      case TGSI_TEXTURE_CUBE_ARRAY:
+         strbuf_appendf(&bias_buf, ", %s.xyz, %s.xyz", srcs[1], srcs[2]);
+         break;
+      default:
+         strbuf_appendf(&bias_buf, ", %s, %s", srcs[1], srcs[2]);
+         break;
+      }
       break;
    case TGSI_OPCODE_TG4:
       sampler_index = 2;
@@ -3261,21 +3252,21 @@ static void translate_tex(struct dump_ctx *ctx,
          if (inst->Texture.Texture == TGSI_TEXTURE_1D)
             emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texelFetch%s(%s, ivec2(%s(%s%s), 0)%s%s)%s));\n",
                       dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
-                      tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
-                      get_wm_string(twm), bias, offset,
+                      tex_ext, srcs[sampler_index], get_string(txfi),
+                      srcs[0], src_swizzle, bias, offset,
                       dinfo->dst_override_no_wm[0] ? "" : writemask);
          else if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
             /* the y coordinate must go into the z element and the y must be zero */
             emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texelFetch%s(%s, ivec3(%s(%s%s), 0).xzy%s%s)%s));\n",
                       dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
-                      tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
-                      get_wm_string(twm), bias, offset,
+                      tex_ext, srcs[sampler_index], get_string(txfi),
+                      srcs[0], src_swizzle, bias, offset,
                       dinfo->dst_override_no_wm[0] ? "" : writemask);
          } else {
             emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texelFetch%s(%s, %s(%s%s), 0%s)%s));\n",
                       dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
-                      tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
-                      get_wm_string(twm), offset,
+                      tex_ext, srcs[sampler_index], get_string(txfi),
+                      srcs[0], src_swizzle, offset,
                       dinfo->dst_override_no_wm[0] ? "" : writemask);
          }
       } else {
@@ -3291,8 +3282,8 @@ static void translate_tex(struct dump_ctx *ctx,
           */
          emit_buff(&ctx->glsl_strbufs, "{\n  vec4 val = %s(texelFetch%s(%s, %s(%s%s)%s%s));\n",
                    get_string(dtypeprefix),
-                   tex_ext, srcs[sampler_index], get_string(txfi), srcs[0],
-                   get_wm_string(twm), bias, offset);
+                   tex_ext, srcs[sampler_index], get_string(txfi),
+                   srcs[0], src_swizzle, bias, offset);
 
          if (vrend_shader_sampler_views_mask_get(ctx->key->sampler_views_lower_swizzle_mask, sinfo->sreg_index)) {
             int16_t  packed_swizzles = ctx->key->tex_swizzle[sinfo->sreg_index];
@@ -3338,21 +3329,21 @@ static void translate_tex(struct dump_ctx *ctx,
                emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(vec4(vec4(texture%s(%s, vec4(%s%s.xzw, 0).xwyz %s%s)) * %sshadmask%d + %sshadadd%d)%s));\n",
                          dst, get_string(dinfo->dstconv),
                          get_string(dtypeprefix), tex_ext, srcs[sampler_index],
-                         srcs[0], get_wm_string(twm), offset, bias, cname,
-                         src->Register.Index, cname,
-                         src->Register.Index, writemask);
+                         srcs[0], src_swizzle, offset, bias,
+                         cname, src->Register.Index,
+                         cname, src->Register.Index, writemask);
             else
                emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(vec4(vec4(texture%s(%s, vec3(%s%s.xz, 0).xzy %s%s)) * %sshadmask%d + %sshadadd%d)%s));\n",
                          dst, get_string(dinfo->dstconv),
                          get_string(dtypeprefix), tex_ext, srcs[sampler_index],
-                         srcs[0], get_wm_string(twm), offset, bias, cname,
-                         src->Register.Index, cname,
-                         src->Register.Index, writemask);
+                         srcs[0], src_swizzle, offset, bias,
+                         cname, src->Register.Index,
+                         cname, src->Register.Index, writemask);
          } else if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY) {
             emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(vec4(vec4(texture%s(%s, vec4(%s%s, 0).xwyz %s%s)) * %sshadmask%d + %sshadadd%d)%s));\n",
                       dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
                       tex_ext, srcs[sampler_index], srcs[0],
-                      get_wm_string(twm), offset, bias, cname,
+                      src_swizzle, offset, bias, cname,
                       src->Register.Index, cname,
                       src->Register.Index, writemask);
          }
@@ -3360,9 +3351,9 @@ static void translate_tex(struct dump_ctx *ctx,
          emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(vec4(vec4(texture%s(%s, %s%s%s%s)) * %sshadmask%d + %sshadadd%d)%s));\n",
                    dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
                    tex_ext, srcs[sampler_index], srcs[0],
-                   get_wm_string(twm), offset, bias, cname,
-                   src->Register.Index, cname,
-                   src->Register.Index, writemask);
+                   src_swizzle, offset, bias,
+                   cname, src->Register.Index,
+                   cname, src->Register.Index, writemask);
    } else {
       /* OpenGL ES do not support 1D texture
        * so we use a 2D texture with a parameter set to 0.5
@@ -3381,7 +3372,7 @@ static void translate_tex(struct dump_ctx *ctx,
                emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texture%s(%s, vec2(%s%s, 0.5) %s%s)%s));\n",
                          dst, get_string(dinfo->dstconv),
                          get_string(dtypeprefix), tex_ext, srcs[sampler_index],
-                         srcs[0], get_wm_string(twm), offset, bias,
+                         srcs[0], src_swizzle, offset, bias,
                          dinfo->dst_override_no_wm[0] ? "" : writemask);
          } else if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
             if (inst->Instruction.Opcode == TGSI_OPCODE_TXP)
@@ -3394,13 +3385,13 @@ static void translate_tex(struct dump_ctx *ctx,
                emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texture%s(%s, vec3(%s%s, 0).xzy %s%s)%s));\n",
                          dst, get_string(dinfo->dstconv),
                          get_string(dtypeprefix), tex_ext, srcs[sampler_index],
-                         srcs[0], get_wm_string(twm), offset, bias,
+                         srcs[0], src_swizzle, offset, bias,
                          dinfo->dst_override_no_wm[0] ? "" : writemask);
          }
       } else {
          emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(texture%s(%s, %s%s%s%s)%s));\n",
                    dst, get_string(dinfo->dstconv), get_string(dtypeprefix),
-                   tex_ext, srcs[sampler_index], srcs[0], get_wm_string(twm),
+                   tex_ext, srcs[sampler_index], srcs[0], src_swizzle,
                    offset, bias, dinfo->dst_override_no_wm[0] ? "" : writemask);
       }
    }
