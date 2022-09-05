@@ -33,7 +33,7 @@
 #include <va/va.h>
 #include <va/va_drm.h>
 #include <va/va_drmcommon.h>
-#include <drm/drm_fourcc.h>
+#include <drm_fourcc.h>
 
 #include "util/u_memory.h"
 #include "virgl_hw.h"
