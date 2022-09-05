@@ -3908,11 +3908,10 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 static bool vrend_get_swizzle(struct vrend_sampler_view *view,
                               GLint swizzle[4])
 {
-   const static GLint OOOR[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
-   const static GLint RRR1[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
-   const static GLint RRRG[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
-   const static GLint RRRR[] = {GL_RED, GL_RED, GL_RED, GL_RED};
-   const static GLint RGBA[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+   static const GLint OOOR[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
+   static const GLint RRR1[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+   static const GLint RRRG[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
+   static const GLint RRRR[] = {GL_RED, GL_RED, GL_RED, GL_RED};
 
    switch (view->format) {
    case VIRGL_FORMAT_A8_UNORM:
