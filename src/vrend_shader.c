@@ -2456,7 +2456,12 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    char src_fb[PIPE_MAX_COLOR_BUFS][64];
    double scale[PIPE_MAX_COLOR_BUFS];
    int mask[PIPE_MAX_COLOR_BUFS];
-   char full_op[PIPE_MAX_COLOR_BUFS][128 + 8];
+
+   struct vrend_strbuf full_op_buf[PIPE_MAX_COLOR_BUFS];
+   for (int i = 0; i < PIPE_MAX_COLOR_BUFS; ++i) {
+      strbuf_alloc(&full_op_buf[i], 134);
+   }
+
 
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
       mask[i] = (1 << ctx->key->fs.surface_component_bits[i]) - 1;
@@ -2494,67 +2499,52 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    for (unsigned i = 0; i < ctx->num_outputs; i++) {
       switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_CLEAR:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s", "vec4(0)");
+         strbuf_fmt(&full_op_buf[i], "%s", "vec4(0)");
          break;
       case PIPE_LOGICOP_NOOP:
-         full_op[i][0]= 0;
+         strbuf_fmt(&full_op_buf[i], "%s", "");
          break;
       case PIPE_LOGICOP_SET:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s", "vec4(1)");
+         strbuf_fmt(&full_op_buf[i], "%s", "vec4(1)");
          break;
       case PIPE_LOGICOP_COPY:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "fsout_tmp_c%d", i);
+         strbuf_fmt(&full_op_buf[i], "fsout_tmp_c%d", i);
          break;
       case PIPE_LOGICOP_COPY_INVERTED:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~%s", src[i]);
+         strbuf_fmt(&full_op_buf[i], "~%s", src[i]);
          break;
       case PIPE_LOGICOP_INVERT:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~%s", src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~%s", src_fb[i]);
          break;
       case PIPE_LOGICOP_AND:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s & %s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "%s & %s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_NAND:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~( %s & %s )", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~( %s & %s )", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_NOR:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~( %s | %s )", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~( %s | %s )", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_AND_INVERTED:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~%s & %s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~%s & %s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_AND_REVERSE:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s & ~%s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "%s & ~%s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_XOR:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s ^%s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "%s ^%s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_EQUIV:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~( %s ^ %s )", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~( %s ^ %s )", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_OR_INVERTED:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "~%s | %s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "~%s | %s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_OR_REVERSE:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s | ~%s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "%s | ~%s", src[i], src_fb[i]);
          break;
       case PIPE_LOGICOP_OR:
-         snprintf(full_op[i], ARRAY_SIZE(full_op[i]),
-                  "%s | %s", src[i], src_fb[i]);
+         strbuf_fmt(&full_op_buf[i], "%s | %s", src[i], src_fb[i]);
          break;
       }
    }
@@ -2566,10 +2556,10 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
       case PIPE_LOGICOP_COPY:
       case PIPE_LOGICOP_CLEAR:
       case PIPE_LOGICOP_SET:
-         emit_buff(glsl_strbufs, "fsout_c%d = %s;\n", i, full_op[i]);
+         emit_buff(glsl_strbufs, "fsout_c%d = %s;\n", i, full_op_buf[i].buf);
          break;
       default:
-         emit_buff(glsl_strbufs, "fsout_c%d = vec4((%s) & %d) / %f;\n", i, full_op[i], mask[i], scale[i]);
+         emit_buff(glsl_strbufs, "fsout_c%d = vec4((%s) & %d) / %f;\n", i, full_op_buf[i].buf, mask[i], scale[i]);
       }
    }
 }
