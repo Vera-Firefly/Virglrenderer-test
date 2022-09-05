@@ -440,7 +440,12 @@ static int program_comp_func(void *key1, void *key2)
 
 static void program_destroy_func(void *shader_id)
 {
-   GLuint id = ((uint64_t)(shader_id)) & 0xffffffff;
+   GLuint id;
+#if __SIZEOF_POINTER__  == 8
+   id = ((uint64_t)(shader_id)) & 0xffffffff;
+#else
+   id = (GLuint)(shader_id);
+#endif
    glDeleteProgram(id);
 }
 
