@@ -1293,7 +1293,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                 array->sid <= decl->Semantic.Index &&
                 array->sid + array->size >= decl->Semantic.Index) {
                ctx->inputs[i].sid = array->sid;
-               ctx->inputs[i].last = ctx->inputs[i].first + array->size;
+               ctx->inputs[i].last = MAX2(ctx->inputs[i].first + array->size, ctx->inputs[i].last);
                break;
             }
          }
