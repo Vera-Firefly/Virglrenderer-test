@@ -1677,6 +1677,20 @@ static uint64_t vtest_gettime(uint32_t offset_ms)
    return ns + ns_per_ms * offset_ms;
 }
 
+static inline void write_ready(int fd)
+{
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wunused-result"
+#endif
+   static const uint64_t val = 1;
+   write(fd, &val, sizeof(val));
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
+}
+
+
 /* TODO this is slow */
 static void vtest_signal_sync(struct vtest_sync *sync, uint64_t value)
 {
@@ -1720,10 +1734,8 @@ static void vtest_signal_sync(struct vtest_sync *sync, uint64_t value)
          }
 
          if (is_ready) {
-            const uint64_t val = 1;
-
             list_del(&wait->head);
-            write(wait->fd, &val, sizeof(val));
+            write_ready(wait->fd);
             vtest_free_sync_wait(wait);
          }
       }
@@ -1981,8 +1993,7 @@ int vtest_sync_wait(uint32_t length_dw)
       is_ready = true;
 
    if (is_ready) {
-      const uint64_t val = 1;
-      write(wait->fd, &val, sizeof(val));
+      write_ready(wait->fd);
    }
 
    resp_buf[VTEST_CMD_LEN] = 0;
