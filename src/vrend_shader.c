@@ -1294,9 +1294,6 @@ iter_declaration(struct tgsi_iterate_context *iter,
                 array->sid + array->size >= decl->Semantic.Index) {
                ctx->inputs[i].sid = array->sid;
                ctx->inputs[i].last = ctx->inputs[i].first + array->size;
-               fprintf(stderr, "sync array %d.%d [%d %d]\n",
-                       ctx->inputs[i].name, ctx->inputs[i].sid, ctx->inputs[i].first, ctx->inputs[i].last);
-
                break;
             }
          }
