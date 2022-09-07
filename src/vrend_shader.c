@@ -76,6 +76,7 @@
 #define SHADER_REQ_GEOMETRY_SHADER    (1ULL << 32)
 #define SHADER_REQ_BLEND_EQUATION_ADVANCED (1ULL << 33)
 #define SHADER_REQ_EXPLICIT_ATTRIB_LOCATION (1ULL << 34)
+#define SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION (1ULL << 35)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -295,6 +296,7 @@ struct dump_ctx {
    bool write_mul_utemp;
    bool write_mul_itemp;
    bool has_sample_input;
+   bool has_noperspective;
    bool early_depth_stencil;
    bool has_file_memory;
    bool force_color_two_side;
@@ -1273,10 +1275,16 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->inputs[i].glsl_gl_block = false;
       ctx->inputs[i].overlapping_array = NULL;
 
-      if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
-          decl->Interp.Location == TGSI_INTERPOLATE_LOC_SAMPLE) {
-         ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
-         ctx->has_sample_input = true;
+      if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+         if (decl->Interp.Location == TGSI_INTERPOLATE_LOC_SAMPLE) {
+            ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            ctx->has_sample_input = true;
+         }
+         if (decl->Interp.Interpolate == TGSI_INTERPOLATE_LINEAR && ctx->cfg->use_gles &&
+             ctx->cfg->has_nopersective) {
+            ctx->shader_req_bits |= SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION;
+            ctx->has_noperspective = true;
+         }
       }
 
       map_overlapping_io_array(ctx->inputs, &ctx->inputs[i], ctx->num_inputs, decl);
@@ -5999,6 +6007,9 @@ static void emit_header(const struct dump_ctx *ctx, struct vrend_glsl_strbufs *g
       if (ctx->shader_req_bits & SHADER_REQ_LODQ)
          emit_ext(glsl_strbufs, "EXT_texture_query_lod", "require");
 
+      if (ctx->shader_req_bits & SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION)
+         emit_ext(glsl_strbufs, "NV_shader_noperspective_interpolation", "require");
+
       emit_hdr(glsl_strbufs, "precision highp float;\n");
       emit_hdr(glsl_strbufs, "precision highp int;\n");
    } else {
@@ -6120,7 +6131,7 @@ static const char *get_interp_string(const struct vrend_shader_cfg *cfg, enum tg
 {
    switch (interpolate) {
    case TGSI_INTERPOLATE_LINEAR:
-      if (!cfg->use_gles)
+      if (cfg->has_nopersective)
          return "noperspective ";
       else
          return "";
@@ -7527,6 +7538,7 @@ static void fill_var_sinfo(const struct dump_ctx *ctx, struct vrend_variable_sha
 {
    sinfo->num_ucp = ctx->is_last_vertex_stage ? VIRGL_NUM_CLIP_PLANES : 0;
    sinfo->fs_info.has_sample_input = ctx->has_sample_input;
+   sinfo->fs_info.has_noperspective = ctx->has_noperspective;
    sinfo->fs_info.num_interps = ctx->num_interps;
    sinfo->fs_info.glsl_ver = ctx->glsl_ver_required;
    bool has_prop = (ctx->num_clip_dist_prop + ctx->num_cull_dist_prop) > 0;
@@ -7879,6 +7891,11 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
        ((cfg->use_gles && cfg->glsl_version < 320) ||
         cfg->glsl_version >= 320)) {
       ctx.shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+   }
+
+   if (fs_info->num_interps && fs_info->has_noperspective &&
+       cfg->use_gles) {
+      ctx.shader_req_bits |= SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION;
    }
 
    emit_header(&ctx, &ctx.glsl_strbufs);

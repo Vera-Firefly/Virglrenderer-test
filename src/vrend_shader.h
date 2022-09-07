@@ -83,6 +83,7 @@ struct vrend_fs_shader_info {
    int num_interps;
    int glsl_ver;
    bool has_sample_input;
+   bool has_noperspective;
    struct vrend_interp_info interpinfo[PIPE_MAX_SHADER_INPUTS];
 };
 
@@ -246,6 +247,7 @@ struct vrend_shader_cfg {
    uint32_t has_dual_src_blend : 1;
    uint32_t has_fbfetch_coherent : 1;
    uint32_t has_cull_distance : 1;
+   uint32_t has_nopersective : 1;
 };
 
 struct vrend_context;

@@ -172,6 +172,7 @@ enum features_id
    feat_multi_draw_indirect,
    feat_nv_conditional_render,
    feat_nv_prim_restart,
+   feat_shader_noperspective_interpolation,
    feat_nvx_gpu_memory_info,
    feat_polygon_offset_clamp,
    feat_occlusion_query,
@@ -274,6 +275,7 @@ static const  struct {
    FEAT(multi_draw_indirect, 43, UNAVAIL,  "GL_ARB_multi_draw_indirect", "GL_EXT_multi_draw_indirect" ),
    FEAT(nv_conditional_render, UNAVAIL, UNAVAIL,  "GL_NV_conditional_render" ),
    FEAT(nv_prim_restart, UNAVAIL, UNAVAIL,  "GL_NV_primitive_restart" ),
+   FEAT(shader_noperspective_interpolation, 31, UNAVAIL, "GL_NV_shader_noperspective_interpolation", "GL_EXT_gpu_shader4"),
    FEAT(nvx_gpu_memory_info, UNAVAIL, UNAVAIL, "GL_NVX_gpu_memory_info" ),
    FEAT(polygon_offset_clamp, 46, UNAVAIL,  "GL_ARB_polygon_offset_clamp", "GL_EXT_polygon_offset_clamp"),
    FEAT(occlusion_query, 15, UNAVAIL, "GL_ARB_occlusion_query"),
@@ -7445,6 +7447,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->shader_cfg.has_dual_src_blend = has_feature(feat_dual_src_blend);
    grctx->shader_cfg.has_fbfetch_coherent = has_feature(feat_framebuffer_fetch);
    grctx->shader_cfg.has_cull_distance = has_feature(feat_cull_distance);
+   grctx->shader_cfg.has_nopersective = has_feature(feat_shader_noperspective_interpolation);
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
