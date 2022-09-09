@@ -11343,7 +11343,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 12;
+   caps->v2.host_feature_check_version = 13;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
@@ -11718,6 +11718,11 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max);
    caps->v2.max_texture_image_units = MIN2(max, PIPE_MAX_SHADER_SAMPLER_VIEWS);
+
+   if (has_feature(feat_ubo)) {
+      glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &max);
+      caps->v2.max_uniform_block_size = max;
+   }
 
    /* Propagate the max of Uniform Components */
    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max);
