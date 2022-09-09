@@ -4194,7 +4194,6 @@ int vrend_create_shader(struct vrend_context *ctx,
 {
    struct vrend_shader_selector *sel = NULL;
    int ret_handle;
-   bool new_shader = true, long_shader = false;
    bool finished = false;
    int ret;
 
@@ -4214,11 +4213,13 @@ int vrend_create_shader(struct vrend_context *ctx,
        !has_feature(feat_compute_shader))
       return EINVAL;
 
-   if (offlen & VIRGL_OBJ_SHADER_OFFSET_CONT)
-      new_shader = false;
-   else if (((offlen + 3) / 4) > pkt_length)
-      long_shader = true;
-
+   /* offlen & VIRGL_OBJ_SHADER_OFFSET_CONT declares whether we have a new shader or
+    * a shader continuation
+    *
+    * offlen & ~VIRGL_OBJ_SHADER_OFFSET_CONT
+    *  is the total shader length for   a new shader (new_shader == true)
+    *  the continuation offset for a shader continuation (new_shader == false) */
+   bool new_shader = !(offlen & VIRGL_OBJ_SHADER_OFFSET_CONT);
    struct vrend_sub_context *sub_ctx = ctx->sub;
 
    /* if we have an in progress one - don't allow a new shader
@@ -4230,24 +4231,27 @@ int vrend_create_shader(struct vrend_context *ctx,
          return EINVAL;
    }
 
+   const uint32_t pkt_length_bytes = pkt_length * 4;
+
    if (new_shader) {
+      const uint32_t expected_token_count = (offlen + 3) / 4;  /* round up count */
       sel = vrend_create_shader_state(so_info, req_local_mem, type);
-     if (sel == NULL)
-       return ENOMEM;
+      if (sel == NULL)
+         return ENOMEM;
 
-     sel->buf_len = ((offlen + 3) / 4) * 4; /* round up buffer size */
-     sel->tmp_buf = malloc(sel->buf_len);
-     if (!sel->tmp_buf) {
-        ret = ENOMEM;
-        goto error;
-     }
+      sel->buf_len = expected_token_count * 4;
+      sel->tmp_buf = malloc(sel->buf_len);
+      if (!sel->tmp_buf) {
+         ret = ENOMEM;
+         goto error;
+      }
 
-     memcpy(sel->tmp_buf, shd_text, pkt_length * 4);
-     if (long_shader) {
-        sel->buf_offset = pkt_length * 4;
-        sub_ctx->long_shader_in_progress_handle[type] = handle;
-     } else
-        finished = true;
+      memcpy(sel->tmp_buf, shd_text, pkt_length_bytes);
+      if (expected_token_count > pkt_length) {
+         sel->buf_offset = pkt_length_bytes;
+         sub_ctx->long_shader_in_progress_handle[type] = handle;
+      } else
+         finished = true;
    } else {
       sel = vrend_object_lookup(sub_ctx->object_hash, handle, VIRGL_OBJECT_SHADER);
       if (!sel) {
@@ -4265,23 +4269,23 @@ int vrend_create_shader(struct vrend_context *ctx,
       }
 
       /*make sure no overflow */
-      if (pkt_length * 4 < pkt_length ||
-          pkt_length * 4 + sel->buf_offset < pkt_length * 4 ||
-          pkt_length * 4 + sel->buf_offset < sel->buf_offset) {
+      if (pkt_length_bytes < pkt_length ||
+          pkt_length_bytes + sel->buf_offset < pkt_length_bytes ||
+          pkt_length_bytes + sel->buf_offset < sel->buf_offset) {
             ret = EINVAL;
             goto error;
           }
 
-      if ((pkt_length * 4 + sel->buf_offset) > sel->buf_len) {
-         vrend_printf( "Got too large shader continuation %d vs %d\n",
-                 pkt_length * 4 + sel->buf_offset, sel->buf_len);
+      if ((pkt_length_bytes + sel->buf_offset) > sel->buf_len) {
+         vrend_printf("Got too large shader continuation %d vs %d\n",
+                      pkt_length_bytes + sel->buf_offset, sel->buf_len);
          ret = EINVAL;
          goto error;
       }
 
-      memcpy(sel->tmp_buf + sel->buf_offset, shd_text, pkt_length * 4);
+      memcpy(sel->tmp_buf + sel->buf_offset, shd_text, pkt_length_bytes);
 
-      sel->buf_offset += pkt_length * 4;
+      sel->buf_offset += pkt_length_bytes;
       if (sel->buf_offset >= sel->buf_len) {
          finished = true;
          shd_text = sel->tmp_buf;
@@ -4292,7 +4296,7 @@ int vrend_create_shader(struct vrend_context *ctx,
       struct tgsi_token *tokens;
 
       /* check for null termination */
-      uint32_t last_chunk_offset = sel->buf_offset ? sel->buf_offset : pkt_length * 4;
+      uint32_t last_chunk_offset = sel->buf_offset ? sel->buf_offset : pkt_length_bytes;
       if (last_chunk_offset < 4 || !memchr(shd_text + last_chunk_offset - 4, '\0', 4)) {
          ret = EINVAL;
          goto error;
