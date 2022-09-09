@@ -4235,6 +4235,9 @@ int vrend_create_shader(struct vrend_context *ctx,
 
    if (new_shader) {
       const uint32_t expected_token_count = (offlen + 3) / 4;  /* round up count */
+      if (expected_token_count < pkt_length)
+        return EINVAL;
+
       sel = vrend_create_shader_state(so_info, req_local_mem, type);
       if (sel == NULL)
          return ENOMEM;
