@@ -741,6 +741,8 @@ struct vrend_sub_context {
    struct vrend_context *parent;
    struct sysval_uniform_block sysvalue_data;
    uint32_t sysvalue_data_cookie;
+   uint32_t current_program_id;
+   uint32_t current_pipeline_id;
 };
 
 struct vrend_untyped_resource {
@@ -1328,19 +1330,35 @@ static bool vrend_is_timer_query(GLenum gltype)
       gltype == GL_TIME_ELAPSED;
 }
 
-static void vrend_use_program(struct vrend_linked_shader_program *program)
+static inline void use_program(struct vrend_sub_context *sub_ctx, uint32_t id)
+{
+      if (sub_ctx->current_program_id != id) {
+         sub_ctx->current_program_id = id;
+         glUseProgram(id);
+      }
+}
+
+static inline void bind_pipeline(struct vrend_sub_context *sub_ctx, uint32_t id)
+{
+      if (sub_ctx->current_pipeline_id != id) {
+         sub_ctx->current_pipeline_id = id;
+         glBindProgramPipeline(id);
+      }
+}
+
+static void vrend_use_program(struct vrend_sub_context *sub_ctx,
+                              struct vrend_linked_shader_program *program)
 {
    GLuint id = !program ? 0 :
                           program->is_pipeline ? program->id.pipeline :
                                                  program->id.program;
-
    if (program && program->is_pipeline) {
-       glUseProgram(0);
-       glBindProgramPipeline(id);
+      use_program(sub_ctx, 0);
+      bind_pipeline(sub_ctx, id);
    } else {
        if (has_feature(feat_separate_shader_objects))
-           glBindProgramPipeline(0);
-       glUseProgram(id);
+          bind_pipeline(sub_ctx, 0);
+       use_program(sub_ctx, id);
    }
 }
 
@@ -1847,7 +1865,7 @@ static struct vrend_linked_shader_program *add_cs_shader_program(struct vrend_co
    sprog->id.program = prog_id;
    list_addtail(&sprog->head, &ctx->sub->cs_programs);
 
-   vrend_use_program(sprog);
+   vrend_use_program(ctx->sub, sprog);
 
    bind_sampler_locs(sprog, PIPE_SHADER_COMPUTE, 0);
    bind_ubo_locs(sprog, PIPE_SHADER_COMPUTE, 0);
@@ -2035,7 +2053,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    sprog->virgl_block_bind = -1;
    sprog->ubo_sysval_buffer_id = -1;
 
-   vrend_use_program(sprog);
+   vrend_use_program(sub_ctx, sprog);
 
    for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
         shader_type <= last_shader;
@@ -4389,7 +4407,7 @@ void vrend_clear(struct vrend_context *ctx,
    if (sub_ctx->viewport_state_dirty)
       vrend_update_viewport_state(sub_ctx);
 
-   vrend_use_program(NULL);
+   vrend_use_program(ctx->sub, NULL);
 
    glDisable(GL_SCISSOR_TEST);
 
@@ -5341,7 +5359,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
           }
 
           if (need_rebind) {
-             vrend_use_program(prog);
+             vrend_use_program(sub_ctx, prog);
              rebind_ubo_and_sampler_locs(prog, last_shader);
           }
       }
@@ -5516,7 +5534,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       return 0;
    }
 
-   vrend_use_program(sub_ctx->prog);
+   vrend_use_program(sub_ctx, sub_ctx->prog);
 
    if (vrend_state.use_gles) {
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
@@ -5771,7 +5789,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
       return;
    }
 
-   vrend_use_program(sub_ctx->prog);
+   vrend_use_program(sub_ctx, sub_ctx->prog);
 
    vrend_set_active_pipeline_stage(sub_ctx->prog, PIPE_SHADER_COMPUTE);
    vrend_draw_bind_ubo_shader(sub_ctx, PIPE_SHADER_COMPUTE, 0);
@@ -8474,7 +8492,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       uint32_t stride = info->stride;
       uint32_t layer_stride = info->layer_stride;
 
-      vrend_use_program(0);
+      vrend_use_program(ctx->sub, 0);
 
       if (!stride)
          stride = util_format_get_nblocksx(res->base.format, u_minify(res->base.width0, info->level)) * elsize;
@@ -8847,7 +8865,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
    int row_stride = info->stride / elsize;
    GLint old_fbo;
 
-   vrend_use_program(0);
+   vrend_use_program(ctx->sub, 0);
 
    enum virgl_formats fmt = res->base.format;
 
