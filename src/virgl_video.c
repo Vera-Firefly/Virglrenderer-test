@@ -47,9 +47,7 @@ struct virgl_video_buffer {
     uint32_t height;
     bool interlanced;
     VASurfaceID va_sfc;
-    VADRMPRIMESurfaceDescriptor desc;
-    struct virgl_video_dma_buf dmabuf;
-    bool exported;
+    struct virgl_video_dma_buf *dmabuf;
     void *opaque;                               /* User opaque data */
 };
 
@@ -268,9 +266,8 @@ static uint32_t drm_format_from_va_fourcc(uint32_t va_fourcc)
     }
 }
 
-
-static void fill_dma_buf(const VADRMPRIMESurfaceDescriptor *desc,
-                         struct virgl_video_dma_buf *dmabuf)
+static void fill_video_dma_buf(struct virgl_video_dma_buf *dmabuf,
+                               const VADRMPRIMESurfaceDescriptor *desc)
 {
     unsigned i, j, obj_idx;
     struct virgl_video_dma_buf_plane *plane;
@@ -323,6 +320,57 @@ static void fill_dma_buf(const VADRMPRIMESurfaceDescriptor *desc,
     }
 }
 
+static struct virgl_video_dma_buf *export_video_dma_buf(
+                                        struct virgl_video_buffer *buffer,
+                                        unsigned flags)
+{
+    struct virgl_video_dma_buf *dmabuf;
+    uint32_t exp_flags;
+    VAStatus va_stat;
+    VADRMPRIMESurfaceDescriptor desc;
+
+    exp_flags = VA_EXPORT_SURFACE_SEPARATE_LAYERS;
+
+    if (flags & VIRGL_VIDEO_DMABUF_READ_ONLY)
+        exp_flags |= VA_EXPORT_SURFACE_READ_ONLY;
+
+    if (flags & VIRGL_VIDEO_DMABUF_WRITE_ONLY)
+        exp_flags |= VA_EXPORT_SURFACE_WRITE_ONLY;
+
+    dmabuf = calloc(1, sizeof(*dmabuf));
+    if (!dmabuf)
+        return NULL;
+
+    va_stat = vaExportSurfaceHandle(va_dpy, buffer->va_sfc,
+                    VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2, exp_flags, &desc);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("export surface failed, err = 0x%X\n", va_stat);
+        goto free_dmabuf;
+    }
+
+    fill_video_dma_buf(dmabuf, &desc);
+    dmabuf->flags = flags;
+    dmabuf->buf   = buffer;
+
+    return dmabuf;
+
+free_dmabuf:
+    free(dmabuf);
+    return NULL;
+}
+
+static void destroy_video_dma_buf(struct virgl_video_dma_buf *dmabuf)
+{
+    unsigned i;
+
+    if (dmabuf) {
+        for (i = 0; i < dmabuf->num_planes; i++)
+            close(dmabuf->planes[i].fd);
+
+        free(dmabuf);
+    }
+}
+
 static int flush_video_buffer(struct virgl_video_buffer *buffer)
 {
     VAStatus va_stat;
@@ -330,20 +378,8 @@ static int flush_video_buffer(struct virgl_video_buffer *buffer)
     if (!flush_buffer_cb)
         return 0;
 
-    if (!buffer->exported) {
-        va_stat = vaExportSurfaceHandle(va_dpy, buffer->va_sfc,
-                                        VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
-                                        VA_EXPORT_SURFACE_READ_ONLY |
-                                        VA_EXPORT_SURFACE_SEPARATE_LAYERS,
-                                        &buffer->desc);
-        if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("export surface failed, err = 0x%X\n", va_stat);
-            return -1;
-        }
-
-        fill_dma_buf(&buffer->desc, &buffer->dmabuf);
-        buffer->exported = true;
-    }
+    if (!buffer->dmabuf)
+        buffer->dmabuf = export_video_dma_buf(buffer, VIRGL_VIDEO_DMABUF_READ_ONLY);
 
     va_stat = vaSyncSurface(va_dpy, buffer->va_sfc);
 
@@ -352,7 +388,8 @@ static int flush_video_buffer(struct virgl_video_buffer *buffer)
         return -1;
     }
 
-    flush_buffer_cb(buffer, &buffer->dmabuf);
+    if (buffer->dmabuf)
+        flush_buffer_cb(buffer, buffer->dmabuf);
 
     return 0;
 }
@@ -629,7 +666,6 @@ struct virgl_video_buffer *virgl_video_create_buffer(
     buffer->format = args->format;
     buffer->width  = args->width;
     buffer->height = args->height;
-    buffer->exported = false;
     buffer->opaque = args->opaque;
 
     return buffer;
@@ -637,15 +673,11 @@ struct virgl_video_buffer *virgl_video_create_buffer(
 
 void virgl_video_destroy_buffer(struct virgl_video_buffer *buffer)
 {
-    unsigned i;
-
     if (!va_dpy || !buffer)
         return;
 
-    if (buffer->exported) {
-        for (i = 0; i < buffer->desc.num_objects; i++)
-            close(buffer->desc.objects[i].fd);
-    }
+    if (buffer->dmabuf)
+        destroy_video_dma_buf(buffer->dmabuf);
 
     if (buffer->va_sfc)
         vaDestroySurfaces(va_dpy, &buffer->va_sfc, 1);

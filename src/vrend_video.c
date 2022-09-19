@@ -103,17 +103,18 @@ static struct vrend_video_buffer *get_video_buffer(
     return NULL;
 }
 
-static void flush_video_buffer(struct virgl_video_buffer *buffer,
-                               const struct virgl_video_dma_buf *dmabuf)
-{
-    EGLint img_attrs[16];
-    unsigned i, num_attrs;
-    struct vrend_resource *res;
-    struct vrend_video_plane *plane;
-    struct vrend_video_buffer *buf = vrend_video_buffer(buffer);
 
-    for (i = 0; i < dmabuf->num_planes && i < buf->num_planes; i++) {
-        plane = &buf->planes[i];
+static int sync_dmabuf_to_video_buffer(struct vrend_video_buffer *buf,
+                                       const struct virgl_video_dma_buf *dmabuf)
+{
+    if (!(dmabuf->flags & VIRGL_VIDEO_DMABUF_READ_ONLY)) {
+        vrend_printf("%s: dmabuf is not readable\n", __func__);
+        return -1;
+    }
+
+    for (unsigned i = 0; i < dmabuf->num_planes && i < buf->num_planes; i++) {
+        struct vrend_video_plane *plane = &buf->planes[i];
+        struct vrend_resource *res;
 
         res = vrend_renderer_ctx_res_lookup(buf->ctx->ctx, plane->res_handle);
         if (!res) {
@@ -123,20 +124,15 @@ static void flush_video_buffer(struct virgl_video_buffer *buffer,
 
         /* dmabuf -> eglimage */
         if (EGL_NO_IMAGE_KHR == plane->egl_image) {
-            num_attrs = 0;
-            img_attrs[num_attrs++] = EGL_LINUX_DRM_FOURCC_EXT;
-            img_attrs[num_attrs++] = dmabuf->planes[i].drm_format;
-            img_attrs[num_attrs++] = EGL_WIDTH;
-            img_attrs[num_attrs++] = dmabuf->width / (i + 1);
-            img_attrs[num_attrs++] = EGL_HEIGHT;
-            img_attrs[num_attrs++] = dmabuf->height / (i + 1);
-            img_attrs[num_attrs++] = EGL_DMA_BUF_PLANE0_FD_EXT;
-            img_attrs[num_attrs++] = dmabuf->planes[i].fd;
-            img_attrs[num_attrs++] = EGL_DMA_BUF_PLANE0_OFFSET_EXT;
-            img_attrs[num_attrs++] = dmabuf->planes[i].offset;
-            img_attrs[num_attrs++] = EGL_DMA_BUF_PLANE0_PITCH_EXT;
-            img_attrs[num_attrs++] = dmabuf->planes[i].pitch;
-            img_attrs[num_attrs++] = EGL_NONE;
+            EGLint img_attrs[16] = {
+                EGL_LINUX_DRM_FOURCC_EXT,       dmabuf->planes[i].drm_format,
+                EGL_WIDTH,                      dmabuf->width / (i + 1),
+                EGL_HEIGHT,                     dmabuf->height / (i + 1),
+                EGL_DMA_BUF_PLANE0_FD_EXT,      dmabuf->planes[i].fd,
+                EGL_DMA_BUF_PLANE0_OFFSET_EXT,  dmabuf->planes[i].offset,
+                EGL_DMA_BUF_PLANE0_PITCH_EXT,   dmabuf->planes[i].pitch,
+                EGL_NONE
+            };
 
             plane->egl_image = eglCreateImageKHR(eglGetCurrentDisplay(),
                     EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, img_attrs);
@@ -157,7 +153,7 @@ static void flush_video_buffer(struct virgl_video_buffer *buffer,
         glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                GL_TEXTURE_2D, plane->texture, 0);
 
-        /* framebuffer -> surface */
+        /* framebuffer -> vrend_video_buffer.planes[i] */
         glBindTexture(GL_TEXTURE_2D, res->id);
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0,
                             res->base.width0, res->base.height0);
@@ -165,6 +161,78 @@ static void flush_video_buffer(struct virgl_video_buffer *buffer,
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return 0;
+}
+
+static int sync_video_buffer_to_dmabuf(struct vrend_video_buffer *buf,
+                                       const struct virgl_video_dma_buf *dmabuf)
+{
+    if (!(dmabuf->flags & VIRGL_VIDEO_DMABUF_WRITE_ONLY)) {
+        vrend_printf("%s: dmabuf is not writable\n", __func__);
+        return -1;
+    }
+
+    for (unsigned i = 0; i < dmabuf->num_planes && i < buf->num_planes; i++) {
+        struct vrend_video_plane *plane = &buf->planes[i];
+        struct vrend_resource *res;
+
+        res = vrend_renderer_ctx_res_lookup(buf->ctx->ctx, plane->res_handle);
+        if (!res) {
+            vrend_printf("%s: res %d not found\n", __func__, plane->res_handle);
+            continue;
+        }
+
+        /* dmabuf -> eglimage */
+        if (EGL_NO_IMAGE_KHR == plane->egl_image) {
+            EGLint img_attrs[16] = {
+                EGL_LINUX_DRM_FOURCC_EXT,       dmabuf->planes[i].drm_format,
+                EGL_WIDTH,                      dmabuf->width / (i + 1),
+                EGL_HEIGHT,                     dmabuf->height / (i + 1),
+                EGL_DMA_BUF_PLANE0_FD_EXT,      dmabuf->planes[i].fd,
+                EGL_DMA_BUF_PLANE0_OFFSET_EXT,  dmabuf->planes[i].offset,
+                EGL_DMA_BUF_PLANE0_PITCH_EXT,   dmabuf->planes[i].pitch,
+                EGL_NONE
+            };
+
+            plane->egl_image = eglCreateImageKHR(eglGetCurrentDisplay(),
+                    EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, NULL, img_attrs);
+        }
+
+        if (EGL_NO_IMAGE_KHR == plane->egl_image) {
+            vrend_printf("%s: create egl image failed\n", __func__);
+            continue;
+        }
+
+        /* eglimage -> texture */
+        glBindTexture(GL_TEXTURE_2D, plane->texture);
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D,
+                                    (GLeglImageOES)(plane->egl_image));
+
+        /* vrend_video_buffer.planes[i] -> framebuffer */
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, plane->framebuffer);
+        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, res->id, 0);
+
+        /* framebuffer -> texture */
+        glBindTexture(GL_TEXTURE_2D, plane->texture);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0,
+                            res->base.width0, res->base.height0);
+
+    }
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return 0;
+}
+
+static void flush_video_buffer(struct virgl_video_buffer *buffer,
+                               const struct virgl_video_dma_buf *dmabuf)
+{
+    struct vrend_video_buffer *buf = vrend_video_buffer(buffer);
+
+    sync_dmabuf_to_video_buffer(buf, dmabuf);
 }
 
 int vrend_video_init(int drm_fd)

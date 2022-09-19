@@ -73,10 +73,18 @@ struct virgl_video_create_buffer_args {
     void *opaque;
 };
 
+/* flags for virgl_video_dma_buffers */
+#define VIRGL_VIDEO_DMABUF_READ_ONLY        0x0001
+#define VIRGL_VIDEO_DMABUF_WRITE_ONLY       0x0002
+#define VIRGL_VIDEO_DMABUF_READ_WRITE       0x0003
+
 struct virgl_video_dma_buf {
+    struct virgl_video_buffer *buf;
+
     uint32_t drm_format;
     uint32_t width;
     uint32_t height;
+    uint32_t flags;
 
     uint32_t num_planes;
     struct virgl_video_dma_buf_plane {
