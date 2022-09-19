@@ -23,7 +23,7 @@
 
 project(
    'virglrenderer', 'c',
-   version: '0.10.1',
+   version: '0.10.3',
    license : 'MIT',
    meson_version : '>= 0.53',
    default_options : ['buildtype=release', 'b_ndebug=if-release',
@@ -37,10 +37,9 @@ project(
 #    interface age
 # 3. If the ABI has changed in an incompatible way increment the binary_age
 #    and set revision and interface_age to zero
-
 binary_age    = 1
 interface_age = 7
-revision      = 5
+revision      = 6
 
 cc = meson.get_compiler('c')
 
@@ -73,7 +72,7 @@ epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
 m_dep = cc.find_library('m', required : false)
 
 conf_data = configuration_data()
-conf_data.set('VERSION', '0.10.1')
+conf_data.set('VERSION', meson.project_version())
 conf_data.set('_GNU_SOURCE', 1)
 conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
 
