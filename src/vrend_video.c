@@ -63,10 +63,16 @@ struct vrend_video_buffer {
     struct vrend_video_plane planes[3];
 };
 
+static struct vrend_video_codec *vrend_video_codec(
+        struct virgl_video_codec *codec)
+{
+    return virgl_video_codec_opaque_data(codec);
+}
+
 static struct vrend_video_buffer *vrend_video_buffer(
         struct virgl_video_buffer *buffer)
 {
-    return virgl_video_buffer_get_associated_data(buffer);
+    return virgl_video_buffer_opaque_data(buffer);
 }
 
 static struct vrend_video_codec *get_video_codec(
@@ -220,6 +226,7 @@ int vrend_video_create_codec(struct vrend_video_context *ctx,
     args.width = width;
     args.height = height;
     args.flags = flags;
+    args.opaque = cdc;
     cdc->codec = virgl_video_create_codec(&args);
     if (!cdc->codec) {
         free(cdc);
@@ -280,12 +287,12 @@ int vrend_video_create_buffer(struct vrend_video_context *ctx,
     args.width = width;
     args.height = height;
     args.interlaced = 0;
+    args.opaque = buf;
     buf->buffer = virgl_video_create_buffer(&args);
     if (!buf->buffer) {
         free(buf);
         return -1;
     }
-    virgl_video_buffer_set_associated_data(buf->buffer, buf);
 
     for (i = 0; i < ARRAY_SIZE(buf->planes); i++)
         buf->planes[i].egl_image = EGL_NO_IMAGE_KHR;

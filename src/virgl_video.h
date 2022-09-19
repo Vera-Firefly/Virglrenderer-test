@@ -62,6 +62,7 @@ struct virgl_video_create_codec_args {
     uint32_t width;
     uint32_t height;
     uint32_t flags;
+    void *opaque;
 };
 
 struct virgl_video_create_buffer_args {
@@ -69,6 +70,7 @@ struct virgl_video_create_buffer_args {
     uint32_t width;
     uint32_t height;
     bool interlaced;
+    void *opaque;
 };
 
 struct virgl_video_dma_buf {
@@ -104,14 +106,13 @@ struct virgl_video_codec *virgl_video_create_codec(
         const struct virgl_video_create_codec_args *args);
 void virgl_video_destroy_codec(struct virgl_video_codec *codec);
 uint32_t virgl_video_codec_profile(const struct virgl_video_codec *codec);
+void *virgl_video_codec_opaque_data(struct virgl_video_codec *codec);
 
 struct virgl_video_buffer *virgl_video_create_buffer(
         const struct virgl_video_create_buffer_args *args);
 void virgl_video_destroy_buffer(struct virgl_video_buffer *buffer);
 uint32_t virgl_video_buffer_id(const struct virgl_video_buffer *buffer);
-void virgl_video_buffer_set_associated_data(
-        struct virgl_video_buffer *buffer, void *data);
-void *virgl_video_buffer_get_associated_data(struct virgl_video_buffer *buffer);
+void *virgl_video_buffer_opaque_data(struct virgl_video_buffer *buffer);
 
 int virgl_video_begin_frame(struct virgl_video_codec *codec,
                             struct virgl_video_buffer *target);

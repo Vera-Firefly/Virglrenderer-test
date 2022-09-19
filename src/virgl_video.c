@@ -47,10 +47,10 @@ struct virgl_video_buffer {
     uint32_t height;
     bool interlanced;
     VASurfaceID va_sfc;
-    void *associated_data;
     VADRMPRIMESurfaceDescriptor desc;
     struct virgl_video_dma_buf dmabuf;
     bool exported;
+    void *opaque;                               /* User opaque data */
 };
 
 
@@ -64,6 +64,7 @@ struct virgl_video_codec {
    VAContextID va_ctx;
    VAConfigID  va_cfg;
    struct virgl_video_buffer *buffer;
+   void *opaque;                                /* User opaque data */
 };
 
 
@@ -568,6 +569,7 @@ struct virgl_video_codec *virgl_video_create_codec(
     codec->chroma_format = args->chroma_format;
     codec->width = args->width;
     codec->height = args->height;
+    codec->opaque = args->opaque;
 
     return codec;
 
@@ -628,6 +630,7 @@ struct virgl_video_buffer *virgl_video_create_buffer(
     buffer->width  = args->width;
     buffer->height = args->height;
     buffer->exported = false;
+    buffer->opaque = args->opaque;
 
     return buffer;
 }
@@ -650,6 +653,11 @@ void virgl_video_destroy_buffer(struct virgl_video_buffer *buffer)
     free(buffer);
 }
 
+void *virgl_video_codec_opaque_data(struct virgl_video_codec *codec)
+{
+    return codec ? codec->opaque : NULL;
+}
+
 enum pipe_video_profile virgl_video_codec_profile(
         const struct virgl_video_codec *codec)
 {
@@ -661,16 +669,9 @@ uint32_t virgl_video_buffer_id(const struct virgl_video_buffer *buffer)
     return (uint32_t)(buffer ? buffer->va_sfc : VA_INVALID_SURFACE);
 }
 
-void virgl_video_buffer_set_associated_data(
-        struct virgl_video_buffer *buffer, void *data)
+void *virgl_video_buffer_opaque_data(struct virgl_video_buffer *buffer)
 {
-    if (buffer)
-        buffer->associated_data = data;
-}
-
-void *virgl_video_buffer_get_associated_data(struct virgl_video_buffer *buffer)
-{
-    return buffer ? buffer->associated_data : NULL;
+    return buffer ? buffer->opaque : NULL;
 }
 
 int virgl_video_begin_frame(struct virgl_video_codec *codec,
