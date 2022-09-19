@@ -23,6 +23,7 @@
  **************************************************************************/
 
 #include "virgl_video.h"
+#include "virgl_video_hw.h"
 
 #include "vrend_debug.h"
 #include "vrend_winsys.h"

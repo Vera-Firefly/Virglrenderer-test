@@ -37,6 +37,7 @@
 
 #include "util/u_memory.h"
 #include "virgl_hw.h"
+#include "virgl_video_hw.h"
 #include "virgl_util.h"
 #include "virgl_video.h"
 

@@ -161,6 +161,7 @@ proxy_sources = [
 ]
 
 video_sources = [
+   'virgl_video_hw.h',
    'virgl_video.c',
    'virgl_video.h',
    'vrend_video.c',
