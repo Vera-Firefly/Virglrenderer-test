@@ -97,14 +97,21 @@ struct virgl_video_dma_buf {
     } planes[4];
 };
 
-
-
-typedef void (*virgl_video_flush_buffer)(
-            struct virgl_video_buffer *buffer,
-            const struct virgl_video_dma_buf *dmabuf);
+/*
+ * Use callback functions instead of directly exporting the video buffer
+ * through an interface like virgl_video_export_buffer() is because the
+ * underlying implementation may not be VA-API. The callback function can
+ * better shield the underlying logic differences.
+ */
+struct virgl_video_callbacks {
+    /* Callback when decoding is complete, used to download the decoded picture
+     * from the video buffer */
+    void (*decode_completed)(struct virgl_video_codec *codec,
+                             const struct virgl_video_dma_buf *dmabuf);
+};
 
 int virgl_video_init(int drm_fd,
-                     virgl_video_flush_buffer cb,
+                     struct virgl_video_callbacks *cbs,
                      unsigned int flags);
 void virgl_video_destroy(void);
 

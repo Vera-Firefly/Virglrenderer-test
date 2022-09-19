@@ -227,20 +227,28 @@ static int sync_video_buffer_to_dmabuf(struct vrend_video_buffer *buf,
     return 0;
 }
 
-static void flush_video_buffer(struct virgl_video_buffer *buffer,
-                               const struct virgl_video_dma_buf *dmabuf)
+
+static void vrend_video_decode_completed(
+                                struct virgl_video_codec *codec,
+                                const struct virgl_video_dma_buf *dmabuf)
 {
-    struct vrend_video_buffer *buf = vrend_video_buffer(buffer);
+    struct vrend_video_buffer *buf = vrend_video_buffer(dmabuf->buf);
+
+    (void)codec;
 
     sync_dmabuf_to_video_buffer(buf, dmabuf);
 }
+
+static struct virgl_video_callbacks video_callbacks = {
+    .decode_completed           = vrend_video_decode_completed,
+};
 
 int vrend_video_init(int drm_fd)
 {
     if (drm_fd < 0)
         return -1;
 
-    return virgl_video_init(drm_fd, flush_video_buffer, 0);
+    return virgl_video_init(drm_fd, &video_callbacks, 0);
 }
 
 void vrend_video_fini(void)

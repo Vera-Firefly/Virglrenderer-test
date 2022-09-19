@@ -68,7 +68,7 @@ struct virgl_video_codec {
 
 static VADisplay va_dpy;
 
-static virgl_video_flush_buffer flush_buffer_cb;
+static struct virgl_video_callbacks *callbacks = NULL;
 
 static enum pipe_video_profile pipe_profile_from_va(VAProfile profile)
 {
@@ -371,12 +371,13 @@ static void destroy_video_dma_buf(struct virgl_video_dma_buf *dmabuf)
     }
 }
 
-static int flush_video_buffer(struct virgl_video_buffer *buffer)
+static void decode_completed(struct virgl_video_codec *codec,
+                             struct virgl_video_buffer *buffer)
 {
     VAStatus va_stat;
 
-    if (!flush_buffer_cb)
-        return 0;
+    if (!callbacks || !callbacks->decode_completed)
+        return;
 
     if (!buffer->dmabuf)
         buffer->dmabuf = export_video_dma_buf(buffer, VIRGL_VIDEO_DMABUF_READ_ONLY);
@@ -385,18 +386,15 @@ static int flush_video_buffer(struct virgl_video_buffer *buffer)
 
     if (VA_STATUS_SUCCESS != va_stat) {
         virgl_log("sync surface failed, err = 0x%x\n", va_stat);
-        return -1;
+        return;
     }
 
     if (buffer->dmabuf)
-        flush_buffer_cb(buffer, buffer->dmabuf);
-
-    return 0;
+        callbacks->decode_completed(codec, buffer->dmabuf);
 }
 
-
 int virgl_video_init(int drm_fd,
-                     virgl_video_flush_buffer cb, unsigned int flags)
+                     struct virgl_video_callbacks *cbs, unsigned int flags)
 {
     VAStatus va_stat;
     int major_ver, minor_ver;
@@ -433,7 +431,7 @@ int virgl_video_init(int drm_fd,
         return -1;
     }
 
-    flush_buffer_cb = cb;
+    callbacks = cbs;
 
     return 0;
 }
@@ -445,7 +443,7 @@ void virgl_video_destroy(void)
         va_dpy = NULL;
     }
 
-    flush_buffer_cb = NULL;
+    callbacks = NULL;
 }
 
 static int fill_vcaps_entry(VAProfile profile, VAEntrypoint entrypoint,
@@ -1272,7 +1270,9 @@ int virgl_video_end_frame(struct virgl_video_codec *codec,
         return -1;
     }
 
-    flush_video_buffer(target);
+    if (codec->entrypoint != PIPE_VIDEO_ENTRYPOINT_ENCODE) {
+        decode_completed(codec, target);
+    }
 
     return 0;
 }
