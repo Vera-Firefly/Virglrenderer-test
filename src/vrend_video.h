@@ -22,6 +22,16 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * The video interface of the vrend renderer.
+ *
+ * These interfaces are mainly called by the vrend deocode submodule
+ * to process the corresponding virgl context video command.
+ *
+ * @author Feng Jiang <jiangfeng@kylinos.cn>
+ */
+
 #ifndef VREND_VIDEO_H
 #define VREND_VIDEO_H
 
@@ -72,6 +82,12 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
                                  unsigned num_buffers,
                                  const uint32_t *buffer_handles,
                                  const uint32_t *buffer_sizes);
+int vrend_video_encode_bitstream(struct vrend_video_context *ctx,
+                                 uint32_t cdc_handle,
+                                 uint32_t src_handle,
+                                 uint32_t dest_handle,
+                                 uint32_t desc_handle,
+                                 uint32_t feed_handle);
 int vrend_video_end_frame(struct vrend_video_context *ctx,
                           uint32_t cdc_handle,
                           uint32_t tgt_handle);

@@ -22,6 +22,41 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * Implementation of general video codec interface.
+ *
+ * This implementation is currently based on VA-API, and other interfaces,
+ * such as VDPAU and proprietary interfaces, can also be considered in the
+ * future.
+ *
+ * Two objects are implemented here:
+ * virgl_video_buffer:
+ *   Buffer for storing raw YUV formatted data. Currently, it is a wrapper
+ *   for VASurface.
+ * virgl_video_codec:
+ *   Represents a video encoder or decoder. It's a wrapper of VAContext and
+ *   mainly provides the following methods:
+ *   - virgl_video_begin_frame()
+ *     It calls vaBeginPicture() to prepare for encoding and decoding. For
+ *     encoding, it also needs to upload the raw picture data from the guest
+ *     side into the local VASurface.
+ *   - virgl_video_decode_bitstream()
+ *     It constructs the decoding-related VABuffers according to the picture
+ *     description information, and then calls vaRenderPicture() for decoding.
+ *   - virgl_video_encode_bitstream()
+ *     It constructs the encoding-related VABuffers according to the picture
+ *     description information, and then calls vaRenderPicture() for encoding.
+ *   - virgl_video_end_frame()
+ *     It calls vaEndPicture() to end encoding and decoding. After decoding,
+ *     it transmits the raw picture data from VASurface to the guest side,
+ *     and after encoding, it transmits the result and the coded data in
+ *     VACodedBuffer to the guest side.
+ *
+ * @author Feng Jiang <jiangfeng@kylinos.cn>
+ */
+
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -35,11 +70,22 @@
 #include <va/va_drmcommon.h>
 #include <drm_fourcc.h>
 
+#include "pipe/p_video_state.h"
 #include "util/u_memory.h"
 #include "virgl_hw.h"
 #include "virgl_video_hw.h"
 #include "virgl_util.h"
 #include "virgl_video.h"
+
+/*
+ * The max size of codec buffer is approximately:
+ *   num_of_macroblocks * max_size_of_per_macroblock + size_of_some_headers
+ * Now, we only support YUV420 formats, this means that we have a limit of
+ * 3200 bits(400 Bytes) per macroblock. To simplify the calculation, we
+ * directly use 512 instead of 400.
+ */
+#define CODED_BUF_DEFAULT_SIZE(width, height) \
+    ((width) * (height) / (16 * 16) * 512)
 
 struct virgl_video_buffer {
     enum pipe_format format;
@@ -63,6 +109,8 @@ struct virgl_video_codec {
    VAContextID va_ctx;
    VAConfigID  va_cfg;
    struct virgl_video_buffer *buffer;
+   struct virgl_video_buffer *ref_pic_list[32]; /* Enc: reference pictures */
+   VABufferID  va_coded_buf;                    /* Enc: VACodedBuffer */
    void *opaque;                                /* User opaque data */
 };
 
@@ -372,6 +420,69 @@ static void destroy_video_dma_buf(struct virgl_video_dma_buf *dmabuf)
     }
 }
 
+static void encode_upload_picture(struct virgl_video_codec *codec,
+                                  struct virgl_video_buffer *buffer)
+{
+    VAStatus va_stat;
+
+    if (!callbacks || !callbacks->encode_upload_picture)
+        return;
+
+    va_stat = vaSyncSurface(va_dpy, buffer->va_sfc);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("sync surface failed, err = 0x%x\n", va_stat);
+        return;
+    }
+
+    if (!buffer->dmabuf)
+        buffer->dmabuf = export_video_dma_buf(buffer, VIRGL_VIDEO_DMABUF_WRITE_ONLY);
+
+    if (buffer->dmabuf)
+        callbacks->encode_upload_picture(codec, buffer->dmabuf);
+}
+
+static void encode_completed(struct virgl_video_codec *codec,
+                             struct virgl_video_buffer *buffer)
+{
+    VAStatus va_stat;
+    VACodedBufferSegment *buf, *buf_list;
+    void **coded_bufs = NULL;
+    unsigned *coded_sizes = NULL;
+    unsigned i, num_coded_bufs = 0;
+
+    if (!callbacks || !callbacks->encode_completed)
+        return;
+
+    va_stat = vaMapBuffer(va_dpy, codec->va_coded_buf, (void **)(&buf_list));
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("map coded buffer failed, err = 0x%x\n", va_stat);
+        return;
+    }
+
+    for (buf = buf_list; buf; buf = (VACodedBufferSegment *)buf->next)
+        num_coded_bufs++;
+
+    coded_bufs = calloc(num_coded_bufs, sizeof(void *));
+    coded_sizes = calloc(num_coded_bufs, sizeof(unsigned *));
+    if (!coded_bufs || !coded_sizes) {
+        virgl_log("alloc memory failed, num_coded_bufs %u\n", num_coded_bufs);
+        goto fail_unmap_buffer;
+    }
+
+    for (buf = buf_list, i = 0; buf; buf = (VACodedBufferSegment *)buf->next) {
+        coded_bufs[i]  = buf->buf;
+        coded_sizes[i++] = buf->size;
+    }
+
+    callbacks->encode_completed(codec, buffer->dmabuf, NULL, num_coded_bufs,
+                                (const void * const*)coded_bufs, coded_sizes);
+
+fail_unmap_buffer:
+    vaUnmapBuffer(va_dpy, codec->va_coded_buf);
+    free(coded_bufs);
+    free(coded_sizes);
+}
+
 static void decode_completed(struct virgl_video_codec *codec,
                              struct virgl_video_buffer *buffer)
 {
@@ -383,6 +494,33 @@ static void decode_completed(struct virgl_video_codec *codec,
 
     if (buffer->dmabuf)
         callbacks->decode_completed(codec, buffer->dmabuf);
+}
+
+static VASurfaceID get_enc_ref_pic(struct virgl_video_codec *codec,
+                                   uint32_t frame_num)
+{
+    uint32_t idx;
+    struct virgl_video_create_buffer_args args;
+
+    if (frame_num == VA_INVALID_ID)
+        return VA_INVALID_ID;
+
+    idx = frame_num % ARRAY_SIZE(codec->ref_pic_list);
+
+    if (!codec->ref_pic_list[idx]) {
+        args.format = PIPE_FORMAT_NV21;
+        args.width = codec->width;
+        args.height = codec->height;
+        args.interlaced = 0;
+        args.opaque = NULL;
+        codec->ref_pic_list[idx] = virgl_video_create_buffer(&args);
+        if (!codec->ref_pic_list[idx]) {
+            virgl_log("create ref pic for frame_num %u failed\n", frame_num);
+            return VA_INVALID_ID;
+        }
+    }
+
+    return codec->ref_pic_list[idx]->va_sfc;
 }
 
 int virgl_video_init(int drm_fd,
@@ -528,8 +666,12 @@ int virgl_video_fill_caps(union virgl_caps *caps)
                                  entrypoints, &num_entrypoints);
         for (j = 0; j < num_entrypoints &&
              caps->v2.num_video_caps < ARRAY_SIZE(caps->v2.video_caps); j++) {
-            /* only support decode now */
-            if (VAEntrypointVLD != entrypoints[j])
+            /* H.264/5 decode & H.264 encode */
+            if (VAEntrypointVLD != entrypoints[j] &&
+                (VAEntrypointEncSlice != entrypoints[j] ||
+                 (profiles[i] != VAProfileH264Main &&
+                  profiles[i] != VAProfileH264High &&
+                  profiles[i] != VAProfileH264ConstrainedBaseline)))
                 continue;
 
             fill_vcaps_entry(profiles[i], entrypoints[j],
@@ -600,6 +742,12 @@ struct virgl_video_codec *virgl_video_create_codec(
     codec->max_references = args->max_references;
     codec->opaque = args->opaque;
 
+    if (entrypoint == VAEntrypointEncSlice) {
+        vaCreateBuffer(va_dpy, codec->va_ctx, VAEncCodedBufferType,
+                       CODED_BUF_DEFAULT_SIZE(codec->width, codec->height),
+                       1, NULL, &codec->va_coded_buf);
+    }
+
     return codec;
 
 err:
@@ -610,6 +758,8 @@ err:
 
 void virgl_video_destroy_codec(struct virgl_video_codec *codec)
 {
+    unsigned i;
+
     if (!va_dpy || !codec)
         return;
 
@@ -618,6 +768,14 @@ void virgl_video_destroy_codec(struct virgl_video_codec *codec)
 
     if (codec->va_cfg)
         vaDestroyConfig(va_dpy, codec->va_cfg);
+
+    if (codec->va_coded_buf)
+        vaDestroyBuffer(va_dpy, codec->va_coded_buf);
+
+    for (i = 0; i < ARRAY_SIZE(codec->ref_pic_list); i++) {
+        if (codec->ref_pic_list[i])
+            free(codec->ref_pic_list[i]);
+    }
 
     free(codec);
 }
@@ -705,6 +863,9 @@ int virgl_video_begin_frame(struct virgl_video_codec *codec,
 
     if (!va_dpy || !codec || !target)
         return -1;
+
+    if (codec->entrypoint == PIPE_VIDEO_ENTRYPOINT_ENCODE)
+        encode_upload_picture(codec, target);
 
     codec->buffer = target;
     va_stat = vaBeginPicture(va_dpy, codec->va_ctx, target->va_sfc);
@@ -879,6 +1040,295 @@ static void h264_fill_slice_param(const struct virgl_h264_picture_desc *desc,
     //vasp->chroma_offset_l1[32][2];
 }
 
+/*
+ * Refer to vlVaHandleVAEncPictureParameterBufferTypeH264() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h264_fill_enc_picture_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc,
+                            VAEncPictureParameterBufferH264 *param)
+{
+    unsigned i;
+
+    (void)codec;
+    (void)source;
+
+    /* CurrPic */
+    param->CurrPic.picture_id = get_enc_ref_pic(codec, desc->frame_num);
+    //CurrPic.frame_idx;
+    //CurrPic.flags;
+    param->CurrPic.TopFieldOrderCnt = desc->pic_order_cnt;
+    //CurrPic.BottomFieldOrderCnt;
+
+    /* ReferenceFrames */
+    for (i = 0; i < ARRAY_SIZE(param->ReferenceFrames); i++)
+        h264_init_picture(&param->ReferenceFrames[i]);
+
+    /* coded_buf */
+    param->coded_buf = codec->va_coded_buf;
+
+    //pic_parameter_set_id;
+    //seq_parameter_set_id;
+    //last_picture;
+    //frame_num
+    param->pic_init_qp = desc->quant_i_frames;
+    param->num_ref_idx_l0_active_minus1 = desc->num_ref_idx_l0_active_minus1;
+    param->num_ref_idx_l1_active_minus1 = desc->num_ref_idx_l1_active_minus1;
+    //chroma_qp_index_offset;
+    //second_chroma_qp_index_offset;
+
+    /* pic_fields */
+    param->pic_fields.bits.idr_pic_flag =
+                      (desc->picture_type == PIPE_H2645_ENC_PICTURE_TYPE_IDR);
+    param->pic_fields.bits.reference_pic_flag = !desc->not_referenced;
+    param->pic_fields.bits.entropy_coding_mode_flag = desc->pic_ctrl.enc_cabac_enable;
+    //pic_fields.bits.weighted_pred_flag
+    //pic_fields.bits.weighted_bipred_idc
+    //pic_fields.bits.constrained_intra_pred_flag
+    //pic_fields.bits.transform_8x8_mode_flag
+    //pic_fields.bits.deblocking_filter_control_present_flag
+    //pic_fields.bits.redundant_pic_cnt_present_flag
+    //pic_fields.bits.pic_order_present_flag
+    //pic_fields.bits.pic_scaling_matrix_present_flag
+
+}
+
+/*
+ * Refer to vlVaHandleVAEncSliceParameterBufferTypeH264() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h264_fill_enc_slice_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc,
+                            VAEncSliceParameterBufferH264 *param)
+{
+    unsigned i;
+    const struct virgl_h264_slice_descriptor *sd;
+
+    (void)codec;
+    (void)source;
+
+    /* Get the lastest slice descriptor */
+    if (desc->num_slice_descriptors &&
+        desc->num_slice_descriptors <= ARRAY_SIZE(desc->slices_descriptors)) {
+        sd = &desc->slices_descriptors[desc->num_slice_descriptors - 1];
+        param->macroblock_address = sd->macroblock_address;
+        param->num_macroblocks    = sd->num_macroblocks;
+        //macroblock_info;
+    }
+
+    switch (desc->picture_type) {
+    case PIPE_H2645_ENC_PICTURE_TYPE_P:
+        param->slice_type = 0;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_B:
+        param->slice_type = 1;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_I:
+    case PIPE_H2645_ENC_PICTURE_TYPE_IDR: /* fall through */
+        param->slice_type = 2;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_SKIP:
+    default:
+        break;
+    }
+
+    //pic_parameter_set_id;
+    //idr_pic_id;
+    //pic_order_cnt_lsb;
+    //delta_pic_order_cnt_bottom;
+    //delta_pic_order_cnt[2];
+    //direct_spatial_mv_pred_flag;
+
+    /*
+     * Sine num_ref_idx_l0_active_minus1 and num_ref_idx_l1_active_minus1
+     * have been passed by VAEncPictureParameterBufferH264,
+     * num_ref_idx_active_override_flag is always set to 0.
+     */
+    param->num_ref_idx_active_override_flag = 0;
+    //num_ref_idx_l0_active_minus1
+    //num_ref_idx_l1_active_minus1
+
+    /* Reference List */
+    for (i = 0; i < 32; i++) {
+        h264_init_picture(&param->RefPicList0[i]);
+        h264_init_picture(&param->RefPicList1[i]);
+
+        param->RefPicList0[i].picture_id =
+                    get_enc_ref_pic(codec, desc->ref_idx_l0_list[i]);
+        param->RefPicList1[i].picture_id =
+                    get_enc_ref_pic(codec, desc->ref_idx_l1_list[i]);
+
+        if (param->RefPicList0[i].picture_id != VA_INVALID_ID)
+            param->RefPicList0[i].flags = VA_PICTURE_H264_SHORT_TERM_REFERENCE;
+
+        if (param->RefPicList1[i].picture_id != VA_INVALID_ID)
+            param->RefPicList1[i].flags = VA_PICTURE_H264_SHORT_TERM_REFERENCE;
+    }
+
+    //luma_log2_weight_denom;
+    //chroma_log2_weight_denom;
+    //luma_weight_l0_flag;
+    //luma_weight_l0[32];
+    //luma_offset_l0[32];
+    //chroma_weight_l0_flag;
+    //chroma_weight_l0[32][2];
+    //chroma_offset_l0[32][2];
+    //luma_weight_l1_flag;
+    //luma_weight_l1[32];
+    //luma_offset_l1[32];
+    //chroma_weight_l1_flag;
+    //chroma_weight_l1[32][2];
+    //chroma_offset_l1[32][2];
+    param->cabac_init_idc = desc->pic_ctrl.enc_cabac_init_idc;
+    //slice_qp_delta;
+    //disable_deblocking_filter_idc;
+    //slice_alpha_c0_offset_div2;
+    //slice_beta_offset_div2;
+
+}
+
+/*
+ * Refer to vlVaHandleVAEncSequenceParameterBufferTypeH264() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h264_fill_enc_seq_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc,
+                            VAEncSequenceParameterBufferH264 *param)
+{
+    (void)codec;
+    (void)source;
+
+    //seq_parameter_set_id;
+    param->level_idc = codec->level;
+    //intra_period;
+    param->intra_idr_period = desc->intra_idr_period;
+    //ip_period;
+    //bits_per_second;
+    param->max_num_ref_frames = codec->max_references;
+    //picture_width_in_mbs;
+    //picture_height_in_mbs;
+
+    /* seq_fields.bits */
+    //seq_fields.bits.chroma_format_idc
+    //seq_fields.bits.frame_mbs_only_flag
+    //seq_fields.bits.mb_adaptive_frame_field_flag
+    //seq_fields.bits.seq_scaling_matrix_present_flag
+    //seq_fields.bits.direct_8x8_inference_flag
+    //seq_fields.bits.log2_max_frame_num_minus4
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, pic_order_cnt_type);
+    //seq_fields.bit.log2_max_pic_order_cnt_lsb_minus4
+    //seq_fields.bit.delta_pic_order_always_zero_flag
+
+    //bit_depth_luma_minus8;
+    //bit_depth_chroma_minus8;
+
+    //num_ref_frames_in_pic_order_cnt_cycle;
+    //offset_for_non_ref_pic;
+    //offset_for_top_to_bottom_field;
+    //offset_for_ref_frame[256];
+    if (desc->seq.enc_frame_cropping_flag) {
+        param->frame_cropping_flag      = desc->seq.enc_frame_cropping_flag;
+        param->frame_crop_left_offset   = desc->seq.enc_frame_crop_left_offset;
+        param->frame_crop_right_offset  = desc->seq.enc_frame_crop_right_offset;
+        param->frame_crop_top_offset    = desc->seq.enc_frame_crop_top_offset;
+        param->frame_crop_bottom_offset = desc->seq.enc_frame_crop_bottom_offset;
+    }
+
+    ITEM_SET(param, &desc->seq, vui_parameters_present_flag);
+
+    // vui_fields.bits
+    if (desc->seq.vui_parameters_present_flag) {
+        ITEM_SET(&param->vui_fields.bits, &desc->seq.vui_flags,
+                 aspect_ratio_info_present_flag);
+        ITEM_SET(&param->vui_fields.bits, &desc->seq.vui_flags,
+                 timing_info_present_flag);
+    }
+    //vui_fields.bits.bitstream_restriction_flag
+    //vui_fields.bits.log2_max_mv_length_horizontal
+    //vui_fields.bits.log2_max_mv_length_vertical
+    //vui_fields.bits.fixed_frame_rate_flag
+    //vui_fields.bits.low_delay_hrd_flag
+    //vui_fields.bits.motion_vectors_over_pic_boundaries_flag
+
+    if (desc->seq.vui_parameters_present_flag) {
+        ITEM_SET(param, &desc->seq, aspect_ratio_idc);
+        ITEM_SET(param, &desc->seq, sar_width);
+        ITEM_SET(param, &desc->seq, sar_height);
+    }
+    ITEM_SET(param, &desc->seq, num_units_in_tick);
+    ITEM_SET(param, &desc->seq, time_scale);
+}
+
+/*
+ * Refer to vlVaHandleVAEncMiscParameterTypeRateControlH264() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h264_fill_enc_misc_param_rate_ctrl(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc,
+                            VAEncMiscParameterRateControl *param)
+{
+    unsigned temporal_id = 0; /* always 0 now */
+    const struct virgl_h264_enc_rate_control *rc = &desc->rate_ctrl[temporal_id];
+
+    (void)codec;
+    (void)source;
+
+    param->bits_per_second = rc->peak_bitrate;
+    if (desc->rate_ctrl[0].rate_ctrl_method !=
+        PIPE_H2645_ENC_RATE_CONTROL_METHOD_CONSTANT) {
+        param->target_percentage = rc->target_bitrate *
+                                   param->bits_per_second / 100.0;
+    }
+    //window_size;
+    //initial_qp;
+    param->min_qp = rc->min_qp;
+    //basic_unit_size;
+
+    /* rc_flags */
+    //rc_flags.bits.reset
+    param->rc_flags.bits.disable_frame_skip = !rc->skip_frame_enable;
+    param->rc_flags.bits.disable_bit_stuffing = !rc->fill_data_enable;
+    //rc_flags.bits.mb_rate_control
+    param->rc_flags.bits.temporal_id = temporal_id;
+    //rc_flags.bits.cfs_I_frames
+    //rc_flags.bits.enable_parallel_brc
+    //rc_flags.bits.enable_dynamic_scaling
+    //rc_flags.bits.frame_tolerance_mode
+
+    //ICQ_quality_factor;
+    param->max_qp = rc->max_qp;
+    //quality_factor;
+    //target_frame_size;
+}
+
+/*
+ * Refer to vlVaHandleVAEncMiscParameterTypeFrameRateH264() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h264_fill_enc_misc_param_frame_rate(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc,
+                            VAEncMiscParameterFrameRate *param)
+{
+    unsigned temporal_id = 0; /* always 0 now */
+    const struct virgl_h264_enc_rate_control *rc = &desc->rate_ctrl[temporal_id];
+
+    (void)codec;
+    (void)source;
+
+    param->framerate = rc->frame_rate_num | (rc->frame_rate_den << 16);
+    param->framerate_flags.bits.temporal_id = temporal_id;
+}
+
 static int h264_decode_bitstream(struct virgl_video_codec *codec,
                                  struct virgl_video_buffer *target,
                                  const struct virgl_h264_picture_desc *desc,
@@ -956,6 +1406,134 @@ err:
     free(slice_data_buf);
 
     return err;
+}
+
+static int h264_encode_render_sequence(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc)
+{
+    int err = 0;
+    VAStatus va_stat;
+    VAEncSequenceParameterBufferH264 seq_param;
+    VAEncMiscParameterBuffer *misc_param;
+    VABufferID seq_param_buf, rc_param_buf, fr_param_buf;
+
+    memset(&seq_param, 0, sizeof(seq_param));
+    h264_fill_enc_seq_param(codec, source, desc, &seq_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncSequenceParameterBufferType,
+                   sizeof(seq_param), 1, &seq_param, &seq_param_buf);
+
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncMiscParameterBufferType,
+                   sizeof(VAEncMiscParameterBuffer) +
+                   sizeof(VAEncMiscParameterRateControl), 1, NULL, &rc_param_buf);
+    vaMapBuffer(va_dpy, rc_param_buf, (void **)&misc_param);
+    misc_param->type = VAEncMiscParameterTypeRateControl;
+    h264_fill_enc_misc_param_rate_ctrl(codec, source, desc,
+                    (VAEncMiscParameterRateControl *)misc_param->data);
+    vaUnmapBuffer(va_dpy, rc_param_buf);
+
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncMiscParameterBufferType,
+                   sizeof(VAEncMiscParameterBuffer) +
+                   sizeof(VAEncMiscParameterFrameRate), 1, NULL, &fr_param_buf);
+    vaMapBuffer(va_dpy, fr_param_buf, (void **)&misc_param);
+    misc_param->type = VAEncMiscParameterTypeFrameRate;
+    h264_fill_enc_misc_param_frame_rate(codec, source, desc,
+                    (VAEncMiscParameterFrameRate *)misc_param->data);
+    vaUnmapBuffer(va_dpy, fr_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &seq_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h264 sequence param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &rc_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h264 rate control param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &fr_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h264 frame rate param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+error:
+    vaDestroyBuffer(va_dpy, seq_param_buf);
+    vaDestroyBuffer(va_dpy, rc_param_buf);
+    vaDestroyBuffer(va_dpy, fr_param_buf);
+
+    return err;
+}
+
+static int h264_encode_render_picture(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc)
+{
+    VAStatus va_stat;
+    VABufferID pic_param_buf;
+    VAEncPictureParameterBufferH264 pic_param;
+
+    memset(&pic_param, 0, sizeof(pic_param));
+    h264_fill_enc_picture_param(codec, source, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h264 picture param failed, err = 0x%x\n", va_stat);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int h264_encode_render_slice(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc)
+{
+    VAStatus va_stat;
+    VABufferID slice_param_buf;
+    VAEncSliceParameterBufferH264 slice_param;
+
+    memset(&slice_param, 0, sizeof(slice_param));
+    h264_fill_enc_slice_param(codec, source, desc, &slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncSliceParameterBufferType,
+                   sizeof(slice_param), 1, &slice_param, &slice_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h264 slice param failed, err = 0x%x\n", va_stat);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int h264_encode_bitstream(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h264_enc_picture_desc *desc)
+{
+    if (desc->picture_type == PIPE_H2645_ENC_PICTURE_TYPE_IDR) {
+        h264_encode_render_sequence(codec, source, desc);
+    }
+
+    h264_encode_render_picture(codec, source, desc);
+    h264_encode_render_slice(codec, source, desc);
+
+    return 0;
 }
 
 /*
@@ -1249,6 +1827,36 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     return -1;
 }
 
+int virgl_video_encode_bitstream(struct virgl_video_codec *codec,
+                                 struct virgl_video_buffer *source,
+                                 const union virgl_picture_desc *desc)
+{
+    if (!va_dpy || !codec || !source || !desc)
+        return -1;
+
+    if (desc->base.profile != codec->profile) {
+        virgl_log("profiles not matched, picture: %d, codec: %d\n",
+                desc->base.profile, codec->profile);
+        return -1;
+    }
+
+    switch (codec->profile) {
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_BASELINE:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_CONSTRAINED_BASELINE:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_EXTENDED:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH10:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH422:
+    case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH444:
+        return h264_encode_bitstream(codec, source, &desc->h264_enc);
+    default:
+        break;
+    }
+
+    return -1;
+}
+
 int virgl_video_end_frame(struct virgl_video_codec *codec,
                           struct virgl_video_buffer *target)
 {
@@ -1271,6 +1879,8 @@ int virgl_video_end_frame(struct virgl_video_codec *codec,
 
     if (codec->entrypoint != PIPE_VIDEO_ENTRYPOINT_ENCODE) {
         decode_completed(codec, target);
+    } else {
+        encode_completed(codec, target);
     }
 
     return 0;

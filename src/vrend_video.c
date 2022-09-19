@@ -22,6 +22,52 @@
  *
  **************************************************************************/
 
+/**
+ * @file
+ * The video implementation of the vrend renderer.
+ *
+ * It is based on the general virgl video submodule and handles data transfer
+ * and synchronization between host and guest.
+ *
+ * The relationship between vaSurface and video buffer objects:
+ *
+ *           GUEST (Mesa)           |       HOST (Virglrenderer)
+ *                                  |
+ *         +------------+           |          +------------+
+ *         | vaSurface  |           |          | vaSurface  | <------+
+ *         +------------+           |          +------------+        |
+ *               |                  |                                |
+ *  +---------------------------+   |   +-------------------------+  |
+ *  |    virgl_video_buffer     |   |   |    vrend_video_buffer   |  |
+ *  | +-----------------------+ |   |   |  +-------------------+  |  |
+ *  | |    vl_video_buffer    | |   |   |  | vrend_resource(s) |  |  |
+ *  | | +-------------------+ | |<--+-->|  +-------------------+  |  |
+ *  | | | virgl_resource(s) | | |   |   |  +--------------------+ |  |
+ *  | | +-------------------+ | |   |   |  | virgl_video_buffer |-+--+
+ *  | +-----------------------+ |   |   |  +--------------------+ |
+ *  +---------------------------+   |   +-------------------------+
+ *
+ * The relationship between vaContext and video codec objects:
+ *
+ *           GUEST (Mesa)         |         HOST (Virglrenderer)
+ *                                |
+ *         +------------+         |           +------------+
+ *         | vaContext  |         |           | vaContext  | <-------+
+ *         +------------+         |           +------------+         |
+ *               |                |                                  |
+ *  +------------------------+    |    +--------------------------+  |
+ *  |    virgl_video_codec   | <--+--> |    vrend_video_codec     |  |
+ *  +------------------------+    |    |  +--------------------+  |  |
+ *                                |    |  | virgl_video_codec  | -+--+
+ *                                |    |  +--------------------+  |
+ *                                |    +--------------------------+
+ *
+ * @author Feng Jiang <jiangfeng@kylinos.cn>
+ */
+
+
+#include <sys/param.h>
+
 #include "virgl_video.h"
 #include "virgl_video_hw.h"
 
@@ -41,6 +87,8 @@ struct vrend_video_context {
 struct vrend_video_codec {
     struct virgl_video_codec *codec;
     uint32_t handle;
+    struct vrend_resource *feed_res;    /* encoding feedback */
+    struct vrend_resource *dest_res;    /* encoding coded buffer */
     struct vrend_video_context *ctx;
     struct list_head head;
 };
@@ -239,8 +287,75 @@ static void vrend_video_decode_completed(
     sync_dmabuf_to_video_buffer(buf, dmabuf);
 }
 
+
+static void vrend_video_enocde_upload_picture(
+                                struct virgl_video_codec *codec,
+                                const struct virgl_video_dma_buf *dmabuf)
+{
+    struct vrend_video_buffer *buf = vrend_video_buffer(dmabuf->buf);
+
+    (void)codec;
+
+    sync_video_buffer_to_dmabuf(buf, dmabuf);
+}
+
+static void vrend_video_encode_completed(
+                                struct virgl_video_codec *codec,
+                                const struct virgl_video_dma_buf *src_buf,
+                                const struct virgl_video_dma_buf *ref_buf,
+                                unsigned num_coded_bufs,
+                                const void * const *coded_bufs,
+                                const unsigned *coded_sizes)
+{
+    void *buf;
+    unsigned i, size, data_size;
+    struct virgl_video_encode_feedback feedback;
+    struct vrend_video_codec *cdc = vrend_video_codec(codec);
+
+    (void)src_buf;
+    (void)ref_buf;
+
+    if (!cdc->dest_res || !cdc->feed_res)
+        return;
+
+    memset(&feedback, 0, sizeof(feedback));
+
+    /* sync coded data to guest */
+    if (has_bit(cdc->dest_res->storage_bits, VREND_STORAGE_GL_BUFFER)) {
+        glBindBufferARB(cdc->dest_res->target, cdc->dest_res->id);
+        buf = glMapBufferRange(cdc->dest_res->target, 0,
+                               cdc->dest_res->base.width0, GL_MAP_WRITE_BIT);
+        for (i = 0, data_size = 0; i < num_coded_bufs &&
+                    data_size < cdc->dest_res->base.width0; i++) {
+            size = MIN(cdc->dest_res->base.width0 - data_size, coded_sizes[i]);
+            memcpy((uint8_t *)buf + data_size, coded_bufs[i], size);
+            vrend_write_to_iovec(cdc->dest_res->iov, cdc->dest_res->num_iovs,
+                                 data_size, coded_bufs[i], size);
+            data_size += size;
+        }
+        glUnmapBuffer(cdc->dest_res->target);
+        glBindBufferARB(cdc->dest_res->target, 0);
+        feedback.stat = VIRGL_VIDEO_ENCODE_STAT_SUCCESS;
+        feedback.coded_size = data_size;
+    } else {
+        vrend_printf("unexcepted coded res type\n");
+        feedback.stat = VIRGL_VIDEO_ENCODE_STAT_FAILURE;
+        feedback.coded_size = 0;
+    }
+
+    /* send feedback */
+    vrend_write_to_iovec(cdc->feed_res->iov, cdc->feed_res->num_iovs,
+                         0, (char *)(&feedback),
+                         MIN(cdc->feed_res->base.width0, sizeof(feedback)));
+
+    cdc->dest_res = NULL;
+    cdc->feed_res = NULL;
+}
+
 static struct virgl_video_callbacks video_callbacks = {
     .decode_completed           = vrend_video_decode_completed,
+    .encode_upload_picture      = vrend_video_enocde_upload_picture,
+    .encode_completed           = vrend_video_encode_completed,
 };
 
 int vrend_video_init(int drm_fd)
@@ -595,6 +710,50 @@ err:
     return err;
 }
 
+int vrend_video_encode_bitstream(struct vrend_video_context *ctx,
+                                 uint32_t cdc_handle,
+                                 uint32_t src_handle,
+                                 uint32_t dest_handle,
+                                 uint32_t desc_handle,
+                                 uint32_t feed_handle)
+{
+    union virgl_picture_desc desc;
+    struct vrend_resource *dest_res, *desc_res, *feed_res;
+    struct vrend_video_codec  *cdc = get_video_codec(ctx, cdc_handle);
+    struct vrend_video_buffer *src = get_video_buffer(ctx, src_handle);
+
+    if (!cdc || !src)
+        return -1;
+
+    /* Feedback resource */
+    feed_res = vrend_renderer_ctx_res_lookup(ctx->ctx, feed_handle);
+    if (!feed_res) {
+        vrend_printf("%s: feedback res %d not found\n", __func__, feed_handle);
+        return -1;
+    }
+
+    /* Picture descriptor resource */
+    desc_res = vrend_renderer_ctx_res_lookup(ctx->ctx, desc_handle);
+    if (!desc_res) {
+        vrend_printf("%s: desc res %d not found\n", __func__, desc_handle);
+        return -1;
+    }
+    memset(&desc, 0, sizeof(desc));
+    vrend_read_from_iovec(desc_res->iov, desc_res->num_iovs, 0, (char *)(&desc),
+                          MIN(desc_res->base.width0, sizeof(desc)));
+
+    /* Destination buffer resource. */
+    dest_res = vrend_renderer_ctx_res_lookup(ctx->ctx, dest_handle);
+    if (!dest_res) {
+        vrend_printf("%s: dest res %d not found\n", __func__, dest_handle);
+        return -1;
+    }
+
+    cdc->feed_res = feed_res;
+    cdc->dest_res = dest_res;
+
+    return virgl_video_encode_bitstream(cdc->codec, src->buffer, &desc);
+}
 
 int vrend_video_end_frame(struct vrend_video_context *ctx,
                           uint32_t cdc_handle,

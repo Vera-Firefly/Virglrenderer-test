@@ -30,7 +30,7 @@
  * two objects:
  *
  * virgl_video_buffer:
- *   Buffer for storing raw YUV formatted data. In VA-VAPI based
+ *   Buffer for storing raw YUV formatted data. In VA-API based
  *   implementations, it is usually associated with a surface.
  *
  * virgl_video_codec:
@@ -109,6 +109,19 @@ struct virgl_video_callbacks {
      * from the video buffer */
     void (*decode_completed)(struct virgl_video_codec *codec,
                              const struct virgl_video_dma_buf *dmabuf);
+
+    /* Upload the picture data to be encoded to the video buffer */
+    void (*encode_upload_picture)(struct virgl_video_codec *codec,
+                                  const struct virgl_video_dma_buf *dmabuf);
+
+    /* Callback when encoding is complete, used to download the encoded data
+     * and reference picture */
+    void (*encode_completed)(struct virgl_video_codec *codec,
+                             const struct virgl_video_dma_buf *src_buf,
+                             const struct virgl_video_dma_buf *ref_buf,
+                             unsigned num_coded_bufs,
+                             const void * const *coded_bufs,
+                             const unsigned *coded_sizes);
 };
 
 int virgl_video_init(int drm_fd,
@@ -138,6 +151,9 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  unsigned num_buffers,
                                  const void * const *buffers,
                                  const unsigned *sizes);
+int virgl_video_encode_bitstream(struct virgl_video_codec *codec,
+                                 struct virgl_video_buffer *source,
+                                 const union virgl_picture_desc *desc);
 int virgl_video_end_frame(struct virgl_video_codec *codec,
                           struct virgl_video_buffer *target);
 

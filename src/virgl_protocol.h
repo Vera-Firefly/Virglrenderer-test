@@ -742,6 +742,12 @@ enum vrend_tweak_type {
 #define VIRGL_DECODE_BS_BUF_SIZE            5
 
 /* VIRGL_CCMD_ENCODE_BITSTREAM */
+#define VIRGL_ENCODE_BS_MIN_SIZE            5
+#define VIRGL_ENCODE_BS_CDC_HANDLE          1
+#define VIRGL_ENCODE_BS_SRC_HANDLE          2
+#define VIRGL_ENCODE_BS_DEST_HANDLE         3
+#define VIRGL_ENCODE_BS_DESC_HANDLE         4
+#define VIRGL_ENCODE_BS_FEED_HANDLE         5
 
 /* VIRGL_CCMD_END_FRAME */
 #define VIRGL_END_FRAME_SIZE                2

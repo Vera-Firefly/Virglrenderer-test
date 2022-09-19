@@ -1759,6 +1759,27 @@ static int vrend_decode_decode_bitstream(struct vrend_context *ctx,
    return 0;
 }
 
+static int vrend_decode_encode_bitstream(struct vrend_context *ctx,
+                                         const uint32_t *buf,
+                                         uint32_t length)
+{
+   struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
+
+   if (length < VIRGL_ENCODE_BS_MIN_SIZE)
+      return EINVAL;
+
+   uint32_t cdc_handle  = get_buf_entry(buf, VIRGL_ENCODE_BS_CDC_HANDLE);
+   uint32_t src_handle  = get_buf_entry(buf, VIRGL_ENCODE_BS_SRC_HANDLE);
+   uint32_t dest_handle = get_buf_entry(buf, VIRGL_ENCODE_BS_DEST_HANDLE);
+   uint32_t desc_handle = get_buf_entry(buf, VIRGL_ENCODE_BS_DESC_HANDLE);
+   uint32_t feed_handle = get_buf_entry(buf, VIRGL_ENCODE_BS_FEED_HANDLE);
+
+   vrend_video_encode_bitstream(vctx, cdc_handle, src_handle, dest_handle,
+                                desc_handle, feed_handle);
+
+   return 0;
+}
+
 static int vrend_decode_end_frame(struct vrend_context *ctx,
                                   const uint32_t *buf,
                                   uint32_t length)
@@ -1863,7 +1884,7 @@ static const vrend_decode_callback decode_table[VIRGL_MAX_COMMANDS] = {
    [VIRGL_CCMD_BEGIN_FRAME] = vrend_decode_begin_frame,
    [VIRGL_CCMD_DECODE_MACROBLOCK] = vrend_decode_dummy,
    [VIRGL_CCMD_DECODE_BITSTREAM] = vrend_decode_decode_bitstream,
-   [VIRGL_CCMD_ENCODE_BITSTREAM] = vrend_decode_dummy,
+   [VIRGL_CCMD_ENCODE_BITSTREAM] = vrend_decode_encode_bitstream,
    [VIRGL_CCMD_END_FRAME] = vrend_decode_end_frame,
 #else
    [VIRGL_CCMD_CREATE_VIDEO_CODEC] = vrend_unsupported,
