@@ -374,20 +374,11 @@ static void destroy_video_dma_buf(struct virgl_video_dma_buf *dmabuf)
 static void decode_completed(struct virgl_video_codec *codec,
                              struct virgl_video_buffer *buffer)
 {
-    VAStatus va_stat;
-
     if (!callbacks || !callbacks->decode_completed)
         return;
 
     if (!buffer->dmabuf)
         buffer->dmabuf = export_video_dma_buf(buffer, VIRGL_VIDEO_DMABUF_READ_ONLY);
-
-    va_stat = vaSyncSurface(va_dpy, buffer->va_sfc);
-
-    if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("sync surface failed, err = 0x%x\n", va_stat);
-        return;
-    }
 
     if (buffer->dmabuf)
         callbacks->decode_completed(codec, buffer->dmabuf);
@@ -1264,9 +1255,14 @@ int virgl_video_end_frame(struct virgl_video_codec *codec,
         return -1;
 
     va_stat = vaEndPicture(va_dpy, codec->va_ctx);
-
     if (VA_STATUS_SUCCESS != va_stat) {
         virgl_log("end picture failed, err = 0x%x\n", va_stat);
+        return -1;
+    }
+
+    va_stat = vaSyncSurface(va_dpy, target->va_sfc);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("sync surface failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
