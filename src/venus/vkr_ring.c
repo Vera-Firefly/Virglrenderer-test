@@ -106,47 +106,41 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
                 struct vkr_context *ctx,
                 uint64_t idle_timeout)
 {
-   struct vkr_ring *ring;
-   int ret;
-
-   ring = calloc(1, sizeof(*ring));
+   struct vkr_ring *ring = calloc(1, sizeof(*ring));
    if (!ring)
       return NULL;
 
    ring->resource = layout->resource;
 
-   if (!vkr_ring_init_control(ring, layout)) {
-      free(ring);
-      return NULL;
-   }
+   if (!vkr_ring_init_control(ring, layout))
+      goto err_init_control;
 
    vkr_ring_init_buffer(ring, layout);
    vkr_ring_init_extra(ring, layout);
 
    ring->cmd = malloc(ring->buffer.size);
-   if (!ring->cmd) {
-      free(ring);
-      return NULL;
-   }
+   if (!ring->cmd)
+      goto err_cmd_malloc;
 
    ring->context = ctx;
    ring->idle_timeout = idle_timeout;
 
-   ret = mtx_init(&ring->mutex, mtx_plain);
-   if (ret != thrd_success) {
-      free(ring->cmd);
-      free(ring);
-      return NULL;
-   }
-   ret = cnd_init(&ring->cond);
-   if (ret != thrd_success) {
-      mtx_destroy(&ring->mutex);
-      free(ring->cmd);
-      free(ring);
-      return NULL;
-   }
+   if (mtx_init(&ring->mutex, mtx_plain) != thrd_success)
+      goto err_mtx_init;
+
+   if (cnd_init(&ring->cond) != thrd_success)
+      goto err_cond_init;
 
    return ring;
+
+err_cond_init:
+   mtx_destroy(&ring->mutex);
+err_mtx_init:
+   free(ring->cmd);
+err_cmd_malloc:
+err_init_control:
+   free(ring);
+   return NULL;
 }
 
 void
