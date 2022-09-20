@@ -697,10 +697,10 @@ vn_decode_VkClearColorValue_temp(struct vn_cs_decoder *dec, VkClearColorValue *v
     }
 }
 
-/* struct VkMutableDescriptorTypeListVALVE */
+/* struct VkMutableDescriptorTypeListEXT */
 
 static inline void
-vn_decode_VkMutableDescriptorTypeListVALVE_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeListVALVE *val)
+vn_decode_VkMutableDescriptorTypeListEXT_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeListEXT *val)
 {
     vn_decode_uint32_t(dec, &val->descriptorTypeCount);
     if (vn_peek_array_size(dec)) {
@@ -715,16 +715,16 @@ vn_decode_VkMutableDescriptorTypeListVALVE_temp(struct vn_cs_decoder *dec, VkMut
 }
 
 static inline void
-vn_replace_VkMutableDescriptorTypeListVALVE_handle(VkMutableDescriptorTypeListVALVE *val)
+vn_replace_VkMutableDescriptorTypeListEXT_handle(VkMutableDescriptorTypeListEXT *val)
 {
     /* skip val->descriptorTypeCount */
     /* skip val->pDescriptorTypes */
 }
 
-/* struct VkMutableDescriptorTypeCreateInfoVALVE chain */
+/* struct VkMutableDescriptorTypeCreateInfoEXT chain */
 
 static inline void *
-vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_pnext_temp(struct vn_cs_decoder *dec)
+vn_decode_VkMutableDescriptorTypeCreateInfoEXT_pnext_temp(struct vn_cs_decoder *dec)
 {
     /* no known/supported struct */
     if (vn_decode_simple_pointer(dec))
@@ -733,7 +733,7 @@ vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_pnext_temp(struct vn_cs_decoder
 }
 
 static inline void
-vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_self_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeCreateInfoVALVE *val)
+vn_decode_VkMutableDescriptorTypeCreateInfoEXT_self_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeCreateInfoEXT *val)
 {
     /* skip val->{sType,pNext} */
     vn_decode_uint32_t(dec, &val->mutableDescriptorTypeListCount);
@@ -742,7 +742,7 @@ vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_self_temp(struct vn_cs_decoder 
         val->pMutableDescriptorTypeLists = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pMutableDescriptorTypeLists) * iter_count);
         if (!val->pMutableDescriptorTypeLists) return;
         for (uint32_t i = 0; i < iter_count; i++)
-            vn_decode_VkMutableDescriptorTypeListVALVE_temp(dec, &((VkMutableDescriptorTypeListVALVE *)val->pMutableDescriptorTypeLists)[i]);
+            vn_decode_VkMutableDescriptorTypeListEXT_temp(dec, &((VkMutableDescriptorTypeListEXT *)val->pMutableDescriptorTypeLists)[i]);
     } else {
         vn_decode_array_size(dec, val->mutableDescriptorTypeListCount);
         val->pMutableDescriptorTypeLists = NULL;
@@ -750,39 +750,39 @@ vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_self_temp(struct vn_cs_decoder 
 }
 
 static inline void
-vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeCreateInfoVALVE *val)
+vn_decode_VkMutableDescriptorTypeCreateInfoEXT_temp(struct vn_cs_decoder *dec, VkMutableDescriptorTypeCreateInfoEXT *val)
 {
     VkStructureType stype;
     vn_decode_VkStructureType(dec, &stype);
-    if (stype != VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_VALVE)
+    if (stype != VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_EXT)
         vn_cs_decoder_set_fatal(dec);
 
     val->sType = stype;
-    val->pNext = vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_pnext_temp(dec);
-    vn_decode_VkMutableDescriptorTypeCreateInfoVALVE_self_temp(dec, val);
+    val->pNext = vn_decode_VkMutableDescriptorTypeCreateInfoEXT_pnext_temp(dec);
+    vn_decode_VkMutableDescriptorTypeCreateInfoEXT_self_temp(dec, val);
 }
 
 static inline void
-vn_replace_VkMutableDescriptorTypeCreateInfoVALVE_handle_self(VkMutableDescriptorTypeCreateInfoVALVE *val)
+vn_replace_VkMutableDescriptorTypeCreateInfoEXT_handle_self(VkMutableDescriptorTypeCreateInfoEXT *val)
 {
     /* skip val->sType */
     /* skip val->pNext */
     /* skip val->mutableDescriptorTypeListCount */
     if (val->pMutableDescriptorTypeLists) {
        for (uint32_t i = 0; i < val->mutableDescriptorTypeListCount; i++)
-            vn_replace_VkMutableDescriptorTypeListVALVE_handle(&((VkMutableDescriptorTypeListVALVE *)val->pMutableDescriptorTypeLists)[i]);
+            vn_replace_VkMutableDescriptorTypeListEXT_handle(&((VkMutableDescriptorTypeListEXT *)val->pMutableDescriptorTypeLists)[i]);
     }
 }
 
 static inline void
-vn_replace_VkMutableDescriptorTypeCreateInfoVALVE_handle(VkMutableDescriptorTypeCreateInfoVALVE *val)
+vn_replace_VkMutableDescriptorTypeCreateInfoEXT_handle(VkMutableDescriptorTypeCreateInfoEXT *val)
 {
     struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
 
     do {
         switch ((int32_t)pnext->sType) {
-        case VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_VALVE:
-            vn_replace_VkMutableDescriptorTypeCreateInfoVALVE_handle_self((VkMutableDescriptorTypeCreateInfoVALVE *)pnext);
+        case VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_EXT:
+            vn_replace_VkMutableDescriptorTypeCreateInfoEXT_handle_self((VkMutableDescriptorTypeCreateInfoEXT *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */

@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[94];
+      bool enabled[95];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -33,6 +33,7 @@ struct vn_info_extension_table {
          bool EXT_inline_uniform_block;
          bool EXT_line_rasterization;
          bool EXT_multi_draw;
+         bool EXT_mutable_descriptor_type;
          bool EXT_pipeline_creation_cache_control;
          bool EXT_pipeline_creation_feedback;
          bool EXT_primitive_topology_list_restart;
@@ -112,7 +113,7 @@ struct vn_info_extension_table {
    };
 };
 
-#define VN_INFO_EXTENSION_MAX_NUMBER (414)
+#define VN_INFO_EXTENSION_MAX_NUMBER (495)
 
 struct vn_info_extension {
    const char *name;
@@ -121,8 +122,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 94;
-static const struct vn_info_extension _vn_info_extensions[94] = {
+static const uint32_t _vn_info_extension_count = 95;
+static const struct vn_info_extension _vn_info_extensions[95] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
@@ -142,6 +143,7 @@ static const struct vn_info_extension _vn_info_extensions[94] = {
    { "VK_EXT_inline_uniform_block", 139, 1 },
    { "VK_EXT_line_rasterization", 260, 1 },
    { "VK_EXT_multi_draw", 393, 1 },
+   { "VK_EXT_mutable_descriptor_type", 495, 1 },
    { "VK_EXT_pipeline_creation_cache_control", 298, 3 },
    { "VK_EXT_pipeline_creation_feedback", 193, 1 },
    { "VK_EXT_primitive_topology_list_restart", 357, 1 },
@@ -228,7 +230,7 @@ vn_info_wire_format_version(void)
 static inline uint32_t
 vn_info_vk_xml_version(void)
 {
-    return VK_MAKE_API_VERSION(0, 1, 3, 227);
+    return VK_MAKE_API_VERSION(0, 1, 3, 228);
 }
 
 static inline int
