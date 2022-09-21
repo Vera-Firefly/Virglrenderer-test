@@ -122,7 +122,7 @@ void trace_end(const char **scope);
 #define TRACE_FUNC()
 #define TRACE_SCOPE(SCOPE)
 #define TRACE_SCOPE_SLOW(SCOPE)
-#define TRACE_SCOPE_BEGIN(SCOPE, VAR)
+#define TRACE_SCOPE_BEGIN(SCOPE)
 #define TRACE_SCOPE_END(VAR)
 #endif /* ENABLE_TRACING */
 
