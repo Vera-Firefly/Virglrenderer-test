@@ -53,8 +53,8 @@ struct dump_ctx
    int indent;
    
    uint indentation;
-   FILE *file;
    tgsi_dump_callback_type logger;
+   void *user_data;
 
    void (*dump_printf)(struct dump_ctx *ctx, const char *format, ...);
 };
@@ -63,15 +63,22 @@ static void
 dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
 {
    va_list ap;
-   (void)ctx;
    va_start(ap, format);
    if (ctx->logger)
-      ctx->logger(format, ap);
-   else if (ctx->file)
-      vfprintf(ctx->file, format, ap);
+      ctx->logger(format, ap, ctx->user_data);
    else
       _debug_vprintf(format, ap);
    va_end(ap);
+}
+
+static void
+log_to_file(const char *fmt, va_list ap, void* user_data)
+{
+   FILE *file = user_data;
+   if (file)
+      vfprintf(file, fmt, ap);
+   else
+      _debug_vprintf(fmt, ap);
 }
 
 static void
@@ -462,8 +469,8 @@ tgsi_dump_declaration(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
-   ctx.file = NULL;
    ctx.logger = NULL;
+   ctx.user_data = NULL;
 
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
 }
@@ -512,8 +519,8 @@ void tgsi_dump_property(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
-   ctx.file = NULL;
    ctx.logger = NULL;
+   ctx.user_data = NULL;
 
    iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
@@ -546,8 +553,8 @@ tgsi_dump_immediate(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
-   ctx.file = NULL;
    ctx.logger = NULL;
+   ctx.user_data = NULL;
 
    iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
 }
@@ -698,8 +705,8 @@ tgsi_dump_instruction(
    ctx.indent = 0;
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
-   ctx.file = NULL;
    ctx.logger = NULL;
+   ctx.user_data = NULL;
 
    iter_instruction( &ctx.iter, (struct tgsi_full_instruction *)inst );
 }
@@ -719,7 +726,8 @@ void
 tgsi_dump_with_logger(
    const struct tgsi_token *tokens,
    uint flags,
-   tgsi_dump_callback_type logger)
+   tgsi_dump_callback_type logger,
+   void *user_data)
 {
    struct dump_ctx ctx;
 
@@ -735,8 +743,8 @@ tgsi_dump_with_logger(
    ctx.indent = 0;
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
-   ctx.file = NULL;
    ctx.logger = logger;
+   ctx.user_data = user_data;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
       ctx.dump_float_as_hex = TRUE;
@@ -763,8 +771,8 @@ tgsi_dump_to_file(const struct tgsi_token *tokens, uint flags, FILE *file)
    ctx.indent = 0;
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
-   ctx.file = file;
-   ctx.logger = NULL;
+   ctx.logger = log_to_file;
+   ctx.user_data = (void*)file;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
       ctx.dump_float_as_hex = TRUE;
@@ -834,7 +842,8 @@ tgsi_dump_str(
    ctx.base.indent = 0;
    ctx.base.dump_printf = &str_dump_ctx_printf;
    ctx.base.indentation = 0;
-   ctx.base.file = NULL;
+   ctx.base.logger = NULL;
+   ctx.base.user_data = NULL;
 
    ctx.str = str;
    ctx.str[0] = 0;
@@ -866,7 +875,8 @@ tgsi_dump_instruction_str(
    ctx.base.indent = 0;
    ctx.base.dump_printf = &str_dump_ctx_printf;
    ctx.base.indentation = 0;
-   ctx.base.file = NULL;
+   ctx.base.logger = NULL;
+   ctx.base.user_data = NULL;
 
    ctx.str = str;
    ctx.str[0] = 0;

@@ -42,6 +42,7 @@
 
 #include "util/u_thread.h"
 #include "util/u_format.h"
+#include "tgsi/tgsi_dump.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "vrend_object.h"
@@ -1241,11 +1242,18 @@ vrend_so_target_reference(struct vrend_so_target **ptr, struct vrend_so_target *
    *ptr = target;
 }
 
+static void vrend_shader_dump_to_debug(const char *fmt, va_list ap, UNUSED void *user_data)
+{
+   virgl_logv(VIRGL_LOG_LEVEL_DEBUG, fmt, ap);
+}
+
 static void vrend_shader_dump(struct vrend_shader *shader)
 {
    const char *prefix = pipe_shader_to_prefix(shader->sel->type);
-   if (shader->sel->tmp_buf)
-      virgl_debug("%s: %d TGSI:\n%s\n", prefix, shader->id, shader->sel->tmp_buf);
+   if (shader->sel->tokens) {
+      virgl_debug("%s: %d TGSI:\n", prefix, shader->id);
+      tgsi_dump_with_logger(shader->sel->tokens, 0, vrend_shader_dump_to_debug, NULL);
+   }
 
    virgl_debug("%s: %d GLSL:\n", prefix, shader->id);
    strarray_dump_with_line_numbers(&shader->glsl_strings);
@@ -4223,7 +4231,9 @@ static int vrend_shader_create(struct vrend_context *ctx,
 
    if (shader->sel->tokens) {
 
-      VREND_DEBUG(dbg_shader_tgsi, ctx, "shader\n%s\n", shader->sel->tmp_buf);
+      VREND_DEBUG(dbg_shader_tgsi, ctx, "TGSI received:");
+      VREND_DEBUG_EXT(dbg_shader_tgsi, ctx, tgsi_dump_with_logger(shader->sel->tokens, 0, vrend_shader_dump_to_debug, NULL));
+      VREND_DEBUG(dbg_shader_tgsi, ctx, "\n");
 
       bool ret = vrend_convert_shader(ctx, &ctx->shader_cfg, shader->sel->tokens,
                                       shader->sel->req_local_mem, key, &shader->sel->sinfo,
