@@ -666,12 +666,9 @@ int virgl_video_fill_caps(union virgl_caps *caps)
                                  entrypoints, &num_entrypoints);
         for (j = 0; j < num_entrypoints &&
              caps->v2.num_video_caps < ARRAY_SIZE(caps->v2.video_caps); j++) {
-            /* H.264/5 decode & H.264 encode */
+            /* support encoding and decoding */
             if (VAEntrypointVLD != entrypoints[j] &&
-                (VAEntrypointEncSlice != entrypoints[j] ||
-                 (profiles[i] != VAProfileH264Main &&
-                  profiles[i] != VAProfileH264High &&
-                  profiles[i] != VAProfileH264ConstrainedBaseline)))
+                VAEntrypointEncSlice != entrypoints[j])
                 continue;
 
             fill_vcaps_entry(profiles[i], entrypoints[j],
@@ -1536,6 +1533,13 @@ static int h264_encode_bitstream(
     return 0;
 }
 
+static void h265_init_picture(VAPictureHEVC *pic)
+{
+    pic->picture_id     = VA_INVALID_SURFACE;
+    pic->pic_order_cnt  = 0;
+    pic->flags          = VA_PICTURE_HEVC_INVALID;
+}
+
 /*
  * Refer to vlVaHandlePictureParameterBufferHEVC() in mesa,
  * and comment out some unused parameters.
@@ -1718,6 +1722,327 @@ static void h265_fill_slice_param(const struct virgl_h265_picture_desc *desc,
     //va_reserved[VA_PADDING_LOW - 2];
 }
 
+/*
+ * Refer to vlVaHandleVAEncSequenceParameterBufferTypeHEVC() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h265_fill_enc_seq_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc,
+                            VAEncSequenceParameterBufferHEVC *param)
+{
+    (void)codec;
+    (void)source;
+
+    ITEM_SET(param, &desc->seq, general_profile_idc);
+    ITEM_SET(param, &desc->seq, general_level_idc);
+    ITEM_SET(param, &desc->seq, general_tier_flag);
+    ITEM_SET(param, &desc->seq, intra_period);
+    //intra_idr_period
+    ITEM_SET(param, &desc->seq, ip_period);
+    //bits_per_second
+    ITEM_SET(param, &desc->seq, pic_width_in_luma_samples);
+    ITEM_SET(param, &desc->seq, pic_height_in_luma_samples);
+
+    /* seq_fields.bits */
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, chroma_format_idc);
+    //seq_fields.bits.separate_colour_plane_flag
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, bit_depth_luma_minus8);
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, bit_depth_chroma_minus8);
+    //seq_fields.bits.scaling_list_enabled_flag
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, strong_intra_smoothing_enabled_flag);
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, amp_enabled_flag);
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, sample_adaptive_offset_enabled_flag);
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, pcm_enabled_flag);
+    //seq_fields.bits.pcm_loop_filter_disabled_flag
+    ITEM_SET(&param->seq_fields.bits, &desc->seq, sps_temporal_mvp_enabled_flag);
+    //seq_fields.bits.low_delay_seq
+    //seq_fields.bits.hierachical_flag
+    //seq_fields.bits.reserved_bits
+
+    ITEM_SET(param, &desc->seq, log2_min_luma_coding_block_size_minus3);
+    ITEM_SET(param, &desc->seq, log2_diff_max_min_luma_coding_block_size);
+    ITEM_SET(param, &desc->seq, log2_min_transform_block_size_minus2);
+    ITEM_SET(param, &desc->seq, log2_diff_max_min_transform_block_size);
+    ITEM_SET(param, &desc->seq, max_transform_hierarchy_depth_inter);
+    ITEM_SET(param, &desc->seq, max_transform_hierarchy_depth_intra);
+    //pcm_sample_bit_depth_luma_minus1
+    //pcm_sample_bit_depth_chroma_minus1
+    //log2_min_pcm_luma_coding_block_size_minus3
+    //log2_max_pcm_luma_coding_block_size_minus3
+    ITEM_SET(param, &desc->seq, vui_parameters_present_flag);
+
+    /* vui_fields.bits */
+    if (desc->seq.vui_parameters_present_flag) {
+        ITEM_SET(&param->vui_fields.bits, &desc->seq.vui_flags,
+                 aspect_ratio_info_present_flag);
+    }
+    //vui_fields.bits.neutral_chroma_indication_flag
+    //vui_fields.bits.field_seq_flag
+    if (desc->seq.vui_parameters_present_flag) {
+        param->vui_fields.bits.vui_timing_info_present_flag =
+            desc->seq.vui_flags.timing_info_present_flag;
+    }
+    //vui_fields.bits.bitstream_restriction_flag
+    //vui_fields.bits.tiles_fixed_structure_flag
+    //vui_fields.bits.motion_vectors_over_pic_boundaries_flag
+    //vui_fields.bits.restricted_ref_pic_lists_flag
+    //vui_fields.bits.log2_max_mv_length_horizontal
+    //vui_fields.bits.log2_max_mv_length_vertical
+
+    if (desc->seq.vui_parameters_present_flag) {
+        ITEM_SET(param, &desc->seq, aspect_ratio_idc);
+        ITEM_SET(param, &desc->seq, sar_width);
+        ITEM_SET(param, &desc->seq, sar_height);
+    }
+    param->vui_num_units_in_tick = desc->seq.num_units_in_tick;
+    param->vui_time_scale = desc->seq.time_scale;
+    //min_spatial_segmentation_idc
+    //max_bytes_per_pic_denom
+    //max_bits_per_min_cu_denom
+
+    //scc_fields.bits.palette_mode_enabled_flag
+}
+
+/*
+ * Refer to vlVaHandleVAEncPictureParameterBufferTypeHEVC() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h265_fill_enc_picture_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc,
+                            VAEncPictureParameterBufferHEVC *param)
+{
+    unsigned i;
+
+    (void)source;
+
+    param->decoded_curr_pic.picture_id = get_enc_ref_pic(codec, desc->frame_num);
+    param->decoded_curr_pic.pic_order_cnt = desc->pic_order_cnt;
+
+    for (i = 0; i < 15; i++) {
+        h265_init_picture(&param->reference_frames[i]);
+    }
+
+    param->coded_buf = codec->va_coded_buf;
+    //collocated_ref_pic_index
+    //last_picture
+    param->pic_init_qp = desc->rc.quant_i_frames;
+    //diff_cu_qp_delta_depth
+    //pps_cb_qp_offset
+    //pps_cr_qp_offset
+    //num_tile_columns_minus1
+    //num_tile_rows_minus1
+    //column_width_minus1[19]
+    //row_height_minus1[21]
+    ITEM_SET(param, &desc->pic, log2_parallel_merge_level_minus2);
+    //ctu_max_bitsize_allowed
+    param->num_ref_idx_l0_default_active_minus1 = desc->num_ref_idx_l0_active_minus1;
+    param->num_ref_idx_l1_default_active_minus1 = desc->num_ref_idx_l1_active_minus1;
+    //slice_pic_parameter_set_id
+    ITEM_SET(param, &desc->pic, nal_unit_type);
+
+    param->pic_fields.bits.idr_pic_flag =
+        (desc->picture_type == PIPE_H2645_ENC_PICTURE_TYPE_IDR);
+    switch (desc->picture_type) {
+    case PIPE_H2645_ENC_PICTURE_TYPE_IDR: /* fallthrough */
+    case PIPE_H2645_ENC_PICTURE_TYPE_I:
+        param->pic_fields.bits.coding_type = 1;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_P:
+        param->pic_fields.bits.coding_type = 2;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_B:
+        param->pic_fields.bits.coding_type = 3;
+        break;
+    default:
+        break;
+    }
+
+    param->pic_fields.bits.reference_pic_flag = !desc->not_referenced;
+    //pic_fields.bits.dependent_slice_segments_enabled_flag
+    //pic_fields.bits.sign_data_hiding_enabled_flag
+    ITEM_SET(&param->pic_fields.bits, &desc->pic, constrained_intra_pred_flag);
+    ITEM_SET(&param->pic_fields.bits, &desc->pic, transform_skip_enabled_flag);
+    //pic_fields.bits.cu_qp_delta_enabled_flag
+    //pic_fields.bits.weighted_pred_flag
+    //pic_fields.bits.weighted_bipred_flag
+    //pic_fields.bits.transquant_bypass_enabled_flag
+    //pic_fields.bits.tiles_enabled_flag
+    //pic_fields.bits.entropy_coding_sync_enabled_flag
+    //pic_fields.bits.loop_filter_across_tiles_enabled_flag
+    ITEM_SET(&param->pic_fields.bits, &desc->pic,
+             pps_loop_filter_across_slices_enabled_flag);
+    //pic_fields.bits.scaling_list_data_present_flag
+    //pic_fields.bits.screen_content_flag
+    //pic_fields.bits.enable_gpu_weighted_prediction
+    //pic_fields.bits.no_output_of_prior_pics_flag
+
+    //hierarchical_level_plus1
+    //scc_fields.bits.pps_curr_pic_ref_enabled_flag
+}
+
+/*
+ * Refer to vlVaHandleVAEncSliceParameterBufferTypeHEVC() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h265_fill_enc_slice_param(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc,
+                            VAEncSliceParameterBufferHEVC *param)
+{
+    unsigned i;
+    const struct virgl_h265_slice_descriptor *sd;
+
+    (void)source;
+
+    /* Get the lastest slice descriptor */
+    if (desc->num_slice_descriptors &&
+        desc->num_slice_descriptors <= ARRAY_SIZE(desc->slices_descriptors)) {
+        sd = &desc->slices_descriptors[desc->num_slice_descriptors - 1];
+        ITEM_SET(param, sd, slice_segment_address);
+        ITEM_SET(param, sd, num_ctu_in_slice);
+    }
+
+    switch (desc->picture_type) {
+    case PIPE_H2645_ENC_PICTURE_TYPE_P:
+        param->slice_type = 0;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_B:
+        param->slice_type = 1;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_I:
+    case PIPE_H2645_ENC_PICTURE_TYPE_IDR: /* fall through */
+        param->slice_type = 2;
+        break;
+    case PIPE_H2645_ENC_PICTURE_TYPE_SKIP:
+    default:
+        break;
+    }
+
+    //slice_pic_parameter_set_id
+
+    //num_ref_idx_l0_active_minus1
+    //num_ref_idx_l1_active_minus1
+
+    for (i = 0; i < 15; i++) {
+        h265_init_picture(&param->ref_pic_list0[i]);
+        h265_init_picture(&param->ref_pic_list1[i]);
+
+        param->ref_pic_list0[i].picture_id =
+                    get_enc_ref_pic(codec, desc->ref_idx_l0_list[i]);
+        param->ref_pic_list1[i].picture_id =
+                    get_enc_ref_pic(codec, desc->ref_idx_l1_list[i]);
+
+        if (param->ref_pic_list0[i].picture_id != VA_INVALID_ID)
+            param->ref_pic_list0[i].flags = VA_PICTURE_HEVC_RPS_ST_CURR_BEFORE;
+
+        if (param->ref_pic_list1[i].picture_id != VA_INVALID_ID)
+            param->ref_pic_list1[i].flags = VA_PICTURE_HEVC_RPS_ST_CURR_BEFORE;
+    }
+
+    //luma_log2_weight_denom
+    //delta_chroma_log2_weight_denom
+    //delta_luma_weight_l0[15]
+    //luma_offset_l0[15]
+    //delta_chroma_weight_l0[15][2]
+    //chroma_offset_l0[15][2]
+    //delta_luma_weight_l1[15]
+    //luma_offset_l1[15]
+    //delta_chroma_weight_l1[15][2]
+    //chroma_offset_l1[15][2]
+    ITEM_SET(param, &desc->slice, max_num_merge_cand);
+    //slice_qp_delta
+    ITEM_SET(param, &desc->slice, slice_cb_qp_offset);
+    ITEM_SET(param, &desc->slice, slice_cr_qp_offset);
+    ITEM_SET(param, &desc->slice, slice_beta_offset_div2);
+    ITEM_SET(param, &desc->slice, slice_tc_offset_div2);
+
+    //slice_fields.bits.last_slice_of_pic_flag
+    //slice_fields.bits.dependent_slice_segment_flag
+    //slice_fields.bits.colour_plane_id
+    //slice_fields.bits.slice_temporal_mvp_enabled_flag
+    //slice_fields.bits.slice_sao_luma_flag
+    //slice_fields.bits.slice_sao_chroma_flag
+    /*
+     * Sine num_ref_idx_l0_active_minus1 and num_ref_idx_l1_active_minus1
+     * have been passed by VAEncPictureParameterBufferHEVC,
+     * num_ref_idx_active_override_flag is always set to 0.
+     */
+    param->slice_fields.bits.num_ref_idx_active_override_flag = 0;
+    //slice_fields.bits.mvd_l1_zero_flag
+    ITEM_SET(&param->slice_fields.bits, &desc->slice, cabac_init_flag);
+    ITEM_SET(&param->slice_fields.bits, &desc->slice,
+             slice_deblocking_filter_disabled_flag);
+    ITEM_SET(&param->slice_fields.bits,
+             &desc->slice, slice_loop_filter_across_slices_enabled_flag);
+    //slice_fields.bits.collocated_from_l0_flag
+
+    //pred_weight_table_bit_offset
+    //pred_weight_table_bit_length;
+}
+
+/*
+ * Refer to vlVaHandleVAEncMiscParameterTypeRateControlHEVC() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h265_fill_enc_misc_param_rate_ctrl(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc,
+                            VAEncMiscParameterRateControl *param)
+{
+    (void)codec;
+    (void)source;
+
+    param->bits_per_second = desc->rc.peak_bitrate;
+    if (desc->rc.rate_ctrl_method !=
+        PIPE_H2645_ENC_RATE_CONTROL_METHOD_CONSTANT) {
+        param->target_percentage = desc->rc.target_bitrate *
+                                   param->bits_per_second / 100.0;
+    }
+    //window_size;
+    //initial_qp;
+    param->min_qp = desc->rc.min_qp;
+    //basic_unit_size;
+
+    /* rc_flags */
+    //rc_flags.bits.reset
+    param->rc_flags.bits.disable_frame_skip = !desc->rc.skip_frame_enable;
+    param->rc_flags.bits.disable_bit_stuffing = !desc->rc.fill_data_enable;
+    //rc_flags.bits.mb_rate_control
+    //rc_flags.bits.temporal_id
+    //rc_flags.bits.cfs_I_frames
+    //rc_flags.bits.enable_parallel_brc
+    //rc_flags.bits.enable_dynamic_scaling
+    //rc_flags.bits.frame_tolerance_mode
+
+    //ICQ_quality_factor;
+    param->max_qp = desc->rc.max_qp;
+    //quality_factor;
+    //target_frame_size;
+}
+
+/*
+ * Refer to vlVaHandleVAEncMiscParameterTypeFrameRateHEVC() in mesa,
+ * and comment out some unused parameters.
+ */
+static void h265_fill_enc_misc_param_frame_rate(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc,
+                            VAEncMiscParameterFrameRate *param)
+{
+    (void)codec;
+    (void)source;
+
+    param->framerate = desc->rc.frame_rate_num | (desc->rc.frame_rate_den << 16);
+    //framerate_flags
+}
+
 static int h265_decode_bitstream(struct virgl_video_codec *codec,
                                  struct virgl_video_buffer *target,
                                  const struct virgl_h265_picture_desc *desc,
@@ -1782,6 +2107,134 @@ err:
     free(slice_data_buf);
 
     return err;
+}
+
+static int h265_encode_render_sequence(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc)
+{
+    int err = 0;
+    VAStatus va_stat;
+    VAEncSequenceParameterBufferHEVC seq_param;
+    VAEncMiscParameterBuffer *misc_param;
+    VABufferID seq_param_buf, rc_param_buf, fr_param_buf;
+
+    memset(&seq_param, 0, sizeof(seq_param));
+    h265_fill_enc_seq_param(codec, source, desc, &seq_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncSequenceParameterBufferType,
+                   sizeof(seq_param), 1, &seq_param, &seq_param_buf);
+
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncMiscParameterBufferType,
+                   sizeof(VAEncMiscParameterBuffer) +
+                   sizeof(VAEncMiscParameterRateControl), 1, NULL, &rc_param_buf);
+    vaMapBuffer(va_dpy, rc_param_buf, (void **)&misc_param);
+    misc_param->type = VAEncMiscParameterTypeRateControl;
+    h265_fill_enc_misc_param_rate_ctrl(codec, source, desc,
+                    (VAEncMiscParameterRateControl *)misc_param->data);
+    vaUnmapBuffer(va_dpy, rc_param_buf);
+
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncMiscParameterBufferType,
+                   sizeof(VAEncMiscParameterBuffer) +
+                   sizeof(VAEncMiscParameterFrameRate), 1, NULL, &fr_param_buf);
+    vaMapBuffer(va_dpy, fr_param_buf, (void **)&misc_param);
+    misc_param->type = VAEncMiscParameterTypeFrameRate;
+    h265_fill_enc_misc_param_frame_rate(codec, source, desc,
+                    (VAEncMiscParameterFrameRate *)misc_param->data);
+    vaUnmapBuffer(va_dpy, fr_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &seq_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h265 sequence param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &rc_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h265 rate control param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &fr_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h265 frame rate param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto error;
+    }
+
+error:
+    vaDestroyBuffer(va_dpy, seq_param_buf);
+    vaDestroyBuffer(va_dpy, rc_param_buf);
+    vaDestroyBuffer(va_dpy, fr_param_buf);
+
+    return err;
+}
+
+static int h265_encode_render_picture(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc)
+{
+    VAStatus va_stat;
+    VABufferID pic_param_buf;
+    VAEncPictureParameterBufferHEVC pic_param;
+
+    memset(&pic_param, 0, sizeof(pic_param));
+    h265_fill_enc_picture_param(codec, source, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h265 picture param failed, err = 0x%x\n", va_stat);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int h265_encode_render_slice(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc)
+{
+    VAStatus va_stat;
+    VABufferID slice_param_buf;
+    VAEncSliceParameterBufferHEVC slice_param;
+
+    memset(&slice_param, 0, sizeof(slice_param));
+    h265_fill_enc_slice_param(codec, source, desc, &slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAEncSliceParameterBufferType,
+                   sizeof(slice_param), 1, &slice_param, &slice_param_buf);
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render h265 slice param failed, err = 0x%x\n", va_stat);
+        return -1;
+    }
+
+    return 0;
+}
+
+static int h265_encode_bitstream(
+                            struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *source,
+                            const struct virgl_h265_enc_picture_desc *desc)
+{
+    if (desc->picture_type == PIPE_H2645_ENC_PICTURE_TYPE_IDR) {
+        h265_encode_render_sequence(codec, source, desc);
+    }
+
+    h265_encode_render_picture(codec, source, desc);
+    h265_encode_render_slice(codec, source, desc);
+
+    return 0;
 }
 
 int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
@@ -1850,6 +2303,12 @@ int virgl_video_encode_bitstream(struct virgl_video_codec *codec,
     case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH422:
     case PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH444:
         return h264_encode_bitstream(codec, source, &desc->h264_enc);
+    case PIPE_VIDEO_PROFILE_HEVC_MAIN:
+    case PIPE_VIDEO_PROFILE_HEVC_MAIN_10:
+    case PIPE_VIDEO_PROFILE_HEVC_MAIN_STILL:
+    case PIPE_VIDEO_PROFILE_HEVC_MAIN_12:
+    case PIPE_VIDEO_PROFILE_HEVC_MAIN_444:
+        return h265_encode_bitstream(codec, source, &desc->h265_enc);
     default:
         break;
     }
