@@ -2609,6 +2609,141 @@ err:
     return err;
 }
 
+static void vp9_fill_picture_param(struct virgl_video_codec *codec,
+                                   struct virgl_video_buffer *target,
+                                   const struct virgl_vp9_picture_desc *desc,
+                                   VADecPictureParameterBufferVP9 *vapp)
+{
+    unsigned i;
+
+    for (i = 0; i < 8; i++)
+        vapp->reference_frames[i] = desc->ref[i];
+
+    ITEM_SET(vapp, &desc->picture_parameter, frame_width);
+    ITEM_SET(vapp, &desc->picture_parameter, frame_height);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, subsampling_x);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, subsampling_y);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, frame_type);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, show_frame);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, error_resilient_mode);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, intra_only);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, allow_high_precision_mv);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, mcomp_filter_type);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, frame_parallel_decoding_mode);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, reset_frame_context);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, refresh_frame_context);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, frame_context_idx);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, segmentation_enabled);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, segmentation_temporal_update);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, segmentation_update_map);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, last_ref_frame);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, last_ref_frame_sign_bias);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, golden_ref_frame);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, golden_ref_frame_sign_bias);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, alt_ref_frame);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, alt_ref_frame_sign_bias);
+    ITEM_SET(&vapp->pic_fields.bits, &desc->picture_parameter.pic_fields, lossless_flag);
+    ITEM_SET(vapp, &desc->picture_parameter, filter_level);
+    ITEM_SET(vapp, &desc->picture_parameter, sharpness_level);
+    ITEM_SET(vapp, &desc->picture_parameter, log2_tile_rows);
+    ITEM_SET(vapp, &desc->picture_parameter, log2_tile_columns);
+    ITEM_SET(vapp, &desc->picture_parameter, frame_header_length_in_bytes);
+    ITEM_SET(vapp, &desc->picture_parameter, first_partition_size);
+    ITEM_CPY(vapp, &desc->picture_parameter, mb_segment_tree_probs);
+    ITEM_CPY(vapp, &desc->picture_parameter, segment_pred_probs);
+    ITEM_SET(vapp, &desc->picture_parameter, profile);
+    ITEM_SET(vapp, &desc->picture_parameter, bit_depth);
+}
+
+static void vp9_fill_slice_param(const struct virgl_vp9_picture_desc *desc,
+                                  VASliceParameterBufferVP9 *vasp)
+{
+    int i;
+
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_size);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_offset);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_flag);
+    for (i = 0; i < 8; i++) {
+        vasp->seg_param[i].segment_flags.fields.segment_reference_enabled =
+            desc->slice_parameter.seg_param[i].segment_flags.segment_reference_enabled;
+        vasp->seg_param[i].segment_flags.fields.segment_reference =
+            desc->slice_parameter.seg_param[i].segment_flags.segment_reference;
+        vasp->seg_param[i].segment_flags.fields.segment_reference_skipped =
+            desc->slice_parameter.seg_param[i].segment_flags.segment_reference_skipped;
+        ITEM_CPY(vasp, &desc->slice_parameter, seg_param[i].filter_level);
+        ITEM_SET(vasp, &desc->slice_parameter, seg_param[i].luma_ac_quant_scale);
+        ITEM_SET(vasp, &desc->slice_parameter, seg_param[i].luma_dc_quant_scale);
+        ITEM_SET(vasp, &desc->slice_parameter, seg_param[i].chroma_ac_quant_scale);
+        ITEM_SET(vasp, &desc->slice_parameter, seg_param[i].chroma_dc_quant_scale);
+    }
+}
+
+static int vp9_decode_bitstream(struct virgl_video_codec *codec,
+                                 struct virgl_video_buffer *target,
+                                 const struct virgl_vp9_picture_desc *desc,
+                                 unsigned num_buffers,
+                                 const void * const *buffers,
+                                 const unsigned *sizes)
+{
+    unsigned i;
+    int err = 0;
+    VAStatus va_stat;
+    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf;
+    VADecPictureParameterBufferVP9 pic_param = {0};
+    VASliceParameterBufferVP9 slice_param = {0};
+
+    slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
+    if (!slice_data_buf) {
+        virgl_log("alloc slice data buffer id failed\n");
+        return -1;
+    }
+
+    vp9_fill_picture_param(codec, target, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    vp9_fill_slice_param(desc, &slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VASliceParameterBufferType,
+                   sizeof(slice_param), 1, &slice_param, &slice_param_buf);
+
+    for (i = 0; i < num_buffers; i++) {
+        vaCreateBuffer(va_dpy, codec->va_ctx, VASliceDataBufferType,
+                       sizes[i], 1, (void *)(buffers[i]), &slice_data_buf[i]);
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    for (i = 0; i < num_buffers; i++) {
+        va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
+
+        if (VA_STATUS_SUCCESS != va_stat) {
+            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            err = -1;
+        }
+    }
+
+err:
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+    for (i = 0; i < num_buffers; i++)
+        vaDestroyBuffer(va_dpy, slice_data_buf[i]);
+    free(slice_data_buf);
+
+    return err;
+}
+
 int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  struct virgl_video_buffer *target,
                                  const union virgl_picture_desc *desc,
@@ -2616,7 +2751,6 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  const void * const *buffers,
                                  const unsigned *sizes)
 {
-
     if (!va_dpy || !codec || !target || !desc
         || !num_buffers || !buffers || !sizes)
         return -1;
