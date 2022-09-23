@@ -54,17 +54,20 @@ struct dump_ctx
    
    uint indentation;
    FILE *file;
+   tgsi_dump_callback_type logger;
 
    void (*dump_printf)(struct dump_ctx *ctx, const char *format, ...);
 };
 
-static void 
+static void
 dump_ctx_printf(struct dump_ctx *ctx, const char *format, ...)
 {
    va_list ap;
    (void)ctx;
    va_start(ap, format);
-   if (ctx->file)
+   if (ctx->logger)
+      ctx->logger(format, ap);
+   else if (ctx->file)
       vfprintf(ctx->file, format, ap);
    else
       _debug_vprintf(format, ap);
@@ -459,6 +462,8 @@ tgsi_dump_declaration(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
+   ctx.file = NULL;
+   ctx.logger = NULL;
 
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
 }
@@ -507,6 +512,8 @@ void tgsi_dump_property(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
+   ctx.file = NULL;
+   ctx.logger = NULL;
 
    iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
@@ -539,6 +546,8 @@ tgsi_dump_immediate(
    struct dump_ctx ctx;
 
    ctx.dump_printf = dump_ctx_printf;
+   ctx.file = NULL;
+   ctx.logger = NULL;
 
    iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
 }
@@ -690,6 +699,7 @@ tgsi_dump_instruction(
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
    ctx.file = NULL;
+   ctx.logger = NULL;
 
    iter_instruction( &ctx.iter, (struct tgsi_full_instruction *)inst );
 }
@@ -702,6 +712,38 @@ prolog(
    ENM( iter->processor.Processor, tgsi_processor_type_names );
    EOL();
    return TRUE;
+}
+
+
+void
+tgsi_dump_with_logger(
+   const struct tgsi_token *tokens,
+   uint flags,
+   tgsi_dump_callback_type logger)
+{
+   struct dump_ctx ctx;
+
+   ctx.iter.prolog = prolog;
+   ctx.iter.iterate_instruction = iter_instruction;
+   ctx.iter.iterate_declaration = iter_declaration;
+   ctx.iter.iterate_immediate = iter_immediate;
+   ctx.iter.iterate_property = iter_property;
+   ctx.iter.epilog = NULL;
+
+   ctx.instno = 0;
+   ctx.immno = 0;
+   ctx.indent = 0;
+   ctx.dump_printf = dump_ctx_printf;
+   ctx.indentation = 0;
+   ctx.file = NULL;
+   ctx.logger = logger;
+
+   if (flags & TGSI_DUMP_FLOAT_AS_HEX)
+      ctx.dump_float_as_hex = TRUE;
+   else
+      ctx.dump_float_as_hex = FALSE;
+
+   tgsi_iterate_shader( tokens, &ctx.iter );
 }
 
 void
@@ -722,6 +764,7 @@ tgsi_dump_to_file(const struct tgsi_token *tokens, uint flags, FILE *file)
    ctx.dump_printf = dump_ctx_printf;
    ctx.indentation = 0;
    ctx.file = file;
+   ctx.logger = NULL;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
       ctx.dump_float_as_hex = TRUE;

@@ -40,6 +40,8 @@ extern "C" {
 
 #define TGSI_DUMP_FLOAT_AS_HEX (1 << 0)
 
+typedef void (*tgsi_dump_callback_type)(const char *fmt, va_list ap);
+
 bool
 tgsi_dump_str(
    const struct tgsi_token *tokens,
@@ -49,6 +51,12 @@ tgsi_dump_str(
 
 void
 tgsi_dump_to_file(const struct tgsi_token *tokens, uint flags, FILE *file);
+
+void
+tgsi_dump_with_logger(
+   const struct tgsi_token *tokens,
+   uint flags,
+   tgsi_dump_callback_type logger );
 
 void
 tgsi_dump(
