@@ -165,6 +165,7 @@ while (__AFL_LOOP(1000)) {
 #define OPT_RENDERNODE 'r'
 #define OPT_VENUS 'v'
 #define OPT_RENDER_SERVER 'n'
+#define OPT_SOCKET_PATH 'p'
 
 static void vtest_server_parse_args(int argc, char **argv)
 {
@@ -180,6 +181,7 @@ static void vtest_server_parse_args(int argc, char **argv)
       {"rendernode",          required_argument, NULL, OPT_RENDERNODE},
       {"venus",               no_argument, NULL, OPT_VENUS},
       {"render-server",       no_argument, NULL, OPT_RENDER_SERVER},
+      {"socket-path",         optional_argument, NULL, OPT_SOCKET_PATH},
       {0, 0, 0, 0}
    };
 
@@ -225,10 +227,13 @@ static void vtest_server_parse_args(int argc, char **argv)
          server.render_server = true;
          break;
 #endif
+      case OPT_SOCKET_PATH:
+         server.socket_name = optarg;
+         break;
       default:
          printf("Usage: %s [--no-fork] [--no-loop-or-fork] [--multi-clients] "
                 "[--use-glx] [--use-egl-surfaceless] [--use-gles] "
-                "[--rendernode <dev>]"
+                "[--rendernode <dev>] [--socket-path <path>] "
 #ifdef ENABLE_VENUS
                 " [--venus]"
 #endif
