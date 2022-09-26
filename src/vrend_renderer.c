@@ -1158,6 +1158,25 @@ static void __report_gles_missing_func(ASSERTED const char *fname,
 
 #define report_gles_missing_func(ctx, missf) __report_gles_missing_func(__func__, ctx, missf)
 
+static void buffered_logger(const char *fmt,
+                            va_list ap,
+                            void *user_data)
+{
+   struct vrend_strbuf *logger_buffer = user_data;
+   strbuf_vappendf(logger_buffer, fmt, ap);
+}
+
+static void vrend_dump_tgsi(const struct tgsi_token *tokens,
+                            uint flags)
+{
+   struct vrend_strbuf logger_buffer = { NULL, };
+   strbuf_alloc(&logger_buffer, STRBUF_MIN_MALLOC);
+
+   tgsi_dump_with_logger(tokens, flags, buffered_logger, &logger_buffer);
+   virgl_debug("%s", logger_buffer.buf);
+   strbuf_free(&logger_buffer);
+}
+
 static void init_features(int gl_ver, int gles_ver)
 {
    for (enum features_id id = 0; id < feat_last; id++) {
@@ -1242,17 +1261,12 @@ vrend_so_target_reference(struct vrend_so_target **ptr, struct vrend_so_target *
    *ptr = target;
 }
 
-static void vrend_shader_dump_to_debug(const char *fmt, va_list ap, UNUSED void *user_data)
-{
-   virgl_logv(VIRGL_LOG_LEVEL_DEBUG, fmt, ap);
-}
-
 static void vrend_shader_dump(struct vrend_shader *shader)
 {
    const char *prefix = pipe_shader_to_prefix(shader->sel->type);
    if (shader->sel->tokens) {
       virgl_debug("%s: %d TGSI:\n", prefix, shader->id);
-      tgsi_dump_with_logger(shader->sel->tokens, 0, vrend_shader_dump_to_debug, NULL);
+      vrend_dump_tgsi(shader->sel->tokens, 0);
    }
 
    virgl_debug("%s: %d GLSL:\n", prefix, shader->id);
@@ -4232,7 +4246,7 @@ static int vrend_shader_create(struct vrend_context *ctx,
    if (shader->sel->tokens) {
 
       VREND_DEBUG(dbg_shader_tgsi, ctx, "TGSI received:");
-      VREND_DEBUG_EXT(dbg_shader_tgsi, ctx, tgsi_dump_with_logger(shader->sel->tokens, 0, vrend_shader_dump_to_debug, NULL));
+      VREND_DEBUG_EXT(dbg_shader_tgsi, ctx, vrend_dump_tgsi(shader->sel->tokens, 0));
       VREND_DEBUG(dbg_shader_tgsi, ctx, "\n");
 
       bool ret = vrend_convert_shader(ctx, &ctx->shader_cfg, shader->sel->tokens,
