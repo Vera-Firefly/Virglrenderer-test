@@ -164,10 +164,10 @@ void vrend_clear(struct vrend_context *ctx,
                  const union pipe_color_union *color,
                  double depth, unsigned stencil);
 
-void vrend_clear_texture(struct vrend_context* ctx,
-                         uint32_t handle, uint32_t level,
-                         const struct pipe_box *box,
-                         const void * data);
+int vrend_clear_texture(struct vrend_context* ctx,
+                        uint32_t handle, uint32_t level,
+                        const struct pipe_box *box,
+                        const void * data);
 
 int vrend_draw_vbo(struct vrend_context *ctx,
                    const struct pipe_draw_info *info,

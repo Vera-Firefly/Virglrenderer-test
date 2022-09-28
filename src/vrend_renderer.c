@@ -4559,7 +4559,7 @@ void vrend_clear(struct vrend_context *ctx,
       glDisable(GL_SCISSOR_TEST);
 }
 
-void vrend_clear_texture(struct vrend_context* ctx,
+int vrend_clear_texture(struct vrend_context* ctx,
                          uint32_t handle, uint32_t level,
                          const struct pipe_box *box,
                          const void * data)
@@ -4567,11 +4567,10 @@ void vrend_clear_texture(struct vrend_context* ctx,
    GLenum format, type;
    struct vrend_resource *res;
 
-   if (handle)
-      res = vrend_renderer_ctx_res_lookup(ctx, handle);
-   else {
-      vrend_printf( "cannot find resource for handle %d\n", handle);
-      return;
+   res = vrend_renderer_ctx_res_lookup(ctx, handle);
+   if (!res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
+      return EINVAL;
    }
 
    enum virgl_formats fmt = res->base.format;
@@ -4600,6 +4599,7 @@ void vrend_clear_texture(struct vrend_context* ctx,
                          box->width, box->height, box->depth,
                          format, type, data);
    }
+   return 0;
 }
 
 static void vrend_update_scissor_state(struct vrend_sub_context *sub_ctx)

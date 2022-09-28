@@ -233,8 +233,7 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
    arr[2] = get_buf_entry(buf, VIRGL_TEXTURE_ARRAY_C);
    arr[3] = get_buf_entry(buf, VIRGL_TEXTURE_ARRAY_D);
 
-   vrend_clear_texture(ctx, handle, level, &box, (void *) &arr);
-   return 0;
+   return vrend_clear_texture(ctx, handle, level, &box, (void *) &arr);
 }
 
 static int vrend_decode_set_viewport_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
