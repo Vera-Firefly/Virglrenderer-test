@@ -1667,7 +1667,7 @@ static int vrend_decode_destroy_video_codec(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-    if (length != VIRGL_DESTROY_VIDEO_CODEC_SIZE)
+    if (length < VIRGL_DESTROY_VIDEO_CODEC_MIN_SIZE)
        return EINVAL;
 
    uint32_t handle = get_buf_entry(buf, VIRGL_DESTROY_VIDEO_CODEC_HANDLE);
@@ -1713,7 +1713,7 @@ static int vrend_decode_destroy_video_buffer(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-   if (length != VIRGL_DESTROY_VIDEO_BUFFER_SIZE)
+   if (length < VIRGL_DESTROY_VIDEO_BUFFER_MIN_SIZE)
       return EINVAL;
 
    uint32_t handle = get_buf_entry(buf, VIRGL_DESTROY_VIDEO_BUFFER_HANDLE);
@@ -1728,7 +1728,7 @@ static int vrend_decode_begin_frame(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-   if (length != VIRGL_BEGIN_FRAME_SIZE)
+   if (length < VIRGL_BEGIN_FRAME_MIN_SIZE)
       return EINVAL;
 
    uint32_t cdc_handle = get_buf_entry(buf, VIRGL_BEGIN_FRAME_CDC_HANDLE);
@@ -1744,7 +1744,7 @@ static int vrend_decode_decode_bitstream(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-   if (length != VIRGL_DECODE_BS_SIZE)
+   if (length < VIRGL_DECODE_BS_MIN_SIZE)
       return EINVAL;
 
    uint32_t cdc_handle = get_buf_entry(buf, VIRGL_DECODE_BS_CDC_HANDLE);
@@ -1786,7 +1786,7 @@ static int vrend_decode_end_frame(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-   if (length != VIRGL_END_FRAME_SIZE)
+   if (length < VIRGL_END_FRAME_MIN_SIZE)
       return EINVAL;
 
    uint32_t cdc_handle = get_buf_entry(buf, VIRGL_END_FRAME_CDC_HANDLE);
