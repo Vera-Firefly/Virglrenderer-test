@@ -1640,7 +1640,7 @@ static int vrend_decode_create_video_codec(struct vrend_context *ctx,
 {
    struct vrend_video_context *vctx = vrend_context_get_video_ctx(ctx);
 
-   if (length != VIRGL_CREATE_VIDEO_CODEC_SIZE)
+   if (length < VIRGL_CREATE_VIDEO_CODEC_MIN_SIZE)
       return EINVAL;
 
    uint32_t handle     = get_buf_entry(buf, VIRGL_CREATE_VIDEO_CODEC_HANDLE);
@@ -1650,9 +1650,13 @@ static int vrend_decode_create_video_codec(struct vrend_context *ctx,
    uint32_t level      = get_buf_entry(buf, VIRGL_CREATE_VIDEO_CODEC_LEVEL);
    uint32_t width      = get_buf_entry(buf, VIRGL_CREATE_VIDEO_CODEC_WIDTH);
    uint32_t height     = get_buf_entry(buf, VIRGL_CREATE_VIDEO_CODEC_HEIGHT);
+   uint32_t max_ref    = 2; /* The max number of ref frames is 2 by default */
+
+   if (length >= VIRGL_CREATE_VIDEO_CODEC_MAX_REF)
+      max_ref = get_buf_entry(buf, VIRGL_CREATE_VIDEO_CODEC_MAX_REF);
 
    vrend_video_create_codec(vctx, handle, profile, entrypoint,
-                            chroma_fmt, level, width, height, 0);
+                            chroma_fmt, level, width, height, max_ref, 0);
 
    return 0;
 }

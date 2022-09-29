@@ -47,6 +47,7 @@ int vrend_video_create_codec(struct vrend_video_context *ctx,
                              uint32_t level,
                              uint32_t width,
                              uint32_t height,
+                             uint32_t max_ref,
                              uint32_t flags);
 void vrend_video_destroy_codec(struct vrend_video_context *ctx,
                                uint32_t handle);

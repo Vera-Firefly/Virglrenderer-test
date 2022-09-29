@@ -59,6 +59,7 @@ struct virgl_video_codec {
    enum pipe_video_chroma_format chroma_format;
    uint32_t width;
    uint32_t height;
+   uint32_t max_references;
    VAContextID va_ctx;
    VAConfigID  va_cfg;
    struct virgl_video_buffer *buffer;
@@ -591,10 +592,12 @@ struct virgl_video_codec *virgl_video_create_codec(
     codec->va_ctx = ctx;
 
     codec->profile = args->profile;
+    codec->level = args->level;
     codec->entrypoint = args->entrypoint;
     codec->chroma_format = args->chroma_format;
     codec->width = args->width;
     codec->height = args->height;
+    codec->max_references = args->max_references;
     codec->opaque = args->opaque;
 
     return codec;

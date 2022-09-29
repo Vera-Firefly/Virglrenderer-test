@@ -269,6 +269,7 @@ int vrend_video_create_codec(struct vrend_video_context *ctx,
                              uint32_t level,
                              uint32_t width,
                              uint32_t height,
+                             uint32_t max_ref,
                              uint32_t flags)
 {
     struct vrend_video_codec *cdc = get_video_codec(ctx, handle);
@@ -301,6 +302,7 @@ int vrend_video_create_codec(struct vrend_video_context *ctx,
     args.level = level;
     args.width = width;
     args.height = height;
+    args.max_references = max_ref;
     args.flags = flags;
     args.opaque = cdc;
     cdc->codec = virgl_video_create_codec(&args);

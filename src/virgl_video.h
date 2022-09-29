@@ -61,6 +61,7 @@ struct virgl_video_create_codec_args {
     uint32_t level;
     uint32_t width;
     uint32_t height;
+    uint32_t max_references;
     uint32_t flags;
     void *opaque;
 };
