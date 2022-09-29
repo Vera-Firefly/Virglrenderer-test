@@ -696,8 +696,9 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
         vrend_printf("%s: desc res %d not found\n", __func__, desc_handle);
         goto err;
     }
-    vrend_read_from_iovec(res->iov, res->num_iovs,
-                          0, (char *)(&desc), sizeof(desc));
+    memset(&desc, 0, sizeof(desc));
+    vrend_read_from_iovec(res->iov, res->num_iovs, 0, (char *)(&desc),
+                          MIN(res->base.width0, sizeof(desc)));
     modify_picture_desc(cdc, tgt, &desc);
 
     err = virgl_video_decode_bitstream(cdc->codec, tgt->buffer, &desc,
