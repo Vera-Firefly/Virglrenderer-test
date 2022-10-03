@@ -190,6 +190,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkGetPhysicalDeviceQueueFamilyProperties2_EXT: return "vkGetPhysicalDeviceQueueFamilyProperties2";
     case VK_COMMAND_TYPE_vkGetPhysicalDeviceMemoryProperties2_EXT: return "vkGetPhysicalDeviceMemoryProperties2";
     case VK_COMMAND_TYPE_vkGetPhysicalDeviceSparseImageFormatProperties2_EXT: return "vkGetPhysicalDeviceSparseImageFormatProperties2";
+    case VK_COMMAND_TYPE_vkCmdPushDescriptorSetKHR_EXT: return "vkCmdPushDescriptorSetKHR";
     case VK_COMMAND_TYPE_vkTrimCommandPool_EXT: return "vkTrimCommandPool";
     case VK_COMMAND_TYPE_vkGetPhysicalDeviceExternalBufferProperties_EXT: return "vkGetPhysicalDeviceExternalBufferProperties";
     case VK_COMMAND_TYPE_vkGetPhysicalDeviceExternalSemaphoreProperties_EXT: return "vkGetPhysicalDeviceExternalSemaphoreProperties";
@@ -292,11 +293,12 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkGetFenceFdKHR_EXT: return "vkGetFenceFdKHR";
     case VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT: return "vkImportFenceFdKHR";
     case VK_COMMAND_TYPE_vkUpdateDescriptorSetWithTemplate_EXT: return "vkUpdateDescriptorSetWithTemplate";
+    case VK_COMMAND_TYPE_vkCmdPushDescriptorSetWithTemplateKHR_EXT: return "vkCmdPushDescriptorSetWithTemplateKHR";
     default: return "unknown";
     }
 }
 
-static void (*const vn_dispatch_table[249])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[251])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -444,6 +446,7 @@ static void (*const vn_dispatch_table[249])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkGetPhysicalDeviceQueueFamilyProperties2_EXT] = vn_dispatch_vkGetPhysicalDeviceQueueFamilyProperties2,
     [VK_COMMAND_TYPE_vkGetPhysicalDeviceMemoryProperties2_EXT] = vn_dispatch_vkGetPhysicalDeviceMemoryProperties2,
     [VK_COMMAND_TYPE_vkGetPhysicalDeviceSparseImageFormatProperties2_EXT] = vn_dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2,
+    [VK_COMMAND_TYPE_vkCmdPushDescriptorSetKHR_EXT] = vn_dispatch_vkCmdPushDescriptorSetKHR,
     [VK_COMMAND_TYPE_vkTrimCommandPool_EXT] = vn_dispatch_vkTrimCommandPool,
     [VK_COMMAND_TYPE_vkGetPhysicalDeviceExternalBufferProperties_EXT] = vn_dispatch_vkGetPhysicalDeviceExternalBufferProperties,
     [VK_COMMAND_TYPE_vkGetPhysicalDeviceExternalSemaphoreProperties_EXT] = vn_dispatch_vkGetPhysicalDeviceExternalSemaphoreProperties,
@@ -550,7 +553,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 249 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 251 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

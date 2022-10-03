@@ -14,6 +14,12 @@
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+/*
+ * These structs/unions/commands are not included
+ *
+ *   vkCmdPushDescriptorSetWithTemplateKHR
+ */
+
 /* struct VkCommandBufferAllocateInfo chain */
 
 static inline void *
@@ -4418,6 +4424,50 @@ static inline void vn_encode_vkCmdExecuteCommands_reply(struct vn_cs_encoder *en
     /* skip args->pCommandBuffers */
 }
 
+static inline void vn_decode_vkCmdPushDescriptorSetKHR_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdPushDescriptorSetKHR *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    vn_decode_VkPipelineBindPoint(dec, &args->pipelineBindPoint);
+    vn_decode_VkPipelineLayout_lookup(dec, &args->layout);
+    vn_decode_uint32_t(dec, &args->set);
+    vn_decode_uint32_t(dec, &args->descriptorWriteCount);
+    if (vn_peek_array_size(dec)) {
+        const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorWriteCount);
+        args->pDescriptorWrites = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorWrites) * iter_count);
+        if (!args->pDescriptorWrites) return;
+        for (uint32_t i = 0; i < iter_count; i++)
+            vn_decode_VkWriteDescriptorSet_temp(dec, &((VkWriteDescriptorSet *)args->pDescriptorWrites)[i]);
+    } else {
+        vn_decode_array_size(dec, args->descriptorWriteCount);
+        args->pDescriptorWrites = NULL;
+    }
+}
+
+static inline void vn_replace_vkCmdPushDescriptorSetKHR_args_handle(struct vn_command_vkCmdPushDescriptorSetKHR *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    /* skip args->pipelineBindPoint */
+    vn_replace_VkPipelineLayout_handle(&args->layout);
+    /* skip args->set */
+    /* skip args->descriptorWriteCount */
+    if (args->pDescriptorWrites) {
+       for (uint32_t i = 0; i < args->descriptorWriteCount; i++)
+            vn_replace_VkWriteDescriptorSet_handle(&((VkWriteDescriptorSet *)args->pDescriptorWrites)[i]);
+    }
+}
+
+static inline void vn_encode_vkCmdPushDescriptorSetKHR_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdPushDescriptorSetKHR *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdPushDescriptorSetKHR_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->pipelineBindPoint */
+    /* skip args->layout */
+    /* skip args->set */
+    /* skip args->descriptorWriteCount */
+    /* skip args->pDescriptorWrites */
+}
+
 static inline void vn_decode_vkCmdSetDeviceMask_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdSetDeviceMask *args)
 {
     vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
@@ -7061,6 +7111,31 @@ static inline void vn_dispatch_vkCmdExecuteCommands(struct vn_dispatch_context *
 
     if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
        vn_encode_vkCmdExecuteCommands_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdPushDescriptorSetKHR(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdPushDescriptorSetKHR args;
+
+    if (!ctx->dispatch_vkCmdPushDescriptorSetKHR) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdPushDescriptorSetKHR_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdPushDescriptorSetKHR(ctx, &args);
+
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
+       vn_encode_vkCmdPushDescriptorSetKHR_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

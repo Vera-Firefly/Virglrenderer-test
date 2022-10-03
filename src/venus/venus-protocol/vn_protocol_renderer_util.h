@@ -78,6 +78,8 @@ struct vn_device_proc_table {
    PFN_vkCmdPipelineBarrier CmdPipelineBarrier;
    PFN_vkCmdPipelineBarrier2 CmdPipelineBarrier2;
    PFN_vkCmdPushConstants CmdPushConstants;
+   PFN_vkCmdPushDescriptorSetKHR CmdPushDescriptorSetKHR;
+   PFN_vkCmdPushDescriptorSetWithTemplateKHR CmdPushDescriptorSetWithTemplateKHR;
    PFN_vkCmdResetEvent CmdResetEvent;
    PFN_vkCmdResetEvent2 CmdResetEvent2;
    PFN_vkCmdResetQueryPool CmdResetQueryPool;
@@ -378,6 +380,12 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->KHR_synchronization2 ? VN_GDPA(dev, vkCmdPipelineBarrier2KHR) :
       NULL;
    proc_table->CmdPushConstants = VN_GDPA(dev, vkCmdPushConstants);
+   proc_table->CmdPushDescriptorSetKHR =
+      ext_table->KHR_push_descriptor ? VN_GDPA(dev, vkCmdPushDescriptorSetKHR) :
+      NULL;
+   proc_table->CmdPushDescriptorSetWithTemplateKHR =
+      ext_table->KHR_push_descriptor ? VN_GDPA(dev, vkCmdPushDescriptorSetWithTemplateKHR) :
+      NULL;
    proc_table->CmdResetEvent = VN_GDPA(dev, vkCmdResetEvent);
    proc_table->CmdResetEvent2 =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdResetEvent2) :

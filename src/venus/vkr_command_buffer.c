@@ -850,6 +850,14 @@ vkr_dispatch_vkCmdDrawMultiIndexedEXT(UNUSED struct vn_dispatch_context *dispatc
                 args->pVertexOffset);
 }
 
+static void
+vkr_dispatch_vkCmdPushDescriptorSetKHR(UNUSED struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkCmdPushDescriptorSetKHR *args)
+{
+   VKR_CMD_CALL(CmdPushDescriptorSetKHR, args, args->pipelineBindPoint, args->layout,
+                args->set, args->descriptorWriteCount, args->pDescriptorWrites);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -990,4 +998,8 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    /* VK_EXT_multi_draw */
    dispatch->dispatch_vkCmdDrawMultiEXT = vkr_dispatch_vkCmdDrawMultiEXT;
    dispatch->dispatch_vkCmdDrawMultiIndexedEXT = vkr_dispatch_vkCmdDrawMultiIndexedEXT;
+
+   /* VK_KHR_push_descriptor */
+   dispatch->dispatch_vkCmdPushDescriptorSetKHR = vkr_dispatch_vkCmdPushDescriptorSetKHR;
+   dispatch->dispatch_vkCmdPushDescriptorSetWithTemplateKHR = NULL;
 }

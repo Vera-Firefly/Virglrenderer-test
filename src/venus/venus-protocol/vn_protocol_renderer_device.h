@@ -9400,6 +9400,60 @@ vn_decode_VkPhysicalDeviceMultiDrawPropertiesEXT_partial_temp(struct vn_cs_decod
     vn_decode_VkPhysicalDeviceMultiDrawPropertiesEXT_self_partial_temp(dec, val);
 }
 
+/* struct VkPhysicalDevicePushDescriptorPropertiesKHR chain */
+
+static inline void
+vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR_self(struct vn_cs_encoder *enc, const VkPhysicalDevicePushDescriptorPropertiesKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_uint32_t(enc, &val->maxPushDescriptors);
+}
+
+static inline void
+vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR(struct vn_cs_encoder *enc, const VkPhysicalDevicePushDescriptorPropertiesKHR *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR });
+    vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDevicePushDescriptorPropertiesKHR *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->maxPushDescriptors */
+}
+
+static inline void
+vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDevicePushDescriptorPropertiesKHR *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_self_partial_temp(dec, val);
+}
+
 /* struct VkConformanceVersion */
 
 static inline void
@@ -11345,6 +11399,12 @@ vn_encode_VkPhysicalDeviceProperties2_pnext(struct vn_cs_encoder *enc, const voi
             vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDeviceMultiDrawPropertiesEXT_self(enc, (const VkPhysicalDeviceMultiDrawPropertiesEXT *)pnext);
             return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDevicePushDescriptorPropertiesKHR_self(enc, (const VkPhysicalDevicePushDescriptorPropertiesKHR *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:
             vn_encode_simple_pointer(enc, pnext);
             vn_encode_VkStructureType(enc, &pnext->sType);
@@ -11550,6 +11610,14 @@ vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(struct vn_cs_decoder *d
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
             vn_decode_VkPhysicalDeviceMultiDrawPropertiesEXT_self_partial_temp(dec, (VkPhysicalDeviceMultiDrawPropertiesEXT *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDevicePushDescriptorPropertiesKHR));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDevicePushDescriptorPropertiesKHR_self_partial_temp(dec, (VkPhysicalDevicePushDescriptorPropertiesKHR *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:

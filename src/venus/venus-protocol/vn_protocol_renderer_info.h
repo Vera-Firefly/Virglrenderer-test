@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[95];
+      bool enabled[96];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -87,6 +87,7 @@ struct vn_info_extension_table {
          bool KHR_maintenance3;
          bool KHR_maintenance4;
          bool KHR_multiview;
+         bool KHR_push_descriptor;
          bool KHR_relaxed_block_layout;
          bool KHR_sampler_mirror_clamp_to_edge;
          bool KHR_sampler_ycbcr_conversion;
@@ -122,8 +123,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 95;
-static const struct vn_info_extension _vn_info_extensions[95] = {
+static const uint32_t _vn_info_extension_count = 96;
+static const struct vn_info_extension _vn_info_extensions[96] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
@@ -197,6 +198,7 @@ static const struct vn_info_extension _vn_info_extensions[95] = {
    { "VK_KHR_maintenance3", 169, 1 },
    { "VK_KHR_maintenance4", 414, 2 },
    { "VK_KHR_multiview", 54, 1 },
+   { "VK_KHR_push_descriptor", 81, 2 },
    { "VK_KHR_relaxed_block_layout", 145, 1 },
    { "VK_KHR_sampler_mirror_clamp_to_edge", 15, 3 },
    { "VK_KHR_sampler_ycbcr_conversion", 157, 14 },

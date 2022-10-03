@@ -329,6 +329,8 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetMemoryFdPropertiesKHR_EXT = 194,
     VK_COMMAND_TYPE_vkImportSemaphoreFdKHR_EXT = 242,
     VK_COMMAND_TYPE_vkGetSemaphoreFdKHR_EXT = 243,
+    VK_COMMAND_TYPE_vkCmdPushDescriptorSetKHR_EXT = 249,
+    VK_COMMAND_TYPE_vkCmdPushDescriptorSetWithTemplateKHR_EXT = 250,
     VK_COMMAND_TYPE_vkCmdBeginConditionalRenderingEXT_EXT = 240,
     VK_COMMAND_TYPE_vkCmdEndConditionalRenderingEXT_EXT = 241,
     VK_COMMAND_TYPE_vkImportFenceFdKHR_EXT = 238,
@@ -1556,6 +1558,15 @@ struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 {
     VkSparseImageFormatProperties2* pProperties;
 };
 
+struct vn_command_vkCmdPushDescriptorSetKHR {
+    VkCommandBuffer commandBuffer;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipelineLayout layout;
+    uint32_t set;
+    uint32_t descriptorWriteCount;
+    const VkWriteDescriptorSet* pDescriptorWrites;
+};
+
 struct vn_command_vkTrimCommandPool {
     VkDevice device;
     VkCommandPool commandPool;
@@ -1693,6 +1704,14 @@ struct vn_command_vkUpdateDescriptorSetWithTemplate {
     VkDevice device;
     VkDescriptorSet descriptorSet;
     VkDescriptorUpdateTemplate descriptorUpdateTemplate;
+    const void* pData;
+};
+
+struct vn_command_vkCmdPushDescriptorSetWithTemplateKHR {
+    VkCommandBuffer commandBuffer;
+    VkDescriptorUpdateTemplate descriptorUpdateTemplate;
+    VkPipelineLayout layout;
+    uint32_t set;
     const void* pData;
 };
 
@@ -2372,6 +2391,7 @@ struct vn_dispatch_context {
     void (*dispatch_vkGetPhysicalDeviceQueueFamilyProperties2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceQueueFamilyProperties2 *args);
     void (*dispatch_vkGetPhysicalDeviceMemoryProperties2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceMemoryProperties2 *args);
     void (*dispatch_vkGetPhysicalDeviceSparseImageFormatProperties2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceSparseImageFormatProperties2 *args);
+    void (*dispatch_vkCmdPushDescriptorSetKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdPushDescriptorSetKHR *args);
     void (*dispatch_vkTrimCommandPool)(struct vn_dispatch_context *ctx, struct vn_command_vkTrimCommandPool *args);
     void (*dispatch_vkGetPhysicalDeviceExternalBufferProperties)(struct vn_dispatch_context *ctx, struct vn_command_vkGetPhysicalDeviceExternalBufferProperties *args);
     void (*dispatch_vkGetMemoryFdKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkGetMemoryFdKHR *args);
@@ -2391,6 +2411,7 @@ struct vn_dispatch_context {
     void (*dispatch_vkCreateDescriptorUpdateTemplate)(struct vn_dispatch_context *ctx, struct vn_command_vkCreateDescriptorUpdateTemplate *args);
     void (*dispatch_vkDestroyDescriptorUpdateTemplate)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroyDescriptorUpdateTemplate *args);
     void (*dispatch_vkUpdateDescriptorSetWithTemplate)(struct vn_dispatch_context *ctx, struct vn_command_vkUpdateDescriptorSetWithTemplate *args);
+    void (*dispatch_vkCmdPushDescriptorSetWithTemplateKHR)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdPushDescriptorSetWithTemplateKHR *args);
     void (*dispatch_vkGetBufferMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetBufferMemoryRequirements2 *args);
     void (*dispatch_vkGetImageMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetImageMemoryRequirements2 *args);
     void (*dispatch_vkGetImageSparseMemoryRequirements2)(struct vn_dispatch_context *ctx, struct vn_command_vkGetImageSparseMemoryRequirements2 *args);
