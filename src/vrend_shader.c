@@ -3122,14 +3122,17 @@ static void translate_tex(struct dump_ctx *ctx,
    }
 
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_TXB2:
-   case TGSI_OPCODE_TXL2:
    case TGSI_OPCODE_TEX2:
       sampler_index = 2;
-      if (inst->Instruction.Opcode != TGSI_OPCODE_TEX2)
+      if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
          strbuf_appendf(&bias_buf, ", %s.x", srcs[1]);
-      else if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
-         strbuf_appendf(&bias_buf, ", float(%s)", srcs[1]);
+      break;
+   case TGSI_OPCODE_TXB2:
+   case TGSI_OPCODE_TXL2:
+      sampler_index = 2;
+      strbuf_appendf(&bias_buf, ", %s.x", srcs[1]);
+      if (inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY)
+         strbuf_appendf(&bias_buf, ", %s.y", srcs[1]);
       break;
    case TGSI_OPCODE_TXB:
    case TGSI_OPCODE_TXL:
