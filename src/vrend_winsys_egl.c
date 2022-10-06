@@ -430,6 +430,9 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
       return NULL;
    }
 
+   gbm = virgl_gbm_init(-1);
+   egl->gbm = gbm;
+
    return egl;
 }
 
