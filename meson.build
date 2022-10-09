@@ -156,7 +156,7 @@ elif host_machine.endian() == 'big'
   conf_data.set('UTIL_ARCH_LITTLE_ENDIAN', 0)
   conf_data.set('UTIL_ARCH_BIG_ENDIAN', 1)
 else
-  error('It wasn\'t possible to figure out the endianess of the machine')  
+  error('It wasn\'t possible to figure out the endianess of the machine')
 endif
 
 pipe_arch = host_machine.cpu_family()
@@ -180,7 +180,7 @@ else
 endif
 
 if get_option('buildtype') == 'debug'
-   add_global_arguments('-DDEBUG=1', language : 'c')
+   add_project_arguments('-DDEBUG=1', language : 'c')
 endif
 
 platforms = get_option('platforms')
@@ -291,7 +291,7 @@ configure_file(input : 'config.h.meson',
                output : 'config.h',
                configuration : conf_data)
 
-add_project_arguments('-imacros', meson.build_root() / 'config.h', language : 'c')
+add_project_arguments('-imacros', meson.current_build_dir() / 'config.h', language : 'c')
 add_project_arguments('-DHAVE_CONFIG_H=1', language : 'c')
 
 inc_configuration = include_directories(['.', 'src'])
