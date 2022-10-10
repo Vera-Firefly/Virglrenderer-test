@@ -3835,7 +3835,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    enum pipe_shader_type next_type = PIPE_SHADER_INVALID;
 
    if (type == PIPE_SHADER_FRAGMENT) {
-      key->fs.invert_origin = !sub_ctx->fbo_origin_upper_left;
+      key->fs.lower_left_origin = !sub_ctx->fbo_origin_upper_left;
       key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
       key->fs.needs_manual_srgb_encode_bitmask = sub_ctx->needs_manual_srgb_encode_bitmask;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {

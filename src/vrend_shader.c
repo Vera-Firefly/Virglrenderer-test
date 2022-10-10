@@ -603,13 +603,12 @@ static inline bool fs_emit_layout(const struct dump_ctx *ctx)
 {
    if (ctx->fs_pixel_center)
       return true;
-   /* if coord origin is 0 and invert is 0 - emit origin_upper_left,
-      if coord_origin is 0 and invert is 1 - emit nothing (lower)
-      if coord origin is 1 and invert is 0 - emit nothing (lower)
-      if coord_origin is 1 and invert is 1 - emit origin upper left */
-   if (!(ctx->fs_coord_origin ^ ctx->key->fs.invert_origin))
-      return true;
-   return false;
+
+   /* if coord origin is 0 and lower_left_origin is 0 - emit origin_upper_left,
+      if coord_origin is 0 and lower_left_origin is 1 - emit nothing (lower)
+      if coord origin is 1 and lower_left_origin is 0 - emit nothing (lower)
+      if coord_origin is 1 and lower_left_origin is 1 - emit origin_upper_left */
+   return ctx->fs_coord_origin == ctx->key->fs.lower_left_origin;
 }
 
 static const char *get_stage_input_name_prefix(const struct dump_ctx *ctx, int processor)
@@ -6998,7 +6997,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
    uint32_t i;
 
    if (fs_emit_layout(ctx)) {
-      bool upper_left = !(ctx->fs_coord_origin ^ ctx->key->fs.invert_origin);
+      bool upper_left = ctx->fs_coord_origin == ctx->key->fs.lower_left_origin;
       char comma = (upper_left && ctx->fs_pixel_center) ? ',' : ' ';
 
       if (!ctx->cfg->use_gles)
