@@ -195,6 +195,13 @@ spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT32
 spec@arb_draw_indirect@arb_draw_indirect-draw-elements-prim-restart-ugly,Fail
 spec@arb_enhanced_layouts@linker@component-layout@intrastage-vs,Fail
 spec@arb_enhanced_layouts@linker@component-layout@vs-to-fs,Fail
+spec@arb_enhanced_layouts@matching_basic_types_3_loc_1,Fail
+spec@arb_enhanced_layouts@matching_fp64_types_1,Crash
+spec@arb_enhanced_layouts@matching_fp64_types_1_loc_1,Fail
+spec@arb_enhanced_layouts@matching_fp64_types_2,Crash
+spec@arb_enhanced_layouts@matching_fp64_types_2_loc_1,Fail
+spec@arb_enhanced_layouts@matching_fp64_types_3,Crash
+spec@arb_enhanced_layouts@matching_fp64_types_3_loc_1,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
@@ -258,7 +265,6 @@ spec@arb_sample_shading@samplemask 4@noms mask_in_one,Fail
 spec@arb_sample_shading@samplemask 4@noms partition,Fail
 spec@arb_sample_shading@samplemask 4@sample mask_in_one,Fail
 spec@arb_seamless_cube_map@arb_seamless_cubemap,Fail
-spec@arb_shader_atomic_counters@fragment-discard,Fail
 spec@arb_shader_image_load_store@early-z,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/late-z pass,Fail
@@ -645,6 +651,7 @@ spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SR
 spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SRGB_ALPHA- swizzled- border color only,Fail
 spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SRGB_S3TC_DXT1_EXT- swizzled- border color only,Fail
 spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SRGB- swizzled- border color only,Fail
+spec@ext_transform_feedback@builtin-varyings gl_culldistance,Fail
 spec@ext_transform_feedback@immediate-reuse-index-buffer,Fail
 spec@ext_transform_feedback@immediate-reuse-uniform-buffer,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
@@ -662,47 +669,6 @@ spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2d_projvec4,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 2dshadow,Fail
 spec@glsl-1.20@execution@tex-miplevel-selection gl2:textureproj 3d,Fail
 spec@glsl-1.30@execution@fs-texturelod-miplevels-biased,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-mixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-flat-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-smooth-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-smooth-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-smooth-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backcolor-smooth-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-flat-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-flat-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-flat-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-flat-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-smooth-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-smooth-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-smooth-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_backsecondarycolor-smooth-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-flat-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-flat-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-flat-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-flat-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-smooth-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-smooth-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-smooth-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontcolor-smooth-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-flat-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-flat-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-flat-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-flat-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-smooth-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-smooth-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-smooth-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-gl_frontsecondarycolor-smooth-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-flat-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-flat-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-flat-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-flat-vertex,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-smooth-distance,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-smooth-fixed,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-smooth-none,Fail
-spec@glsl-1.30@execution@interpolation@interpolation-noperspective-other-smooth-vertex,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 1darray,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 1darrayshadow,Fail
 spec@glsl-1.30@execution@tex-miplevel-selection texture() 1d,Fail
@@ -817,7 +783,6 @@ spec@glsl-1.50@execution@geometry@primitive-id-restart gl_triangle_fan other,Fai
 spec@glsl-1.50@execution@geometry@primitive-id-restart gl_triangle_strip other,Fail
 spec@glsl-1.50@execution@geometry@tri-strip-ordering-with-prim-restart gl_triangle_strip_adjacency other,Fail
 spec@glsl-1.50@execution@geometry@tri-strip-ordering-with-prim-restart gl_triangle_strip other,Fail
-spec@glsl-1.50@execution@gs-also-uses-smooth-flat-noperspective,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-first-vertex,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
@@ -2398,6 +2363,9 @@ spec@!opengl 1.0@gl-1.0-logicop@GL_NOOP,Fail
 spec@!opengl 1.0@gl-1.0-logicop@GL_NOOP_MSAA,Fail
 spec@!opengl 1.0@gl-1.0-spot-light,Fail
 spec@!opengl 1.0@gl-1.0-swapbuffers-behavior,ExpectedFail
+spec@!opengl 1.0@rasterpos,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
+spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@clipflat,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center bottom PV: FIRST,Fail
 spec@!opengl 1.1@clipflat@glBegin/End(GL_POLYGON)- glFrontFace(GL_CCW)- glPolygonMode(GL_FILL)- quadrant: center middle PV: FIRST,Fail
@@ -3093,9 +3061,6 @@ spec@!opengl 1.1@polygon-mode-offset@config 6: Expected blue pixel in center,Fai
 spec@!opengl 1.1@polygon-mode-offset@config 6: Expected white pixel on right edge,Fail
 spec@!opengl 1.1@polygon-mode-offset@config 6: Expected white pixel on top edge,Fail
 spec@!opengl 1.1@polygon-mode-offset,ExpectedFail
-spec@!opengl 1.0@rasterpos,Fail
-spec@!opengl 1.0@rasterpos@glsl_vs_gs_linked,Fail
-spec@!opengl 1.0@rasterpos@glsl_vs_tes_linked,Fail
 spec@!opengl 1.1@read-front clear-front-first,Crash
 spec@!opengl 1.1@read-front clear-front-first samples=2,Crash
 spec@!opengl 1.1@read-front clear-front-first samples=4,Crash

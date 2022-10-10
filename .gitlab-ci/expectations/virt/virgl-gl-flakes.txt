@@ -51,6 +51,7 @@ spec@glsl-4.00@execution@built-in-functions@gs-mix-dvec2-dvec2-dvec2
 spec@glsl-4.00@execution@built-in-functions@vs-op-mult-dmat3x4-dvec3
 spec@glsl-4.30@execution@built-in-functions@cs-op-bitand-not-uvec2-uvec2
 spec@glsl-4.30@execution@built-in-functions@cs-op-bitor-abs-not-int-ivec4
+spec@glsl-4.50@execution@ssbo-atomiccompswap-int
 spec@oes_texture_view@sampling-2d-array-as-2d-layer
 spec@oes_viewport_array@viewport-gs-writes-in-range
 spec@!opengl 1.0@gl-1.0-drawbuffer-modes
