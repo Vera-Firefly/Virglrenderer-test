@@ -697,7 +697,7 @@ struct vrend_sub_context {
    bool viewport_is_negative;
    /* this is set if the contents of the FBO look upside down when viewed
       with 0,0 as the bottom corner */
-   bool inverted_fbo_content;
+   bool fbo_origin_upper_left;
 
    GLuint blit_fb_ids[2];
 
@@ -2980,7 +2980,7 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
    int old_num;
    GLenum status;
    GLint new_height = -1;
-   bool new_ibf = false;
+   bool new_fbo_origin_upper_left = false;
 
    struct vrend_sub_context *sub_ctx = ctx->sub;
 
@@ -3029,10 +3029,10 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
    /* find a buffer to set fb_height from */
    if (sub_ctx->nr_cbufs == 0 && !sub_ctx->zsurf) {
       new_height = 0;
-      new_ibf = false;
+      new_fbo_origin_upper_left = false;
    } else if (sub_ctx->nr_cbufs == 0) {
       new_height = u_minify(sub_ctx->zsurf->texture->base.height0, sub_ctx->zsurf->val0);
-      new_ibf = sub_ctx->zsurf->texture->y_0_top ? true : false;
+      new_fbo_origin_upper_left = sub_ctx->zsurf->texture->y_0_top ? true : false;
    }
    else {
       surf = NULL;
@@ -3047,13 +3047,14 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
          return;
       }
       new_height = u_minify(surf->texture->base.height0, surf->val0);
-      new_ibf = surf->texture->y_0_top ? true : false;
+      new_fbo_origin_upper_left = surf->texture->y_0_top ? true : false;
    }
 
    if (new_height != -1) {
-      if (sub_ctx->fb_height != (uint32_t)new_height || sub_ctx->inverted_fbo_content != new_ibf) {
+      if (sub_ctx->fb_height != (uint32_t)new_height ||
+          sub_ctx->fbo_origin_upper_left != new_fbo_origin_upper_left) {
          sub_ctx->fb_height = new_height;
-         sub_ctx->inverted_fbo_content = new_ibf;
+         sub_ctx->fbo_origin_upper_left = new_fbo_origin_upper_left;
          sub_ctx->viewport_state_dirty = (1 << 0);
       }
    }
@@ -3834,7 +3835,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
    enum pipe_shader_type next_type = PIPE_SHADER_INVALID;
 
    if (type == PIPE_SHADER_FRAGMENT) {
-      key->fs.invert_origin = !sub_ctx->inverted_fbo_content;
+      key->fs.invert_origin = !sub_ctx->fbo_origin_upper_left;
       key->fs.swizzle_output_rgb_to_bgr = sub_ctx->swizzle_output_rgb_to_bgr;
       key->fs.needs_manual_srgb_encode_bitmask = sub_ctx->needs_manual_srgb_encode_bitmask;
       if (vrend_state.use_gles && can_emulate_logicop(sub_ctx->blend_state.logicop_func)) {
@@ -6211,7 +6212,7 @@ static void vrend_update_frontface_state(struct vrend_sub_context *sub_ctx)
    struct pipe_rasterizer_state *state = &sub_ctx->rs_state;
    int front_ccw = state->front_ccw;
 
-   front_ccw ^= (sub_ctx->inverted_fbo_content ? 0 : 1);
+   front_ccw ^= (sub_ctx->fbo_origin_upper_left ? 0 : 1);
    if (front_ccw)
       glFrontFace(GL_CCW);
    else
