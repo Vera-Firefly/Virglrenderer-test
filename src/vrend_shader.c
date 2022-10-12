@@ -314,6 +314,7 @@ struct dump_ctx {
    int tes_vertex_order;
    int tes_point_mode;
    bool is_last_vertex_stage;
+   bool require_dummy_value;
 
    uint16_t local_cs_block_size[3];
 };
@@ -2835,25 +2836,32 @@ static const char *get_tex_inst_ext(const struct tgsi_full_instruction *inst)
    }
 }
 
-static void get_temp(const struct dump_ctx *ctx,
-              bool indirect_dim, int dim, int reg,
-              char buf[static 64])
+static void
+get_temp(const struct dump_ctx *ctx,
+         bool indirect_dim, int dim, int reg,
+         char buf[static 64], bool *require_dummy_value)
 {
    struct vrend_temp_range *range = find_temp_range(ctx, reg);
-   if (indirect_dim) {
-      snprintf(buf, 64, "temp%d[addr%d + %d]", range->first, dim, reg - range->first);
-   } else {
-      if (range->array_id > 0) {
-         snprintf(buf, 64, "temp%d[%d]", range->first, reg - range->first);
+   if (range) {
+      if (indirect_dim) {
+         snprintf(buf, 64, "temp%d[addr%d + %d]", range->first, dim, reg - range->first);
       } else {
-         snprintf(buf, 64, "temp%d", reg);
+         if (range->array_id > 0) {
+            snprintf(buf, 64, "temp%d[%d]", range->first, reg - range->first);
+         } else {
+            snprintf(buf, 64, "temp%d", reg);
+         }
       }
+   } else {
+      snprintf(buf, 64, "dummy_value");
+      *require_dummy_value = true;
    }
 }
 
 static bool fill_offset_buffer(const struct dump_ctx *ctx,
                                const struct tgsi_full_instruction *inst,
-                               struct vrend_strbuf *offset_buf)
+                               struct vrend_strbuf *offset_buf,
+                               bool *require_dummy_value)
 {
    if (inst->TexOffsets[0].File == TGSI_FILE_IMMEDIATE) {
       const struct immed *imd = &ctx->imm[inst->TexOffsets[0].Index];
@@ -2885,7 +2893,7 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
       }
    } else if (inst->TexOffsets[0].File == TGSI_FILE_TEMPORARY) {
       char temp_buf[64];
-      get_temp(ctx, false, 0, inst->TexOffsets[0].Index, temp_buf);
+      get_temp(ctx, false, 0, inst->TexOffsets[0].Index, temp_buf, require_dummy_value);
       switch (inst->Texture.Texture) {
       case TGSI_TEXTURE_1D:
       case TGSI_TEXTURE_1D_ARRAY:
@@ -3249,7 +3257,7 @@ static void translate_tex(struct dump_ctx *ctx,
          goto cleanup;
       }
 
-      if (!fill_offset_buffer(ctx, inst, &offset_buf)) {
+      if (!fill_offset_buffer(ctx, inst, &offset_buf, &ctx->require_dummy_value)) {
          set_buf_error(&ctx->glsl_strbufs);
          goto cleanup;
       }
@@ -4331,14 +4339,15 @@ get_destination_info(struct dump_ctx *ctx,
       }
       else if (dst_reg->Register.File == TGSI_FILE_TEMPORARY) {
          char temp_buf[64];
-         get_temp(ctx, dst_reg->Register.Indirect, 0, dst_reg->Register.Index, temp_buf);
-         struct vrend_temp_range *range = find_temp_range(ctx, dst_reg->Register.Index);
-         if (!range)
-            return false;
+         get_temp(ctx, dst_reg->Register.Indirect, 0, dst_reg->Register.Index,
+                  temp_buf, &ctx->require_dummy_value);
          strbuf_fmt(&dst_bufs[i], "%s%s", temp_buf, writemask);
          if (inst->Instruction.Precise) {
-            range->precise_result |= true;
-            ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            struct vrend_temp_range *range = find_temp_range(ctx, dst_reg->Register.Index);
+            if (range) {
+               range->precise_result |= true;
+               ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            }
          }
       }
       else if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
@@ -4705,7 +4714,8 @@ get_source_info(struct dump_ctx *ctx,
             stypeprefix = FLOAT_BITS_TO_INT;
          }
          char temp_buf[64];
-         get_temp(ctx, src->Register.Indirect, src->Indirect.Index, src->Register.Index, temp_buf);
+         get_temp(ctx, src->Register.Indirect, src->Indirect.Index, src->Register.Index,
+                  temp_buf, &ctx->require_dummy_value);
          strbuf_fmt(src_buf, "%s%c%s%s%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, temp_buf, swizzle, stprefix ? ')' : ' ');
       } else if (src->Register.File == TGSI_FILE_CONSTANT) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
@@ -6413,6 +6423,9 @@ static int emit_ios_common(const struct dump_ctx *ctx,
          emit_hdrf(glsl_strbufs, "%s vec4 temp%d;\n", precise, ctx->temp_ranges[i].first);
       }
    }
+
+   if (ctx->require_dummy_value)
+      emit_hdr(glsl_strbufs, "vec4 dummy_value = vec4(0.0, 0.0, 0.0, 0.0);\n");
 
    if (ctx->write_mul_utemp) {
       emit_hdr(glsl_strbufs, "uvec4 mul_utemp;\n");
