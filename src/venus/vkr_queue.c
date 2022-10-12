@@ -402,6 +402,18 @@ vkr_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_dispatch_vkQueueSubmit2(UNUSED struct vn_dispatch_context *dispatch,
+                            struct vn_command_vkQueueSubmit2 *args)
+{
+   struct vkr_queue *queue = vkr_queue_from_handle(args->queue);
+   struct vn_device_proc_table *vk = &queue->device->proc_table;
+
+   vn_replace_vkQueueSubmit2_args_handle(args);
+   args->ret =
+      vk->QueueSubmit2(args->queue, args->submitCount, args->pSubmits, args->fence);
+}
+
+static void
 vkr_dispatch_vkCreateFence(struct vn_dispatch_context *dispatch,
                            struct vn_command_vkCreateFence *args)
 {
@@ -643,6 +655,9 @@ vkr_context_init_queue_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkQueueSubmit = vkr_dispatch_vkQueueSubmit;
    dispatch->dispatch_vkQueueBindSparse = vkr_dispatch_vkQueueBindSparse;
    dispatch->dispatch_vkQueueWaitIdle = vkr_dispatch_vkQueueWaitIdle;
+
+   /* VK_KHR_synchronization2 */
+   dispatch->dispatch_vkQueueSubmit2 = vkr_dispatch_vkQueueSubmit2;
 }
 
 void
