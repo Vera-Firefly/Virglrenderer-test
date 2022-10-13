@@ -195,7 +195,8 @@ int vrend_winsys_has_gl_colorspace(void)
 #endif
    return use_context == CONTEXT_NONE ||
          use_context == CONTEXT_GLX ||
-         (use_context == CONTEXT_EGL && egl_colorspace);
+         (use_context == CONTEXT_EGL && egl_colorspace) ||
+         (use_context == CONTEXT_EGL_EXTERNAL && egl_colorspace);
 }
 
 int vrend_winsys_get_fourcc_for_texture(uint32_t tex_id, uint32_t format, int *fourcc)
