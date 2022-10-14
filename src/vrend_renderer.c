@@ -6031,13 +6031,12 @@ static void vrend_hw_emit_blend(struct vrend_sub_context *sub_ctx, struct pipe_b
       if (state->rt[0].colormask != sub_ctx->hw_blend_state.rt[0].colormask ||
           (sub_ctx->hw_blend_state.independent_blend_enable &&
            !state->independent_blend_enable)) {
-         int i;
-         for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-            sub_ctx->hw_blend_state.rt[i].colormask = state->rt[i].colormask;
          glColorMask(state->rt[0].colormask & PIPE_MASK_R ? GL_TRUE : GL_FALSE,
                      state->rt[0].colormask & PIPE_MASK_G ? GL_TRUE : GL_FALSE,
                      state->rt[0].colormask & PIPE_MASK_B ? GL_TRUE : GL_FALSE,
                      state->rt[0].colormask & PIPE_MASK_A ? GL_TRUE : GL_FALSE);
+         for (int i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+            sub_ctx->hw_blend_state.rt[i].colormask = state->rt[0].colormask;
       }
    }
    sub_ctx->hw_blend_state.independent_blend_enable = state->independent_blend_enable;
