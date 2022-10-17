@@ -139,7 +139,6 @@ make check venus:
   extends: .make_check_base
   variables:
     TEST_SUITE: make-check-venus
-    EXTRA_OPTION: "-D venus-experimental=true"
 
 #
 # Piglit & dEQP test jobs
@@ -163,6 +162,37 @@ make check venus:
     - .gitlab-ci/container/debian/x86_test.sh
   artifacts:
     name: "virgl-result"
+    when: always
+    paths:
+      - results/
+    reports:
+      junit: results/junit.xml
+  needs:
+    - job: debian/x86_build
+      artifacts: true
+  rules:
+    - if: *is-post-merge
+      when: never
+    - when: on_success
+
+.use-vk-test-image:
+  stage: test
+  extends:
+    - .set-image-base-tag
+  before_script:
+    - echo -n "${CI_JOB_JWT}" > "${CI_JOB_JWT_FILE}"
+    - unset CI_JOB_JWT
+    - export CI_JOB_NAME_SANITIZED="$(echo $CI_JOB_NAME | tr ' /' '--')"
+  variables:
+    CI_JOB_JWT_FILE: /minio_jwt
+    MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_PATH}
+    MESA_IMAGE_TAG: ${DEBIAN_X86_TEST_VK_TAG}
+  script:
+    - export DEQP_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
+    - export PIGLIT_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
+    - .gitlab-ci/container/debian/x86_test.sh
+  artifacts:
+    name: "venus-result"
     when: always
     paths:
       - results/
@@ -295,3 +325,25 @@ virgl-traces:
     PIGLIT_REPLAY_DESCRIPTION_FILE: "${CI_PROJECT_DIR}/install/traces-virgl.yml"
     PIGLIT_REPLAY_DEVICE_NAME: "gl-virgl"
     PIGLIT_RESULTS: "virgl-replay"
+
+.venus-lavapipe-test:
+  extends:
+    - .use-vk-test-image
+  variables:
+    VK_DRIVER: virtio
+    CROSVM_GALLIUM_DRIVER: "llvmpipe"
+    CROSVM_VK_DRIVER: "lvp"
+
+venus-lavapipe:
+  extends:
+    - .venus-lavapipe-test
+  variables:
+    DEQP_FRACTION: 15
+    DEQP_SUITE: venus
+    GPU_VERSION: venus
+    LP_NUM_THREADS: 1 # There will be FDO_CI_CONCURRENT Crosvm processes, so each should use a single thread
+    FDO_CI_CONCURRENT: 32 # Seems to be the fastest value, more gets actually slower
+    CROSVM_MEMORY: 3072
+    CROSVM_GPU_ARGS: "vulkan=true,gles=false,backend=virglrenderer,egl=true,surfaceless=true"
+  tags:
+    - mesa-swrast

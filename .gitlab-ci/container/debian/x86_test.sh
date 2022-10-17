@@ -38,7 +38,7 @@ fi
 cp -a ${CI_PROJECT_DIR}/install/bin/virgl_test_server /usr/local/bin/
 cp -a ${CI_PROJECT_DIR}/install/lib/libvirglrenderer.so* /usr/local/lib/
 
-if [ "${GALLIUM_DRIVER}" = "virgl" ]; then
+if [ "${VK_DRIVER}" = "virtio" ] || [ "${GALLIUM_DRIVER}" = "virgl" ]; then
     #
     # Run the tests on virtual platform (virgl/crosvm)
     #

@@ -71,6 +71,7 @@ meson _build --native-file=native.file \
     ${DRI_LOADERS} \
     ${GALLIUM_ST} \
     -D tests=true \
+    -D venus-experimental=true \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
 pushd _build && \
