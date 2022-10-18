@@ -271,7 +271,7 @@ struct dump_ctx {
    bool write_all_cbufs;
    uint32_t shadow_samp_mask;
 
-   int fs_coord_origin, fs_pixel_center;
+   bool fs_lower_left_origin, fs_integer_pixel_center;
    int fs_depth_layout;
    uint32_t fs_blend_equation_advanced;
 
@@ -601,14 +601,14 @@ static inline int gs_input_prim_to_size(int prim)
 
 static inline bool fs_emit_layout(const struct dump_ctx *ctx)
 {
-   if (ctx->fs_pixel_center)
+   if (ctx->fs_integer_pixel_center)
       return true;
 
-   /* if coord origin is 0 and lower_left_origin is 0 - emit origin_upper_left,
-      if coord_origin is 0 and lower_left_origin is 1 - emit nothing (lower)
-      if coord origin is 1 and lower_left_origin is 0 - emit nothing (lower)
-      if coord_origin is 1 and lower_left_origin is 1 - emit origin_upper_left */
-   return ctx->fs_coord_origin == ctx->key->fs.lower_left_origin;
+   /* if fs_lower_left_origin is 0 and lower_left_origin is 0 - emit origin_upper_left,
+      if fs_lower_left_origin is 0 and lower_left_origin is 1 - emit nothing (lower)
+      if fs_lower_left_origin is 1 and lower_left_origin is 0 - emit nothing (lower)
+      if fs_lower_left_origin is 1 and lower_left_origin is 1 - emit origin_upper_left */
+   return ctx->fs_lower_left_origin == ctx->key->fs.lower_left_origin;
 }
 
 static const char *get_stage_input_name_prefix(const struct dump_ctx *ctx, int processor)
@@ -1450,7 +1450,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].glsl_no_index = true;
             ctx->inputs[i].glsl_gl_block = true;
          } else if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
-            if (ctx->cfg->use_gles && ctx->fs_pixel_center) {
+            if (ctx->cfg->use_gles && ctx->fs_integer_pixel_center) {
                name_prefix = "(gl_FragCoord - vec4(0.5, 0.5, 0.0, 0.0))";
             } else
                name_prefix = "gl_FragCoord";
@@ -1952,10 +1952,10 @@ iter_property(struct tgsi_iterate_context *iter,
          ctx->write_all_cbufs = true;
       break;
    case TGSI_PROPERTY_FS_COORD_ORIGIN:
-      ctx->fs_coord_origin = prop->u[0].Data;
+      ctx->fs_lower_left_origin = prop->u[0].Data ? true : false;
       break;
    case TGSI_PROPERTY_FS_COORD_PIXEL_CENTER:
-      ctx->fs_pixel_center = prop->u[0].Data;
+      ctx->fs_integer_pixel_center = prop->u[0].Data ? true : false;
       break;
    case TGSI_PROPERTY_FS_DEPTH_LAYOUT:
       /* If the host doesn't support this, then we can savely ignore this,
@@ -6997,14 +6997,14 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
    uint32_t i;
 
    if (fs_emit_layout(ctx)) {
-      bool upper_left = ctx->fs_coord_origin == ctx->key->fs.lower_left_origin;
-      char comma = (upper_left && ctx->fs_pixel_center) ? ',' : ' ';
+      bool upper_left = ctx->fs_lower_left_origin == ctx->key->fs.lower_left_origin;
+      char comma = (upper_left && ctx->fs_integer_pixel_center) ? ',' : ' ';
 
       if (!ctx->cfg->use_gles)
          emit_hdrf(glsl_strbufs, "layout(%s%c%s) in vec4 gl_FragCoord;\n",
                    upper_left ? "origin_upper_left" : "",
                    comma,
-                   ctx->fs_pixel_center ? "pixel_center_integer" : "");
+                   ctx->fs_integer_pixel_center ? "pixel_center_integer" : "");
    }
    if (ctx->early_depth_stencil) {
       emit_hdr(glsl_strbufs, "layout(early_fragment_tests) in;\n");
