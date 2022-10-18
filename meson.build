@@ -230,17 +230,6 @@ if with_glx
    endif
 endif
 
-with_venus = get_option('venus-experimental')
-with_venus_validate = get_option('venus-validate')
-if with_venus
-   venus_dep = dependency('vulkan')
-   conf_data.set('ENABLE_VENUS', 1)
-
-   if with_venus_validate
-      conf_data.set('ENABLE_VENUS_VALIDATE', 1)
-   endif
-endif
-
 have_vla = not cc.has_header_symbol('stdlib.h', '__STDC_NO_VLA__')
 
 # drm/msm support requires the compiler to support VLA:
@@ -260,8 +249,15 @@ with_render_server = get_option('render-server')
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
 if with_render_server
-   if not with_venus
-      error('render server makes no sense without venus currently')
+   with_venus = get_option('venus-experimental')
+   assert(with_venus, 'render server makes no sense without venus')
+
+   venus_dep = dependency('vulkan')
+
+   conf_data.set('ENABLE_VENUS', 1)
+
+   if get_option('venus-validate')
+      conf_data.set('ENABLE_VENUS_VALIDATE', 1)
    endif
 
    conf_data.set('ENABLE_RENDER_SERVER', 1)
