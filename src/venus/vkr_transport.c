@@ -7,7 +7,6 @@
 
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
 #include "venus-protocol/vn_protocol_renderer_transport.h"
-#include "vrend_iov.h"
 
 #include "vkr_context.h"
 #include "vkr_ring.h"
@@ -40,63 +39,6 @@ vkr_dispatch_vkSeekReplyCommandStreamMESA(
    vkr_cs_encoder_seek_stream(&ctx->encoder, args->position);
 }
 
-static void *
-copy_command_stream(struct vkr_context *ctx, const VkCommandStreamDescriptionMESA *stream)
-{
-   struct vkr_resource_attachment *att;
-
-   att = vkr_context_get_resource(ctx, stream->resourceId);
-   if (!att) {
-      vkr_log("failed to copy command stream: invalid res_id %u", stream->resourceId);
-      return NULL;
-   }
-
-   /* seek to offset */
-   size_t iov_offset = stream->offset;
-   const struct iovec *iov = NULL;
-   for (int i = 0; i < att->iov_count; i++) {
-      if (iov_offset < att->iov[i].iov_len) {
-         iov = &att->iov[i];
-         break;
-      }
-      iov_offset -= att->iov[i].iov_len;
-   }
-   if (!iov) {
-      vkr_log("failed to copy command stream: invalid offset %zu", stream->offset);
-      return NULL;
-   }
-
-   /* XXX until the decoder supports scatter-gather and is robust enough,
-    * always make a copy in case the caller modifies the commands while we
-    * parse
-    */
-   uint8_t *data = malloc(stream->size);
-   if (!data) {
-      vkr_log("failed to copy command stream: malloc(%zu) failed", stream->size);
-      return NULL;
-   }
-
-   uint32_t copied = 0;
-   while (true) {
-      const size_t s = MIN2(stream->size - copied, iov->iov_len - iov_offset);
-      memcpy(data + copied, (const uint8_t *)iov->iov_base + iov_offset, s);
-
-      copied += s;
-      if (copied == stream->size) {
-         break;
-      } else if (iov == &att->iov[att->iov_count - 1]) {
-         vkr_log("failed to copy command stream: invalid size %zu", stream->size);
-         free(data);
-         return NULL;
-      }
-
-      iov++;
-      iov_offset = 0;
-   }
-
-   return data;
-}
-
 static void
 vkr_dispatch_vkExecuteCommandStreamsMESA(
    struct vn_dispatch_context *dispatch,
@@ -126,20 +68,32 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
       if (!stream->size)
          continue;
 
-      void *data = copy_command_stream(ctx, stream);
-      if (!data) {
+      struct vkr_resource_attachment *att =
+         vkr_context_get_resource(ctx, stream->resourceId);
+      if (!att) {
+         vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
+                 stream->resourceId);
          vkr_cs_decoder_set_fatal(&ctx->decoder);
          break;
       }
 
-      vkr_cs_decoder_set_stream(&ctx->decoder, data, stream->size);
+      assert(att->iov_count == 1);
+
+      if (stream->offset + stream->size > att->iov[0].iov_len) {
+         vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
+                 stream->resourceId);
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         break;
+      }
+
+      vkr_cs_decoder_set_stream(&ctx->decoder,
+                                (const uint8_t *)att->iov[0].iov_base + stream->offset,
+                                stream->size);
       while (vkr_cs_decoder_has_command(&ctx->decoder)) {
          vn_dispatch_command(&ctx->dispatch);
          if (vkr_cs_decoder_get_fatal(&ctx->decoder))
             break;
       }
-
-      free(data);
 
       if (vkr_cs_decoder_get_fatal(&ctx->decoder))
          break;
@@ -184,8 +138,8 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    };
    /* clang-format on */
 
-   const struct vkr_region res_size =
-      VKR_REGION_INIT(0, vrend_get_iovec_size(att->iov, att->iov_count));
+   assert(att->iov_count == 1);
+   const struct vkr_region res_size = VKR_REGION_INIT(0, att->iov[0].iov_len);
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
       return false;
 
