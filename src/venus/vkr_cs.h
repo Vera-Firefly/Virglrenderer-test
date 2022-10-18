@@ -15,24 +15,15 @@
  */
 #define VKR_CS_DECODER_TEMP_POOL_MAX_SIZE (1u * 1024 * 1024 * 1024)
 
-struct iovec;
-
 struct vkr_cs_encoder {
    bool *fatal_error;
 
    struct {
       const struct vkr_resource_attachment *attachment;
-      const struct iovec *iov;
-      int iov_count;
       size_t offset;
       size_t size;
-
-      int cached_index;
-      size_t cached_offset;
    } stream;
 
-   size_t remaining_size;
-   int next_iov;
    uint8_t *cur;
    const uint8_t *end;
 };
@@ -100,12 +91,6 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
 void
 vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos);
 
-void
-vkr_cs_encoder_write_internal(struct vkr_cs_encoder *enc,
-                              size_t size,
-                              const void *val,
-                              size_t val_size);
-
 static inline void
 vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
                      size_t size,
@@ -115,7 +100,8 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
    assert(val_size <= size);
 
    if (unlikely(size > (size_t)(enc->end - enc->cur))) {
-      vkr_cs_encoder_write_internal(enc, size, val, val_size);
+      vkr_log("failed to write the reply stream");
+      vkr_cs_encoder_set_fatal(enc);
       return;
    }
 

@@ -5,8 +5,6 @@
 
 #include "vkr_cs.h"
 
-#include "vrend_iov.h"
-
 #include "vkr_context.h"
 
 void
@@ -17,168 +15,31 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
 {
    if (!att) {
       memset(&enc->stream, 0, sizeof(enc->stream));
-      enc->remaining_size = 0;
-      enc->next_iov = 0;
       enc->cur = NULL;
       enc->end = NULL;
       return;
    }
 
    enc->stream.attachment = att;
-   enc->stream.iov = att->iov;
-   enc->stream.iov_count = att->iov_count;
    enc->stream.offset = offset;
    enc->stream.size = size;
-   /* clear cache */
-   enc->stream.cached_index = 0;
-   enc->stream.cached_offset = 0;
 
    vkr_cs_encoder_seek_stream(enc, 0);
-}
-
-static bool
-vkr_cs_encoder_translate_stream_offset(struct vkr_cs_encoder *enc,
-                                       size_t offset,
-                                       int *iov_index,
-                                       size_t *iov_offset)
-{
-   int idx = 0;
-
-   /* use or clear cache */
-   if (offset >= enc->stream.cached_offset) {
-      offset -= enc->stream.cached_offset;
-      idx = enc->stream.cached_index;
-   } else {
-      enc->stream.cached_index = 0;
-      enc->stream.cached_offset = 0;
-   }
-
-   while (true) {
-      if (idx >= enc->stream.iov_count)
-         return false;
-
-      const struct iovec *iov = &enc->stream.iov[idx];
-      if (offset < iov->iov_len)
-         break;
-
-      idx++;
-      offset -= iov->iov_len;
-
-      /* update cache */
-      enc->stream.cached_index++;
-      enc->stream.cached_offset += iov->iov_len;
-   }
-
-   *iov_index = idx;
-   *iov_offset = offset;
-
-   return true;
-}
-
-static void
-vkr_cs_encoder_update_end(struct vkr_cs_encoder *enc)
-{
-   const struct iovec *iov = &enc->stream.iov[enc->next_iov - 1];
-   const size_t iov_offset = enc->cur - (uint8_t *)iov->iov_base;
-   const size_t iov_remain = iov->iov_len - iov_offset;
-
-   if (enc->remaining_size >= iov_remain) {
-      enc->end = enc->cur + iov_remain;
-      enc->remaining_size -= iov_remain;
-   } else {
-      enc->end = enc->cur + enc->remaining_size;
-      enc->remaining_size = 0;
-   }
 }
 
 void
 vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
 {
    const size_t offset = enc->stream.offset + pos;
-   int iov_index;
-   size_t iov_offset;
-   if (pos > enc->stream.size ||
-       !vkr_cs_encoder_translate_stream_offset(enc, offset, &iov_index, &iov_offset)) {
+   if (pos > enc->stream.size) {
       vkr_log("failed to seek the reply stream to %zu", pos);
       vkr_cs_encoder_set_fatal(enc);
       return;
    }
 
-   enc->remaining_size = enc->stream.size - pos;
-   enc->next_iov = iov_index + 1;
-
-   const struct iovec *iov = &enc->stream.iov[iov_index];
-   enc->cur = iov->iov_base;
-   enc->cur += iov_offset;
-
-   vkr_cs_encoder_update_end(enc);
-}
-
-static bool
-vkr_cs_encoder_next_iov(struct vkr_cs_encoder *enc)
-{
-   if (enc->next_iov >= enc->stream.iov_count)
-      return false;
-
-   const struct iovec *iov = &enc->stream.iov[enc->next_iov++];
-   enc->cur = iov->iov_base;
-   vkr_cs_encoder_update_end(enc);
-
-   return true;
-}
-
-static uint8_t *
-vkr_cs_encoder_get_ptr(struct vkr_cs_encoder *enc, size_t size, size_t *ptr_size)
-{
-   while (true) {
-      uint8_t *ptr = enc->cur;
-      const size_t avail = enc->end - enc->cur;
-
-      if (avail) {
-         *ptr_size = MIN2(size, avail);
-         enc->cur += *ptr_size;
-         return ptr;
-      }
-
-      if (!vkr_cs_encoder_next_iov(enc)) {
-         *ptr_size = 0;
-         return size ? NULL : ptr;
-      }
-   }
-}
-
-void
-vkr_cs_encoder_write_internal(struct vkr_cs_encoder *enc,
-                              size_t size,
-                              const void *val,
-                              size_t val_size)
-{
-   size_t pad_size = size - val_size;
-
-   do {
-      size_t ptr_size;
-      uint8_t *ptr = vkr_cs_encoder_get_ptr(enc, val_size, &ptr_size);
-      if (unlikely(!ptr)) {
-         vkr_log("failed to write value to the reply stream");
-         vkr_cs_encoder_set_fatal(enc);
-         return;
-      }
-
-      memcpy(ptr, val, ptr_size);
-      val = (const uint8_t *)val + ptr_size;
-      val_size -= ptr_size;
-   } while (val_size);
-
-   while (pad_size) {
-      size_t ptr_size;
-      const void *ptr = vkr_cs_encoder_get_ptr(enc, pad_size, &ptr_size);
-      if (unlikely(!ptr)) {
-         vkr_log("failed to write padding to the reply stream");
-         vkr_cs_encoder_set_fatal(enc);
-         return;
-      }
-      pad_size -= ptr_size;
-   }
+   enc->cur = (uint8_t *)enc->stream.attachment->iov[0].iov_base + offset;
+   enc->end = (const uint8_t *)enc->stream.attachment->iov[0].iov_base +
+              enc->stream.attachment->iov[0].iov_len;
 }
 
 void
