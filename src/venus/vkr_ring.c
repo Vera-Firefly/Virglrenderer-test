@@ -8,44 +8,18 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "vrend_iov.h"
-
 #include "vkr_context.h"
 
 enum vkr_ring_status_flag {
    VKR_RING_STATUS_IDLE = 1u << 0,
 };
 
-/* callers must make sure they do not seek to end-of-resource or beyond */
-static const struct iovec *
-seek_resource(const struct vkr_resource_attachment *att,
-              int base_iov_index,
-              size_t offset,
-              int *out_iov_index,
-              size_t *out_iov_offset)
+static inline void *
+get_resource_pointer(const struct vkr_resource_attachment *att, size_t offset)
 {
-   const struct iovec *iov = &att->iov[base_iov_index];
-   assert(iov - att->iov < att->iov_count);
-   while (offset >= iov->iov_len) {
-      offset -= iov->iov_len;
-      iov++;
-      assert(iov - att->iov < att->iov_count);
-   }
-
-   *out_iov_index = iov - att->iov;
-   *out_iov_offset = offset;
-
-   return iov;
-}
-
-static void *
-get_resource_pointer(const struct vkr_resource_attachment *att,
-                     int base_iov_index,
-                     size_t offset)
-{
-   const struct iovec *iov =
-      seek_resource(att, base_iov_index, offset, &base_iov_index, &offset);
-   return (uint8_t *)iov->iov_base + offset;
+   assert(offset < att->size);
+   assert(att->iov_count == 1);
+   return (uint8_t *)att->iov[0].iov_base + offset;
 }
 
 static void
@@ -53,9 +27,7 @@ vkr_ring_init_extra(struct vkr_ring *ring, const struct vkr_ring_layout *layout)
 {
    struct vkr_ring_extra *extra = &ring->extra;
 
-   seek_resource(layout->attachment, 0, layout->extra.begin, &extra->base_iov_index,
-                 &extra->base_iov_offset);
-
+   extra->offset = layout->extra.begin;
    extra->region = vkr_region_make_relative(&layout->extra);
 }
 
@@ -64,18 +36,11 @@ vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout
 {
    struct vkr_ring_buffer *buf = &ring->buffer;
 
-   const struct iovec *base_iov =
-      seek_resource(layout->attachment, 0, layout->buffer.begin, &buf->base_iov_index,
-                    &buf->base_iov_offset);
-
    buf->size = vkr_region_size(&layout->buffer);
    assert(util_is_power_of_two_nonzero(buf->size));
    buf->mask = buf->size - 1;
-
    buf->cur = 0;
-   buf->cur_iov = base_iov;
-   buf->cur_iov_index = buf->base_iov_index;
-   buf->cur_iov_offset = buf->base_iov_offset;
+   buf->data = get_resource_pointer(layout->attachment, layout->buffer.begin);
 }
 
 static bool
@@ -83,9 +48,9 @@ vkr_ring_init_control(struct vkr_ring *ring, const struct vkr_ring_layout *layou
 {
    struct vkr_ring_control *ctrl = &ring->control;
 
-   ctrl->head = get_resource_pointer(layout->attachment, 0, layout->head.begin);
-   ctrl->tail = get_resource_pointer(layout->attachment, 0, layout->tail.begin);
-   ctrl->status = get_resource_pointer(layout->attachment, 0, layout->status.begin);
+   ctrl->head = get_resource_pointer(layout->attachment, layout->head.begin);
+   ctrl->tail = get_resource_pointer(layout->attachment, layout->tail.begin);
+   ctrl->status = get_resource_pointer(layout->attachment, layout->status.begin);
 
    /* we will manage head and status, and we expect them to be 0 initially */
    if (*ctrl->head || *ctrl->status)
@@ -118,67 +83,23 @@ vkr_ring_store_status(struct vkr_ring *ring, uint32_t status)
    atomic_store_explicit(ring->control.status, status, memory_order_seq_cst);
 }
 
-/* TODO consider requiring virgl_resource to be logically contiguous */
 static void
 vkr_ring_read_buffer(struct vkr_ring *ring, void *data, uint32_t size)
 {
    struct vkr_ring_buffer *buf = &ring->buffer;
-   const struct vkr_resource_attachment *att = ring->attachment;
 
+   const size_t offset = buf->cur & buf->mask;
    assert(size <= buf->size);
-   const uint32_t buf_offset = buf->cur & buf->mask;
-   const uint32_t buf_avail = buf->size - buf_offset;
-   const bool wrap = size >= buf_avail;
-
-   uint32_t read_size;
-   uint32_t wrap_size;
-   if (!wrap) {
-      read_size = size;
-      wrap_size = 0;
+   if (offset + size <= buf->size) {
+      memcpy(data, buf->data + offset, size);
    } else {
-      read_size = buf_avail;
-      /* When size == buf_avail, wrap is true but wrap_size is 0.  We want to
-       * wrap because it seems slightly faster on the next call.  Besides,
-       * seek_resource does not support seeking to end-of-resource which could
-       * happen if we don't wrap and the buffer region end coincides with the
-       * resource end.
-       */
-      wrap_size = size - buf_avail;
-   }
-
-   /* do the reads */
-   if (read_size <= buf->cur_iov->iov_len - buf->cur_iov_offset) {
-      const void *src = (const uint8_t *)buf->cur_iov->iov_base + buf->cur_iov_offset;
-      memcpy(data, src, read_size);
-
-      /* fast path */
-      if (!wrap) {
-         assert(!wrap_size);
-         buf->cur += read_size;
-         buf->cur_iov_offset += read_size;
-         return;
-      }
-   } else {
-      vrend_read_from_iovec(buf->cur_iov, att->iov_count - buf->cur_iov_index,
-                            buf->cur_iov_offset, data, read_size);
-   }
-
-   if (wrap_size) {
-      vrend_read_from_iovec(att->iov + buf->base_iov_index,
-                            att->iov_count - buf->base_iov_index, buf->base_iov_offset,
-                            (char *)data + read_size, wrap_size);
+      const size_t s = buf->size - offset;
+      memcpy(data, buf->data + offset, s);
+      memcpy((uint8_t *)data + s, buf->data, size - s);
    }
 
    /* advance cur */
    buf->cur += size;
-   if (!wrap) {
-      buf->cur_iov = seek_resource(att, buf->cur_iov_index, buf->cur_iov_offset + size,
-                                   &buf->cur_iov_index, &buf->cur_iov_offset);
-   } else {
-      buf->cur_iov =
-         seek_resource(att, buf->base_iov_index, buf->base_iov_offset + wrap_size,
-                       &buf->cur_iov_index, &buf->cur_iov_offset);
-   }
 }
 
 struct vkr_ring *
@@ -390,8 +311,7 @@ vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
 
       /* Mesa always sets offset to 0 and the cache hit rate will be 100% */
       extra->cached_offset = offset;
-      extra->cached_data = get_resource_pointer(ring->attachment, extra->base_iov_index,
-                                                extra->base_iov_offset + offset);
+      extra->cached_data = get_resource_pointer(ring->attachment, extra->offset + offset);
    }
 
    atomic_store_explicit(extra->cached_data, val, memory_order_release);
