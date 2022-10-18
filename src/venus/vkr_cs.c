@@ -37,9 +37,8 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
       return;
    }
 
-   enc->cur = (uint8_t *)enc->stream.attachment->iov[0].iov_base + offset;
-   enc->end = (const uint8_t *)enc->stream.attachment->iov[0].iov_base +
-              enc->stream.attachment->iov[0].iov_len;
+   enc->cur = enc->stream.attachment->data + offset;
+   enc->end = enc->stream.attachment->data + enc->stream.attachment->size;
 }
 
 void

@@ -77,18 +77,14 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
       }
 
-      assert(att->iov_count == 1);
-
-      if (stream->offset + stream->size > att->iov[0].iov_len) {
+      if (stream->offset + stream->size > att->size) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
          vkr_cs_decoder_set_fatal(&ctx->decoder);
          break;
       }
 
-      vkr_cs_decoder_set_stream(&ctx->decoder,
-                                (const uint8_t *)att->iov[0].iov_base + stream->offset,
-                                stream->size);
+      vkr_cs_decoder_set_stream(&ctx->decoder, att->data + stream->offset, stream->size);
       while (vkr_cs_decoder_has_command(&ctx->decoder)) {
          vn_dispatch_command(&ctx->dispatch);
          if (vkr_cs_decoder_get_fatal(&ctx->decoder))
@@ -138,8 +134,7 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    };
    /* clang-format on */
 
-   assert(att->iov_count == 1);
-   const struct vkr_region res_size = VKR_REGION_INIT(0, att->iov[0].iov_len);
+   const struct vkr_region res_size = VKR_REGION_INIT(0, att->size);
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
       return false;
 

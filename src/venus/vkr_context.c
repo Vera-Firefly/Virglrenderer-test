@@ -329,8 +329,7 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    int fd = -1;
 
    /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
-    * shm allocation.  It serves a similar purpose as iov does, but it is
-    * logically contiguous and it can be exported.
+    * shm allocation. It is logically contiguous and it can be exported.
     */
    if (!blob_id && flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       fd = os_create_anonymous_file(blob_size, "vkr-shmem");
@@ -480,28 +479,19 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
    if (!att)
       return;
 
-   void *mmap_ptr = NULL;
    if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
-      mmap_ptr =
+      void *mmap_ptr =
          mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
       if (mmap_ptr == MAP_FAILED) {
          free(att);
          return;
       }
+
+      att->data = mmap_ptr;
+      att->size = res->map_size;
    }
 
    att->resource = res;
-
-   if (mmap_ptr) {
-      att->shm_iov.iov_base = mmap_ptr;
-      att->shm_iov.iov_len = res->map_size;
-      att->iov = &att->shm_iov;
-      att->iov_count = 1;
-   } else {
-      att->iov = res->iov;
-      att->iov_count = res->iov_count;
-   }
-
    vkr_context_add_resource(ctx, att);
 }
 
@@ -547,7 +537,7 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
    if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
       struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res->res_id);
       if (att)
-         munmap(att->shm_iov.iov_base, att->shm_iov.iov_len);
+         munmap(att->data, att->size);
    }
 
    vkr_context_remove_resource(ctx, res->res_id);

@@ -18,8 +18,7 @@ static inline void *
 get_resource_pointer(const struct vkr_resource_attachment *att, size_t offset)
 {
    assert(offset < att->size);
-   assert(att->iov_count == 1);
-   return (uint8_t *)att->iov[0].iov_base + offset;
+   return att->data + offset;
 }
 
 static void
