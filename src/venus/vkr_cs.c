@@ -20,9 +20,19 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
       return;
    }
 
+   if (unlikely(size + offset > att->size)) {
+      vkr_log(
+         "failed to set the reply stream: offset(%zu) + size(%zu) exceeds res size(%zu)",
+         offset, size, att->size);
+      vkr_cs_encoder_set_fatal(enc);
+      return;
+   }
+
    enc->stream.attachment = att;
    enc->stream.offset = offset;
    enc->stream.size = size;
+
+   enc->end = att->data + att->size;
 
    vkr_cs_encoder_seek_stream(enc, 0);
 }
@@ -30,15 +40,13 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
 void
 vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
 {
-   const size_t offset = enc->stream.offset + pos;
-   if (pos > enc->stream.size) {
+   if (unlikely(pos > enc->stream.size)) {
       vkr_log("failed to seek the reply stream to %zu", pos);
       vkr_cs_encoder_set_fatal(enc);
       return;
    }
 
-   enc->cur = enc->stream.attachment->data + offset;
-   enc->end = enc->stream.attachment->data + enc->stream.attachment->size;
+   enc->cur = enc->stream.attachment->data + enc->stream.offset + pos;
 }
 
 void

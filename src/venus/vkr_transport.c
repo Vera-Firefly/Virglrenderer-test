@@ -114,7 +114,6 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
                      const struct vkr_resource_attachment *att,
                      const VkRingCreateInfoMESA *info)
 {
-   /* clang-format off */
    *layout = (struct vkr_ring_layout){
       .attachment = att,
       .head   = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
@@ -126,13 +125,8 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
 
    const struct vkr_region res_region = VKR_REGION_INIT(info->offset, info->size);
    const struct vkr_region *regions[] = {
-      &layout->head,
-      &layout->tail,
-      &layout->status,
-      &layout->buffer,
-      &layout->extra,
+      &layout->head, &layout->tail, &layout->status, &layout->buffer, &layout->extra,
    };
-   /* clang-format on */
 
    const struct vkr_region res_size = VKR_REGION_INIT(0, att->size);
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
