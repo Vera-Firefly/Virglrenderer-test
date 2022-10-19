@@ -37,7 +37,6 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "vkr_allocator.h"
-#include "vkr_renderer.h"
 #include "drm_renderer.h"
 #include "vrend_renderer.h"
 #include "proxy/proxy_renderer.h"
@@ -60,7 +59,6 @@ struct global_state {
    bool context_initialized;
    bool winsys_initialized;
    bool vrend_initialized;
-   bool vkr_initialized;
    bool proxy_initialized;
    bool external_winsys_initialized;
 };
@@ -173,8 +171,8 @@ void virgl_renderer_fill_caps(uint32_t set, uint32_t version,
          vrend_renderer_fill_caps(set, version, (union virgl_caps *)caps);
       break;
    case VIRGL_RENDERER_CAPSET_VENUS:
-      if (state.vkr_initialized)
-         vkr_get_capset(caps);
+      if (state.proxy_initialized)
+         proxy_get_capset(set, caps);
       break;
    case VIRGL_RENDERER_CAPSET_DRM:
       drm_renderer_capset(caps);
@@ -227,12 +225,9 @@ int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
       ctx = vrend_renderer_context_create(ctx_id, nlen, name);
       break;
    case VIRGL_RENDERER_CAPSET_VENUS:
-      if (state.proxy_initialized)
-         ctx = proxy_context_create(ctx_id, ctx_flags, nlen, name);
-      else if (state.vkr_initialized)
-         ctx = vkr_context_create(nlen, name);
-      else
+      if (!state.proxy_initialized)
          return EINVAL;
+      ctx = proxy_context_create(ctx_id, ctx_flags, nlen, name);
       break;
    case VIRGL_RENDERER_CAPSET_DRM:
       ctx = drm_renderer_create(nlen, name);
@@ -498,7 +493,7 @@ void virgl_renderer_get_cap_set(uint32_t cap_set, uint32_t *max_ver,
       break;
    case VIRGL_RENDERER_CAPSET_VENUS:
       *max_ver = 0;
-      *max_size = vkr_get_capset(NULL);
+      *max_size = proxy_get_capset(cap_set, NULL);
       break;
    case VIRGL_RENDERER_CAPSET_DRM:
       *max_ver = 0;
@@ -645,12 +640,6 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
    if (state.proxy_initialized)
       proxy_renderer_fini();
 
-   if (state.vkr_initialized) {
-      vkr_renderer_fini();
-      /* vkr_allocator_init is called on-demand upon the first map */
-      vkr_allocator_fini();
-   }
-
    if (state.vrend_initialized)
       vrend_renderer_fini();
 
@@ -658,6 +647,9 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
       vrend_winsys_cleanup();
 
    drm_renderer_fini();
+
+   /* vkr_allocator_init is called on-demand upon the first map */
+   vkr_allocator_fini();
 
    memset(&state, 0, sizeof(state));
 }
@@ -775,21 +767,6 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       state.vrend_initialized = true;
    }
 
-   if (!state.vkr_initialized && (flags & VIRGL_RENDERER_VENUS)) {
-      uint32_t vkr_flags = 0;
-      if (flags & VIRGL_RENDERER_THREAD_SYNC)
-         vkr_flags |= VKR_RENDERER_THREAD_SYNC;
-      if (flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
-         vkr_flags |= VKR_RENDERER_ASYNC_FENCE_CB;
-      if (flags & VIRGL_RENDERER_RENDER_SERVER)
-         vkr_flags |= VKR_RENDERER_RENDER_SERVER;
-
-      ret = vkr_renderer_init(vkr_flags);
-      if (ret)
-         goto fail;
-      state.vkr_initialized = true;
-   }
-
    if (!state.proxy_initialized && (flags & VIRGL_RENDERER_RENDER_SERVER)) {
       ret = proxy_renderer_init(&proxy_cbs, flags | VIRGL_RENDERER_NO_VIRGL);
       if (ret)
@@ -844,9 +821,6 @@ void virgl_renderer_reset(void)
 
    if (state.proxy_initialized)
       proxy_renderer_reset();
-
-   if (state.vkr_initialized)
-      vkr_renderer_reset();
 
    if (state.vrend_initialized)
       vrend_renderer_reset();

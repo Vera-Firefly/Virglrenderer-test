@@ -5,13 +5,18 @@
 
 #include "proxy_common.h"
 
+#include "virglrenderer_hw.h"
+
 #include "proxy_client.h"
 #include "proxy_renderer.h"
 #include "proxy_server.h"
+#include "vkr_renderer.h"
 
 int
 proxy_renderer_init(const struct proxy_renderer_cbs *cbs, uint32_t flags)
 {
+   assert(flags & VIRGL_RENDERER_NO_VIRGL);
+
    proxy_renderer.cbs = cbs;
    proxy_renderer.flags = flags;
 
@@ -47,4 +52,17 @@ void
 proxy_renderer_reset(void)
 {
    proxy_client_reset(proxy_renderer.client);
+}
+
+size_t
+proxy_get_capset(uint32_t set, void *caps)
+{
+   switch (set) {
+   case VIRGL_RENDERER_CAPSET_VENUS:
+      return vkr_get_capset(caps);
+   default:
+      break;
+   }
+
+   return 0;
 }

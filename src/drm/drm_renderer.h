@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "virgl_util.h"
+
 #ifdef ENABLE_DRM
 
 int drm_renderer_init(int drm_fd);
