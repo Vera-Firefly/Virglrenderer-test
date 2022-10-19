@@ -71,6 +71,8 @@ meson _build --native-file=native.file \
     ${DRI_LOADERS} \
     ${GALLIUM_ST} \
     -D tests=true \
+    -D render-server=true \
+    -D render-server-worker=process \
     -D venus-experimental=true \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
