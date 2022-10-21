@@ -472,14 +472,19 @@ static int virgl_renderer_resource_get_info_common(int res_handle,
    TRACE_FUNC();
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
 
-   if (!res || !res->pipe_resource)
+   if (!res)
       return EINVAL;
    if (!info)
       return EINVAL;
 
+   info->handle = res_handle;
+   info->fd = res->fd;
+
+   if (!res->pipe_resource)
+	   return 0;
+
    vrend_renderer_resource_get_info(res->pipe_resource,
                                     (struct vrend_renderer_resource_info *)info);
-   info->handle = res_handle;
 
 #ifdef WIN32
    if (d3d_tex2d)

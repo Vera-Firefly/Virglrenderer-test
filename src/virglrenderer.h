@@ -314,6 +314,7 @@ struct virgl_renderer_resource_info {
    uint32_t tex_id;
    uint32_t stride;
    int drm_fourcc;
+   int fd;
 };
 
 #define VIRGL_RENDERER_RESOURCE_INFO_EXT_VERSION 0

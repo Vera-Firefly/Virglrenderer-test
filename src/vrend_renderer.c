@@ -12802,9 +12802,6 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
       }
 
       /* "promote" the fd to pipe_resource */
-      close(res->fd);
-      res->fd = -1;
-      res->fd_type = VIRGL_RESOURCE_FD_INVALID;
       res->pipe_resource = &gr->base;
 #else /* HAVE_EPOXY_EGL_H */
       (void)args;
