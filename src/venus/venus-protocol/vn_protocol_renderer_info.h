@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[96];
+      bool enabled[98];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -20,6 +20,7 @@ struct vn_info_extension_table {
          bool EXT_conditional_rendering;
          bool EXT_conservative_rasterization;
          bool EXT_custom_border_color;
+         bool EXT_depth_clip_control;
          bool EXT_depth_clip_enable;
          bool EXT_descriptor_indexing;
          bool EXT_extended_dynamic_state;
@@ -37,6 +38,7 @@ struct vn_info_extension_table {
          bool EXT_pipeline_creation_cache_control;
          bool EXT_pipeline_creation_feedback;
          bool EXT_primitive_topology_list_restart;
+         bool EXT_primitives_generated_query;
          bool EXT_private_data;
          bool EXT_provoking_vertex;
          bool EXT_queue_family_foreign;
@@ -123,14 +125,15 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 96;
-static const struct vn_info_extension _vn_info_extensions[96] = {
+static const uint32_t _vn_info_extension_count = 98;
+static const struct vn_info_extension _vn_info_extensions[98] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
    { "VK_EXT_conditional_rendering", 82, 2 },
    { "VK_EXT_conservative_rasterization", 102, 1 },
    { "VK_EXT_custom_border_color", 288, 12 },
+   { "VK_EXT_depth_clip_control", 356, 1 },
    { "VK_EXT_depth_clip_enable", 103, 1 },
    { "VK_EXT_descriptor_indexing", 162, 2 },
    { "VK_EXT_extended_dynamic_state", 268, 1 },
@@ -148,6 +151,7 @@ static const struct vn_info_extension _vn_info_extensions[96] = {
    { "VK_EXT_pipeline_creation_cache_control", 298, 3 },
    { "VK_EXT_pipeline_creation_feedback", 193, 1 },
    { "VK_EXT_primitive_topology_list_restart", 357, 1 },
+   { "VK_EXT_primitives_generated_query", 383, 1 },
    { "VK_EXT_private_data", 296, 1 },
    { "VK_EXT_provoking_vertex", 255, 1 },
    { "VK_EXT_queue_family_foreign", 127, 1 },
