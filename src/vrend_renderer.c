@@ -11699,7 +11699,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 #ifdef ENABLE_MINIGBM_ALLOCATION
    if (gbm) {
       if (has_feature(feat_memory_object) && has_feature(feat_memory_object_fd)) {
-         if (!strcmp(gbm_device_get_backend_name(gbm->device), "i915") &&
+         if ((!strcmp(gbm_device_get_backend_name(gbm->device), "i915") ||
+              !strcmp(gbm_device_get_backend_name(gbm->device), "amdgpu")) &&
              !vrend_winsys_different_gpu())
             caps->v2.capability_bits |= VIRGL_CAP_ARB_BUFFER_STORAGE;
       }
