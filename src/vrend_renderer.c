@@ -11076,15 +11076,13 @@ static int vrender_get_glsl_version(void)
 
    version_str = glGetString(GL_SHADING_LANGUAGE_VERSION);
    if (vrend_state.use_gles) {
-      char tmp[20];
-      c = sscanf((const char *)version_str, "%s %s %s %s %i.%i",
-                  tmp, tmp, tmp, tmp, &major_local, &minor_local);
-      assert(c == 6);
+      c = sscanf((const char *)version_str, "%*s %*s %*s %*s %i.%i",
+                  &major_local, &minor_local);
    } else {
       c = sscanf((const char *)version_str, "%i.%i",
                   &major_local, &minor_local);
-      assert(c == 2);
    }
+   assert(c == 2);
 
    return (major_local * 100) + minor_local;
 }
