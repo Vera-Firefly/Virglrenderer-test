@@ -4246,7 +4246,8 @@ get_destination_info(struct dump_ctx *ctx,
          struct vrend_shader_io *output = &ctx->outputs[j];
 
          if (inst->Instruction.Precise) {
-            if (!output->invariant && output->name != TGSI_SEMANTIC_CLIPVERTEX) {
+            if (!output->invariant && output->name != TGSI_SEMANTIC_CLIPVERTEX &&
+                ctx->cfg->has_gpu_shader5) {
                output->precise = true;
                ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
             }
@@ -4343,7 +4344,7 @@ get_destination_info(struct dump_ctx *ctx,
          strbuf_fmt(&dst_bufs[i], "%s%s", temp_buf, writemask);
          if (inst->Instruction.Precise) {
             struct vrend_temp_range *range = find_temp_range(ctx, dst_reg->Register.Index);
-            if (range) {
+            if (range && ctx->cfg->has_gpu_shader5) {
                range->precise_result |= true;
                ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
             }
