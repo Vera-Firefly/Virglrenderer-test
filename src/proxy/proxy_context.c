@@ -152,7 +152,7 @@ proxy_context_retire_fences_internal(struct proxy_context *ctx)
       const uint32_t ring_idx = u_bit_scan64(&old_busy_mask);
       const uint32_t cur_seqno = proxy_context_load_timeline_seqno(ctx, ring_idx);
       if (!proxy_context_retire_timeline_fences_locked(ctx, ring_idx, cur_seqno))
-         new_busy_mask |= 1 << ring_idx;
+         new_busy_mask |= 1ull << ring_idx;
    }
 
    ctx->timeline_busy_mask = new_busy_mask;
@@ -220,7 +220,7 @@ proxy_context_submit_fence(struct virgl_context *base,
       mtx_lock(&ctx->timeline_mutex);
 
    list_addtail(&fence->head, &timeline->fences);
-   ctx->timeline_busy_mask |= 1 << ring_idx;
+   ctx->timeline_busy_mask |= 1ull << ring_idx;
 
    if (proxy_renderer.flags & VIRGL_RENDERER_ASYNC_FENCE_CB)
       mtx_unlock(&ctx->timeline_mutex);
