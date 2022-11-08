@@ -1181,6 +1181,7 @@ int vtest_resource_create_blob(UNUSED uint32_t length_dw)
       fd = -1;
       break;
    default:
+      vtest_unref_resource(res);
       return -EINVAL;
    }
 
