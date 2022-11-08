@@ -148,11 +148,14 @@ static inline void strbuf_vappendf(struct vrend_strbuf *sb, const char *fmt, va_
 
    int len = vsnprintf(sb->buf + sb->size, sb->alloc_size - sb->size, fmt, ap);
    if (len >= (int)(sb->alloc_size - sb->size)) {
-      if (!strbuf_grow(sb, len))
-        return;
+      if (!strbuf_grow(sb, len)) {
+         goto end;
+      }
       vsnprintf(sb->buf + sb->size, sb->alloc_size - sb->size, fmt, cp);
    }
    sb->size += len;
+end:
+   va_end(ap);
 }
 
 __attribute__((format(printf, 2, 3)))
@@ -172,10 +175,12 @@ static inline void strbuf_vfmt(struct vrend_strbuf *sb, const char *fmt, va_list
    int len = vsnprintf(sb->buf, sb->alloc_size, fmt, ap);
    if (len >= (int)(sb->alloc_size)) {
       if (!strbuf_grow(sb, len))
-        return;
+        goto end;
       vsnprintf(sb->buf, sb->alloc_size, fmt, cp);
    }
    sb->size = len;
+end:
+   va_end(ap);
 }
 
 __attribute__((format(printf, 2, 3)))
