@@ -1347,7 +1347,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
 
                   if (ctx->front_face_emitted == false) {
                      int k = ctx->num_inputs++;
-                     if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
+                     if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
                         vrend_printf( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
                         return false;
                      }
