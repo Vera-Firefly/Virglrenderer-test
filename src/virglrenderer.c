@@ -661,8 +661,9 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       return -EBUSY;
 
    if (!state.client_initialized) {
-      if (cbs && (cbs->version < 1 ||
-                  cbs->version > VIRGL_RENDERER_CALLBACKS_VERSION))
+      if (!cbs ||
+          cbs->version < 1 ||
+          cbs->version > VIRGL_RENDERER_CALLBACKS_VERSION)
          return -1;
 
       state.cookie = cookie;
