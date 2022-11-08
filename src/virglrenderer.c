@@ -712,18 +712,23 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       void *egl_display = NULL;
 
       if (!cbs->create_gl_context || !cbs->destroy_gl_context ||
-          !cbs->make_current)
+          !cbs->make_current) {
+         ret = EINVAL;
          goto fail;
+      }
 
       egl_display = state.cbs->get_egl_display(cookie);
 
-      if (!egl_display)
+      if (!egl_display) {
+         ret = -1;
          goto fail;
-
+      }
       ret = vrend_winsys_init_external(egl_display);
 
-      if (ret)
+      if (ret) {
+         ret = -1;
          goto fail;
+      }
 
       state.external_winsys_initialized = true;
    }
