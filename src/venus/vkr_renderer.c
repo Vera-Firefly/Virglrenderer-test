@@ -47,6 +47,7 @@ vkr_get_capset(void *capset)
       c->vk_extension_mask1[0] |= 0x1u;
 
       c->allow_vk_wait_syncs = 1;
+      c->supports_multiple_timelines = 1;
    }
 
    return sizeof(*c);
