@@ -10687,11 +10687,8 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
                        uint32_t query_type, uint32_t query_index,
                        uint32_t res_handle, UNUSED uint32_t offset)
 {
-   struct vrend_query *q;
-   struct vrend_resource *res;
-   uint32_t ret_handle;
    bool fake_samples_passed = false;
-   res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
    if (!res || !has_bit(res->storage_bits, VREND_STORAGE_HOST_SYSTEM_MEMORY)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
@@ -10711,9 +10708,11 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
       return EINVAL;
    }
 
-   q = CALLOC_STRUCT(vrend_query);
+   struct vrend_query *q = CALLOC_STRUCT(vrend_query);
    if (!q)
       return ENOMEM;
+
+   int err = 0;
 
    list_inithead(&q->waiting_queries);
    q->type = query_type;
@@ -10729,20 +10728,22 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
       q->gltype = GL_SAMPLES_PASSED_ARB;
       break;
    case PIPE_QUERY_OCCLUSION_PREDICATE:
-      if (has_feature(feat_occlusion_query_boolean)) {
+      if (has_feature(feat_occlusion_query_boolean))
          q->gltype = GL_ANY_SAMPLES_PASSED;
-         break;
-      } else
-         return EINVAL;
+      else
+         err = EINVAL;
+      break;
    case PIPE_QUERY_TIMESTAMP:
-      if (!has_feature(feat_timer_query))
-         return EINVAL;
-      q->gltype = GL_TIMESTAMP;
+      if (has_feature(feat_timer_query))
+         q->gltype = GL_TIMESTAMP;
+      else
+         err = EINVAL;
       break;
    case PIPE_QUERY_TIME_ELAPSED:
-      if (!has_feature(feat_timer_query))
-         return EINVAL;
-      q->gltype = GL_TIME_ELAPSED;
+      if (has_feature(feat_timer_query))
+         q->gltype = GL_TIME_ELAPSED;
+      else
+         err = EINVAL;
       break;
    case PIPE_QUERY_PRIMITIVES_GENERATED:
       q->gltype = GL_PRIMITIVES_GENERATED;
@@ -10754,29 +10755,34 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
       q->gltype = GL_ANY_SAMPLES_PASSED_CONSERVATIVE;
       break;
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
-      if (!has_feature(feat_transform_feedback_overflow_query))
-         return EINVAL;
-      q->gltype = GL_TRANSFORM_FEEDBACK_STREAM_OVERFLOW_ARB;
+      if (has_feature(feat_transform_feedback_overflow_query))
+         q->gltype = GL_TRANSFORM_FEEDBACK_STREAM_OVERFLOW_ARB;
+      else
+         err = EINVAL;
       break;
    case PIPE_QUERY_SO_OVERFLOW_ANY_PREDICATE:
-      if (!has_feature(feat_transform_feedback_overflow_query))
-         return EINVAL;
-      q->gltype = GL_TRANSFORM_FEEDBACK_OVERFLOW_ARB;
+      if (has_feature(feat_transform_feedback_overflow_query))
+         q->gltype = GL_TRANSFORM_FEEDBACK_OVERFLOW_ARB;
+      else
+         err = EINVAL;
       break;
    default:
       vrend_printf("unknown query object received %d\n", q->type);
       break;
    }
 
-   glGenQueries(1, &q->id);
-
-   ret_handle = vrend_renderer_object_insert(ctx, q, handle,
-                                             VIRGL_OBJECT_QUERY);
-   if (!ret_handle) {
-      FREE(q);
-      return ENOMEM;
+   if (!err) {
+      glGenQueries(1, &q->id);
+      if (!vrend_renderer_object_insert(ctx, q, handle, VIRGL_OBJECT_QUERY)) {
+         glDeleteQueries(1, &q->id);
+         err = ENOMEM;
+      }
    }
-   return 0;
+
+   if (err)
+      FREE(q);
+
+   return err;
 }
 
 static void vrend_destroy_query(struct vrend_query *query)
