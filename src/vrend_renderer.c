@@ -8365,9 +8365,9 @@ static uint64_t vrend_transfer_size(struct vrend_resource *vres,
     */
    int w = box->width > 0 ? box->width : 1;
    int h = box->height > 0 ? box->height : 1;
-   int d = box->depth > 0 ? box->depth : 1;
-   int nblocksx = util_format_get_nblocksx(pres->format, w);
-   int nblocksy = util_format_get_nblocksy(pres->format, h);
+   uint64_t d = box->depth > 0 ? box->depth : 1;
+   uint64_t nblocksx = util_format_get_nblocksx(pres->format, w);
+   uint64_t nblocksy = util_format_get_nblocksy(pres->format, h);
 
    /* Calculate the box size, not including the last layer. The last layer
     * is the only one which may be incomplete, and is the only layer for
