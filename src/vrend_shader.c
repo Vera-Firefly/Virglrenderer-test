@@ -3546,7 +3546,6 @@ void load_clipdist_fs(const struct dump_ctx *ctx,
                       struct vrend_strbuf *result,
                       const struct tgsi_full_src_register *src,
                       int input_idx,
-                      bool gl_in,
                       const char *stypeprefix,
                       int offset)
 {
@@ -3569,10 +3568,7 @@ void load_clipdist_fs(const struct dump_ctx *ctx,
    else
       snprintf(clip_indirect, 32, "%d + %d", src->Register.Index - offset, base_idx);
 
-   if (gl_in)
-      strbuf_fmt(result, "%s(clip_dist_temp[%s].%s)", stypeprefix, clip_indirect, swz);
-   else
-      strbuf_fmt(result, "%s(clip_dist_temp[%s].%s)", stypeprefix, clip_indirect, swz);
+   strbuf_fmt(result, "%s(clip_dist_temp[%s].%s)", stypeprefix, clip_indirect, swz);
 }
 
 
@@ -4624,7 +4620,7 @@ get_source_info(struct dump_ctx *ctx,
             strbuf_fmt(src_buf, "%s(%s ? 1.0 : -1.0)", get_string(stypeprefix), input->glsl_name);
          else if (input->name == TGSI_SEMANTIC_CLIPDIST) {
             if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT)
-               load_clipdist_fs(ctx, src_buf, src, j, false, get_string(stypeprefix), input->first);
+               load_clipdist_fs(ctx, src_buf, src, j, get_string(stypeprefix), input->first);
             else
                create_swizzled_clipdist(ctx, src_buf, src, j, false, get_string(stypeprefix), prefix, arrayname, input->first);
          }  else if (input->name == TGSI_SEMANTIC_TESSOUTER ||
