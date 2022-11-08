@@ -44,7 +44,7 @@ int
 virgl_context_table_init(void)
 {
    virgl_context_table = util_hash_table_create(hash_func_u32,
-                                                compare_func,
+                                                equal_func,
                                                 virgl_context_destroy_func);
    return virgl_context_table ? 0 : ENOMEM;
 }

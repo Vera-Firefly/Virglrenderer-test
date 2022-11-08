@@ -56,8 +56,8 @@ struct util_hash_table;
  * @param compare should return 0 for two equal keys.
  */
 struct util_hash_table *
-util_hash_table_create(unsigned (*hash)(void *key),
-                       int (*compare)(void *key1, void *key2),
+util_hash_table_create(uint32_t (*hash)(const void *key),
+                       bool (*equal)(const void *key1, const void *key2),
                        void (*destroy)(void *value));
 
 

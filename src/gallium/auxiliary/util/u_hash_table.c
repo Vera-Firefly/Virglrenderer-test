@@ -53,10 +53,10 @@ struct util_hash_table
    struct cso_hash *cso;   
    
    /** Hash function */
-   unsigned (*hash)(void *key);
+   uint32_t (*hash)(const void *key);
    
    /** Compare two keys */
-   int (*compare)(void *key1, void *key2);
+   bool (*equal)(const void *key1, const void *key2);
    
    /** free value */
    void (*destroy)(void *value);
@@ -78,8 +78,8 @@ util_hash_table_item(struct cso_hash_iter iter)
 
 
 struct util_hash_table *
-util_hash_table_create(unsigned (*hash)(void *key),
-                       int (*compare)(void *key1, void *key2),
+util_hash_table_create(uint32_t (*hash)(const void *key),
+                       bool (*equal)(const void *key1, const void *key2),
                        void (*destroy)(void *value))
 {
    struct util_hash_table *ht;
@@ -95,7 +95,7 @@ util_hash_table_create(unsigned (*hash)(void *key),
    }
    
    ht->hash = hash;
-   ht->compare = compare;
+   ht->equal = equal;
    ht->destroy = destroy;
    
    return ht;
@@ -113,7 +113,7 @@ util_hash_table_find_iter(struct util_hash_table *ht,
    iter = cso_hash_find(ht->cso, key_hash);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct util_hash_table_item *)cso_hash_iter_data(iter);
-      if (!ht->compare(item->key, key))
+      if (ht->equal(item->key, key))
          break;
       iter = cso_hash_iter_next(iter);
    }
@@ -133,7 +133,7 @@ util_hash_table_find_item(struct util_hash_table *ht,
    iter = cso_hash_find(ht->cso, key_hash);
    while (!cso_hash_iter_is_null(iter)) {
       item = (struct util_hash_table_item *)cso_hash_iter_data(iter);
-      if (!ht->compare(item->key, key))
+      if (ht->equal(item->key, key))
          return item;
       iter = cso_hash_iter_next(iter);
    }
@@ -147,7 +147,7 @@ util_hash_table_set(struct util_hash_table *ht,
                     void *key,
                     void *value)
 {
-   unsigned key_hash;
+   uint32_t key_hash;
    struct util_hash_table_item *item;
    struct cso_hash_iter iter;
 
@@ -185,7 +185,7 @@ void *
 util_hash_table_get(struct util_hash_table *ht,
                     void *key)
 {
-   unsigned key_hash;
+   uint32_t key_hash;
    struct util_hash_table_item *item;
 
    assert(ht);
@@ -206,7 +206,7 @@ void
 util_hash_table_remove(struct util_hash_table *ht,
                        void *key)
 {
-   unsigned key_hash;
+   uint32_t key_hash;
    struct cso_hash_iter iter;
    struct util_hash_table_item *item;
 

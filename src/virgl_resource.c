@@ -57,7 +57,7 @@ int
 virgl_resource_table_init(const struct virgl_resource_pipe_callbacks *callbacks)
 {
    virgl_resource_table = util_hash_table_create(hash_func_u32,
-                                                 compare_func,
+                                                 equal_func,
                                                  virgl_resource_destroy_func);
    if (!virgl_resource_table)
       return ENOMEM;

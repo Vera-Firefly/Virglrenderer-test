@@ -428,14 +428,14 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    return prog_id;
 }
 
-static uint32_t program_hash_func(void *key)
+static uint32_t program_hash_func(const void *key)
 {
    return XXH32(key, sizeof(struct blit_prog_key), 0);
 }
 
-static int program_comp_func(void *key1, void *key2)
+static bool program_equal_func(const void *key1, const void *key2)
 {
-   return memcmp(key1, key2, sizeof(struct blit_prog_key));
+   return memcmp(key1, key2, sizeof(struct blit_prog_key)) == 0;
 }
 
 static void program_destroy_func(void *shader_id)
@@ -460,7 +460,7 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
    }
 
    vrend_blit_ctx.blit_programs = util_hash_table_create(program_hash_func,
-                                                         program_comp_func,
+                                                         program_equal_func,
                                                          program_destroy_func);
 
    blit_ctx->use_gles = epoxy_is_desktop_gl() == 0;

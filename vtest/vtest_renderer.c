@@ -299,23 +299,17 @@ static void vtest_free_sync_wait(struct vtest_sync_wait *wait)
    free(wait);
 }
 
-static unsigned
-u32_hash_func(void *key)
+static uint32_t
+u32_hash_func(const void *key)
 {
    intptr_t ip = pointer_to_intptr(key);
-   return (unsigned)(ip & 0xffffffff);
+   return (uint32_t)(ip & 0xffffffff);
 }
 
-static int
-u32_compare_func(void *key1, void *key2)
+static bool
+u32_equal_func(const void *key1, const void *key2)
 {
-   if (key1 < key2) {
-      return -1;
-   } else if (key1 > key2) {
-      return 1;
-   } else {
-      return 0;
-   }
+   return key1 == key2;
 }
 
 static void
@@ -523,7 +517,7 @@ static struct vtest_context *vtest_new_context(struct vtest_input *input,
       }
 
       ctx->resource_table = util_hash_table_create(u32_hash_func,
-                                                   u32_compare_func,
+                                                   u32_equal_func,
                                                    resource_destroy_func);
       if (!ctx->resource_table) {
          free(ctx);
@@ -531,7 +525,7 @@ static struct vtest_context *vtest_new_context(struct vtest_input *input,
       }
 
       ctx->sync_table = util_hash_table_create(u32_hash_func,
-                                               u32_compare_func,
+                                               u32_equal_func,
                                                sync_destroy_func);
       if (!ctx->sync_table) {
          util_hash_table_destroy(ctx->resource_table);

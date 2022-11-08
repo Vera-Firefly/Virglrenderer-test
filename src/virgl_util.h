@@ -58,9 +58,9 @@ static inline bool is_only_bit(uint32_t mask, uint32_t bit)
     return (mask == bit);
 }
 
-unsigned hash_func_u32(void *key);
+uint32_t hash_func_u32(const void *key);
 
-int compare_func(void *key1, void *key2);
+bool equal_func(const void *key1, const void *key2);
 
 bool has_eventfd(void);
 int create_eventfd(unsigned int initval);
