@@ -463,7 +463,7 @@ static void encode_completed(struct virgl_video_codec *codec,
         num_coded_bufs++;
 
     coded_bufs = calloc(num_coded_bufs, sizeof(void *));
-    coded_sizes = calloc(num_coded_bufs, sizeof(unsigned *));
+    coded_sizes = calloc(num_coded_bufs, sizeof(unsigned));
     if (!coded_bufs || !coded_sizes) {
         virgl_log("alloc memory failed, num_coded_bufs %u\n", num_coded_bufs);
         goto fail_unmap_buffer;
