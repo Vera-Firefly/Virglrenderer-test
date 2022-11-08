@@ -1983,10 +1983,8 @@ int vtest_sync_wait(uint32_t length_dw)
          sync_wait_buf + 2, sync_count);
    free(sync_wait_buf);
 
-   if (ret) {
-      free(wait);
+   if (ret)
       return ret;
-   }
 
    is_ready = !wait->count;
    if ((wait->flags & VCMD_SYNC_WAIT_FLAG_ANY) && wait->count < sync_count)
