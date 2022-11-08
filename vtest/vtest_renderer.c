@@ -909,7 +909,7 @@ int vtest_send_caps2(UNUSED uint32_t length_dw)
       goto end;
    }
 
-   vtest_block_write(ctx->out_fd, caps_buf, max_size);
+   ret = vtest_block_write(ctx->out_fd, caps_buf, max_size);
    if (ret < 0) {
       goto end;
    }
@@ -943,7 +943,7 @@ int vtest_send_caps(UNUSED uint32_t length_dw)
       goto end;
    }
 
-   vtest_block_write(ctx->out_fd, caps_buf, max_size);
+   ret = vtest_block_write(ctx->out_fd, caps_buf, max_size);
    if (ret < 0) {
       goto end;
    }
