@@ -229,5 +229,5 @@ object_array_init(struct vkr_context *ctx,
       arr->objects[i] = obj;
    }
 
-   return arr;
+   return true;
 }
