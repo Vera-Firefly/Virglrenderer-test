@@ -25,7 +25,6 @@ struct render_client;
 struct render_context;
 struct render_context_args;
 struct render_server;
-struct render_virgl;
 struct render_worker;
 struct render_worker_jail;
 

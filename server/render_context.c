@@ -12,7 +12,7 @@
 #include "virglrenderer.h"
 #include "vrend_iov.h"
 
-#include "render_virgl.h"
+#include "render_state.h"
 
 static bool
 render_context_import_resource(struct render_context *ctx,
@@ -347,9 +347,9 @@ render_context_dispatch(struct render_context *ctx)
       goto fail;
    }
 
-   render_virgl_lock_dispatch();
+   render_state_lock_dispatch();
    const bool ok = entry->dispatch(ctx, &req, req_fds, req_fd_count);
-   render_virgl_unlock_dispatch();
+   render_state_unlock_dispatch();
    if (!ok) {
       render_log("failed to dispatch context op %d", req.header.op);
       goto fail;
@@ -377,12 +377,12 @@ render_context_run(struct render_context *ctx)
 static void
 render_context_fini(struct render_context *ctx)
 {
-   render_virgl_lock_dispatch();
+   render_state_lock_dispatch();
    /* destroy the context first to join its sync threads and ring threads */
    virgl_renderer_context_destroy(ctx->ctx_id);
-   render_virgl_unlock_dispatch();
+   render_state_unlock_dispatch();
 
-   render_virgl_remove_context(ctx);
+   render_state_remove_context(ctx);
 
    if (ctx->shmem_ptr)
       munmap(ctx->shmem_ptr, ctx->shmem_size);
@@ -449,7 +449,7 @@ render_context_init(struct render_context *ctx, const struct render_context_args
    if (!render_context_init_name(ctx, args->ctx_id, args->ctx_name))
       return false;
 
-   render_virgl_add_context(ctx);
+   render_state_add_context(ctx);
 
    return true;
 }
@@ -461,13 +461,13 @@ render_context_main(const struct render_context_args *args)
 
    assert(args->valid && args->ctx_id && args->ctx_fd >= 0);
 
-   if (!render_virgl_init(args->init_flags)) {
+   if (!render_state_init(args->init_flags)) {
       close(args->ctx_fd);
       return false;
    }
 
    if (!render_context_init(&ctx, args)) {
-      render_virgl_fini();
+      render_state_fini();
       close(args->ctx_fd);
       return false;
    }
@@ -475,7 +475,7 @@ render_context_main(const struct render_context_args *args)
    const bool ok = render_context_run(&ctx);
    render_context_fini(&ctx);
 
-   render_virgl_fini();
+   render_state_fini();
 
    return ok;
 }
