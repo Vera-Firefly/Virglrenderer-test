@@ -472,7 +472,6 @@ struct vrend_shader {
 struct vrend_shader_selector {
    struct pipe_reference reference;
 
-   unsigned num_shaders;
    enum pipe_shader_type type;
    struct vrend_shader_info sinfo;
 
@@ -4121,12 +4120,13 @@ static int vrend_shader_select(struct vrend_sub_context *sub_ctx,
    memset(&key, 0, sizeof(key));
    vrend_fill_shader_key(sub_ctx, sel, &key);
 
-   if (sel->current && !memcmp(&sel->current->key, &key, sizeof(key)))
-      return 0;
+   if (sel->current) {
+      if (!memcmp(&sel->current->key, &key, sizeof(key)))
+         return 0;
 
-   if (sel->num_shaders > 1) {
       struct vrend_shader *p = sel->current;
       struct vrend_shader *c = p->next_variant;
+
       while (c && memcmp(&c->key, &key, sizeof(key)) != 0) {
          p = c;
          c = c->next_variant;
@@ -4150,7 +4150,6 @@ static int vrend_shader_select(struct vrend_sub_context *sub_ctx,
          FREE(shader);
          return r;
       }
-      sel->num_shaders++;
    }
    if (dirty)
       *dirty = true;
@@ -5222,7 +5221,6 @@ void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
    sel->tokens = NULL;
    sel->current = shader;
    sub_ctx->shaders[PIPE_SHADER_TESS_CTRL] = sel;
-   sub_ctx->shaders[PIPE_SHADER_TESS_CTRL]->num_shaders = 1;
 
    vrend_compile_shader(sub_ctx, shader);
 }
