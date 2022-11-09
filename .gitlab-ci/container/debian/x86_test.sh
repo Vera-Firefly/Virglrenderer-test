@@ -7,7 +7,7 @@ mkdir -p ${MESA_CI_PROJECT_DIR}
 cd ${MESA_CI_PROJECT_DIR}
 
 # Deploy Mesa CI artifacts
-MESA_CI_ARTIFACTS_URL="https://${MINIO_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.gz"
+MESA_CI_ARTIFACTS_URL="https://${STORAGE_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.gz"
 if wget -q --method=HEAD ${MESA_CI_ARTIFACTS_URL}; then
     wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xvz
 else
