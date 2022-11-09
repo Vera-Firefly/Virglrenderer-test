@@ -5146,7 +5146,7 @@ static void
 vrend_fill_sysval_uniform_block (struct vrend_sub_context *sub_ctx)
 {
    if (sub_ctx->prog->virgl_block_bind == -1)
-      return;   
+      return;
 
    if (sub_ctx->sysvalue_data_cookie != sub_ctx->prog->sysvalue_data_cookie) {
       glBindBuffer(GL_UNIFORM_BUFFER, sub_ctx->prog->ubo_sysval_buffer_id);
