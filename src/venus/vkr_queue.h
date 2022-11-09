@@ -29,6 +29,9 @@ struct vkr_queue {
    uint32_t family;
    uint32_t index;
 
+   /* only used when client driver uses multiple timelines */
+   uint32_t ring_idx;
+
    /* Submitted fences are added to pending_syncs first.  How submitted fences
     * are retired depends on VKR_RENDERER_THREAD_SYNC and
     * VKR_RENDERER_ASYNC_FENCE_CB.

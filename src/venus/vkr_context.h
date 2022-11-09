@@ -63,6 +63,8 @@ struct vkr_context {
    struct list_head busy_queues;
    struct list_head signaled_syncs;
 
+   struct vkr_queue *sync_queues[64];
+
    struct vkr_instance *instance;
    char *instance_name;
 };

@@ -7,6 +7,7 @@
 
 #include "venus-protocol/vn_protocol_renderer_queue.h"
 
+#include "vkr_context.h"
 #include "vkr_physical_device.h"
 #include "vkr_queue_gen.h"
 
@@ -176,6 +177,9 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
 
    list_del(&queue->busy_head);
    list_del(&queue->base.track_head);
+
+   if (queue->ring_idx > 0)
+      ctx->sync_queues[queue->ring_idx] = NULL;
 
    if (queue->base.id)
       vkr_context_remove_object(ctx, &queue->base);
@@ -361,6 +365,26 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
    if (!queue) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
+   }
+
+   const VkDeviceQueueTimelineInfoMESA *timeline_info = vkr_find_struct(
+      args->pQueueInfo->pNext, VK_STRUCTURE_TYPE_DEVICE_QUEUE_TIMELINE_INFO_MESA);
+   if (timeline_info) {
+      if (timeline_info->ringIdx == 0 ||
+          timeline_info->ringIdx >= ARRAY_SIZE(ctx->sync_queues)) {
+         vkr_log("invalid ring_idx %d", timeline_info->ringIdx);
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         return;
+      }
+
+      if (ctx->sync_queues[timeline_info->ringIdx]) {
+         vkr_log("sync_queue %d already bound", timeline_info->ringIdx);
+         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         return;
+      }
+
+      queue->ring_idx = timeline_info->ringIdx;
+      ctx->sync_queues[timeline_info->ringIdx] = queue;
    }
 
    const vkr_object_id id =
