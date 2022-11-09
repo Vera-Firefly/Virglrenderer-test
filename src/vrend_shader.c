@@ -3855,11 +3855,13 @@ translate_load(const struct dump_ctx *ctx,
 
       set_memory_qualifier(ssbo_memory_qualifier, ctx->ssbo_used_mask, inst, inst->Src[0].Register.Index, inst->Src[0].Register.Indirect);
 
-      strcpy(mydst, dst);
-      char *wmp = strchr(mydst, '.');
+      const char *d = dst;
+      char *md = mydst;
+      unsigned i = 0;
+      while ((i < sizeof(mydst) - 1) && *d && *d != '.')
+         *md++ = *d++;
+      *md = 0;
 
-      if (wmp)
-         wmp[0] = 0;
       emit_buff(glsl_strbufs, "ssbo_addr_temp = uint(floatBitsToUint(%s)) >> 2;\n", srcs[1]);
 
       atomic_op[0] = atomic_src[0] = '\0';
