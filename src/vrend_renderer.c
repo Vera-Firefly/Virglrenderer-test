@@ -8588,15 +8588,11 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          buffers = GL_COLOR_ATTACHMENT0;
          glDrawBuffers(1, &buffers);
          glDisable(GL_BLEND);
-         if (ctx) {
-            vrend_depth_test_enable(ctx, false);
-            vrend_alpha_test_enable(ctx, false);
-            vrend_stencil_test_enable(ctx->sub, false);
-         } else {
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_ALPHA_TEST);
-            glDisable(GL_STENCIL_TEST);
-         }
+
+         vrend_depth_test_enable(ctx, false);
+         vrend_alpha_test_enable(ctx, false);
+         vrend_stencil_test_enable(ctx->sub, false);
+
          glPixelZoom(1.0f, res->y_0_top ? -1.0f : 1.0f);
          glWindowPos2i(info->box->x, res->y_0_top ? (int)res->base.height0 - info->box->y : info->box->y);
          glDrawPixels(info->box->width, info->box->height, glformat, gltype,
