@@ -228,9 +228,7 @@ render_context_dispatch(struct render_context *ctx)
       goto fail;
    }
 
-   render_state_lock_dispatch();
    const bool ok = entry->dispatch(ctx, &req, req_fds, req_fd_count);
-   render_state_unlock_dispatch();
    if (!ok) {
       render_log("failed to dispatch context op %d", req.header.op);
       goto fail;

@@ -8,34 +8,6 @@
 
 #include "render_common.h"
 
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-#include "c11/threads.h"
-#endif
-
-/* Workers call into virglrenderer.  When they are processes, not much care is
- * required. But when workers are threads, we need to grab a lock to protect
- * virglrenderer.
- *
- * TODO skip virglrenderer.h and go straight to vkr_renderer.h.
- */
-struct render_state {
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   /* protect the struct */
-   mtx_t struct_mutex;
-   /* protect virglrenderer interface */
-   mtx_t dispatch_mutex;
-#endif
-
-   /* track and init/fini just once */
-   int init_count;
-   uint32_t init_flags;
-
-   /* track the render_context */
-   struct list_head contexts;
-};
-
-extern struct render_state render_state_internal;
-
 bool
 render_state_init(uint32_t init_flags);
 
@@ -47,22 +19,6 @@ render_state_add_context(struct render_context *ctx);
 
 void
 render_state_remove_context(struct render_context *ctx);
-
-static inline void
-render_state_lock_dispatch(void)
-{
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   mtx_lock(&render_state_internal.dispatch_mutex);
-#endif
-}
-
-static inline void
-render_state_unlock_dispatch(void)
-{
-#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   mtx_unlock(&render_state_internal.dispatch_mutex);
-#endif
-}
 
 bool
 render_state_create_context(uint32_t ctx_id,

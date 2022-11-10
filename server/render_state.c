@@ -7,56 +7,96 @@
 
 #include <inttypes.h>
 
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+#include "c11/threads.h"
+#endif
+
 #include "virglrenderer.h"
 
 #include "render_context.h"
 
-struct render_state render_state_internal = {
+/* Workers call into virglrenderer.  When they are processes, not much care is
+ * required. But when workers are threads, we need to grab a lock to protect
+ * virglrenderer.
+ *
+ * TODO skip virglrenderer.h and go straight to vkr_renderer.h.
+ */
+struct render_state {
 #ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   .struct_mutex = _MTX_INITIALIZER_NP,
-   .dispatch_mutex = _MTX_INITIALIZER_NP,
+   /* protect virglrenderer interface */
+   mtx_t virgl_mutex;
+   /* protect the below global states */
+   mtx_t state_mutex;
+#endif
+
+   /* track and init/fini just once */
+   int init_count;
+   uint32_t init_flags;
+
+   /* track the render_context */
+   struct list_head contexts;
+};
+
+struct render_state state = {
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   .virgl_mutex = _MTX_INITIALIZER_NP,
+   .state_mutex = _MTX_INITIALIZER_NP,
 #endif
    .init_count = 0,
 };
 
-static struct render_state *
-render_state_lock_struct(void)
+static inline void
+render_state_lock_state(void)
 {
 #ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   mtx_lock(&render_state_internal.struct_mutex);
+   mtx_lock(&state.state_mutex);
 #endif
-   return &render_state_internal;
 }
 
-static void
-render_state_unlock_struct(void)
+static inline void
+render_state_unlock_state(void)
 {
 #ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   mtx_unlock(&render_state_internal.struct_mutex);
+   mtx_unlock(&state.state_mutex);
+#endif
+}
+
+static inline void
+render_state_lock_renderer(void)
+{
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   mtx_lock(&state.virgl_mutex);
+#endif
+}
+
+static inline void
+render_state_unlock_renderer(void)
+{
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   mtx_unlock(&state.virgl_mutex);
 #endif
 }
 
 static struct render_context *
 render_state_lookup_context(uint32_t ctx_id)
 {
-   const struct render_state *virgl = render_state_lock_struct();
    struct render_context *ctx = NULL;
 
+   render_state_lock_state();
 #ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
-   list_for_each_entry (struct render_context, iter, &virgl->contexts, head) {
+   list_for_each_entry (struct render_context, iter, &state.contexts, head) {
       if (iter->ctx_id == ctx_id) {
          ctx = iter;
          break;
       }
    }
 #else
-   assert(list_is_singular(&virgl->contexts));
-   ctx = list_first_entry(&virgl->contexts, struct render_context, head);
+   assert(list_is_singular(&state.contexts));
+   ctx = list_first_entry(&state.contexts, struct render_context, head);
    assert(ctx->ctx_id == ctx_id);
    (void)ctx_id;
 #endif
-
-   render_state_unlock_struct();
+   render_state_unlock_state();
 
    return ctx;
 }
@@ -90,34 +130,29 @@ static const struct virgl_renderer_callbacks render_state_cbs = {
 void
 render_state_add_context(struct render_context *ctx)
 {
-   struct render_state *virgl = render_state_lock_struct();
-   list_addtail(&ctx->head, &virgl->contexts);
-   render_state_unlock_struct();
+   render_state_lock_state();
+   list_addtail(&ctx->head, &state.contexts);
+   render_state_unlock_state();
 }
 
 void
 render_state_remove_context(struct render_context *ctx)
 {
-   render_state_lock_struct();
+   render_state_lock_state();
    list_del(&ctx->head);
-   render_state_unlock_struct();
+   render_state_unlock_state();
 }
 
 void
 render_state_fini(void)
 {
-   struct render_state *virgl = render_state_lock_struct();
-
-   if (virgl->init_count) {
-      virgl->init_count--;
-      if (!virgl->init_count) {
-         render_state_lock_dispatch();
-         virgl_renderer_cleanup(virgl);
-         render_state_unlock_dispatch();
-      }
+   render_state_lock_state();
+   if (state.init_count) {
+      state.init_count--;
+      if (!state.init_count)
+         virgl_renderer_cleanup(&state);
    }
-
-   render_state_unlock_struct();
+   render_state_unlock_state();
 }
 
 bool
@@ -130,37 +165,33 @@ render_state_init(uint32_t init_flags)
    init_flags |= VIRGL_RENDERER_THREAD_SYNC | VIRGL_RENDERER_ASYNC_FENCE_CB |
                  VIRGL_RENDERER_USE_EXTERNAL_BLOB;
 
-   struct render_state *virgl = render_state_lock_struct();
+   render_state_lock_state();
+   if (state.init_count) {
+      if (state.init_flags != init_flags) {
+         render_state_unlock_state();
 
-   if (virgl->init_count) {
-      if (virgl->init_flags != init_flags) {
          render_log("failed to re-initialize with flags 0x%x", init_flags);
-         goto fail;
+         return false;
       }
    } else {
-      render_state_lock_dispatch();
       virgl_set_debug_callback(render_state_debug_callback);
-      int ret = virgl_renderer_init(virgl, init_flags,
+      int ret = virgl_renderer_init(&state, init_flags,
                                     (struct virgl_renderer_callbacks *)&render_state_cbs);
-      render_state_unlock_dispatch();
       if (ret) {
+         render_state_unlock_state();
+
          render_log("failed to initialize virglrenderer");
-         goto fail;
+         return false;
       }
 
-      list_inithead(&virgl->contexts);
-      virgl->init_flags = init_flags;
+      list_inithead(&state.contexts);
+      state.init_flags = init_flags;
    }
 
-   virgl->init_count++;
-
-   render_state_unlock_struct();
+   state.init_count++;
+   render_state_unlock_state();
 
    return true;
-
-fail:
-   render_state_unlock_struct();
-   return false;
 }
 
 bool
@@ -169,34 +200,35 @@ render_state_create_context(uint32_t ctx_id,
                             uint32_t name_len,
                             const char *name)
 {
+   render_state_lock_renderer();
    int ret = virgl_renderer_context_create_with_flags(ctx_id, flags, name_len, name);
-   if (ret) {
-      render_log("failed to create context %u with flags %u (%d)", ctx_id, flags, ret);
-      return false;
-   }
+   render_state_unlock_renderer();
 
-   return true;
+   if (ret)
+      render_log("failed to create context %u with flags %u (%d)", ctx_id, flags, ret);
+
+   return !ret;
 }
 
 void
 render_state_destroy_context(uint32_t ctx_id)
 {
-   render_state_lock_dispatch();
-   /* destroy the context first to join its sync threads and ring threads */
+   render_state_lock_renderer();
    virgl_renderer_context_destroy(ctx_id);
-   render_state_unlock_dispatch();
+   render_state_unlock_renderer();
 }
 
 bool
 render_state_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size)
 {
+   render_state_lock_renderer();
    int ret = virgl_renderer_submit_cmd(cmd, ctx_id, size / sizeof(uint32_t));
-   if (ret) {
-      render_log("failed to submit cmd: ctx_id %u size %u ret(%d)", ctx_id, size, ret);
-      return false;
-   }
+   render_state_unlock_renderer();
 
-   return true;
+   if (ret)
+      render_log("failed to submit cmd: ctx_id %u size %u ret(%d)", ctx_id, size, ret);
+
+   return !ret;
 }
 
 bool
@@ -205,17 +237,18 @@ render_state_submit_fence(uint32_t ctx_id,
                           uint64_t queue_id,
                           uint64_t fence_id)
 {
-
+   render_state_lock_renderer();
    int ret = virgl_renderer_context_create_fence(ctx_id, flags, queue_id, fence_id);
+   render_state_unlock_renderer();
+
    if (ret) {
       render_log(
          "failed to create context fence: ctx_id %u with flags %u queue_id %" PRIu64
          " fence_id %" PRIu64 " ret(%d)",
          ctx_id, flags, queue_id, fence_id, ret);
-      return false;
    }
 
-   return true;
+   return !ret;
 }
 
 bool
@@ -236,8 +269,12 @@ render_state_create_resource(uint32_t ctx_id,
       .blob_id = blob_id,
       .size = blob_size,
    };
+
+   render_state_lock_renderer();
    int ret = virgl_renderer_resource_create_blob(&blob_args);
    if (ret) {
+      render_state_unlock_renderer();
+
       render_log("failed to create blob resource");
       return false;
    }
@@ -254,6 +291,8 @@ render_state_create_resource(uint32_t ctx_id,
    ret = virgl_renderer_resource_export_blob(res_id, &fd_type, &res_fd);
    if (ret) {
       virgl_renderer_resource_unref(res_id);
+      render_state_unlock_renderer();
+
       return false;
    }
 
@@ -261,6 +300,7 @@ render_state_create_resource(uint32_t ctx_id,
     * RENDER_CONTEXT_OP_IMPORT_RESOURCE to attach the resource again.
     */
    virgl_renderer_ctx_attach_resource(ctx_id, res_id);
+   render_state_unlock_renderer();
 
    switch (fd_type) {
    case VIRGL_RENDERER_BLOB_FD_TYPE_DMABUF:
@@ -317,13 +357,18 @@ render_state_import_resource(uint32_t ctx_id,
       .fd = fd,
       .size = size,
    };
+
+   render_state_lock_renderer();
    int ret = virgl_renderer_resource_import_blob(&import_args);
    if (ret) {
+      render_state_unlock_renderer();
+
       render_log("failed to import blob resource %u (%d)", res_id, ret);
       return false;
    }
 
    virgl_renderer_ctx_attach_resource(ctx_id, res_id);
+   render_state_unlock_renderer();
 
    return true;
 }
@@ -331,5 +376,7 @@ render_state_import_resource(uint32_t ctx_id,
 void
 render_state_destroy_resource(UNUSED uint32_t ctx_id, uint32_t res_id)
 {
+   render_state_lock_renderer();
    virgl_renderer_resource_unref(res_id);
+   render_state_unlock_renderer();
 }
