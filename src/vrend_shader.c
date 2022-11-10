@@ -5659,6 +5659,12 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_SLT:
       emit_compare("lessThan");
       break;
+   case TGSI_OPCODE_SLE:
+      emit_compare("lessThanEqual");
+      break;
+   case TGSI_OPCODE_SGT:
+      emit_compare("greaterThan");
+      break;
    case TGSI_OPCODE_ISLT:
    case TGSI_OPCODE_USLT:
    case TGSI_OPCODE_FSLT:
