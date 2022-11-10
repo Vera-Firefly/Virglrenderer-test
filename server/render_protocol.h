@@ -9,8 +9,6 @@
 #include <stdint.h>
 
 #include "virgl_resource.h"
-#include "virglrenderer.h"
-#include "virglrenderer_hw.h"
 
 /* this covers the command line options and the socket type */
 #define RENDER_SERVER_VERSION 0
@@ -186,7 +184,7 @@ struct render_context_op_destroy_resource_request {
  */
 struct render_context_op_submit_cmd_request {
    struct render_context_op_header header;
-   size_t size;
+   uint32_t size;
    char cmd[256];
    /* if size > sizeof(cmd), followed by (size - sizeof(cmd)) bytes in another
     * message; size still must be small
