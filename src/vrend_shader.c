@@ -7884,10 +7884,6 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    if (cfg->use_core_profile && cfg->glsl_version >= 140)
       ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);
 
-   /* If we need a sysvalue UBO then we require GLSL 1.40 */
-   if (ctx.glsl_strbufs.required_sysval_uniform_decls)
-      ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);
-
    if (sinfo->so_info.num_outputs) {
       ctx.so = &sinfo->so_info;
       ctx.so_names = calloc(sinfo->so_info.num_outputs, sizeof(char *));
@@ -7913,6 +7909,10 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    bret = tgsi_iterate_shader(tokens, &ctx.iter);
    if (bret == false)
       goto fail;
+
+   /* If we need a sysvalue UBO then we require GLSL 1.40 */
+   if (ctx.glsl_strbufs.required_sysval_uniform_decls)
+      ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);
 
    if (!ctx.cfg->use_gles &&
       ( key->in_arrays.num_arrays > 0 ) &&
