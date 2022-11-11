@@ -2359,7 +2359,10 @@ static void emit_clip_dist_movs(const struct dump_ctx *ctx,
 
    if (ctx->prog_type == TGSI_PROCESSOR_TESS_CTRL)
       prefix = "gl_out[gl_InvocationID].";
-   if (ctx->num_out_clip_dist == 0 && ctx->is_last_vertex_stage) {
+
+   if (ctx->num_out_clip_dist == 0 &&
+       ctx->is_last_vertex_stage &&
+       ctx->num_outputs + 2 <= MAX_VARYING) {
       emit_buff(glsl_strbufs, "if (clip_plane_enabled) {\n");
       for (i = 0; i < 8; i++) {
          emit_buff(glsl_strbufs, "  %sgl_ClipDistance[%d] = dot(%s, clipp[%d]);\n",
