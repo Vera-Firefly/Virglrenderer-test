@@ -37,6 +37,8 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_dual_blend.h"
+#include "util/hash_table.h"
+#include "util/ralloc.h"
 
 #include "util/u_thread.h"
 #include "util/u_format.h"
@@ -827,6 +829,10 @@ struct vrend_context {
 
    vrend_context_fence_retire fence_retire;
    void *fence_retire_data;
+
+#ifdef ENABLE_TRACING
+   struct hash_table *active_markers;
+#endif
 };
 
 static void vrend_pause_render_condition(struct vrend_context *ctx, bool pause);
@@ -7531,6 +7537,13 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 
 }
 
+#ifdef ENABLE_TRACING
+static void destroy_active_markers_entry(struct hash_entry *entry)
+{
+    TRACE_SCOPE_END(entry->data);
+}
+#endif
+
 void vrend_destroy_context(struct vrend_context *ctx)
 {
    bool switch_0 = (ctx == vrend_state.current_ctx);
@@ -7571,6 +7584,10 @@ void vrend_destroy_context(struct vrend_context *ctx)
    LIST_FOR_EACH_ENTRY_SAFE(untyped_res, untyped_res_tmp, &ctx->untyped_resources, head)
       free(untyped_res);
    vrend_ctx_resource_fini_table(ctx->res_hash);
+
+#ifdef ENABLE_TRACING
+   _mesa_hash_table_destroy(ctx->active_markers, destroy_active_markers_entry);
+#endif
 
    FREE(ctx);
 
@@ -7631,6 +7648,10 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    if (!grctx->ctx_id)
       grctx->fence_retire = vrend_clicbs->ctx0_fence_retire;
+
+#ifdef ENABLE_TRACING
+   grctx->active_markers = _mesa_hash_table_create(NULL, _mesa_hash_string, _mesa_key_string_equal);
+#endif
 
    return grctx;
 }
@@ -12750,11 +12771,16 @@ void vrend_context_emit_string_marker(struct vrend_context *ctx, GLsizei length,
     char buf[256];
     if (length > 6 && !strncmp(message, "BEGIN:", 6)) {
        snprintf(buf, 256, "%.*s", length - 6, &message[6]);
-       TRACE_SCOPE_BEGIN(buf);
+       char *scope_name = ralloc_strndup(ctx->active_markers, buf, 256);
+       const char *scope = TRACE_SCOPE_BEGIN(scope_name);
+       _mesa_hash_table_insert(ctx->active_markers, scope_name, (void *)scope);
     } else if (length > 4 && !strncmp(message, "END:", 4)) {
        snprintf(buf, 256, "%.*s", length - 4, &message[4]);
-       const char *scope = buf;
-       TRACE_SCOPE_END(scope);
+       struct hash_entry *entry = _mesa_hash_table_search(ctx->active_markers, buf);
+       const char *orig_scope = (const char *) entry->data;
+       TRACE_SCOPE_END(orig_scope);
+       ralloc_free((void *)entry->key);
+      _mesa_hash_table_remove(ctx->active_markers, entry);
     }
 #endif
 
