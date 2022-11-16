@@ -187,6 +187,10 @@ if with_tracing == 'percetto'
    virgl_depends += [percetto_dep]
 endif
 
+if with_tracing == 'sysprof'
+   virgl_depends += [sysprof_dep]
+endif
+
 virgl_sources += vrend_sources
 
 if gbm_dep.found()

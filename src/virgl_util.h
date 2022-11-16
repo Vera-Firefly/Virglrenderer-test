@@ -40,6 +40,7 @@
 #define TRACE_WITH_PERFETTO 1
 #define TRACE_WITH_STDERR 2
 #define TRACE_WITH_PERCETTO 3
+#define TRACE_WITH_SYSPROF 4
 
 #define BIT(n)                   (UINT32_C(1) << (n))
 

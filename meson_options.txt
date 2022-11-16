@@ -120,6 +120,6 @@ option(
   'tracing',
   type : 'combo',
   value : 'none',
-  choices : [ 'percetto', 'perfetto', 'stderr', 'none' ],
+  choices : [ 'percetto', 'perfetto', 'sysprof', 'stderr', 'none' ],
   description : 'enable emitting traces using the selected backend'
 )

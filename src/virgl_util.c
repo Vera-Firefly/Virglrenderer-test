@@ -49,6 +49,10 @@
 #include <vperfetto-min.h>
 #endif
 
+#if ENABLE_TRACING == TRACE_WITH_SYSPROF
+#include <sysprof-capture.h>
+#endif
+
 #if ENABLE_TRACING == TRACE_WITH_STDERR
 #include <stdio.h>
 #endif
@@ -208,6 +212,38 @@ void trace_end(void **dummy)
 {
    (void)dummy;
    vperfetto_min_endTrackEvent_VMM();
+}
+#endif
+
+#if ENABLE_TRACING == TRACE_WITH_SYSPROF
+struct virgl_sysprof_entry {
+   SysprofTimeStamp begin;
+   /* SysprofCaptureMark itself limits it to 40 characters */
+   char name[40];
+};
+
+void trace_init(void)
+{
+}
+
+void *trace_begin(const char *scope)
+{
+   struct virgl_sysprof_entry *trace = malloc(sizeof (struct virgl_sysprof_entry));
+   trace->begin = SYSPROF_CAPTURE_CURRENT_TIME;
+   snprintf(trace->name, sizeof(trace->name), "%s", scope);
+
+   return trace;
+}
+
+void trace_end(void **func_name)
+{
+   struct virgl_sysprof_entry *trace = (struct virgl_sysprof_entry *)*func_name;
+   sysprof_collector_mark(trace->begin,
+                          SYSPROF_CAPTURE_CURRENT_TIME - trace->begin,
+                          "virglrenderer",
+                          trace->name,
+                          NULL);
+   free(trace);
 }
 #endif
 

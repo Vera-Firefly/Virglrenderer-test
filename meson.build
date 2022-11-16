@@ -108,6 +108,11 @@ if with_tracing == 'perfetto'
    conf_data.set('ENABLE_TRACING', 'TRACE_WITH_PERFETTO')
 endif
 
+if with_tracing == 'sysprof'
+   sysprof_dep = dependency('sysprof-capture-4', version: '>= 3.38.0')
+   conf_data.set('ENABLE_TRACING', 'TRACE_WITH_SYSPROF')
+endif
+
 if with_tracing == 'stderr'
    conf_data.set('ENABLE_TRACING', 'TRACE_WITH_STDERR')
 endif
