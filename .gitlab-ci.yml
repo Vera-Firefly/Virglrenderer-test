@@ -11,7 +11,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 722243
+  MESA_PIPELINE_ID: 740110
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -37,7 +37,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: 6a29cb2654ff059dcb59e3fcaa0bcc982656609d
+    ref: fda262fe64ed3d55527921e67681056b0efe9f30
     file:
       - '/.gitlab-ci/image-tags.yml'
 
