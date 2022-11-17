@@ -11,7 +11,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 740110
+  MESA_PIPELINE_ID: 743439
   MESA_PROJECT_PATH: mesa/mesa
   MINIO_HOST: minio-packet.freedesktop.org
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -37,7 +37,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: fda262fe64ed3d55527921e67681056b0efe9f30
+    ref: 1ec172646cd7f5b8c04173a6b45a871aa48aa12e
     file:
       - '/.gitlab-ci/image-tags.yml'
 
@@ -154,7 +154,7 @@ make check venus:
     - export CI_JOB_NAME_SANITIZED="$(echo $CI_JOB_NAME | tr ' /' '--')"
   variables:
     CI_JOB_JWT_FILE: /minio_jwt
-    MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_PATH}
+    MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_GL_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_X86_TEST_GL_TAG}
   script:
     - export DEQP_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
@@ -185,7 +185,7 @@ make check venus:
     - export CI_JOB_NAME_SANITIZED="$(echo $CI_JOB_NAME | tr ' /' '--')"
   variables:
     CI_JOB_JWT_FILE: /minio_jwt
-    MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_PATH}
+    MESA_IMAGE_PATH: ${DEBIAN_X86_TEST_IMAGE_VK_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_X86_TEST_VK_TAG}
   script:
     - export DEQP_RESULTS_DIR="results/${CI_JOB_NAME_SANITIZED}"
