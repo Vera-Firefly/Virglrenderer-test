@@ -656,7 +656,9 @@ int virgl_video_fill_caps(union virgl_caps *caps)
     vaQueryConfigProfiles(va_dpy, profiles, &num_profiles);
     for (i = 0, caps->v2.num_video_caps = 0; i < num_profiles; i++) {
         /* only support H.264 and H.265 now */
-        if (profiles[i] != VAProfileH264Main &&
+        if (profiles[i] != VAProfileMPEG2Simple &&
+            profiles[i] != VAProfileMPEG2Main &&
+            profiles[i] != VAProfileH264Main &&
             profiles[i] != VAProfileH264High &&
             profiles[i] != VAProfileH264ConstrainedBaseline &&
             profiles[i] != VAProfileHEVCMain)
@@ -2237,6 +2239,104 @@ static int h265_encode_bitstream(
     return 0;
 }
 
+
+static void mpeg12_fill_picture_param(struct virgl_video_codec *codec,
+                                      struct virgl_video_buffer *target,
+                                      const struct virgl_mpeg12_picture_desc *desc,
+                                      VAPictureParameterBufferMPEG2 *vapp)
+{
+    (void)codec;
+    (void)target;
+    vapp->forward_reference_picture = desc->ref[0];
+    vapp->backward_reference_picture = desc->ref[1];
+    vapp->f_code = (desc->f_code[0][0] + 1) <<12;
+    vapp->f_code |= (desc->f_code[0][1] + 1) <<8;
+    vapp->f_code |= (desc->f_code[1][0] + 1) <<4;
+    vapp->f_code |= (desc->f_code[1][1] + 1) <<0;
+    ITEM_SET(vapp, desc, picture_coding_type);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, intra_dc_precision);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, picture_structure);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, top_field_first);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, frame_pred_frame_dct);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, concealment_motion_vectors);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, q_scale_type);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, intra_vlc_format);
+    ITEM_SET(&vapp->picture_coding_extension.bits, desc, alternate_scan);
+}
+
+static void mpeg12_fill_slice_param(const struct virgl_mpeg12_picture_desc *desc,
+                                    VASliceParameterBufferMPEG2 *vasp)
+{
+    (void)desc;
+    (void)vasp;
+}
+
+static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
+                                   struct virgl_video_buffer *target,
+                                   const struct virgl_mpeg12_picture_desc *desc,
+                                   unsigned num_buffers,
+                                   const void * const *buffers,
+                                   const unsigned *sizes)
+{
+    unsigned i;
+    int err = 0;
+    VAStatus va_stat;
+    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf, iq_matrix_buf;
+    VAPictureParameterBufferMPEG2 pic_param = {0};
+    VASliceParameterBufferMPEG2 slice_param = {0};
+
+    slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
+    if (!slice_data_buf) {
+        virgl_log("alloc slice data buffer id failed\n");
+        return -1;
+    }
+
+    mpeg12_fill_picture_param(codec, target, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    mpeg12_fill_slice_param(desc, &slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VASliceParameterBufferType,
+                   sizeof(slice_param), 1, &slice_param, &slice_param_buf);
+
+    for (i = 0; i < num_buffers; i++) {
+        vaCreateBuffer(va_dpy, codec->va_ctx, VASliceDataBufferType,
+                       sizes[i], 1, (void *)(buffers[i]), &slice_data_buf[i]);
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    for (i = 0; i < num_buffers; i++) {
+        va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
+
+        if (VA_STATUS_SUCCESS != va_stat) {
+            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            err = -1;
+        }
+    }
+
+err:
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+    for (i = 0; i < num_buffers; i++)
+        vaDestroyBuffer(va_dpy, slice_data_buf[i]);
+    free(slice_data_buf);
+
+    return err;
+}
+
 int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  struct virgl_video_buffer *target,
                                  const union virgl_picture_desc *desc,
@@ -2273,6 +2373,10 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     case PIPE_VIDEO_PROFILE_HEVC_MAIN_444:
         return h265_decode_bitstream(codec, target, &desc->h265,
                                      num_buffers, buffers, sizes);
+    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
+    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
+        return mpeg12_decode_bitstream(codec, target, &desc->mpeg12,
+                                       num_buffers, buffers, sizes);
     default:
         break;
     }

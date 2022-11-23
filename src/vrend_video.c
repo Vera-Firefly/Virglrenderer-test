@@ -618,6 +618,21 @@ static void modify_h265_picture_desc(struct vrend_video_codec *cdc,
     }
 }
 
+static void modify_mpeg12_picture_desc(struct vrend_video_codec *cdc,
+                                       struct vrend_video_buffer *tgt,
+                                       struct virgl_mpeg12_picture_desc *desc)
+{
+    unsigned i;
+    struct vrend_video_buffer *vbuf;
+
+    (void)tgt;
+
+    for (i = 0; i < ARRAY_SIZE(desc->ref); i++) {
+        vbuf = get_video_buffer(cdc->ctx, desc->ref[i]);
+        desc->ref[i] = virgl_video_buffer_id(vbuf ? vbuf->buffer : NULL);
+    }
+}
+
 static void modify_picture_desc(struct vrend_video_codec *cdc,
                                 struct vrend_video_buffer *tgt,
                                 union virgl_picture_desc *desc)
@@ -639,6 +654,10 @@ static void modify_picture_desc(struct vrend_video_codec *cdc,
     case PIPE_VIDEO_PROFILE_HEVC_MAIN_12:
     case PIPE_VIDEO_PROFILE_HEVC_MAIN_444:
         modify_h265_picture_desc(cdc, tgt, &desc->h265);
+        break;
+    case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
+    case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
+        modify_mpeg12_picture_desc(cdc, tgt, &desc->mpeg12);
         break;
     default:
         break;
