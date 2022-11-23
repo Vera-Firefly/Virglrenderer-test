@@ -662,6 +662,7 @@ int virgl_video_fill_caps(union virgl_caps *caps)
             profiles[i] != VAProfileH264High &&
             profiles[i] != VAProfileH264ConstrainedBaseline &&
             profiles[i] != VAProfileHEVCMain &&
+            profiles[i] != VAProfileHEVCMain10 &&
             profiles[i] != VAProfileJPEGBaseline &&
             profiles[i] != VAProfileVC1Simple &&
             profiles[i] != VAProfileVC1Main &&
