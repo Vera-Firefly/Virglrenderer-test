@@ -643,6 +643,21 @@ static void modify_mjpeg_picture_desc(struct vrend_video_codec *cdc,
     (void)desc;
 }
 
+static void modify_vc1_picture_desc(struct vrend_video_codec *cdc,
+                                    struct vrend_video_buffer *tgt,
+                                    struct virgl_vc1_picture_desc *desc)
+{
+    unsigned i;
+    struct vrend_video_buffer *vbuf;
+
+    (void)tgt;
+
+    for (i = 0; i < ARRAY_SIZE(desc->ref); i++) {
+        vbuf = get_video_buffer(cdc->ctx, desc->ref[i]);
+        desc->ref[i] = virgl_video_buffer_id(vbuf ? vbuf->buffer : NULL);
+    }
+}
+
 static void modify_picture_desc(struct vrend_video_codec *cdc,
                                 struct vrend_video_buffer *tgt,
                                 union virgl_picture_desc *desc)
@@ -671,6 +686,11 @@ static void modify_picture_desc(struct vrend_video_codec *cdc,
         break;
     case PIPE_VIDEO_PROFILE_JPEG_BASELINE:
         modify_mjpeg_picture_desc(cdc, tgt, &desc->mjpeg);
+        break;
+    case PIPE_VIDEO_PROFILE_VC1_SIMPLE:
+    case PIPE_VIDEO_PROFILE_VC1_MAIN:
+    case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
+        modify_vc1_picture_desc(cdc, tgt, &desc->vc1);
         break;
     default:
         break;
