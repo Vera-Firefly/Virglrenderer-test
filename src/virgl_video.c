@@ -661,7 +661,8 @@ int virgl_video_fill_caps(union virgl_caps *caps)
             profiles[i] != VAProfileH264Main &&
             profiles[i] != VAProfileH264High &&
             profiles[i] != VAProfileH264ConstrainedBaseline &&
-            profiles[i] != VAProfileHEVCMain)
+            profiles[i] != VAProfileHEVCMain &&
+            profiles[i] != VAProfileJPEGBaseline)
             continue;
 
         vaQueryConfigEntrypoints(va_dpy, profiles[i],
@@ -2281,7 +2282,7 @@ static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
     unsigned i;
     int err = 0;
     VAStatus va_stat;
-    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf, iq_matrix_buf;
+    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf;
     VAPictureParameterBufferMPEG2 pic_param = {0};
     VASliceParameterBufferMPEG2 slice_param = {0};
 
@@ -2318,6 +2319,161 @@ static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
         goto err;
     }
 
+    for (i = 0; i < num_buffers; i++) {
+        va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
+
+        if (VA_STATUS_SUCCESS != va_stat) {
+            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            err = -1;
+        }
+    }
+
+err:
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+    for (i = 0; i < num_buffers; i++)
+        vaDestroyBuffer(va_dpy, slice_data_buf[i]);
+    free(slice_data_buf);
+
+    return err;
+}
+
+static void mjpeg_fill_picture_param(struct virgl_video_codec *codec,
+                                     struct virgl_video_buffer *target,
+                                     const struct virgl_mjpeg_picture_desc *desc,
+                                     VAPictureParameterBufferJPEGBaseline *vapp)
+{
+    int i;
+    (void)codec;
+    (void)target;
+
+    ITEM_SET(vapp, &desc->picture_parameter, picture_width);
+    ITEM_SET(vapp, &desc->picture_parameter, picture_height);
+
+    for (i = 0; i < desc->picture_parameter.num_components; ++i) {
+        ITEM_SET(&vapp->components[i], &desc->picture_parameter.components[i], component_id);
+        ITEM_SET(&vapp->components[i], &desc->picture_parameter.components[i], h_sampling_factor);
+        ITEM_SET(&vapp->components[i], &desc->picture_parameter.components[i], v_sampling_factor);
+        ITEM_SET(&vapp->components[i], &desc->picture_parameter.components[i], quantiser_table_selector);
+    }
+
+    ITEM_SET(vapp, &desc->picture_parameter, num_components);
+}
+
+static void mjpeg_fill_slice_param(const struct virgl_mjpeg_picture_desc *desc,
+                                   VASliceParameterBufferJPEGBaseline *vasp)
+{
+    int i;
+
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_size);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_offset);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_data_flag);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_horizontal_position);
+    ITEM_SET(vasp, &desc->slice_parameter, slice_vertical_position);
+
+    for (i = 0; i < desc->slice_parameter.num_components; ++i) {
+        ITEM_SET(&vasp->components[i], &desc->slice_parameter.components[i], component_selector);
+        ITEM_SET(&vasp->components[i], &desc->slice_parameter.components[i], dc_table_selector);
+        ITEM_SET(&vasp->components[i], &desc->slice_parameter.components[i], ac_table_selector);
+    }
+
+    ITEM_SET(vasp, &desc->slice_parameter, num_components);
+    ITEM_SET(vasp, &desc->slice_parameter, restart_interval);
+    ITEM_SET(vasp, &desc->slice_parameter, num_mcus);
+}
+
+static void mjpeg_fill_iq_matrix(const struct virgl_mjpeg_picture_desc *desc,
+                                VAIQMatrixBufferJPEGBaseline *vaiqm)
+{
+    ITEM_CPY(vaiqm, &desc->quantization_table, load_quantiser_table);
+    ITEM_CPY(vaiqm, &desc->quantization_table, quantiser_table);
+}
+
+static void mjpeg_fill_huffman_table(const struct virgl_mjpeg_picture_desc *desc,
+                                    VAHuffmanTableBufferJPEGBaseline *vahftb)
+{
+    int i;
+    for (i = 0; i < 2; ++i) {
+        ITEM_SET(vahftb, &desc->huffman_table, load_huffman_table[i]);
+        ITEM_CPY(&vahftb->huffman_table[i], &desc->huffman_table.table[i], num_dc_codes);
+        ITEM_CPY(&vahftb->huffman_table[i], &desc->huffman_table.table[i], dc_values);
+        ITEM_CPY(&vahftb->huffman_table[i], &desc->huffman_table.table[i], num_ac_codes);
+        ITEM_CPY(&vahftb->huffman_table[i], &desc->huffman_table.table[i], ac_values);
+    }
+
+}
+
+static int mjpeg_decode_bitstream(struct virgl_video_codec *codec,
+                                  struct virgl_video_buffer *target,
+                                  const struct virgl_mjpeg_picture_desc *desc,
+                                  unsigned num_buffers,
+                                  const void * const *buffers,
+                                  const unsigned *sizes)
+{
+    unsigned i;
+    int err = 0;
+    VAStatus va_stat;
+    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf, iq_matrix_buf, huffman_table_buf;
+    VAPictureParameterBufferJPEGBaseline pic_param = {0};
+    VASliceParameterBufferJPEGBaseline slice_param = {0};
+    VAIQMatrixBufferJPEGBaseline iq_matrix = {0};
+    VAHuffmanTableBufferJPEGBaseline huffman_table = {0};
+
+    slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
+    if (!slice_data_buf) {
+        virgl_log("alloc slice data buffer id failed\n");
+        return -1;
+    }
+
+    mjpeg_fill_picture_param(codec, target, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    mjpeg_fill_iq_matrix(desc, &iq_matrix);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAIQMatrixBufferType,
+                   sizeof(iq_matrix), 1, &iq_matrix, &iq_matrix_buf);
+
+    mjpeg_fill_huffman_table(desc, &huffman_table);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAHuffmanTableBufferType,
+                   sizeof(iq_matrix), 1, &huffman_table, &huffman_table_buf);
+
+    mjpeg_fill_slice_param(desc, &slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VASliceParameterBufferType,
+                   sizeof(slice_param), 1, &slice_param, &slice_param_buf);
+
+    for (i = 0; i < num_buffers; i++) {
+        vaCreateBuffer(va_dpy, codec->va_ctx, VASliceDataBufferType,
+                       sizes[i], 1, (void *)(buffers[i]), &slice_data_buf[i]);
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &huffman_table_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render huffman_table_buf failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &iq_matrix_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render iq_matrix_buf failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+    
     for (i = 0; i < num_buffers; i++) {
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
@@ -2376,6 +2532,9 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
     case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
         return mpeg12_decode_bitstream(codec, target, &desc->mpeg12,
+                                       num_buffers, buffers, sizes);
+    case PIPE_VIDEO_PROFILE_JPEG_BASELINE:
+        return mjpeg_decode_bitstream(codec, target, &desc->mjpeg,
                                        num_buffers, buffers, sizes);
     default:
         break;

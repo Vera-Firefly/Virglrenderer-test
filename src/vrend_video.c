@@ -633,6 +633,16 @@ static void modify_mpeg12_picture_desc(struct vrend_video_codec *cdc,
     }
 }
 
+
+static void modify_mjpeg_picture_desc(struct vrend_video_codec *cdc,
+                                      struct vrend_video_buffer *tgt,
+                                      struct virgl_mjpeg_picture_desc *desc)
+{
+    (void)cdc;
+    (void)tgt;
+    (void)desc;
+}
+
 static void modify_picture_desc(struct vrend_video_codec *cdc,
                                 struct vrend_video_buffer *tgt,
                                 union virgl_picture_desc *desc)
@@ -658,6 +668,9 @@ static void modify_picture_desc(struct vrend_video_codec *cdc,
     case PIPE_VIDEO_PROFILE_MPEG2_MAIN:
     case PIPE_VIDEO_PROFILE_MPEG2_SIMPLE:
         modify_mpeg12_picture_desc(cdc, tgt, &desc->mpeg12);
+        break;
+    case PIPE_VIDEO_PROFILE_JPEG_BASELINE:
+        modify_mjpeg_picture_desc(cdc, tgt, &desc->mjpeg);
         break;
     default:
         break;
