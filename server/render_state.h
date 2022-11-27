@@ -14,14 +14,8 @@ render_state_init(uint32_t init_flags);
 void
 render_state_fini(void);
 
-void
-render_state_add_context(struct render_context *ctx);
-
-void
-render_state_remove_context(struct render_context *ctx);
-
 bool
-render_state_create_context(uint32_t ctx_id,
+render_state_create_context(struct render_context *ctx,
                             uint32_t flags,
                             uint32_t name_len,
                             const char *name);

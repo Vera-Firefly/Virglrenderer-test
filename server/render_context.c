@@ -146,7 +146,7 @@ render_context_dispatch_init(struct render_context *ctx,
    if (shmem_ptr == MAP_FAILED)
       return false;
 
-   if (!render_state_create_context(ctx->ctx_id, req->flags, ctx->name_len, ctx->name)) {
+   if (!render_state_create_context(ctx, req->flags, ctx->name_len, ctx->name)) {
       munmap(shmem_ptr, req->shmem_size);
       return false;
    }
@@ -258,7 +258,6 @@ render_context_fini(struct render_context *ctx)
 {
    /* destroy the context first to join its sync threads and ring threads */
    render_state_destroy_context(ctx->ctx_id);
-   render_state_remove_context(ctx);
 
    if (ctx->shmem_ptr)
       munmap(ctx->shmem_ptr, ctx->shmem_size);
@@ -324,8 +323,6 @@ render_context_init(struct render_context *ctx, const struct render_context_args
 
    if (!render_context_init_name(ctx, args->ctx_id, args->ctx_name))
       return false;
-
-   render_state_add_context(ctx);
 
    return true;
 }

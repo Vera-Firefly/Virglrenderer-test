@@ -127,7 +127,7 @@ static const struct virgl_renderer_callbacks render_state_cbs = {
    .write_context_fence = render_state_cb_write_context_fence,
 };
 
-void
+static void
 render_state_add_context(struct render_context *ctx)
 {
    render_state_lock_state();
@@ -135,7 +135,7 @@ render_state_add_context(struct render_context *ctx)
    render_state_unlock_state();
 }
 
-void
+static void
 render_state_remove_context(struct render_context *ctx)
 {
    render_state_lock_state();
@@ -195,17 +195,21 @@ render_state_init(uint32_t init_flags)
 }
 
 bool
-render_state_create_context(uint32_t ctx_id,
+render_state_create_context(struct render_context *ctx,
                             uint32_t flags,
                             uint32_t name_len,
                             const char *name)
 {
    render_state_lock_renderer();
-   int ret = virgl_renderer_context_create_with_flags(ctx_id, flags, name_len, name);
+   int ret = virgl_renderer_context_create_with_flags(ctx->ctx_id, flags, name_len, name);
    render_state_unlock_renderer();
 
-   if (ret)
-      render_log("failed to create context %u with flags %u (%d)", ctx_id, flags, ret);
+   if (!ret) {
+      render_state_add_context(ctx);
+   } else {
+      render_log("failed to create context %u with flags %u (%d)", ctx->ctx_id, flags,
+                 ret);
+   }
 
    return !ret;
 }
@@ -213,9 +217,15 @@ render_state_create_context(uint32_t ctx_id,
 void
 render_state_destroy_context(uint32_t ctx_id)
 {
+   struct render_context *ctx = render_state_lookup_context(ctx_id);
+   if (!ctx)
+      return;
+
    render_state_lock_renderer();
    virgl_renderer_context_destroy(ctx_id);
    render_state_unlock_renderer();
+
+   render_state_remove_context(ctx);
 }
 
 bool
