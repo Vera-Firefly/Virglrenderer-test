@@ -239,7 +239,7 @@ vkr_renderer_create_resource(uint32_t ctx_id,
           blob.type == VIRGL_RESOURCE_FD_OPAQUE);
 
    struct virgl_resource *res = virgl_resource_create_from_fd(
-      res_id, blob.type, blob.u.fd, NULL, 0, &blob.opaque_fd_metadata);
+      res_id, blob.type, blob.u.fd, NULL, 0, &blob.vulkan_info);
    if (!res) {
       close(blob.u.fd);
       return false;

@@ -52,11 +52,11 @@ enum virgl_resource_fd_type {
    VIRGL_RESOURCE_FD_INVALID = -1,
 };
 
-struct virgl_resource_opaque_fd_metadata {
-    uint8_t driver_uuid[16];
-    uint8_t device_uuid[16];
-    uint64_t allocation_size;
-    uint32_t memory_type_index;
+struct virgl_resource_vulkan_info {
+   uint8_t device_uuid[16];
+   uint8_t driver_uuid[16];
+   uint64_t allocation_size;
+   uint32_t memory_type_index;
 };
 
 /**
@@ -101,7 +101,7 @@ struct virgl_resource {
    uint64_t map_size;
    void *mapped;
 
-   struct virgl_resource_opaque_fd_metadata opaque_fd_metadata;
+   struct virgl_resource_vulkan_info vulkan_info;
 
    void *private_data;
 };
@@ -145,7 +145,7 @@ virgl_resource_create_from_fd(uint32_t res_id,
                               int fd,
                               const struct iovec *iov,
                               int iov_count,
-                              const struct virgl_resource_opaque_fd_metadata *opaque_fd_metadata);
+                              const struct virgl_resource_vulkan_info *vulkan_info);
 
 struct virgl_resource *
 virgl_resource_create_from_opaque_handle(struct virgl_context *ctx,

@@ -76,7 +76,7 @@ static VkDevice
 vkr_allocator_get_device(struct virgl_resource *res)
 {
    for (uint32_t i = 0; i < vkr_allocator.device_count; ++i) {
-      if (memcmp(vkr_allocator.device_uuids[i], res->opaque_fd_metadata.device_uuid,
+      if (memcmp(vkr_allocator.device_uuids[i], res->vulkan_info.device_uuid,
                  VK_UUID_SIZE) == 0)
          return vkr_allocator.devices[i];
    }
@@ -105,8 +105,8 @@ vkr_allocator_allocate_memory(struct virgl_resource *res)
                                      .handleType =
                                         VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT,
                                      .fd = fd },
-      .allocationSize = res->opaque_fd_metadata.allocation_size,
-      .memoryTypeIndex = res->opaque_fd_metadata.memory_type_index
+      .allocationSize = res->vulkan_info.allocation_size,
+      .memoryTypeIndex = res->vulkan_info.memory_type_index
    };
 
    VkDeviceMemory mem_handle;
@@ -124,7 +124,7 @@ vkr_allocator_allocate_memory(struct virgl_resource *res)
    mem_info->device = dev_handle;
    mem_info->device_memory = mem_handle;
    mem_info->res_id = res->res_id;
-   mem_info->size = res->opaque_fd_metadata.allocation_size;
+   mem_info->size = res->vulkan_info.allocation_size;
 
    list_addtail(&mem_info->head, &vkr_allocator.memories);
 

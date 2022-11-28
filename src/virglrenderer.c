@@ -1016,7 +1016,7 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
                                           blob.u.fd,
                                           args->iovecs,
                                           args->num_iovs,
-                                          &blob.opaque_fd_metadata);
+                                          &blob.vulkan_info);
       if (!res) {
          close(blob.u.fd);
          return -ENOMEM;

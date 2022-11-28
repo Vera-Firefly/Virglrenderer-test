@@ -134,7 +134,7 @@ virgl_resource_create_from_fd(uint32_t res_id,
                               int fd,
                               const struct iovec *iov,
                               int iov_count,
-                              const struct virgl_resource_opaque_fd_metadata *opaque_fd_metadata)
+                              const struct virgl_resource_vulkan_info *vulkan_info)
 {
    struct virgl_resource *res;
 
@@ -151,8 +151,8 @@ virgl_resource_create_from_fd(uint32_t res_id,
    res->iov = iov;
    res->iov_count = iov_count;
 
-   if (opaque_fd_metadata && fd_type == VIRGL_RESOURCE_FD_OPAQUE)
-      res->opaque_fd_metadata = *opaque_fd_metadata;
+   if (vulkan_info && fd_type == VIRGL_RESOURCE_FD_OPAQUE)
+      res->vulkan_info = *vulkan_info;
 
    return res;
 }
