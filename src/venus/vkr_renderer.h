@@ -72,7 +72,8 @@ vkr_renderer_create_resource(uint32_t ctx_id,
                              uint64_t blob_size,
                              enum virgl_resource_fd_type *out_fd_type,
                              int *out_res_fd,
-                             uint32_t *out_map_info);
+                             uint32_t *out_map_info,
+                             struct virgl_resource_vulkan_info *out_vulkan_info);
 
 bool
 vkr_renderer_import_resource(uint32_t ctx_id,
@@ -170,7 +171,8 @@ vkr_renderer_create_resource(UNUSED uint32_t ctx_id,
                              UNUSED uint64_t blob_size,
                              UNUSED enum virgl_resource_fd_type *out_fd_type,
                              UNUSED int *out_res_fd,
-                             UNUSED uint32_t *out_map_info)
+                             UNUSED uint32_t *out_map_info,
+                             UNUSED struct virgl_resource_vulkan_info *out_vulkan_info)
 {
    return false;
 }

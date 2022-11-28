@@ -401,6 +401,9 @@ proxy_context_get_blob(struct virgl_context *base,
    blob->u.fd = reply_fd;
    blob->map_info = reply.map_info;
 
+   if (reply.fd_type == VIRGL_RESOURCE_FD_OPAQUE)
+      blob->vulkan_info = reply.vulkan_info;
+
    proxy_context_resource_add(ctx, res_id);
 
    return 0;

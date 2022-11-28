@@ -239,11 +239,13 @@ render_state_create_resource(uint32_t ctx_id,
                              uint64_t blob_size,
                              enum virgl_resource_fd_type *out_fd_type,
                              int *out_res_fd,
-                             uint32_t *out_map_info)
+                             uint32_t *out_map_info,
+                             struct virgl_resource_vulkan_info *out_vulkan_info)
 {
    render_state_lock_renderer();
    bool ok = vkr_renderer_create_resource(ctx_id, res_id, blob_flags, blob_id, blob_size,
-                                          out_fd_type, out_res_fd, out_map_info);
+                                          out_fd_type, out_res_fd, out_map_info,
+                                          out_vulkan_info);
    render_state_unlock_renderer();
 
    return ok;

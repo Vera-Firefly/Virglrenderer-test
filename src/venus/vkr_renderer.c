@@ -218,7 +218,8 @@ vkr_renderer_create_resource(uint32_t ctx_id,
                              uint64_t blob_size,
                              enum virgl_resource_fd_type *out_fd_type,
                              int *out_res_fd,
-                             uint32_t *out_map_info)
+                             uint32_t *out_map_info,
+                             struct virgl_resource_vulkan_info *out_vulkan_info)
 {
    TRACE_FUNC();
 
@@ -263,6 +264,11 @@ vkr_renderer_create_resource(uint32_t ctx_id,
    *out_fd_type = blob.type;
    *out_res_fd = res_fd;
    *out_map_info = blob.map_info;
+
+   if (blob.type == VIRGL_RESOURCE_FD_OPAQUE) {
+      assert(out_vulkan_info);
+      *out_vulkan_info = blob.vulkan_info;
+   }
 
    return true;
 }
