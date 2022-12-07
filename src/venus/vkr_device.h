@@ -6,9 +6,10 @@
 #ifndef VKR_DEVICE_H
 #define VKR_DEVICE_H
 
+#include "vkr_common.h"
+
 #include "venus-protocol/vn_protocol_renderer_util.h"
 
-#include "vkr_common.h"
 #include "vkr_context.h"
 
 struct vkr_device {
