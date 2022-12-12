@@ -26,7 +26,7 @@ vn_decode_VkInstance_temp(struct vn_cs_decoder *dec, VkInstance *val)
     vn_decode_uint64_t(dec, &id);
     if (vn_cs_handle_indirect_id(VK_OBJECT_TYPE_INSTANCE)) {
         *val = vn_cs_decoder_alloc_temp(dec, sizeof(vn_object_id));
-        if (!val)
+        if (!*val)
             return;
     }
     vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_INSTANCE);
@@ -62,7 +62,7 @@ vn_decode_VkPhysicalDevice_temp(struct vn_cs_decoder *dec, VkPhysicalDevice *val
     vn_decode_uint64_t(dec, &id);
     if (vn_cs_handle_indirect_id(VK_OBJECT_TYPE_PHYSICAL_DEVICE)) {
         *val = vn_cs_decoder_alloc_temp(dec, sizeof(vn_object_id));
-        if (!val)
+        if (!*val)
             return;
     }
     vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_PHYSICAL_DEVICE);
@@ -98,7 +98,7 @@ vn_decode_VkDevice_temp(struct vn_cs_decoder *dec, VkDevice *val)
     vn_decode_uint64_t(dec, &id);
     if (vn_cs_handle_indirect_id(VK_OBJECT_TYPE_DEVICE)) {
         *val = vn_cs_decoder_alloc_temp(dec, sizeof(vn_object_id));
-        if (!val)
+        if (!*val)
             return;
     }
     vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_DEVICE);
@@ -134,7 +134,7 @@ vn_decode_VkQueue_temp(struct vn_cs_decoder *dec, VkQueue *val)
     vn_decode_uint64_t(dec, &id);
     if (vn_cs_handle_indirect_id(VK_OBJECT_TYPE_QUEUE)) {
         *val = vn_cs_decoder_alloc_temp(dec, sizeof(vn_object_id));
-        if (!val)
+        if (!*val)
             return;
     }
     vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_QUEUE);
@@ -170,7 +170,7 @@ vn_decode_VkCommandBuffer_temp(struct vn_cs_decoder *dec, VkCommandBuffer *val)
     vn_decode_uint64_t(dec, &id);
     if (vn_cs_handle_indirect_id(VK_OBJECT_TYPE_COMMAND_BUFFER)) {
         *val = vn_cs_decoder_alloc_temp(dec, sizeof(vn_object_id));
-        if (!val)
+        if (!*val)
             return;
     }
     vn_cs_handle_store_id((void **)val, id, VK_OBJECT_TYPE_COMMAND_BUFFER);
