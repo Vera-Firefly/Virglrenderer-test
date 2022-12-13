@@ -110,6 +110,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_line_rasterization = true,
    .EXT_multi_draw = true,
    .EXT_mutable_descriptor_type = true,
+   .EXT_pci_bus_info = true,
    .EXT_primitive_topology_list_restart = true,
    .EXT_primitives_generated_query = true,
    .EXT_provoking_vertex = true,
