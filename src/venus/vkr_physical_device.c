@@ -244,9 +244,6 @@ vkr_physical_device_init_properties(struct vkr_physical_device *physical_dev)
 
    VkPhysicalDeviceProperties *props = &physical_dev->properties;
    props->apiVersion = vkr_api_version_cap_minor(props->apiVersion, VKR_MAX_API_VERSION);
-   props->driverVersion = 0;
-
-   /* TODO lie about props->pipelineCacheUUID and patch cache header */
 }
 
 static void
@@ -524,59 +521,8 @@ vkr_dispatch_vkGetPhysicalDeviceProperties2(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceProperties2 *args)
 {
-   struct vkr_physical_device *physical_dev =
-      vkr_physical_device_from_handle(args->physicalDevice);
-
    vn_replace_vkGetPhysicalDeviceProperties2_args_handle(args);
    vkGetPhysicalDeviceProperties2(args->physicalDevice, args->pProperties);
-
-   union {
-      VkBaseOutStructure *pnext;
-      VkPhysicalDeviceProperties2 *props;
-      VkPhysicalDeviceVulkan11Properties *vk11;
-      VkPhysicalDeviceVulkan12Properties *vk12;
-      VkPhysicalDeviceIDProperties *id;
-      VkPhysicalDeviceDriverProperties *driver;
-   } u;
-
-   u.pnext = (VkBaseOutStructure *)args->pProperties;
-   while (u.pnext) {
-      switch (u.pnext->sType) {
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2:
-         u.props->properties = physical_dev->properties;
-         break;
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
-         memset(u.vk11->deviceUUID, 0, sizeof(u.vk11->deviceUUID));
-         memset(u.vk11->driverUUID, 0, sizeof(u.vk11->driverUUID));
-         memset(u.vk11->deviceLUID, 0, sizeof(u.vk11->deviceLUID));
-         u.vk11->deviceNodeMask = 0;
-         u.vk11->deviceLUIDValid = false;
-         break;
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
-         u.vk12->driverID = 0;
-         memset(u.vk12->driverName, 0, sizeof(u.vk12->driverName));
-         memset(u.vk12->driverInfo, 0, sizeof(u.vk12->driverInfo));
-         memset(&u.vk12->conformanceVersion, 0, sizeof(u.vk12->conformanceVersion));
-         break;
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES:
-         memset(u.id->deviceUUID, 0, sizeof(u.id->deviceUUID));
-         memset(u.id->driverUUID, 0, sizeof(u.id->driverUUID));
-         memset(u.id->deviceLUID, 0, sizeof(u.id->deviceLUID));
-         u.id->deviceNodeMask = 0;
-         u.id->deviceLUIDValid = false;
-         break;
-      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:
-         u.driver->driverID = 0;
-         memset(u.driver->driverName, 0, sizeof(u.driver->driverName));
-         memset(u.driver->driverInfo, 0, sizeof(u.driver->driverInfo));
-         memset(&u.driver->conformanceVersion, 0, sizeof(u.driver->conformanceVersion));
-         break;
-      default:
-         break;
-      }
-
-      u.pnext = u.pnext->pNext;
-   }
 }
 
 static void
