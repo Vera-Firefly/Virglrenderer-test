@@ -2064,7 +2064,7 @@ static int vtest_submit_cmd2_batch(struct vtest_context *ctx,
       submit->sync_queue = queue;
       ret = virgl_renderer_context_create_fence(ctx->ctx_id,
                                                 VIRGL_RENDERER_FENCE_FLAG_MERGEABLE,
-                                                batch->sync_queue_id,
+                                                batch->sync_queue_index,
                                                 (uintptr_t)submit);
       if (ret) {
          vtest_free_sync_queue_submit(submit);
@@ -2099,7 +2099,7 @@ int vtest_submit_cmd2(uint32_t length_dw)
    }
 
    batch_count = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_COUNT];
-   if (VCMD_SUBMIT_CMD2_BATCH_COUNT + 8 * batch_count > length_dw) {
+   if (VCMD_SUBMIT_CMD2_BATCH_COUNT + 6 * batch_count > length_dw) {
       free(submit_cmd2_buf);
       return -EINVAL;
    }
@@ -2112,8 +2112,6 @@ int vtest_submit_cmd2(uint32_t length_dw)
          .sync_offset = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_OFFSET(i)],
          .sync_count = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_COUNT(i)],
          .sync_queue_index = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_QUEUE_INDEX(i)],
-         .sync_queue_id = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_QUEUE_ID_LO(i)] |
-                          (uint64_t)submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_QUEUE_ID_HI(i)] << 32,
       };
       const uint32_t *cmds = &submit_cmd2_buf[batch.cmd_offset];
       const uint32_t *syncs = &submit_cmd2_buf[batch.sync_offset];
