@@ -56,7 +56,7 @@
 #include "util/u_pointer.h"
 #include "util/u_hash_table.h"
 
-#define VTEST_MAX_SYNC_QUEUE_COUNT 64
+#define VTEST_MAX_TIMELINE_COUNT 64
 
 struct vtest_resource {
    struct list_head head;
@@ -76,14 +76,14 @@ struct vtest_sync {
    uint64_t value;
 };
 
-struct vtest_sync_queue {
+struct vtest_timeline {
    struct list_head submits;
 };
 
-struct vtest_sync_queue_submit {
+struct vtest_timeline_submit {
    struct list_head head;
 
-   struct vtest_sync_queue *sync_queue;
+   struct vtest_timeline *timeline;
 
    uint32_t count;
    struct vtest_sync **syncs;
@@ -122,7 +122,7 @@ struct vtest_context {
    struct util_hash_table *resource_table;
    struct util_hash_table *sync_table;
 
-   struct vtest_sync_queue sync_queues[VTEST_MAX_SYNC_QUEUE_COUNT];
+   struct vtest_timeline timelines[VTEST_MAX_TIMELINE_COUNT];
 
    struct list_head sync_waits;
 };
@@ -165,16 +165,16 @@ static void vtest_write_implicit_fence(UNUSED void *cookie, uint32_t fence_id_in
    renderer->implicit_fence_completed = fence_id_in;
 }
 
-static void vtest_signal_sync_queue(struct vtest_sync_queue *queue,
-                                    struct vtest_sync_queue_submit *to_submit);
+static void vtest_signal_timeline(struct vtest_timeline *timeline,
+                                  struct vtest_timeline_submit *to_submit);
 
 static void vtest_write_context_fence(UNUSED void *cookie,
                                       UNUSED uint32_t ctx_id,
                                       UNUSED uint32_t ring_idx,
                                       uint64_t fence_id)
 {
-   struct vtest_sync_queue_submit *submit = (void*)(uintptr_t)fence_id;
-   vtest_signal_sync_queue(submit->sync_queue, submit);
+   struct vtest_timeline_submit *submit = (void*)(uintptr_t)fence_id;
+   vtest_signal_timeline(submit->timeline, submit);
 }
 
 static int vtest_get_drm_fd(void *cookie)
@@ -279,7 +279,7 @@ static void vtest_unref_sync(struct vtest_sync *sync)
    list_add(&sync->head, &renderer.free_syncs);
 }
 
-static void vtest_free_sync_queue_submit(struct vtest_sync_queue_submit *submit)
+static void vtest_free_timeline_submit(struct vtest_timeline_submit *submit)
 {
    uint32_t i;
    for (i = 0; i < submit->count; i++)
@@ -533,9 +533,9 @@ static struct vtest_context *vtest_new_context(struct vtest_input *input,
          return NULL;
       }
 
-      for (i = 0; i < VTEST_MAX_SYNC_QUEUE_COUNT; i++) {
-         struct vtest_sync_queue *queue = &ctx->sync_queues[i];
-         list_inithead(&queue->submits);
+      for (i = 0; i < VTEST_MAX_TIMELINE_COUNT; i++) {
+         struct vtest_timeline *timeline = &ctx->timelines[i];
+         list_inithead(&timeline->submits);
       }
 
       list_inithead(&ctx->sync_waits);
@@ -645,13 +645,13 @@ void vtest_destroy_context(struct vtest_context *ctx)
    }
    list_del(&ctx->head);
 
-   for (i = 0; i < VTEST_MAX_SYNC_QUEUE_COUNT; i++) {
-      struct vtest_sync_queue *queue = &ctx->sync_queues[i];
-      struct vtest_sync_queue_submit *submit, *submit_tmp;
+   for (i = 0; i < VTEST_MAX_TIMELINE_COUNT; i++) {
+      struct vtest_timeline *timeline = &ctx->timelines[i];
+      struct vtest_timeline_submit *submit, *submit_tmp;
 
-      LIST_FOR_EACH_ENTRY_SAFE(submit, submit_tmp, &queue->submits, head)
-         vtest_free_sync_queue_submit(submit);
-      list_inithead(&queue->submits);
+      LIST_FOR_EACH_ENTRY_SAFE(submit, submit_tmp, &timeline->submits, head)
+         vtest_free_timeline_submit(submit);
+      list_inithead(&timeline->submits);
    }
 
    LIST_FOR_EACH_ENTRY_SAFE(wait, wait_tmp, &ctx->sync_waits, head) {
@@ -777,12 +777,12 @@ int vtest_get_param(UNUSED uint32_t length_dw)
    resp_buf[VTEST_CMD_ID] = VCMD_GET_PARAM;
    resp = &resp_buf[VTEST_CMD_DATA_START];
    switch (param) {
-   case VCMD_PARAM_MAX_SYNC_QUEUE_COUNT:
+   case VCMD_PARAM_MAX_TIMELINE_COUNT:
       resp[0] = true;
       /* TODO until we have a timerfd */
 #ifdef HAVE_EVENTFD_H
       if (!getenv("VIRGL_DISABLE_MT"))
-         resp[1] = VTEST_MAX_SYNC_QUEUE_COUNT;
+         resp[1] = VTEST_MAX_TIMELINE_COUNT;
       else
          resp[1] = 0;
 #else
@@ -1737,12 +1737,12 @@ static void vtest_signal_sync(struct vtest_sync *sync, uint64_t value)
    }
 }
 
-static void vtest_signal_sync_queue(struct vtest_sync_queue *queue,
-                                    struct vtest_sync_queue_submit *to_submit)
+static void vtest_signal_timeline(struct vtest_timeline *timeline,
+                                  struct vtest_timeline_submit *to_submit)
 {
-   struct vtest_sync_queue_submit *submit, *tmp;
+   struct vtest_timeline_submit *submit, *tmp;
 
-   LIST_FOR_EACH_ENTRY_SAFE(submit, tmp, &queue->submits, head) {
+   LIST_FOR_EACH_ENTRY_SAFE(submit, tmp, &timeline->submits, head) {
       uint32_t i;
 
       list_del(&submit->head);
@@ -2008,7 +2008,7 @@ static int vtest_submit_cmd2_batch(struct vtest_context *ctx,
                                    const uint32_t *cmds,
                                    const uint32_t *syncs)
 {
-   struct vtest_sync_queue_submit *submit = NULL;
+   struct vtest_timeline_submit *submit = NULL;
    uint32_t i;
    int ret;
 
@@ -2019,7 +2019,7 @@ static int vtest_submit_cmd2_batch(struct vtest_context *ctx,
    if (!batch->sync_count)
       return 0;
 
-   if (batch->flags & VCMD_SUBMIT_CMD2_FLAG_SYNC_QUEUE) {
+   if (batch->flags & VCMD_SUBMIT_CMD2_FLAG_RING_IDX) {
       submit = malloc(sizeof(*submit) +
                       sizeof(*submit->syncs) * batch->sync_count +
                       sizeof(*submit->values) * batch->sync_count);
@@ -2053,25 +2053,25 @@ static int vtest_submit_cmd2_batch(struct vtest_context *ctx,
    if (i < batch->sync_count) {
       if (submit) {
          submit->count = i;
-         vtest_free_sync_queue_submit(submit);
+         vtest_free_timeline_submit(submit);
       }
       return -EEXIST;
    }
 
    if (submit) {
-      struct vtest_sync_queue *queue = &ctx->sync_queues[batch->sync_queue_index];
+      struct vtest_timeline *timeline = &ctx->timelines[batch->ring_idx];
 
-      submit->sync_queue = queue;
+      submit->timeline = timeline;
       ret = virgl_renderer_context_create_fence(ctx->ctx_id,
                                                 VIRGL_RENDERER_FENCE_FLAG_MERGEABLE,
-                                                batch->sync_queue_index,
+                                                batch->ring_idx,
                                                 (uintptr_t)submit);
       if (ret) {
-         vtest_free_sync_queue_submit(submit);
+         vtest_free_timeline_submit(submit);
          return ret;
       }
 
-      list_addtail(&submit->head, &queue->submits);
+      list_addtail(&submit->head, &timeline->submits);
    }
 
    return 0;
@@ -2111,14 +2111,14 @@ int vtest_submit_cmd2(uint32_t length_dw)
          .cmd_size = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_CMD_SIZE(i)],
          .sync_offset = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_OFFSET(i)],
          .sync_count = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_COUNT(i)],
-         .sync_queue_index = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_SYNC_QUEUE_INDEX(i)],
+         .ring_idx = submit_cmd2_buf[VCMD_SUBMIT_CMD2_BATCH_RING_IDX(i)],
       };
       const uint32_t *cmds = &submit_cmd2_buf[batch.cmd_offset];
       const uint32_t *syncs = &submit_cmd2_buf[batch.sync_offset];
 
       if (batch.cmd_offset + batch.cmd_size > length_dw ||
           batch.sync_offset + batch.sync_count * 3 > length_dw ||
-          batch.sync_queue_index >= VTEST_MAX_SYNC_QUEUE_COUNT) {
+          batch.ring_idx >= VTEST_MAX_TIMELINE_COUNT) {
          free(submit_cmd2_buf);
          return -EINVAL;
       }
