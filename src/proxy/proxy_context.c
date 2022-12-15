@@ -317,7 +317,7 @@ validate_resource_fd_shm(int fd, uint64_t expected_size)
       return false;
    }
 
-   const uint64_t size = lseek64(fd, 0, SEEK_END);
+   const uint64_t size = lseek(fd, 0, SEEK_END);
    if (size != expected_size) {
       proxy_log("failed to validate shm size(%" PRIu64 ") expected(%" PRIu64 ")", size,
                 expected_size);
