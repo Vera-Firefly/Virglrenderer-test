@@ -10713,6 +10713,66 @@ vn_decode_VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT_partial_temp(struc
     vn_decode_VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT_self_partial_temp(dec, val);
 }
 
+/* struct VkPhysicalDevicePCIBusInfoPropertiesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDevicePCIBusInfoPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_uint32_t(enc, &val->pciDomain);
+    vn_encode_uint32_t(enc, &val->pciBus);
+    vn_encode_uint32_t(enc, &val->pciDevice);
+    vn_encode_uint32_t(enc, &val->pciFunction);
+}
+
+static inline void
+vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT(struct vn_cs_encoder *enc, const VkPhysicalDevicePCIBusInfoPropertiesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT });
+    vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDevicePCIBusInfoPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->pciDomain */
+    /* skip val->pciBus */
+    /* skip val->pciDevice */
+    /* skip val->pciFunction */
+}
+
+static inline void
+vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDevicePCIBusInfoPropertiesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self_partial_temp(dec, val);
+}
+
 /* struct VkPhysicalDeviceDepthStencilResolveProperties chain */
 
 static inline void
@@ -11793,6 +11853,12 @@ vn_encode_VkPhysicalDeviceProperties2_pnext(struct vn_cs_encoder *enc, const voi
             vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
             vn_encode_VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT_self(enc, (const VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *)pnext);
             return;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceProperties2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self(enc, (const VkPhysicalDevicePCIBusInfoPropertiesEXT *)pnext);
+            return;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES:
             vn_encode_simple_pointer(enc, pnext);
             vn_encode_VkStructureType(enc, &pnext->sType);
@@ -12036,6 +12102,14 @@ vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(struct vn_cs_decoder *d
             pnext->sType = stype;
             pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
             vn_decode_VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT_self_partial_temp(dec, (VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *)pnext);
+        }
+        break;
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDevicePCIBusInfoPropertiesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceProperties2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDevicePCIBusInfoPropertiesEXT_self_partial_temp(dec, (VkPhysicalDevicePCIBusInfoPropertiesEXT *)pnext);
         }
         break;
     case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES:
