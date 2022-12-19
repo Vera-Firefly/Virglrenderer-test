@@ -11330,6 +11330,10 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
       caps->v1.max_viewports = 1;
    }
 
+   if (has_feature(feat_timer_query)) {
+      caps->v1.bset.timer_query = 1;
+   }
+
    /* Common limits for all backends. */
    caps->v1.max_render_targets = vrend_state.max_draw_buffers;
 
@@ -11368,7 +11372,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 14;
+   caps->v2.host_feature_check_version = 15;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
