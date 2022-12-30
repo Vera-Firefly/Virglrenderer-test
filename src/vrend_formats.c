@@ -292,6 +292,8 @@ static struct vrend_format_table srgb_formats[] = {
 
   { VIRGL_FORMAT_L8_SRGB, GL_SR8_EXT, GL_RED, GL_UNSIGNED_BYTE, RRR1_SWIZZLE },
   { VIRGL_FORMAT_R8_SRGB, GL_SR8_EXT, GL_RED, GL_UNSIGNED_BYTE, NO_SWIZZLE },
+
+  { VIRGL_FORMAT_R8G8_SRGB, GL_SRG8_EXT, GL_RG, GL_UNSIGNED_BYTE, NO_SWIZZLE },
 };
 
 static struct vrend_format_table bit10_formats[] = {
