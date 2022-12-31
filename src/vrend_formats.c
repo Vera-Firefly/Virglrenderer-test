@@ -426,46 +426,6 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
     glBindTexture(GL_TEXTURE_2D, tex_id);
     glBindFramebuffer(GL_FRAMEBUFFER, fb_id);
 
-    /* we can't probe compressed formats, as we'd need valid payloads to
-     * glCompressedTexImage2D. Let's just check for extensions instead.
-     */
-    if (table[i].format < VIRGL_FORMAT_MAX) {
-       const struct util_format_description *desc = util_format_description(table[i].format);
-       switch (desc->layout) {
-       case UTIL_FORMAT_LAYOUT_S3TC:
-          if (epoxy_has_gl_extension("GL_S3_s3tc") ||
-              epoxy_has_gl_extension("GL_EXT_texture_compression_s3tc"))
-             vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
-          continue;
-
-       case UTIL_FORMAT_LAYOUT_RGTC:
-          if (epoxy_has_gl_extension("GL_ARB_texture_compression_rgtc") ||
-              epoxy_has_gl_extension("GL_EXT_texture_compression_rgtc") )
-             vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
-          continue;
-
-       case UTIL_FORMAT_LAYOUT_ETC:
-          if ((table[i].format == VIRGL_FORMAT_ETC1_RGB8 &&
-               epoxy_has_gl_extension("GL_OES_compressed_ETC1_RGB8_texture")) ||
-               (table[i].format != VIRGL_FORMAT_ETC1_RGB8 && gles_ver >= 30))
-             vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
-          continue;
-
-       case UTIL_FORMAT_LAYOUT_BPTC:
-          if (epoxy_has_gl_extension("GL_ARB_texture_compression_bptc") ||
-              epoxy_has_gl_extension("GL_EXT_texture_compression_bptc"))
-             vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
-          continue;
-
-         case UTIL_FORMAT_LAYOUT_ASTC:
-               if(epoxy_has_gl_extension("GL_KHR_texture_compression_astc_ldr"))
-                   vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
-          continue;
-       default:
-          ;/* do logic below */
-       }
-    }
-
     /* The error state should be clear here */
     status = glGetError();
     assert(status == GL_NO_ERROR);
@@ -562,7 +522,17 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
   }
 }
 
+static void vrend_add_compressed_formats(struct vrend_format_table *table, int num_entries)
+{
+   int flags = epoxy_is_desktop_gl() ? VIRGL_TEXTURE_CAN_READBACK : 0;
+   for (int i = 0; i < num_entries; i++) {
+      vrend_insert_format(&table[i], VIRGL_BIND_SAMPLER_VIEW, flags);
+   }
+}
+
+
 #define add_formats(x) vrend_add_formats((x), ARRAY_SIZE((x)))
+#define add_compressed_formats(x) vrend_add_compressed_formats((x), ARRAY_SIZE((x)))
 
 void vrend_build_format_list_common(void)
 {
@@ -592,10 +562,20 @@ void vrend_build_format_list_common(void)
   add_formats(snorm_la_formats);
 
   /* compressed */
-  add_formats(etc2_formats);
-  add_formats(rgtc_formats);
-  add_formats(dxtn_formats);
-  add_formats(dxtn_srgb_formats);
+  if (epoxy_has_gl_extension("GL_S3_s3tc") ||
+      epoxy_has_gl_extension("GL_EXT_texture_compression_s3tc") ||
+      epoxy_has_gl_extension("GL_ANGLE_texture_compression_dxt")) {
+     add_compressed_formats(dxtn_formats);
+     add_compressed_formats(dxtn_srgb_formats);
+  }
+
+  if (epoxy_has_gl_extension("GL_ARB_texture_compression_rgtc") ||
+      epoxy_has_gl_extension("GL_EXT_texture_compression_rgtc") )
+     add_compressed_formats(rgtc_formats);
+
+  if (epoxy_has_gl_extension("GL_ARB_texture_compression_bptc") ||
+      epoxy_has_gl_extension("GL_EXT_texture_compression_bptc"))
+     add_compressed_formats(bptc_formats);
 
   add_formats(srgb_formats);
 
@@ -603,8 +583,6 @@ void vrend_build_format_list_common(void)
 
   add_formats(packed_float_formats);
   add_formats(exponent_float_formats);
-
-  add_formats(bptc_formats);
 }
 
 
@@ -634,7 +612,14 @@ void vrend_build_format_list_gles(void)
    */
   add_formats(gles_z32_format);
   add_formats(gles_bit10_formats);
-  add_formats(astc_formats);
+
+  if (epoxy_has_gl_extension("GL_KHR_texture_compression_astc_ldr"))
+     add_compressed_formats(astc_formats);
+
+  if (epoxy_gl_version() >= 30) {
+     add_compressed_formats(etc2_formats);
+  }
+
 }
 
 /* glTexStorage may not support all that is supported by glTexImage,
@@ -883,20 +868,21 @@ static boolean format_compressed_compressed_copy_compatible(enum virgl_formats s
         (src == VIRGL_FORMAT_ASTC_10x8 && dst == VIRGL_FORMAT_ASTC_10x8_SRGB) ||
         (src == VIRGL_FORMAT_ASTC_10x10 && dst == VIRGL_FORMAT_ASTC_10x10_SRGB) ||
         (src == VIRGL_FORMAT_ASTC_12x10 && dst == VIRGL_FORMAT_ASTC_12x10_SRGB) ||
-        (src == VIRGL_FORMAT_ASTC_12x12 && dst == VIRGL_FORMAT_ASTC_12x12_SRGB))
+        (src == VIRGL_FORMAT_ASTC_12x12 && dst == VIRGL_FORMAT_ASTC_12x12_SRGB) ||
+        (src == VIRGL_FORMAT_ETC2_R11_UNORM && dst == VIRGL_FORMAT_ETC2_R11_SNORM) ||
+        (src == VIRGL_FORMAT_ETC2_RG11_UNORM && dst == VIRGL_FORMAT_ETC2_RG11_SNORM) ||
+        (src == VIRGL_FORMAT_ETC2_RGBA8 && dst == VIRGL_FORMAT_ETC2_SRGBA8) ||
+        (src == VIRGL_FORMAT_ETC2_RGB8A1 && dst == VIRGL_FORMAT_ETC2_SRGB8A1) ||
+        (src == VIRGL_FORMAT_ETC2_RGB8 && dst == VIRGL_FORMAT_ETC2_SRGB8))
          return true;
    }
 
    if ((src == VIRGL_FORMAT_RGTC1_UNORM && dst == VIRGL_FORMAT_RGTC1_SNORM) ||
        (src == VIRGL_FORMAT_RGTC2_UNORM && dst == VIRGL_FORMAT_RGTC2_SNORM) ||
        (src == VIRGL_FORMAT_BPTC_RGBA_UNORM && dst == VIRGL_FORMAT_BPTC_SRGBA) ||
-       (src == VIRGL_FORMAT_BPTC_RGB_FLOAT && dst == VIRGL_FORMAT_BPTC_RGB_UFLOAT) ||
-       (src == VIRGL_FORMAT_ETC2_R11_UNORM && dst == VIRGL_FORMAT_ETC2_R11_SNORM) ||
-       (src == VIRGL_FORMAT_ETC2_RG11_UNORM && dst == VIRGL_FORMAT_ETC2_RG11_SNORM) ||
-       (src == VIRGL_FORMAT_ETC2_RGBA8 && dst == VIRGL_FORMAT_ETC2_SRGBA8) ||
-       (src == VIRGL_FORMAT_ETC2_RGB8A1 && dst == VIRGL_FORMAT_ETC2_SRGB8A1) ||
-       (src == VIRGL_FORMAT_ETC2_RGB8 && dst == VIRGL_FORMAT_ETC2_SRGB8))
-      return true;
+       (src == VIRGL_FORMAT_BPTC_RGB_FLOAT && dst == VIRGL_FORMAT_BPTC_RGB_UFLOAT))
+       return true;
+
    return false;
 }
 
