@@ -117,7 +117,7 @@ struct virgl_context {
    /* retire signaled fences of all queues */
    void (*retire_fences)(struct virgl_context *ctx);
 
-   /* submit a fence to the queue identified by queue_id */
+   /* submit a fence to the queue identified by ring_idx */
    int (*submit_fence)(struct virgl_context *ctx,
                        uint32_t flags,
                        uint32_t ring_idx,

@@ -29,7 +29,7 @@ render_state_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size);
 bool
 render_state_submit_fence(uint32_t ctx_id,
                           uint32_t flags,
-                          uint64_t queue_id,
+                          uint64_t ring_idx,
                           uint64_t fence_id);
 
 bool

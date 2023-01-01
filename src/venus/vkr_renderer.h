@@ -61,7 +61,7 @@ vkr_renderer_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size);
 bool
 vkr_renderer_submit_fence(uint32_t ctx_id,
                           uint32_t flags,
-                          uint64_t queue_id,
+                          uint64_t ring_idx,
                           uint64_t fence_id);
 
 bool
@@ -157,7 +157,7 @@ vkr_renderer_submit_cmd(UNUSED uint32_t ctx_id, UNUSED void *cmd, UNUSED uint32_
 static inline bool
 vkr_renderer_submit_fence(UNUSED uint32_t ctx_id,
                           UNUSED uint32_t flags,
-                          UNUSED uint64_t queue_id,
+                          UNUSED uint64_t ring_idx,
                           UNUSED uint64_t fence_id)
 {
    return false;

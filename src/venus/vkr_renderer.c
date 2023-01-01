@@ -130,11 +130,11 @@ vkr_renderer_fini2(void)
 }
 
 static void
-vkr_renderer_retire_fence(struct virgl_context *ctx, uint32_t queue_id, uint64_t fence_id)
+vkr_renderer_retire_fence(struct virgl_context *ctx, uint32_t ring_idx, uint64_t fence_id)
 {
    TRACE_FUNC();
 
-   vkr_renderer_cbs->write_context_fence(NULL, ctx->ctx_id, queue_id, fence_id);
+   vkr_renderer_cbs->write_context_fence(NULL, ctx->ctx_id, ring_idx, fence_id);
 }
 
 bool
@@ -197,7 +197,7 @@ vkr_renderer_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size)
 bool
 vkr_renderer_submit_fence(uint32_t ctx_id,
                           uint32_t flags,
-                          uint64_t queue_id,
+                          uint64_t ring_idx,
                           uint64_t fence_id)
 {
    TRACE_FUNC();
@@ -207,7 +207,7 @@ vkr_renderer_submit_fence(uint32_t ctx_id,
       return false;
 
    assert(vkr_renderer_cbs->write_context_fence);
-   return !ctx->submit_fence(ctx, flags, queue_id, fence_id);
+   return !ctx->submit_fence(ctx, flags, ring_idx, fence_id);
 }
 
 bool
