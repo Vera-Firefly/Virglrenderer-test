@@ -583,7 +583,7 @@ vkr_context_destroy(struct virgl_context *base)
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
       free(sync);
 
-   struct vkr_queue_sync *cpu_sync, *cpu_sync_tmp;
+   struct vkr_cpu_sync *cpu_sync, *cpu_sync_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (cpu_sync, cpu_sync_tmp, &ctx->signaled_cpu_syncs, head)
       free(cpu_sync);
 
