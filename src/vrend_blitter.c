@@ -263,7 +263,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    unsigned swizzle_flags = 0;
    char dest_swizzle_snippet[DEST_SWIZZLE_SNIPPET_SIZE] = "texel";
    const char *ext_str = "";
-   bool msaa = nr_samples > 0;
+   bool msaa = nr_samples > 1;
 
    if (msaa && !blit_ctx->use_gles)
       ext_str = "#extension GL_ARB_texture_multisample : enable\n";
@@ -350,7 +350,7 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, i
 {
    struct blit_prog_key key = {
          .is_color = false,
-         .is_msaa = nr_samples > 0,
+         .is_msaa = nr_samples > 1,
          .num_samples = nr_samples,
          .pipe_tex_target = pipe_tex_target,
       };
@@ -391,7 +391,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
 
    struct blit_prog_key key = {
       .is_color = true,
-      .is_msaa = nr_samples > 0,
+      .is_msaa = nr_samples > 1,
       .manual_srgb_decode = has_bit(flags, BLIT_MANUAL_SRGB_DECODE),
       .manual_srgb_encode = has_bit(flags, BLIT_MANUAL_SRGB_ENCODE),
       .num_samples = nr_samples,
@@ -413,7 +413,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
       glAttachShader(prog_id, blit_ctx->vs);
       unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex_target, key.num_samples);
       enum tgsi_return_type tgsi_ret = tgsi_ret_for_format(src_entry->format);
-      int msaa_samples = nr_samples > 0 ? (tgsi_ret == TGSI_RETURN_TYPE_UNORM ? nr_samples : 1) : 0;
+      int msaa_samples = nr_samples > 1 ? (tgsi_ret == TGSI_RETURN_TYPE_UNORM ? nr_samples : 1) : 0;
 
       GLuint fs_id = blit_build_frag_tex_col(blit_ctx, tgsi_tex, tgsi_ret,
                                              swizzle, msaa_samples, flags);

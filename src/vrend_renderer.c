@@ -6614,7 +6614,7 @@ static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
    if (!state)
       return;
 
-   if (res->base.nr_samples > 0) {
+   if (res->base.nr_samples > 1) {
       tex->state = *state;
       return;
    }
@@ -6716,7 +6716,7 @@ static GLenum tgsitargettogltarget(const enum pipe_texture_target target, int nr
    case PIPE_TEXTURE_1D:
       return GL_TEXTURE_1D;
    case PIPE_TEXTURE_2D:
-      return (nr_samples > 0) ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+      return (nr_samples > 1) ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
    case PIPE_TEXTURE_3D:
       return GL_TEXTURE_3D;
    case PIPE_TEXTURE_RECT:
@@ -6727,7 +6727,7 @@ static GLenum tgsitargettogltarget(const enum pipe_texture_target target, int nr
    case PIPE_TEXTURE_1D_ARRAY:
       return GL_TEXTURE_1D_ARRAY;
    case PIPE_TEXTURE_2D_ARRAY:
-      return (nr_samples > 0) ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
+      return (nr_samples > 1) ? GL_TEXTURE_2D_MULTISAMPLE_ARRAY : GL_TEXTURE_2D_ARRAY;
    case PIPE_TEXTURE_CUBE_ARRAY:
       return GL_TEXTURE_CUBE_MAP_ARRAY;
    case PIPE_BUFFER:
@@ -7481,7 +7481,7 @@ static int check_resource_valid(const struct vrend_renderer_resource_create_args
          (tex_conv_table[args->format].flags & VIRGL_TEXTURE_CAN_TEXTURE_STORAGE);
 
    /* only texture 2d and 2d array can have multiple samples */
-   if (args->nr_samples > 0) {
+   if (args->nr_samples > 1) {
       if (!vrend_format_can_multisample(args->format)) {
          snprintf(errmsg, 256, "Unsupported multisample texture format %s",
                   util_format_name(args->format));
@@ -7857,7 +7857,7 @@ static void vrend_resource_gbm_init(struct vrend_resource *gr, uint32_t format)
    if (vrend_winsys_different_gpu())
       gbm_flags |= GBM_BO_USE_LINEAR;
 
-   if (gr->base.depth0 != 1 || gr->base.last_level != 0 || gr->base.nr_samples != 0)
+   if (gr->base.depth0 != 1 || gr->base.last_level != 0 || gr->base.nr_samples > 1)
       return;
 
    if (!gbm || !gbm->device || !gbm_format || !gbm_flags)
@@ -7985,7 +7985,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
          return EINVAL;
       }
 
-      if (pr->nr_samples > 0) {
+      if (pr->nr_samples > 1) {
          if (format_can_texture_storage) {
             if (gr->target == GL_TEXTURE_2D_MULTISAMPLE) {
                glTexStorage2DMultisample(gr->target, pr->nr_samples,
@@ -9945,7 +9945,7 @@ static void vrend_renderer_prepare_blit_extra_info(struct vrend_context *ctx,
 
    /* for scaled MS blits we either need extensions or hand roll */
    if (info->b.mask & PIPE_MASK_RGBA &&
-       src_res->base.nr_samples > 0 &&
+       src_res->base.nr_samples > 1 &&
        src_res->base.nr_samples != dst_res->base.nr_samples &&
        (info->b.src.box.width != info->b.dst.box.width ||
         info->b.src.box.height != info->b.dst.box.height)) {
@@ -10021,9 +10021,9 @@ static bool vrend_renderer_prepare_blit(struct vrend_context *ctx,
     * source and target format are different. For
     * downsampling DS blits to zero samples we solve this by doing two blits */
    if (vrend_state.use_gles &&
-       ((dst_res->base.nr_samples > 0) ||
+       ((dst_res->base.nr_samples > 1) ||
         ((info->b.mask & PIPE_MASK_RGBA) &&
-         (src_res->base.nr_samples > 0) &&
+         (src_res->base.nr_samples > 1) &&
          (info->b.src.box.x != info->b.dst.box.x ||
           info->b.src.box.width != info->b.dst.box.width ||
           info->dst_y1 != info->src_y1 || info->dst_y2 != info->src_y2 ||
@@ -10081,7 +10081,7 @@ static void vrend_renderer_blit_fbo(struct vrend_context *ctx,
 
    if (vrend_state.use_gles &&
        (info->b.mask & PIPE_MASK_ZS) &&
-       ((src_res->base.nr_samples > 0) &&
+       ((src_res->base.nr_samples > 1) &&
         (src_res->base.nr_samples != dst_res->base.nr_samples)) &&
         ((info->b.src.box.x != info->b.dst.box.x) ||
          (info->src_y1 != info->dst_y1) ||
