@@ -402,7 +402,14 @@ static void
 render_context_set_thread_name(uint32_t ctx_id, const char *ctx_name)
 {
    char thread_name[16];
+
+#pragma GCC diagnostic push
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
    snprintf(thread_name, ARRAY_SIZE(thread_name), "virgl-%d-%s", ctx_id, ctx_name);
+#pragma GCC diagnostic pop
+
    u_thread_setname(thread_name);
 }
 
