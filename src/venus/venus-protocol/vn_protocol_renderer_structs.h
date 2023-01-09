@@ -11,6 +11,9 @@
 #include "vn_protocol_renderer_handles.h"
 
 #pragma GCC diagnostic push
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
 #pragma GCC diagnostic ignored "-Wpointer-arith"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
