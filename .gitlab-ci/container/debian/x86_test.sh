@@ -36,6 +36,7 @@ fi
 
 # Overwrite Mesa CI's virglrenderer binaries with self built versions
 cp -a ${CI_PROJECT_DIR}/install/bin/virgl_test_server /usr/local/bin/
+cp -a ${CI_PROJECT_DIR}/install/libexec/virgl_render_server /usr/local/libexec/
 cp -a ${CI_PROJECT_DIR}/install/lib/libvirglrenderer.so* /usr/local/lib/
 
 if [ "${VK_DRIVER}" = "virtio" ] || [ "${GALLIUM_DRIVER}" = "virgl" ]; then

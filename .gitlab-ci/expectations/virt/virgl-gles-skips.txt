@@ -20,6 +20,7 @@ spec@ext_framebuffer_multisample@clip-and-scissor-blit.*
 
 # Skip because they crash crosvm/virglrenderer
 spec@arb_shader_image_load_store@max-size
+spec@egl_ext_device_base@conformance
 spec@glsl-1.50@execution@interface-blocks-api-access-members
 
 # Skip slow tests on crosvm/virglrenderer (90-250 s)
