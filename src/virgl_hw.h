@@ -408,6 +408,7 @@ enum virgl_formats {
    VIRGL_FORMAT_R4G4B4A4_UNORM          = 319,
    VIRGL_FORMAT_R5G5B5A1_UNORM          = 320,
    VIRGL_FORMAT_R5G6B5_UNORM            = 321,
+   VIRGL_FORMAT_Y8_400_UNORM            = 322,
 
    VIRGL_FORMAT_MAX /* = PIPE_FORMAT_COUNT */,
 
