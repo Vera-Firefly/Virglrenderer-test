@@ -248,6 +248,7 @@ endif
 with_render_server = get_option('render-server')
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
+with_venus = false
 if with_render_server
    with_venus = get_option('venus-experimental')
    assert(with_venus, 'render server makes no sense without venus')
