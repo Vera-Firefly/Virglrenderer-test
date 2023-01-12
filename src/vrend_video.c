@@ -466,8 +466,10 @@ int vrend_video_create_buffer(struct vrend_video_context *ctx,
     if (buf)
         return 0;
 
-    if (format <= PIPE_FORMAT_NONE || format >= PIPE_FORMAT_COUNT)
+    if (format <= PIPE_FORMAT_NONE || format >= PIPE_FORMAT_COUNT){
+        vrend_printf("Invalid vrend video buffer format: %d\n", format);
         return -1;
+    }
 
     if (!width || !height || !res_handles || !num_res)
         return -1;
@@ -713,8 +715,10 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
     struct vrend_video_buffer *tgt = get_video_buffer(ctx, tgt_handle);
     union virgl_picture_desc desc;
 
-    if (!cdc || !tgt)
+    if (!cdc || !tgt){
+        vrend_printf("video codec: 0x%x, video buffer: 0x%x, invalid.\n", cdc, tgt);
         return -1;
+    }
 
     bs_buffers = calloc(num_buffers, sizeof(void *));
     if (!bs_buffers) {
