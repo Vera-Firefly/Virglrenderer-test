@@ -45,7 +45,6 @@ spec@arb_shader_image_load_store@level
 spec@arb_shader_image_load_store@max-size
 spec@arb_shader_image_load_store@semantics
 spec@arb_shader_image_size@builtin
-spec@egl_ext_device_base@conformance
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-isampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-sampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-usampler1darray

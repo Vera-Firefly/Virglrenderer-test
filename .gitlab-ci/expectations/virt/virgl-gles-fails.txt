@@ -442,6 +442,10 @@ spec@arb_vertex_attrib_64bit@execution@vs-fs-pass-vertex-attrib,Fail
 spec@arb_vertex_attrib_64bit@execution@vs-test-attrib-location,Fail
 spec@arb_vertex_buffer_object@pos-array,Fail
 spec@egl 1.4@eglterminate then unbind context,ExpectedFail
+spec@egl_ext_device_base@conformance@configless_tests,Fail
+spec@egl_ext_device_base@conformance,Fail
+spec@egl_ext_device_base@conformance@pbuffer_tests,Fail
+spec@egl_ext_device_base@conformance@surfaceless_tests,Fail
 spec@egl_ext_protected_content@conformance,ExpectedFail
 spec@egl_khr_gl_image@egl_khr_gl_renderbuffer_image-clear-shared-image gl_depth_component24,ExpectedFail
 spec@egl_khr_surfaceless_context@viewport,ExpectedFail
