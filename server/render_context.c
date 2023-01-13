@@ -274,7 +274,7 @@ render_context_fini(struct render_context *ctx)
 }
 
 static void
-render_context_set_thread_name(uint32_t ctx_id, const char *ctx_name)
+render_context_set_thread_name(uint32_t ctx_id, UNUSED const char *ctx_name)
 {
    char thread_name[16];
 
@@ -282,7 +282,14 @@ render_context_set_thread_name(uint32_t ctx_id, const char *ctx_name)
 #ifndef __clang__
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
+   /* context name may match guest process name, so use a generic name in
+    * production/release builds.
+    */
+#ifndef NDEBUG
    snprintf(thread_name, ARRAY_SIZE(thread_name), "virgl-%d-%s", ctx_id, ctx_name);
+#else
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "virgl-%d-gpu_renderer", ctx_id);
+#endif
 #pragma GCC diagnostic pop
 
    u_thread_setname(thread_name);
