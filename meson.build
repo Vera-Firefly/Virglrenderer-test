@@ -77,10 +77,17 @@ conf_data.set('VERSION', meson.project_version())
 conf_data.set('_GNU_SOURCE', 1)
 conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
 
+has_attribute_cleanup = cc.compiles('''
+   void func(void *v) {}
+   int main ()
+   {
+      void *foo __attribute__((cleanup (func))) = 0;
+   }''')
+
 with_tracing = get_option('tracing')
 
 if with_tracing != 'none'
-   if not cc.compiles('void f(void* v){} int main () { void *dummy __attribute__((cleanup (f))) = 0;}')
+   if not has_attribute_cleanup
       error('Tracing requires compiler support for __attribute__((cleanup))')
    endif
 endif
@@ -269,6 +276,9 @@ if with_render_server
    if with_render_server_worker == 'process'
       conf_data.set('ENABLE_RENDER_SERVER_WORKER_PROCESS', 1)
    elif with_render_server_worker == 'thread'
+      if not has_attribute_cleanup
+         error('render-server-worker=thread requires __attribute__((cleanup))')
+      endif
       conf_data.set('ENABLE_RENDER_SERVER_WORKER_THREAD', 1)
    elif with_render_server_worker == 'minijail'
       conf_data.set('ENABLE_RENDER_SERVER_WORKER_MINIJAIL', 1)
