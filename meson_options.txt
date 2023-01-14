@@ -59,9 +59,6 @@ option(
   description : 'treat host-side gl errors as fatal'
 )
 
-# NOTE: expecting some slight fencing changes between host and guest
-# once ring_idx is plumbed through crosvm (ie. synchronizing between
-# host CPU and guest CPU will be a separate fence timeline)
 option(
   'drm-msm-experimental',
   type : 'boolean',
@@ -73,7 +70,7 @@ option(
   'render-server',
   type : 'boolean',
   value : 'false',
-  description : 'enable support for render server'
+  description : 'DEPRECATED: render server is enabled by venus-experimental automatically'
 )
 
 option(

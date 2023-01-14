@@ -253,14 +253,11 @@ if with_check_gl_errors
    conf_data.set('CHECK_GL_ERRORS', 1)
 endif
 
-with_render_server = get_option('render-server')
+with_venus = get_option('venus-experimental')
+with_render_server = with_venus
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
-with_venus = false
-if with_render_server
-   with_venus = get_option('venus-experimental')
-   assert(with_venus, 'render server makes no sense without venus')
-
+if with_venus
    venus_dep = dependency('vulkan')
 
    conf_data.set('ENABLE_VENUS', 1)
@@ -329,7 +326,7 @@ summary({'c_args': (' ').join(get_option('c_args')),
         'minigbm_alloc': with_minigbm_allocation,
         'venus': with_venus,
         'drm-msm': with_drm_msm,
-        'render server': with_render_server,
+        'render server (DEPRECATED)': with_render_server,
         'render server worker': with_render_server ? with_render_server_worker : 'none',
         'video': with_video,
         'tests': with_tests,
