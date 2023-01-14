@@ -91,7 +91,6 @@ struct vtest_server
    bool use_gles;
 
    bool venus;
-   bool render_server;
 
    int ctx_flags;
 
@@ -180,7 +179,6 @@ static void vtest_server_parse_args(int argc, char **argv)
       {"use-gles",            no_argument, NULL, OPT_USE_GLES},
       {"rendernode",          required_argument, NULL, OPT_RENDERNODE},
       {"venus",               no_argument, NULL, OPT_VENUS},
-      {"render-server",       no_argument, NULL, OPT_RENDER_SERVER},
       {"socket-path",         optional_argument, NULL, OPT_SOCKET_PATH},
       {0, 0, 0, 0}
    };
@@ -222,11 +220,6 @@ static void vtest_server_parse_args(int argc, char **argv)
          server.venus = true;
          break;
 #endif
-#ifdef ENABLE_RENDER_SERVER
-      case OPT_RENDER_SERVER:
-         server.render_server = true;
-         break;
-#endif
       case OPT_SOCKET_PATH:
          server.socket_name = optarg;
          break;
@@ -236,9 +229,6 @@ static void vtest_server_parse_args(int argc, char **argv)
                 "[--rendernode <dev>] [--socket-path <path>] "
 #ifdef ENABLE_VENUS
                 " [--venus]"
-#endif
-#ifdef ENABLE_RENDER_SERVER
-                " [--render-server]"
 #endif
                 " [file]\n", argv[0]);
          exit(EXIT_FAILURE);
@@ -270,8 +260,6 @@ static void vtest_server_parse_args(int argc, char **argv)
 
    if (server.venus) {
       server.ctx_flags |= VIRGL_RENDERER_VENUS;
-   }
-   if (server.render_server) {
       server.ctx_flags |= VIRGL_RENDERER_RENDER_SERVER;
    }
 }
