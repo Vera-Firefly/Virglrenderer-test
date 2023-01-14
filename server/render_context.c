@@ -295,19 +295,40 @@ render_context_set_thread_name(uint32_t ctx_id, UNUSED const char *ctx_name)
    u_thread_setname(thread_name);
 }
 
+static const char *ctx_name_expansions[] = {
+   "DOOMEternalx64vk.exe",
+};
+
 static bool
 render_context_init_name(struct render_context *ctx,
                          uint32_t ctx_id,
                          const char *ctx_name)
 {
-   ctx->name_len = strlen(ctx_name);
-   ctx->name = malloc(ctx->name_len + 1);
+   /* Linux guests may only pass the first 15 chars of a guest application name,
+    * plus a null terminator. In that case, attempt substring matching and
+    * expansion to enable proper dri-conf lookup in native mesa drivers.
+    */
+   static const size_t truncated_name_len = 15;
+   size_t name_len = strlen(ctx_name);
+   if (name_len == truncated_name_len) {
+      for (uint32_t i = 0; i < ARRAY_SIZE(ctx_name_expansions); i++) {
+         const char *full = ctx_name_expansions[i];
+         if (!strncmp(ctx_name, full, truncated_name_len)) {
+            ctx_name = full;
+            name_len = strlen(full);
+            break;
+         }
+      }
+   }
+
+   ctx->name_len = name_len;
+   ctx->name = malloc(name_len + 1);
    if (!ctx->name)
       return false;
 
    strcpy(ctx->name, ctx_name);
 
-   render_context_set_thread_name(ctx_id, ctx_name);
+   render_context_set_thread_name(ctx_id, ctx->name);
 
 #ifdef _GNU_SOURCE
    /* Sets the guest app executable name used by mesa to load app-specific driver
