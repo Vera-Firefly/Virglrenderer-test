@@ -92,6 +92,8 @@ struct vtest_server
 
    bool venus;
 
+   bool no_virgl;
+
    int ctx_flags;
 
    struct list_head new_clients;
@@ -165,6 +167,7 @@ while (__AFL_LOOP(1000)) {
 #define OPT_VENUS 'v'
 #define OPT_RENDER_SERVER 'n'
 #define OPT_SOCKET_PATH 'p'
+#define OPT_NO_VIRGL 'g'
 
 static void vtest_server_parse_args(int argc, char **argv)
 {
@@ -180,6 +183,7 @@ static void vtest_server_parse_args(int argc, char **argv)
       {"rendernode",          required_argument, NULL, OPT_RENDERNODE},
       {"venus",               no_argument, NULL, OPT_VENUS},
       {"socket-path",         optional_argument, NULL, OPT_SOCKET_PATH},
+      {"no-virgl",            no_argument, NULL, OPT_NO_VIRGL},
       {0, 0, 0, 0}
    };
 
@@ -215,6 +219,9 @@ static void vtest_server_parse_args(int argc, char **argv)
       case OPT_RENDERNODE:
          server.render_device = optarg;
          break;
+      case OPT_NO_VIRGL:
+         server.no_virgl = true;
+         break;
 #ifdef ENABLE_VENUS
       case OPT_VENUS:
          server.venus = true;
@@ -225,7 +232,7 @@ static void vtest_server_parse_args(int argc, char **argv)
          break;
       default:
          printf("Usage: %s [--no-fork] [--no-loop-or-fork] [--multi-clients] "
-                "[--use-glx] [--use-egl-surfaceless] [--use-gles] "
+                "[--use-glx] [--use-egl-surfaceless] [--use-gles] [--no-virgl]"
                 "[--rendernode <dev>] [--socket-path <path>] "
 #ifdef ENABLE_VENUS
                 " [--venus]"
@@ -244,18 +251,22 @@ static void vtest_server_parse_args(int argc, char **argv)
       server.multi_clients = false;
    }
 
-   server.ctx_flags = VIRGL_RENDERER_USE_EGL;
-   if (server.use_glx) {
-      if (server.use_egl_surfaceless || server.use_gles) {
-         fprintf(stderr, "Cannot use surfaceless or GLES with GLX.\n");
-         exit(EXIT_FAILURE);
+   if (!server.no_virgl) {
+      server.ctx_flags = VIRGL_RENDERER_USE_EGL;
+      if (server.use_glx) {
+         if (server.use_egl_surfaceless || server.use_gles) {
+            fprintf(stderr, "Cannot use surfaceless or GLES with GLX.\n");
+            exit(EXIT_FAILURE);
+         }
+         server.ctx_flags = VIRGL_RENDERER_USE_GLX;
+      } else {
+         if (server.use_egl_surfaceless)
+            server.ctx_flags |= VIRGL_RENDERER_USE_SURFACELESS;
+         if (server.use_gles)
+            server.ctx_flags |= VIRGL_RENDERER_USE_GLES;
       }
-      server.ctx_flags = VIRGL_RENDERER_USE_GLX;
    } else {
-      if (server.use_egl_surfaceless)
-         server.ctx_flags |= VIRGL_RENDERER_USE_SURFACELESS;
-      if (server.use_gles)
-         server.ctx_flags |= VIRGL_RENDERER_USE_GLES;
+      server.ctx_flags = VIRGL_RENDERER_NO_VIRGL;
    }
 
    if (server.venus) {
