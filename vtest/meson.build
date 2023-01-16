@@ -21,7 +21,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-virgl_test_server_sources = [
+vtest_sources = [
    'util.c',
    'util.h',
    'vtest_shm.c',
@@ -32,10 +32,31 @@ virgl_test_server_sources = [
    'vtest.h'
 ]
 
+libvtest = static_library(
+   'vtest',
+   vtest_sources,
+   dependencies : [libvirglrenderer_dep, gallium_dep],
+)
+
+libvtest_dep = declare_dependency(
+   link_with: [libvtest],
+   include_directories: [
+      include_directories('.'),
+   ],
+   dependencies: [
+      libvirgl_dep,
+      gallium_dep,
+   ]
+)
+
+virgl_test_server_sources = [
+   'vtest_main.c',
+]
 
 virgl_test_server = executable(
    'virgl_test_server',
    virgl_test_server_sources,
+   link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
    install : true
 )
@@ -44,10 +65,10 @@ if with_fuzzer
    assert(cc.has_argument('-fsanitize=fuzzer'),
           'Fuzzer enabled but compiler does not support "-fsanitize=fuzzer"')
 
-   vtest_obj = virgl_test_server.extract_objects(['util.c',
-                                                  'vtest_shm.c',
-                                                  'vtest_renderer.c'
-                                                 ])
+   vtest_obj = libvtest.extract_objects(['util.c',
+                                         'vtest_shm.c',
+                                         'vtest_renderer.c'
+                                        ])
 
    vtest_fuzzer = executable(
       'vtest_fuzzer',

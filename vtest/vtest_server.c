@@ -46,6 +46,7 @@
 #include "vtest.h"
 #include "vtest_protocol.h"
 #include "virglrenderer.h"
+#include "vtest_server.h"
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -130,7 +131,7 @@ static void vtest_server_close_socket(void);
 static int vtest_client_dispatch_commands(struct vtest_client *client);
 
 
-int main(int argc, char **argv)
+int vtest_main(int argc, char **argv)
 {
 #ifdef __AFL_LOOP
 while (__AFL_LOOP(1000)) {
@@ -157,6 +158,8 @@ while (__AFL_LOOP(1000)) {
    }
 }
 #endif
+
+   return 0;
 }
 
 #define OPT_NO_FORK 'f'
