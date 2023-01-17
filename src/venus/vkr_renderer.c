@@ -19,7 +19,6 @@ static const struct debug_named_value vkr_debug_options[] = {
 };
 
 const struct virgl_renderer_callbacks *vkr_renderer_cbs;
-uint32_t vkr_renderer_flags;
 uint32_t vkr_debug_flags;
 
 size_t
@@ -72,7 +71,6 @@ vkr_renderer_init(uint32_t flags,
 
    virgl_log_set_logger(debug_cb);
 
-   vkr_renderer_flags = flags;
    vkr_renderer_cbs = cbs;
    vkr_debug_flags = debug_get_flags_option("VKR_DEBUG", vkr_debug_options, 0);
 
@@ -97,7 +95,6 @@ vkr_renderer_fini(void)
 
    vkr_debug_flags = 0;
    vkr_renderer_cbs = NULL;
-   vkr_renderer_flags = 0;
 }
 
 static void

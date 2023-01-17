@@ -32,31 +32,15 @@ struct vkr_queue {
    /* only used when client driver uses multiple timelines */
    uint32_t ring_idx;
 
-   /* Submitted fences are added to pending_syncs first.  How submitted fences
-    * are retired depends on VKR_RENDERER_THREAD_SYNC and
-    * VKR_RENDERER_ASYNC_FENCE_CB.
-    *
-    * When VKR_RENDERER_THREAD_SYNC is not set, the main thread calls
-    * vkGetFenceStatus and retires signaled fences in pending_syncs in order.
-    *
-    * When VKR_RENDERER_THREAD_SYNC is set but VKR_RENDERER_ASYNC_FENCE_CB is
-    * not set, the sync thread calls vkWaitForFences and moves signaled fences
-    * from pending_syncs to signaled_syncs in order.  The main thread simply
-    * retires all fences in signaled_syncs.
-    *
-    * When VKR_RENDERER_THREAD_SYNC and VKR_RENDERER_ASYNC_FENCE_CB are both
-    * set, the sync thread calls vkWaitForFences and retires signaled fences
-    * in pending_syncs in order.
+   /* Submitted fences are added to pending_syncs first. With required
+    * VKR_RENDERER_THREAD_SYNC and VKR_RENDERER_ASYNC_FENCE_CB in render server, the sync
+    * thread calls vkWaitForFences and retires signaled fences in pending_syncs in order.
     */
-   int eventfd;
    thrd_t thread;
    mtx_t mutex;
    cnd_t cond;
    bool join;
    struct list_head pending_syncs;
-   struct list_head signaled_syncs;
-
-   struct list_head busy_head;
 };
 VKR_DEFINE_OBJECT_CAST(queue, VK_OBJECT_TYPE_QUEUE, VkQueue)
 
@@ -95,11 +79,6 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
 
 void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync);
-
-void
-vkr_queue_get_signaled_syncs(struct vkr_queue *queue,
-                             struct list_head *retired_syncs,
-                             bool *queue_empty);
 
 struct vkr_queue *
 vkr_queue_create(struct vkr_context *ctx,

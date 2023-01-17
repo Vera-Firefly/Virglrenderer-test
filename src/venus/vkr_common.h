@@ -150,7 +150,6 @@ struct vkr_region {
    size_t end;
 };
 
-extern uint32_t vkr_renderer_flags;
 extern uint32_t vkr_debug_flags;
 
 void

@@ -20,12 +20,9 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    struct vn_device_proc_table *vk = &dev->proc_table;
    struct vkr_queue_sync *sync;
 
-   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
-      mtx_lock(&dev->free_sync_mutex);
-
+   mtx_lock(&dev->free_sync_mutex);
    if (LIST_IS_EMPTY(&dev->free_syncs)) {
-      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
-         mtx_unlock(&dev->free_sync_mutex);
+      mtx_unlock(&dev->free_sync_mutex);
 
       sync = malloc(sizeof(*sync));
       if (!sync)
@@ -48,9 +45,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    } else {
       sync = LIST_ENTRY(struct vkr_queue_sync, dev->free_syncs.next, head);
       list_del(&sync->head);
-
-      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
-         mtx_unlock(&dev->free_sync_mutex);
+      mtx_unlock(&dev->free_sync_mutex);
 
       vk->ResetFences(dev->base.handle.device, 1, &sync->fence);
    }
@@ -66,102 +61,31 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
 void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 {
-   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-      mtx_lock(&dev->free_sync_mutex);
-      list_addtail(&sync->head, &dev->free_syncs);
-      mtx_unlock(&dev->free_sync_mutex);
-   } else {
-      list_addtail(&sync->head, &dev->free_syncs);
-   }
+   mtx_lock(&dev->free_sync_mutex);
+   list_addtail(&sync->head, &dev->free_syncs);
+   mtx_unlock(&dev->free_sync_mutex);
 }
 
-void
-vkr_queue_get_signaled_syncs(struct vkr_queue *queue,
-                             struct list_head *retired_syncs,
-                             bool *queue_empty)
-{
-   struct vkr_device *dev = queue->device;
-   struct vn_device_proc_table *vk = &dev->proc_table;
-   struct vkr_queue_sync *sync, *tmp;
-
-   assert(!(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB));
-
-   list_inithead(retired_syncs);
-
-   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
-      mtx_lock(&queue->mutex);
-
-      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head) {
-         if (sync->head.next == &queue->signaled_syncs ||
-             !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
-            list_addtail(&sync->head, retired_syncs);
-         else
-            vkr_device_free_queue_sync(dev, sync);
-      }
-      list_inithead(&queue->signaled_syncs);
-
-      *queue_empty = LIST_IS_EMPTY(&queue->pending_syncs);
-
-      mtx_unlock(&queue->mutex);
-   } else {
-      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head) {
-         if (!sync->device_lost) {
-            VkResult result = vk->GetFenceStatus(dev->base.handle.device, sync->fence);
-            if (result == VK_NOT_READY)
-               break;
-         }
-
-         bool is_last_sync = sync->head.next == &queue->pending_syncs;
-
-         list_del(&sync->head);
-         if (is_last_sync || !(sync->flags & VIRGL_RENDERER_FENCE_FLAG_MERGEABLE))
-            list_addtail(&sync->head, retired_syncs);
-         else
-            vkr_device_free_queue_sync(dev, sync);
-      }
-
-      *queue_empty = LIST_IS_EMPTY(&queue->pending_syncs);
-   }
-}
-
-static void
+static inline void
 vkr_queue_sync_retire(struct vkr_context *ctx,
                       struct vkr_device *dev,
                       struct vkr_queue_sync *sync)
 {
-   struct vn_device_proc_table *vk = &dev->proc_table;
-
-   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-      ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
-      vkr_device_free_queue_sync(dev, sync);
-   } else {
-      vk->DestroyFence(dev->base.handle.device, sync->fence, NULL);
-      sync->fence = VK_NULL_HANDLE;
-
-      /* move to the ctx to be retired and freed at the next retire_fences */
-      list_addtail(&sync->head, &ctx->signaled_syncs);
-   }
+   ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
+   vkr_device_free_queue_sync(dev, sync);
 }
 
 static void
 vkr_queue_retire_all_syncs(struct vkr_context *ctx, struct vkr_queue *queue)
 {
+   mtx_lock(&queue->mutex);
+   queue->join = true;
+   mtx_unlock(&queue->mutex);
+
+   cnd_signal(&queue->cond);
+   thrd_join(queue->thread, NULL);
+
    struct vkr_queue_sync *sync, *tmp;
-
-   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
-      mtx_lock(&queue->mutex);
-      queue->join = true;
-      mtx_unlock(&queue->mutex);
-
-      cnd_signal(&queue->cond);
-      thrd_join(queue->thread, NULL);
-
-      LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->signaled_syncs, head)
-         vkr_queue_sync_retire(ctx, queue->device, sync);
-   } else {
-      assert(LIST_IS_EMPTY(&queue->signaled_syncs));
-   }
-
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
       vkr_queue_sync_retire(ctx, queue->device, sync);
 }
@@ -175,7 +99,6 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
    mtx_destroy(&queue->mutex);
    cnd_destroy(&queue->cond);
 
-   list_del(&queue->busy_head);
    list_del(&queue->base.track_head);
 
    if (queue->ring_idx > 0)
@@ -228,13 +151,8 @@ vkr_queue_thread(void *arg)
 
       list_del(&sync->head);
 
-      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-         ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
-         vkr_device_free_queue_sync(queue->device, sync);
-      } else {
-         list_addtail(&sync->head, &queue->signaled_syncs);
-         write_eventfd(queue->eventfd, 1);
-      }
+      ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
+      vkr_device_free_queue_sync(queue->device, sync);
    }
    mtx_unlock(&queue->mutex);
 
@@ -266,7 +184,6 @@ vkr_queue_create(struct vkr_context *ctx,
    queue->index = index;
 
    list_inithead(&queue->pending_syncs);
-   list_inithead(&queue->signaled_syncs);
 
    ret = mtx_init(&queue->mutex, mtx_plain);
    if (ret != thrd_success) {
@@ -280,18 +197,14 @@ vkr_queue_create(struct vkr_context *ctx,
       return NULL;
    }
 
-   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
-      ret = thrd_create(&queue->thread, vkr_queue_thread, queue);
-      if (ret != thrd_success) {
-         mtx_destroy(&queue->mutex);
-         cnd_destroy(&queue->cond);
-         free(queue);
-         return NULL;
-      }
-      queue->eventfd = ctx->fence_eventfd;
+   ret = thrd_create(&queue->thread, vkr_queue_thread, queue);
+   if (ret != thrd_success) {
+      mtx_destroy(&queue->mutex);
+      cnd_destroy(&queue->cond);
+      free(queue);
+      return NULL;
    }
 
-   list_inithead(&queue->busy_head);
    list_inithead(&queue->base.track_head);
 
    return queue;

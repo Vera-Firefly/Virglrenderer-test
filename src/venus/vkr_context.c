@@ -119,22 +119,6 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    vkr_context_init_command_buffer_dispatch(ctx);
 }
 
-static struct vkr_cpu_sync *
-vkr_alloc_cpu_sync(uint32_t flags, uint32_t ring_idx, uint64_t fence_id)
-{
-   struct vkr_cpu_sync *sync;
-   sync = malloc(sizeof(*sync));
-   if (!sync)
-      return NULL;
-
-   sync->flags = flags;
-   sync->fence_id = fence_id;
-   sync->ring_idx = ring_idx;
-   list_inithead(&sync->head);
-
-   return sync;
-}
-
 static int
 vkr_context_submit_fence_locked(struct virgl_context *base,
                                 uint32_t flags,
@@ -150,15 +134,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    }
 
    if (ring_idx == 0) {
-      if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) {
-         ctx->base.fence_retire(&ctx->base, ring_idx, fence_id);
-      } else {
-         struct vkr_cpu_sync *sync = vkr_alloc_cpu_sync(flags, ring_idx, fence_id);
-         if (!sync)
-            return -ENOMEM;
-
-         list_addtail(&sync->head, &ctx->signaled_cpu_syncs);
-      }
+      ctx->base.fence_retire(&ctx->base, ring_idx, fence_id);
       return 0;
    } else if (!ctx->sync_queues[ring_idx]) {
       vkr_log("invalid ring_idx %u", ring_idx);
@@ -182,17 +158,10 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
       return -1;
    }
 
-   if (vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) {
-      mtx_lock(&queue->mutex);
-      list_addtail(&sync->head, &queue->pending_syncs);
-      mtx_unlock(&queue->mutex);
-      cnd_signal(&queue->cond);
-   } else {
-      list_addtail(&sync->head, &queue->pending_syncs);
-   }
-
-   if (LIST_IS_EMPTY(&queue->busy_head))
-      list_addtail(&queue->busy_head, &ctx->busy_queues);
+   mtx_lock(&queue->mutex);
+   list_addtail(&sync->head, &queue->pending_syncs);
+   mtx_unlock(&queue->mutex);
+   cnd_signal(&queue->cond);
 
    return 0;
 }
@@ -214,74 +183,6 @@ vkr_context_submit_fence(struct virgl_context *base,
    ret = vkr_context_submit_fence_locked(base, flags, ring_idx, fence_id);
    mtx_unlock(&ctx->mutex);
    return ret;
-}
-
-static void
-vkr_context_retire_fences_locked(struct virgl_context *base)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   struct vkr_queue_sync *sync, *sync_tmp;
-   struct vkr_queue *queue, *queue_tmp;
-
-   assert(!(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB));
-
-   /* retire syncs from destroyed devices */
-   LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &ctx->signaled_syncs, head) {
-      /* ring_idx might have already get reused but is opaque to the clients */
-      ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
-      free(sync);
-   }
-   list_inithead(&ctx->signaled_syncs);
-
-   /* retire syncs from CPU timeline */
-   struct vkr_cpu_sync *cpu_sync, *cpu_sync_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (cpu_sync, cpu_sync_tmp, &ctx->signaled_cpu_syncs, head) {
-      ctx->base.fence_retire(&ctx->base, cpu_sync->ring_idx, cpu_sync->fence_id);
-      free(cpu_sync);
-   }
-   list_inithead(&ctx->signaled_cpu_syncs);
-
-   /* flush first and once because the per-queue sync threads might write to
-    * it any time
-    */
-   if (ctx->fence_eventfd >= 0)
-      flush_eventfd(ctx->fence_eventfd);
-
-   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &ctx->busy_queues, busy_head) {
-      struct vkr_device *dev = queue->device;
-      struct list_head retired_syncs;
-      bool queue_empty;
-
-      vkr_queue_get_signaled_syncs(queue, &retired_syncs, &queue_empty);
-
-      LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &retired_syncs, head) {
-         ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
-         vkr_device_free_queue_sync(dev, sync);
-      }
-
-      if (queue_empty)
-         list_delinit(&queue->busy_head);
-   }
-}
-
-static void
-vkr_context_retire_fences(struct virgl_context *base)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-
-   if (vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)
-      return;
-
-   mtx_lock(&ctx->mutex);
-   vkr_context_retire_fences_locked(base);
-   mtx_unlock(&ctx->mutex);
-}
-
-static int
-vkr_context_get_fencing_fd(struct virgl_context *base)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   return ctx->fence_eventfd;
 }
 
 static int
@@ -568,17 +469,6 @@ vkr_context_destroy(struct virgl_context *base)
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 
-   struct vkr_queue_sync *sync, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &ctx->signaled_syncs, head)
-      free(sync);
-
-   struct vkr_cpu_sync *cpu_sync, *cpu_sync_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (cpu_sync, cpu_sync_tmp, &ctx->signaled_cpu_syncs, head)
-      free(cpu_sync);
-
-   if (ctx->fence_eventfd >= 0)
-      close(ctx->fence_eventfd);
-
    vkr_cs_decoder_fini(&ctx->decoder);
 
    mtx_destroy(&ctx->mutex);
@@ -595,9 +485,6 @@ vkr_context_init_base(struct vkr_context *ctx)
    ctx->base.transfer_3d = vkr_context_transfer_3d;
    ctx->base.get_blob = vkr_context_get_blob;
    ctx->base.submit_cmd = vkr_context_submit_cmd;
-
-   ctx->base.get_fencing_fd = vkr_context_get_fencing_fd;
-   ctx->base.retire_fences = vkr_context_retire_fences;
    ctx->base.submit_fence = vkr_context_submit_fence;
 }
 
@@ -671,24 +558,10 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    vkr_context_init_base(ctx);
    vkr_context_init_dispatch(ctx);
 
-   if ((vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC) &&
-       !(vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB)) {
-      ctx->fence_eventfd = create_eventfd(0);
-      if (ctx->fence_eventfd < 0)
-         goto err_eventfd;
-   } else {
-      ctx->fence_eventfd = -1;
-   }
-
    list_inithead(&ctx->rings);
-   list_inithead(&ctx->busy_queues);
-   list_inithead(&ctx->signaled_syncs);
-   list_inithead(&ctx->signaled_cpu_syncs);
 
    return &ctx->base;
 
-err_eventfd:
-   _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
 err_ctx_resource_table:
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 err_ctx_object_table:
