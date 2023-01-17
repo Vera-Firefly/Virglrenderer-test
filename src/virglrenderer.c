@@ -479,9 +479,12 @@ int virgl_renderer_resource_get_info(int res_handle,
    info->handle = res_handle;
 
    if (state.winsys_initialized) {
-      return vrend_winsys_get_fourcc_for_texture(info->tex_id,
-                                                 info->virgl_format,
-                                                 &info->drm_fourcc);
+      return vrend_winsys_get_attrs_for_texture(info->tex_id,
+                                                info->virgl_format,
+                                                &info->drm_fourcc,
+                                                NULL,
+                                                NULL,
+                                                NULL);
    }
 
    return 0;

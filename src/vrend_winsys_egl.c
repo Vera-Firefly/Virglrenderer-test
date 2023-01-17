@@ -500,7 +500,10 @@ virgl_renderer_gl_context virgl_egl_get_current_context(UNUSED struct virgl_egl 
 }
 
 #ifdef ENABLE_GBM
-int virgl_egl_get_fourcc_for_texture(struct virgl_egl *egl, uint32_t tex_id, uint32_t format, int *fourcc)
+int virgl_egl_get_attrs_for_texture(struct virgl_egl *egl, uint32_t tex_id,
+                                    uint32_t format, int *fourcc,
+                                    bool *has_dmabuf_export,
+                                    int *planes, uint64_t *modifiers)
 {
    int ret = EINVAL;
    uint32_t gbm_format = 0;
@@ -519,17 +522,22 @@ int virgl_egl_get_fourcc_for_texture(struct virgl_egl *egl, uint32_t tex_id, uin
    if (!image)
       return EINVAL;
 
-   success = eglExportDMABUFImageQueryMESA(egl->egl_display, image, fourcc, NULL, NULL);
+   success = eglExportDMABUFImageQueryMESA(egl->egl_display, image, fourcc, planes,
+                                           modifiers);
    if (!success)
       goto out_destroy;
    ret = 0;
  out_destroy:
    eglDestroyImageKHR(egl->egl_display, image);
+   if (has_dmabuf_export)
+      *has_dmabuf_export = true;
    return ret;
 
  fallback:
    ret = virgl_gbm_convert_format(&format, &gbm_format);
    *fourcc = (int)gbm_format;
+   if (has_dmabuf_export)
+      *has_dmabuf_export = false;
    return ret;
 }
 

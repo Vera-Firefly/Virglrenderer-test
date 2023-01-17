@@ -206,15 +206,23 @@ int vrend_winsys_has_gl_colorspace(void)
          (use_context == CONTEXT_EGL_EXTERNAL && egl_colorspace);
 }
 
-int vrend_winsys_get_fourcc_for_texture(uint32_t tex_id, uint32_t format, int *fourcc)
+int vrend_winsys_get_attrs_for_texture(uint32_t tex_id, uint32_t format, int *fourcc,
+                                       bool *has_dmabuf_export,
+                                       int *planes, uint64_t *modifiers)
 {
 #ifdef ENABLE_GBM
    if (use_context == CONTEXT_EGL)
-      return virgl_egl_get_fourcc_for_texture(egl, tex_id, format, fourcc);
+      return virgl_egl_get_attrs_for_texture(egl, tex_id, format, fourcc,
+                                             has_dmabuf_export,
+                                             planes, modifiers);
 #else
    (void)tex_id;
    (void)format;
    (void)fourcc;
+   (void)planes;
+   (void)modifiers;
+   if (has_dmabuf_export)
+      *has_dmabuf_export = false;
 #endif
    return 0;
 }
