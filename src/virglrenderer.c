@@ -463,8 +463,8 @@ void virgl_renderer_ctx_detach_resource(int ctx_id, int res_handle)
    ctx->detach_resource(ctx, res);
 }
 
-int virgl_renderer_resource_get_info(int res_handle,
-                                     struct virgl_renderer_resource_info *info)
+static int virgl_renderer_resource_get_info_common(int res_handle,
+                                                   struct virgl_renderer_resource_info *info)
 {
    TRACE_FUNC();
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
@@ -478,6 +478,18 @@ int virgl_renderer_resource_get_info(int res_handle,
                                     (struct vrend_renderer_resource_info *)info);
    info->handle = res_handle;
 
+   return 0;
+}
+
+int virgl_renderer_resource_get_info(int res_handle,
+                                     struct virgl_renderer_resource_info *info)
+{
+   TRACE_FUNC();
+   int ret;
+
+   if ((ret = virgl_renderer_resource_get_info_common(res_handle, info)) != 0)
+       return ret;
+
    if (state.winsys_initialized) {
       return vrend_winsys_get_attrs_for_texture(info->tex_id,
                                                 info->virgl_format,
@@ -485,6 +497,29 @@ int virgl_renderer_resource_get_info(int res_handle,
                                                 NULL,
                                                 NULL,
                                                 NULL);
+   }
+
+   return 0;
+}
+
+int virgl_renderer_resource_get_info_ext(int res_handle,
+                                         struct virgl_renderer_resource_info_ext *info_ext)
+{
+   TRACE_FUNC();
+   int ret;
+
+   if ((ret = virgl_renderer_resource_get_info_common(res_handle, &info_ext->base)) != 0)
+      return ret;
+
+   info_ext->version = VIRGL_RENDERER_RESOURCE_INFO_EXT_VERSION;
+
+   if (state.winsys_initialized) {
+      return vrend_winsys_get_attrs_for_texture(info_ext->base.tex_id,
+                                                info_ext->base.virgl_format,
+                                                &info_ext->base.drm_fourcc,
+                                                &info_ext->has_dmabuf_export,
+                                                &info_ext->planes,
+                                                &info_ext->modifiers);
    }
 
    return 0;
