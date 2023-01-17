@@ -194,8 +194,10 @@ render_client_dispatch_create_context(struct render_client *client,
    const struct render_client_op_create_context_reply reply = {
       .ok = ok,
    };
-   if (!ok)
-      return render_socket_send_reply(&client->socket, &reply, sizeof(reply));
+   if (!ok) {
+      render_socket_send_reply(&client->socket, &reply, sizeof(reply));
+      return false;
+   }
 
    ok = render_socket_send_reply_with_fds(&client->socket, &reply, sizeof(reply),
                                           &remote_fd, 1);
