@@ -94,7 +94,7 @@ render_state_lookup_context(uint32_t ctx_id)
 }
 
 static void
-render_state_debug_callback(const char *fmt, va_list ap)
+render_state_cb_debug_logger(const char *fmt, va_list ap)
 {
    char buf[1024];
    vsnprintf(buf, sizeof(buf), fmt, ap);
@@ -102,10 +102,7 @@ render_state_debug_callback(const char *fmt, va_list ap)
 }
 
 static void
-render_state_cb_write_context_fence(UNUSED void *cookie,
-                                    uint32_t ctx_id,
-                                    uint32_t ring_idx,
-                                    uint64_t fence_id)
+render_state_cb_retire_fence(uint32_t ctx_id, uint32_t ring_idx, uint64_t fence_id)
 {
    struct render_context *ctx = render_state_lookup_context(ctx_id);
    assert(ctx);
@@ -114,9 +111,9 @@ render_state_cb_write_context_fence(UNUSED void *cookie,
    render_context_update_timeline(ctx, ring_idx, seqno);
 }
 
-static const struct virgl_renderer_callbacks render_state_cbs = {
-   .version = VIRGL_RENDERER_CALLBACKS_VERSION,
-   .write_context_fence = render_state_cb_write_context_fence,
+static const struct vkr_renderer_callbacks render_state_cbs = {
+   .debug_logger = render_state_cb_debug_logger,
+   .retire_fence = render_state_cb_retire_fence,
 };
 
 static void
@@ -156,7 +153,7 @@ render_state_init(uint32_t init_flags)
       /* always use sync thread and async fence cb for low latency */
       static const uint32_t vkr_flags =
          VKR_RENDERER_THREAD_SYNC | VKR_RENDERER_ASYNC_FENCE_CB;
-      if (!vkr_renderer_init(vkr_flags, render_state_debug_callback, &render_state_cbs))
+      if (!vkr_renderer_init(vkr_flags, &render_state_cbs))
          return false;
 
       list_inithead(&state.contexts);
@@ -245,7 +242,7 @@ render_state_import_resource(uint32_t ctx_id,
 }
 
 void
-render_state_destroy_resource(UNUSED uint32_t ctx_id, uint32_t res_id)
+render_state_destroy_resource(uint32_t ctx_id, uint32_t res_id)
 {
    SCOPE_LOCK_RENDERER();
    vkr_renderer_destroy_resource(ctx_id, res_id);

@@ -12,7 +12,7 @@
 
 #include "vkr_context.h"
 
-const struct virgl_renderer_callbacks *vkr_renderer_cbs;
+const struct vkr_renderer_callbacks *vkr_renderer_cbs;
 
 size_t
 vkr_get_capset(void *capset)
@@ -50,9 +50,7 @@ vkr_get_capset(void *capset)
 }
 
 bool
-vkr_renderer_init(uint32_t flags,
-                  virgl_debug_callback_type debug_cb,
-                  const struct virgl_renderer_callbacks *cbs)
+vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs)
 {
    TRACE_INIT();
    TRACE_FUNC();
@@ -62,7 +60,7 @@ vkr_renderer_init(uint32_t flags,
    if ((flags & required_flags) != required_flags)
       return false;
 
-   virgl_log_set_logger(debug_cb);
+   virgl_log_set_logger(cbs->debug_logger);
 
    vkr_renderer_cbs = cbs;
 
@@ -95,7 +93,7 @@ vkr_renderer_retire_fence(struct virgl_context *ctx, uint32_t ring_idx, uint64_t
 {
    TRACE_FUNC();
 
-   vkr_renderer_cbs->write_context_fence(NULL, ctx->ctx_id, ring_idx, fence_id);
+   vkr_renderer_cbs->retire_fence(ctx->ctx_id, ring_idx, fence_id);
 }
 
 bool
@@ -167,7 +165,7 @@ vkr_renderer_submit_fence(uint32_t ctx_id,
    if (!ctx)
       return false;
 
-   assert(vkr_renderer_cbs->write_context_fence);
+   assert(vkr_renderer_cbs->retire_fence);
    return !ctx->submit_fence(ctx, flags, ring_idx, fence_id);
 }
 

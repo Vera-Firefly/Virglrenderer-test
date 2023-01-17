@@ -17,13 +17,20 @@
 #define VKR_RENDERER_THREAD_SYNC (1u << 0)
 #define VKR_RENDERER_ASYNC_FENCE_CB (1u << 1)
 
+typedef void (*vkr_renderer_retire_fence_callback_type)(uint32_t ctx_id,
+                                                        uint32_t ring_idx,
+                                                        uint64_t fence_id);
+
+struct vkr_renderer_callbacks {
+   virgl_debug_callback_type debug_logger;
+   vkr_renderer_retire_fence_callback_type retire_fence;
+};
+
 size_t
 vkr_get_capset(void *capset);
 
 bool
-vkr_renderer_init(uint32_t flags,
-                  virgl_debug_callback_type debug_cb,
-                  const struct virgl_renderer_callbacks *cbs);
+vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs);
 
 void
 vkr_renderer_fini(void);
