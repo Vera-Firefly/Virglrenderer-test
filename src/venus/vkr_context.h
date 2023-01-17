@@ -72,6 +72,9 @@ struct vkr_context {
    char *instance_name;
 };
 
+struct virgl_context *
+vkr_context_create(size_t debug_len, const char *debug_name);
+
 void
 vkr_context_free_resource(struct hash_entry *entry);
 

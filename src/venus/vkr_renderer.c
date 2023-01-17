@@ -11,7 +11,7 @@
 #include "virgl_context.h"
 #include "virglrenderer_hw.h"
 
-#include "vkr_allocator.h"
+#include "vkr_context.h"
 
 static const struct debug_named_value vkr_debug_options[] = {
    { "validate", VKR_DEBUG_VALIDATE, "Force enabling the validation layer" },
@@ -57,35 +57,10 @@ vkr_get_capset(void *capset)
    return sizeof(*c);
 }
 
-int
-vkr_renderer_init(uint32_t flags)
-{
-   if ((vkr_renderer_flags & VKR_RENDERER_ASYNC_FENCE_CB) &&
-       !(vkr_renderer_flags & VKR_RENDERER_THREAD_SYNC))
-      return -EINVAL;
-
-   vkr_renderer_flags = flags;
-   vkr_debug_flags = debug_get_flags_option("VKR_DEBUG", vkr_debug_options, 0);
-
-   return 0;
-}
-
-void
-vkr_renderer_fini(void)
-{
-   vkr_renderer_flags = 0;
-   vkr_debug_flags = 0;
-}
-
-void
-vkr_renderer_reset(void)
-{
-}
-
 bool
-vkr_renderer_init2(uint32_t flags,
-                   virgl_debug_callback_type debug_cb,
-                   const struct virgl_renderer_callbacks *cbs)
+vkr_renderer_init(uint32_t flags,
+                  virgl_debug_callback_type debug_cb,
+                  const struct virgl_renderer_callbacks *cbs)
 {
    TRACE_INIT();
    TRACE_FUNC();
@@ -115,7 +90,7 @@ vkr_renderer_init2(uint32_t flags,
 }
 
 void
-vkr_renderer_fini2(void)
+vkr_renderer_fini(void)
 {
    virgl_context_table_cleanup();
    virgl_resource_table_cleanup();
@@ -123,8 +98,6 @@ vkr_renderer_fini2(void)
    vkr_debug_flags = 0;
    vkr_renderer_cbs = NULL;
    vkr_renderer_flags = 0;
-
-   vkr_allocator_fini();
 }
 
 static void
