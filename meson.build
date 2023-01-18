@@ -217,9 +217,6 @@ if with_egl
       have_egl = gbm_dep.found()
       if (have_egl)
          conf_data.set('HAVE_EPOXY_EGL_H', 1)
-      else
-         assert(not require_egl,
-                'egl was explicitely requested which requires gbm, and this is not available')
       endif
    else
       assert(not require_egl,
