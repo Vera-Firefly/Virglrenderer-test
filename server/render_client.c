@@ -185,8 +185,6 @@ render_client_dispatch_create_context(struct render_client *client,
 
    int remote_fd;
    bool ok = render_client_create_context(client, &req->create_context, &remote_fd);
-   if (!ok)
-      return false;
 
    if (srv->state == RENDER_SERVER_STATE_SUBPROCESS) {
       assert(remote_fd < 0);
