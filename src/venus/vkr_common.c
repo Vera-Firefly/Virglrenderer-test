@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "util/u_debug.h"
 #include "venus-protocol/vn_protocol_renderer_info.h"
 
 #include "vkr_context.h"
@@ -122,6 +123,21 @@ static const struct vn_info_extension_table vkr_extension_table = {
    /* vendor extensions */
    .VALVE_mutable_descriptor_type = true,
 };
+
+static const struct debug_named_value vkr_debug_options[] = {
+   { "validate", VKR_DEBUG_VALIDATE, "Force enabling the validation layer" },
+   DEBUG_NAMED_VALUE_END
+};
+
+uint32_t vkr_debug_flags;
+
+DEBUG_GET_ONCE_FLAGS_OPTION(vkr_debug_flags, "VKR_DEBUG", vkr_debug_options, 0)
+
+void
+vkr_debug_init(void)
+{
+   vkr_debug_flags = debug_get_option_vkr_debug_flags();
+}
 
 void
 vkr_log(const char *fmt, ...)

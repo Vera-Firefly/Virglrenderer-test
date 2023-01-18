@@ -153,6 +153,9 @@ struct vkr_region {
 extern uint32_t vkr_debug_flags;
 
 void
+vkr_debug_init(void);
+
+void
 vkr_log(const char *fmt, ...);
 
 static inline uint32_t

@@ -6,20 +6,13 @@
 #include "vkr_common.h"
 
 #include "util/os_file.h"
-#include "util/u_debug.h"
 #include "venus-protocol/vn_protocol_renderer_info.h"
 #include "virgl_context.h"
 #include "virglrenderer_hw.h"
 
 #include "vkr_context.h"
 
-static const struct debug_named_value vkr_debug_options[] = {
-   { "validate", VKR_DEBUG_VALIDATE, "Force enabling the validation layer" },
-   DEBUG_NAMED_VALUE_END
-};
-
 const struct virgl_renderer_callbacks *vkr_renderer_cbs;
-uint32_t vkr_debug_flags;
 
 size_t
 vkr_get_capset(void *capset)
@@ -72,7 +65,8 @@ vkr_renderer_init(uint32_t flags,
    virgl_log_set_logger(debug_cb);
 
    vkr_renderer_cbs = cbs;
-   vkr_debug_flags = debug_get_flags_option("VKR_DEBUG", vkr_debug_options, 0);
+
+   vkr_debug_init();
 
    int ret = virgl_resource_table_init(NULL);
    if (ret)
@@ -93,7 +87,6 @@ vkr_renderer_fini(void)
    virgl_context_table_cleanup();
    virgl_resource_table_cleanup();
 
-   vkr_debug_flags = 0;
    vkr_renderer_cbs = NULL;
 }
 
