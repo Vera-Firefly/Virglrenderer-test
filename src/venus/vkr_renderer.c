@@ -12,7 +12,11 @@
 
 #include "vkr_context.h"
 
-const struct vkr_renderer_callbacks *vkr_renderer_cbs;
+struct vkr_renderer_state {
+   const struct vkr_renderer_callbacks *cbs;
+};
+
+struct vkr_renderer_state vkr_state;
 
 size_t
 vkr_get_capset(void *capset)
@@ -62,7 +66,7 @@ vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs)
 
    virgl_log_set_logger(cbs->debug_logger);
 
-   vkr_renderer_cbs = cbs;
+   vkr_state.cbs = cbs;
 
    vkr_debug_init();
 
@@ -85,7 +89,7 @@ vkr_renderer_fini(void)
    virgl_context_table_cleanup();
    virgl_resource_table_cleanup();
 
-   vkr_renderer_cbs = NULL;
+   vkr_state.cbs = NULL;
 }
 
 static void
@@ -93,7 +97,7 @@ vkr_renderer_retire_fence(struct virgl_context *ctx, uint32_t ring_idx, uint64_t
 {
    TRACE_FUNC();
 
-   vkr_renderer_cbs->retire_fence(ctx->ctx_id, ring_idx, fence_id);
+   vkr_state.cbs->retire_fence(ctx->ctx_id, ring_idx, fence_id);
 }
 
 bool
@@ -165,7 +169,7 @@ vkr_renderer_submit_fence(uint32_t ctx_id,
    if (!ctx)
       return false;
 
-   assert(vkr_renderer_cbs->retire_fence);
+   assert(vkr_state.cbs->retire_fence);
    return !ctx->submit_fence(ctx, flags, ring_idx, fence_id);
 }
 
