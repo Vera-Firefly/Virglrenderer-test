@@ -9,10 +9,10 @@
 #include "vkr_common.h"
 
 #include "venus-protocol/vn_protocol_renderer_defines.h"
-#include "virgl_context.h"
 
 #include "vkr_cs.h"
 
+struct virgl_context_blob;
 struct virgl_resource;
 
 /*
@@ -37,7 +37,8 @@ enum vkr_context_validate_level {
 };
 
 struct vkr_context {
-   struct virgl_context base;
+   uint32_t ctx_id;
+   vkr_renderer_retire_fence_callback_type retire_fence;
 
    char *debug_name;
    enum vkr_context_validate_level validate_level;
@@ -57,10 +58,41 @@ struct vkr_context {
 
    struct vkr_instance *instance;
    char *instance_name;
+
+   struct list_head head;
 };
 
-struct virgl_context *
-vkr_context_create(size_t debug_len, const char *debug_name);
+struct vkr_context *
+vkr_context_create(uint32_t ctx_id,
+                   vkr_renderer_retire_fence_callback_type cb,
+                   size_t debug_len,
+                   const char *debug_name);
+
+void
+vkr_context_destroy(struct vkr_context *ctx);
+
+int
+vkr_context_submit_fence(struct vkr_context *ctx,
+                         uint32_t flags,
+                         uint32_t ring_idx,
+                         uint64_t fence_id);
+
+int
+vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size);
+
+int
+vkr_context_get_blob(struct vkr_context *ctx,
+                     UNUSED uint32_t res_id,
+                     uint64_t blob_id,
+                     uint64_t blob_size,
+                     uint32_t flags,
+                     struct virgl_context_blob *blob);
+
+void
+vkr_context_attach_resource(struct vkr_context *ctx, struct virgl_resource *res);
+
+void
+vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res);
 
 void
 vkr_context_free_resource(struct hash_entry *entry);

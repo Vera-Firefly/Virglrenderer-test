@@ -11,6 +11,7 @@
 
 #include "util/anon_file.h"
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
+#include "virgl_context.h"
 
 #define XXH_INLINE_ALL
 #include "util/xxhash.h"
@@ -120,12 +121,11 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
 }
 
 static int
-vkr_context_submit_fence_locked(struct virgl_context *base,
+vkr_context_submit_fence_locked(struct vkr_context *ctx,
                                 uint32_t flags,
                                 uint32_t ring_idx,
                                 uint64_t fence_id)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
    VkResult result;
 
    if (ring_idx >= ARRAY_SIZE(ctx->sync_queues)) {
@@ -134,7 +134,7 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    }
 
    if (ring_idx == 0) {
-      ctx->base.fence_retire(&ctx->base, ring_idx, fence_id);
+      ctx->retire_fence(ctx->ctx_id, ring_idx, fence_id);
       return 0;
    } else if (!ctx->sync_queues[ring_idx]) {
       vkr_log("invalid ring_idx %u", ring_idx);
@@ -166,29 +166,25 @@ vkr_context_submit_fence_locked(struct virgl_context *base,
    return 0;
 }
 
-static int
-vkr_context_submit_fence(struct virgl_context *base,
+int
+vkr_context_submit_fence(struct vkr_context *ctx,
                          uint32_t flags,
                          uint32_t ring_idx,
                          uint64_t fence_id)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   int ret;
-
    /* always merge fences */
    assert(!(flags & ~VIRGL_RENDERER_FENCE_FLAG_MERGEABLE));
    flags = VIRGL_RENDERER_FENCE_FLAG_MERGEABLE;
 
    mtx_lock(&ctx->mutex);
-   ret = vkr_context_submit_fence_locked(base, flags, ring_idx, fence_id);
+   int ret = vkr_context_submit_fence_locked(ctx, flags, ring_idx, fence_id);
    mtx_unlock(&ctx->mutex);
    return ret;
 }
 
-static int
-vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t size)
+int
+vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
    int ret = 0;
 
    mtx_lock(&ctx->mutex);
@@ -217,13 +213,12 @@ vkr_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t si
 }
 
 static int
-vkr_context_get_blob_locked(struct virgl_context *base,
+vkr_context_get_blob_locked(struct vkr_context *ctx,
                             uint64_t blob_id,
                             uint64_t blob_size,
                             uint32_t flags,
                             struct virgl_context_blob *blob)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
    struct vkr_device_memory *mem;
    enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
    int fd = -1;
@@ -333,43 +328,25 @@ vkr_context_get_blob_locked(struct virgl_context *base,
    return 0;
 }
 
-static int
-vkr_context_get_blob(struct virgl_context *base,
+int
+vkr_context_get_blob(struct vkr_context *ctx,
                      UNUSED uint32_t res_id,
                      uint64_t blob_id,
                      uint64_t blob_size,
                      uint32_t flags,
                      struct virgl_context_blob *blob)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   int ret;
-
    mtx_lock(&ctx->mutex);
-   ret = vkr_context_get_blob_locked(base, blob_id, blob_size, flags, blob);
+   int ret = vkr_context_get_blob_locked(ctx, blob_id, blob_size, flags, blob);
    mtx_unlock(&ctx->mutex);
 
    return ret;
 }
 
-static int
-vkr_context_transfer_3d(struct virgl_context *base,
-                        struct virgl_resource *res,
-                        UNUSED const struct vrend_transfer_info *info,
-                        UNUSED int transfer_mode)
-{
-   struct vkr_context *ctx = (struct vkr_context *)base;
-
-   vkr_log("no transfer support for ctx %d and res %d", ctx->base.ctx_id, res->res_id);
-   return -1;
-}
-
 static void
-vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_resource *res)
+vkr_context_attach_resource_locked(struct vkr_context *ctx, struct virgl_resource *res)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
-   struct vkr_resource_attachment *att;
-
-   att = vkr_context_get_resource(ctx, res->res_id);
+   struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res->res_id);
    if (att) {
       assert(att->resource == res);
       return;
@@ -395,20 +372,17 @@ vkr_context_attach_resource_locked(struct virgl_context *base, struct virgl_reso
    vkr_context_add_resource(ctx, att);
 }
 
-static void
-vkr_context_attach_resource(struct virgl_context *base, struct virgl_resource *res)
+void
+vkr_context_attach_resource(struct vkr_context *ctx, struct virgl_resource *res)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
    mtx_lock(&ctx->mutex);
-   vkr_context_attach_resource_locked(base, res);
+   vkr_context_attach_resource_locked(ctx, res);
    mtx_unlock(&ctx->mutex);
 }
 
-static void
-vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *res)
+void
+vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res)
 {
-   struct vkr_context *ctx = (struct vkr_context *)base;
-
    mtx_lock(&ctx->mutex);
 
    const struct vkr_resource_attachment *att = ctx->encoder.stream.attachment;
@@ -445,14 +419,12 @@ vkr_context_detach_resource(struct virgl_context *base, struct virgl_resource *r
    mtx_unlock(&ctx->mutex);
 }
 
-static void
-vkr_context_destroy(struct virgl_context *base)
+void
+vkr_context_destroy(struct vkr_context *ctx)
 {
    /* TODO Move the entire teardown process to a separate thread so that the main thread
     * cannot get blocked by the vkDeviceWaitIdle upon device destruction.
     */
-   struct vkr_context *ctx = (struct vkr_context *)base;
-
    struct vkr_ring *ring, *ring_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
       vkr_ring_stop(ring);
@@ -460,7 +432,7 @@ vkr_context_destroy(struct virgl_context *base)
    }
 
    if (ctx->instance) {
-      vkr_log("destroying context %d (%s) with a valid instance", ctx->base.ctx_id,
+      vkr_log("destroying context %d (%s) with a valid instance", ctx->ctx_id,
               vkr_context_get_name(ctx));
 
       vkr_instance_destroy(ctx, ctx->instance);
@@ -474,18 +446,6 @@ vkr_context_destroy(struct virgl_context *base)
    mtx_destroy(&ctx->mutex);
    free(ctx->debug_name);
    free(ctx);
-}
-
-static void
-vkr_context_init_base(struct vkr_context *ctx)
-{
-   ctx->base.destroy = vkr_context_destroy;
-   ctx->base.attach_resource = vkr_context_attach_resource;
-   ctx->base.detach_resource = vkr_context_detach_resource;
-   ctx->base.transfer_3d = vkr_context_transfer_3d;
-   ctx->base.get_blob = vkr_context_get_blob;
-   ctx->base.submit_cmd = vkr_context_submit_cmd;
-   ctx->base.submit_fence = vkr_context_submit_fence;
 }
 
 static uint32_t
@@ -514,15 +474,18 @@ vkr_context_free_resource(struct hash_entry *entry)
    free(att);
 }
 
-struct virgl_context *
-vkr_context_create(size_t debug_len, const char *debug_name)
+struct vkr_context *
+vkr_context_create(uint32_t ctx_id,
+                   vkr_renderer_retire_fence_callback_type cb,
+                   size_t debug_len,
+                   const char *debug_name)
 {
-   struct vkr_context *ctx;
-
-   ctx = calloc(1, sizeof(*ctx));
+   struct vkr_context *ctx = calloc(1, sizeof(*ctx));
    if (!ctx)
       return NULL;
 
+   ctx->ctx_id = ctx_id;
+   ctx->retire_fence = cb;
    ctx->debug_name = malloc(debug_len + 1);
    if (!ctx->debug_name)
       goto err_debug_name;
@@ -555,12 +518,11 @@ vkr_context_create(size_t debug_len, const char *debug_name)
    vkr_cs_decoder_init(&ctx->decoder, ctx->object_table);
    vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error);
 
-   vkr_context_init_base(ctx);
    vkr_context_init_dispatch(ctx);
 
    list_inithead(&ctx->rings);
 
-   return &ctx->base;
+   return ctx;
 
 err_ctx_resource_table:
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);

@@ -71,7 +71,7 @@ vkr_queue_sync_retire(struct vkr_context *ctx,
                       struct vkr_device *dev,
                       struct vkr_queue_sync *sync)
 {
-   ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
+   ctx->retire_fence(ctx->ctx_id, sync->ring_idx, sync->fence_id);
    vkr_device_free_queue_sync(dev, sync);
 }
 
@@ -120,7 +120,7 @@ vkr_queue_thread(void *arg)
    const uint64_t ns_per_sec = 1000000000llu;
    char thread_name[16];
 
-   snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-queue-%d", ctx->base.ctx_id);
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-queue-%d", ctx->ctx_id);
    u_thread_setname(thread_name);
 
    mtx_lock(&queue->mutex);
@@ -151,7 +151,7 @@ vkr_queue_thread(void *arg)
 
       list_del(&sync->head);
 
-      ctx->base.fence_retire(&ctx->base, sync->ring_idx, sync->fence_id);
+      ctx->retire_fence(ctx->ctx_id, sync->ring_idx, sync->fence_id);
       vkr_device_free_queue_sync(queue->device, sync);
    }
    mtx_unlock(&queue->mutex);

@@ -9,7 +9,7 @@
 #include "vkr_common.h"
 
 /* We read from the ring buffer to a temporary buffer for
- * virgl_context::submit_cmd.  Until that is changed, we want to put a limit
+ * vkr_context_submit_cmd.  Until that is changed, we want to put a limit
  * on the size of the temporary buffer.  It also makes no sense to have huge
  * rings.
  *
@@ -83,7 +83,7 @@ struct vkr_ring {
    struct vkr_ring_extra extra;
 
    /* ring thread */
-   struct virgl_context *context;
+   struct vkr_context *context;
    uint64_t idle_timeout;
    void *cmd;
 
@@ -96,7 +96,7 @@ struct vkr_ring {
 
 struct vkr_ring *
 vkr_ring_create(const struct vkr_ring_layout *layout,
-                struct virgl_context *ctx,
+                struct vkr_context *ctx,
                 uint64_t idle_timeout);
 
 void

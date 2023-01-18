@@ -198,7 +198,7 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   ring = vkr_ring_create(&layout, &ctx->base, info->idleTimeout);
+   ring = vkr_ring_create(&layout, ctx, info->idleTimeout);
    if (!ring) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;

@@ -103,7 +103,7 @@ vkr_ring_read_buffer(struct vkr_ring *ring, void *data, uint32_t size)
 
 struct vkr_ring *
 vkr_ring_create(const struct vkr_ring_layout *layout,
-                struct virgl_context *ctx,
+                struct vkr_context *ctx,
                 uint64_t idle_timeout)
 {
    struct vkr_ring *ring;
@@ -197,7 +197,7 @@ static int
 vkr_ring_thread(void *arg)
 {
    struct vkr_ring *ring = arg;
-   struct virgl_context *ctx = ring->context;
+   struct vkr_context *ctx = ring->context;
    char thread_name[16];
 
    snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-ring-%d", ctx->ctx_id);
@@ -242,7 +242,7 @@ vkr_ring_thread(void *arg)
          }
 
          vkr_ring_read_buffer(ring, ring->cmd, cmd_size);
-         ctx->submit_cmd(ctx, ring->cmd, cmd_size);
+         vkr_context_submit_cmd(ctx, ring->cmd, cmd_size);
          vkr_ring_store_head(ring);
 
          last_submit = vkr_ring_now();

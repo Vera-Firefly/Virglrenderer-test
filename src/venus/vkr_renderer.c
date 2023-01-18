@@ -14,6 +14,9 @@
 
 struct vkr_renderer_state {
    const struct vkr_renderer_callbacks *cbs;
+
+   /* track the vkr_context */
+   struct list_head contexts;
 };
 
 struct vkr_renderer_state vkr_state;
@@ -64,40 +67,38 @@ vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs)
    if ((flags & required_flags) != required_flags)
       return false;
 
+   vkr_debug_init();
    virgl_log_set_logger(cbs->debug_logger);
 
    vkr_state.cbs = cbs;
+   list_inithead(&vkr_state.contexts);
 
-   vkr_debug_init();
-
-   int ret = virgl_resource_table_init(NULL);
-   if (ret)
-      return false;
-
-   ret = virgl_context_table_init();
-   if (ret) {
-      virgl_resource_table_cleanup();
-      return false;
-   }
-
-   return true;
+   return !virgl_resource_table_init(NULL);
 }
 
 void
 vkr_renderer_fini(void)
 {
-   virgl_context_table_cleanup();
+   struct vkr_context *ctx, *tmp;
+   LIST_FOR_EACH_ENTRY_SAFE (ctx, tmp, &vkr_state.contexts, head)
+      vkr_context_destroy(ctx);
+
+   list_inithead(&vkr_state.contexts);
+
    virgl_resource_table_cleanup();
 
    vkr_state.cbs = NULL;
 }
 
-static void
-vkr_renderer_retire_fence(struct virgl_context *ctx, uint32_t ring_idx, uint64_t fence_id)
+static struct vkr_context *
+vkr_renderer_lookup_context(uint32_t ctx_id)
 {
-   TRACE_FUNC();
+   list_for_each_entry (struct vkr_context, ctx, &vkr_state.contexts, head) {
+      if (ctx->ctx_id == ctx_id)
+         return ctx;
+   }
 
-   vkr_state.cbs->retire_fence(ctx->ctx_id, ring_idx, fence_id);
+   return NULL;
 }
 
 bool
@@ -116,23 +117,15 @@ vkr_renderer_create_context(uint32_t ctx_id,
       return false;
 
    /* duplicate ctx creation between server and vkr is invalid */
-   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (ctx)
       return false;
 
-   ctx = vkr_context_create(nlen, name);
+   ctx = vkr_context_create(ctx_id, vkr_state.cbs->retire_fence, nlen, name);
    if (!ctx)
       return false;
 
-   ctx->ctx_id = ctx_id;
-   ctx->capset_id = VIRGL_RENDERER_CAPSET_VENUS;
-   ctx->fence_retire = vkr_renderer_retire_fence;
-
-   int ret = virgl_context_add(ctx);
-   if (ret) {
-      ctx->destroy(ctx);
-      return false;
-   }
+   list_addtail(&ctx->head, &vkr_state.contexts);
 
    return true;
 }
@@ -142,7 +135,12 @@ vkr_renderer_destroy_context(uint32_t ctx_id)
 {
    TRACE_FUNC();
 
-   virgl_context_remove(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
+   if (!ctx)
+      return;
+
+   list_del(&ctx->head);
+   vkr_context_destroy(ctx);
 }
 
 bool
@@ -150,11 +148,11 @@ vkr_renderer_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size)
 {
    TRACE_FUNC();
 
-   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (!ctx)
       return false;
 
-   return !ctx->submit_cmd(ctx, cmd, size);
+   return !vkr_context_submit_cmd(ctx, cmd, size);
 }
 
 bool
@@ -165,12 +163,12 @@ vkr_renderer_submit_fence(uint32_t ctx_id,
 {
    TRACE_FUNC();
 
-   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (!ctx)
       return false;
 
    assert(vkr_state.cbs->retire_fence);
-   return !ctx->submit_fence(ctx, flags, ring_idx, fence_id);
+   return !vkr_context_submit_fence(ctx, flags, ring_idx, fence_id);
 }
 
 bool
@@ -190,12 +188,12 @@ vkr_renderer_create_resource(uint32_t ctx_id,
    assert(!virgl_resource_lookup(res_id));
    assert(blob_size);
 
-   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (!ctx)
       return false;
 
    struct virgl_context_blob blob;
-   int ret = ctx->get_blob(ctx, res_id, blob_id, blob_size, blob_flags, &blob);
+   int ret = vkr_context_get_blob(ctx, res_id, blob_id, blob_size, blob_flags, &blob);
    if (ret)
       return false;
 
@@ -222,7 +220,7 @@ vkr_renderer_create_resource(uint32_t ctx_id,
     * RENDER_CONTEXT_OP_CREATE_RESOURCE implies attach and proxy will not send
     * RENDER_CONTEXT_OP_IMPORT_RESOURCE to attach the resource again.
     */
-   ctx->attach_resource(ctx, res);
+   vkr_context_attach_resource(ctx, res);
 
    *out_fd_type = blob.type;
    *out_res_fd = res_fd;
@@ -252,7 +250,7 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    assert(fd >= 0);
    assert(size);
 
-   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (!ctx)
       return false;
 
@@ -264,31 +262,22 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    res->map_info = 0;
    res->map_size = size;
 
-   ctx->attach_resource(ctx, res);
-
-   return true;
-}
-
-static bool
-vkr_renderer_detach_resource(struct virgl_context *ctx, void *data)
-{
-   struct virgl_resource *res = data;
-   ctx->detach_resource(ctx, res);
+   vkr_context_attach_resource(ctx, res);
    return true;
 }
 
 void
-vkr_renderer_destroy_resource(UNUSED uint32_t ctx_id, uint32_t res_id)
+vkr_renderer_destroy_resource(uint32_t ctx_id, uint32_t res_id)
 {
-   struct virgl_resource *res = virgl_resource_lookup(res_id);
-   struct virgl_context_foreach_args args;
+   struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
+   if (!ctx)
+      return;
 
+   struct virgl_resource *res = virgl_resource_lookup(res_id);
    if (!res)
       return;
 
-   args.callback = vkr_renderer_detach_resource;
-   args.data = res;
-   virgl_context_foreach(&args);
+   vkr_context_detach_resource(ctx, res);
 
    virgl_resource_remove(res_id);
 }
