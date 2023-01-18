@@ -997,7 +997,7 @@ START_TEST(test_vrend_host_backed_memory_no_data_leak)
 
    virgl_renderer_resource_unref(res.handle);
    free(data);
-
+   testvirgl_fini_ctx_cmdbuf(&ctx);
 }
 END_TEST
 
@@ -1031,12 +1031,15 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_transfer_buffer_bad_strides);
   tcase_add_test(tc_core, virgl_test_transfer_2d_array_bad_layer_stride);
   tcase_add_test(tc_core, virgl_test_transfer_2d_bad_level);
-  tcase_add_test(tc_core, test_vrend_host_backed_memory_no_data_leak);
 
   tcase_add_loop_test(tc_core, virgl_test_transfer_res_read_valid, 0, PIPE_MAX_TEXTURE_TYPES);
   tcase_add_loop_test(tc_core, virgl_test_transfer_res_write_valid, 0, PIPE_MAX_TEXTURE_TYPES);
   tcase_add_loop_test(tc_core, virgl_test_transfer_res_read_invalid, 0, PIPE_MAX_TEXTURE_TYPES);
   tcase_add_loop_test(tc_core, virgl_test_transfer_res_write_invalid, 0, PIPE_MAX_TEXTURE_TYPES);
+  suite_add_tcase(s, tc_core);
+
+  tc_core = tcase_create("leak");
+  tcase_add_test(tc_core, test_vrend_host_backed_memory_no_data_leak);
   suite_add_tcase(s, tc_core);
 
   tc_core = tcase_create("transfer_inline_write");
