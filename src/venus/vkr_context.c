@@ -216,7 +216,7 @@ static int
 vkr_context_get_blob_locked(struct vkr_context *ctx,
                             uint64_t blob_id,
                             uint64_t blob_size,
-                            uint32_t flags,
+                            uint32_t blob_flags,
                             struct virgl_context_blob *blob)
 {
    struct vkr_device_memory *mem;
@@ -226,7 +226,7 @@ vkr_context_get_blob_locked(struct vkr_context *ctx,
    /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
     * shm allocation. It is logically contiguous and it can be exported.
     */
-   if (!blob_id && flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       fd = os_create_anonymous_file(blob_size, "vkr-shmem");
       if (fd < 0)
          return -ENOMEM;
@@ -250,13 +250,13 @@ vkr_context_get_blob_locked(struct vkr_context *ctx,
    if (!mem->valid_fd_types)
       return -EINVAL;
 
-   if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       const bool host_visible = mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
       if (!host_visible)
          return -EINVAL;
    }
 
-   if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
       if (!(mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_DMABUF)))
          return -EINVAL;
 
@@ -309,7 +309,7 @@ vkr_context_get_blob_locked(struct vkr_context *ctx,
    blob->type = fd_type;
    blob->u.fd = fd;
 
-   if (flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
       const bool host_coherent =
          mem->property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
       const bool host_cached = mem->property_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
@@ -333,11 +333,11 @@ vkr_context_get_blob(struct vkr_context *ctx,
                      UNUSED uint32_t res_id,
                      uint64_t blob_id,
                      uint64_t blob_size,
-                     uint32_t flags,
+                     uint32_t blob_flags,
                      struct virgl_context_blob *blob)
 {
    mtx_lock(&ctx->mutex);
-   int ret = vkr_context_get_blob_locked(ctx, blob_id, blob_size, flags, blob);
+   int ret = vkr_context_get_blob_locked(ctx, blob_id, blob_size, blob_flags, blob);
    mtx_unlock(&ctx->mutex);
 
    return ret;

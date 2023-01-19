@@ -82,10 +82,10 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 
 int
 vkr_context_get_blob(struct vkr_context *ctx,
-                     UNUSED uint32_t res_id,
+                     uint32_t res_id,
                      uint64_t blob_id,
                      uint64_t blob_size,
-                     uint32_t flags,
+                     uint32_t blob_flags,
                      struct virgl_context_blob *blob);
 
 void
