@@ -9,30 +9,30 @@
 
 void
 vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
-                          const struct vkr_resource_attachment *att,
+                          const struct vkr_resource *res,
                           size_t offset,
                           size_t size)
 {
-   if (!att) {
+   if (!res) {
       memset(&enc->stream, 0, sizeof(enc->stream));
       enc->cur = NULL;
       enc->end = NULL;
       return;
    }
 
-   if (unlikely(size + offset > att->size)) {
+   if (unlikely(size + offset > res->size)) {
       vkr_log(
          "failed to set the reply stream: offset(%zu) + size(%zu) exceeds res size(%zu)",
-         offset, size, att->size);
+         offset, size, res->size);
       vkr_cs_encoder_set_fatal(enc);
       return;
    }
 
-   enc->stream.attachment = att;
+   enc->stream.resource = res;
    enc->stream.offset = offset;
    enc->stream.size = size;
 
-   enc->end = att->data + att->size;
+   enc->end = res->data + res->size;
 
    vkr_cs_encoder_seek_stream(enc, 0);
 }
@@ -46,7 +46,7 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
       return;
    }
 
-   enc->cur = enc->stream.attachment->data + enc->stream.offset + pos;
+   enc->cur = enc->stream.resource->data + enc->stream.offset + pos;
 }
 
 void

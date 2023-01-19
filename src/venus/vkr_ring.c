@@ -15,10 +15,10 @@ enum vkr_ring_status_flag {
 };
 
 static inline void *
-get_resource_pointer(const struct vkr_resource_attachment *att, size_t offset)
+get_resource_pointer(const struct vkr_resource *res, size_t offset)
 {
-   assert(offset < att->size);
-   return att->data + offset;
+   assert(offset < res->size);
+   return res->data + offset;
 }
 
 static void
@@ -39,7 +39,7 @@ vkr_ring_init_buffer(struct vkr_ring *ring, const struct vkr_ring_layout *layout
    assert(util_is_power_of_two_nonzero(buf->size));
    buf->mask = buf->size - 1;
    buf->cur = 0;
-   buf->data = get_resource_pointer(layout->attachment, layout->buffer.begin);
+   buf->data = get_resource_pointer(layout->resource, layout->buffer.begin);
 }
 
 static bool
@@ -47,9 +47,9 @@ vkr_ring_init_control(struct vkr_ring *ring, const struct vkr_ring_layout *layou
 {
    struct vkr_ring_control *ctrl = &ring->control;
 
-   ctrl->head = get_resource_pointer(layout->attachment, layout->head.begin);
-   ctrl->tail = get_resource_pointer(layout->attachment, layout->tail.begin);
-   ctrl->status = get_resource_pointer(layout->attachment, layout->status.begin);
+   ctrl->head = get_resource_pointer(layout->resource, layout->head.begin);
+   ctrl->tail = get_resource_pointer(layout->resource, layout->tail.begin);
+   ctrl->status = get_resource_pointer(layout->resource, layout->status.begin);
 
    /* we will manage head and status, and we expect them to be 0 initially */
    if (*ctrl->head || *ctrl->status)
@@ -113,7 +113,7 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    if (!ring)
       return NULL;
 
-   ring->attachment = layout->attachment;
+   ring->resource = layout->resource;
 
    if (!vkr_ring_init_control(ring, layout)) {
       free(ring);
@@ -310,7 +310,7 @@ vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
 
       /* Mesa always sets offset to 0 and the cache hit rate will be 100% */
       extra->cached_offset = offset;
-      extra->cached_data = get_resource_pointer(ring->attachment, extra->offset + offset);
+      extra->cached_data = get_resource_pointer(ring->resource, extra->offset + offset);
    }
 
    atomic_store_explicit(extra->cached_data, val, memory_order_release);

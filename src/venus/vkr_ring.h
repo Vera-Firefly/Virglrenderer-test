@@ -17,11 +17,11 @@
  */
 #define VKR_RING_BUFFER_MAX_SIZE (16u * 1024 * 1024)
 
-/* The layout of a ring in a virgl_resource.  This is parsed and discarded by
- * vkr_ring_create.
+/* The layout of a ring in a vkr_resource. This is parsed and
+ * discarded by vkr_ring_create.
  */
 struct vkr_ring_layout {
-   const struct vkr_resource_attachment *attachment;
+   const struct vkr_resource *resource;
 
    struct vkr_region head;
    struct vkr_region tail;
@@ -77,7 +77,7 @@ struct vkr_ring {
    struct list_head head;
 
    /* ring regions */
-   const struct vkr_resource_attachment *attachment;
+   const struct vkr_resource *resource;
    struct vkr_ring_control control;
    struct vkr_ring_buffer buffer;
    struct vkr_ring_extra extra;

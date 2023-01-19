@@ -5,7 +5,6 @@
 
 #include "vkr_common.h"
 
-#include "util/os_file.h"
 #include "venus-protocol/vn_protocol_renderer_info.h"
 #include "virgl_context.h"
 #include "virglrenderer_hw.h"
@@ -73,7 +72,7 @@ vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs)
    vkr_state.cbs = cbs;
    list_inithead(&vkr_state.contexts);
 
-   return !virgl_resource_table_init(NULL);
+   return true;
 }
 
 void
@@ -84,8 +83,6 @@ vkr_renderer_fini(void)
       vkr_context_destroy(ctx);
 
    list_inithead(&vkr_state.contexts);
-
-   virgl_resource_table_cleanup();
 
    vkr_state.cbs = NULL;
 }
@@ -185,7 +182,6 @@ vkr_renderer_create_resource(uint32_t ctx_id,
    TRACE_FUNC();
 
    assert(res_id);
-   assert(!virgl_resource_lookup(res_id));
    assert(blob_size);
 
    struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
@@ -200,19 +196,9 @@ vkr_renderer_create_resource(uint32_t ctx_id,
    assert(blob.type == VIRGL_RESOURCE_FD_SHM || blob.type == VIRGL_RESOURCE_FD_DMABUF ||
           blob.type == VIRGL_RESOURCE_FD_OPAQUE);
 
-   struct virgl_resource *res = virgl_resource_create_from_fd(
-      res_id, blob.type, blob.u.fd, NULL, 0, &blob.vulkan_info);
-   if (!res) {
+   int fd = os_dupfd_cloexec(blob.u.fd);
+   if (fd < 0) {
       close(blob.u.fd);
-      return false;
-   }
-
-   res->map_info = blob.map_info;
-   res->map_size = blob_size;
-
-   int res_fd = os_dupfd_cloexec(res->fd);
-   if (res_fd < 0) {
-      virgl_resource_remove(res_id);
       return false;
    }
 
@@ -220,10 +206,10 @@ vkr_renderer_create_resource(uint32_t ctx_id,
     * RENDER_CONTEXT_OP_CREATE_RESOURCE implies attach and proxy will not send
     * RENDER_CONTEXT_OP_IMPORT_RESOURCE to attach the resource again.
     */
-   vkr_context_attach_resource(ctx, res);
+   vkr_context_attach_resource(ctx, res_id, blob.type, fd, blob_size);
 
    *out_fd_type = blob.type;
-   *out_res_fd = res_fd;
+   *out_res_fd = blob.u.fd;
    *out_map_info = blob.map_info;
 
    if (blob.type == VIRGL_RESOURCE_FD_OPAQUE) {
@@ -244,7 +230,6 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    TRACE_FUNC();
 
    assert(res_id);
-   assert(!virgl_resource_lookup(res_id));
    assert(fd_type == VIRGL_RESOURCE_FD_SHM || fd_type == VIRGL_RESOURCE_FD_DMABUF ||
           fd_type == VIRGL_RESOURCE_FD_OPAQUE);
    assert(fd >= 0);
@@ -254,30 +239,17 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    if (!ctx)
       return false;
 
-   struct virgl_resource *res =
-      virgl_resource_create_from_fd(res_id, fd_type, fd, NULL, 0, NULL);
-   if (!res)
-      return false;
+   vkr_context_attach_resource(ctx, res_id, fd_type, fd, size);
 
-   res->map_info = 0;
-   res->map_size = size;
-
-   vkr_context_attach_resource(ctx, res);
    return true;
 }
 
 void
 vkr_renderer_destroy_resource(uint32_t ctx_id, uint32_t res_id)
 {
+   TRACE_FUNC();
+
    struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
-   if (!ctx)
-      return;
-
-   struct virgl_resource *res = virgl_resource_lookup(res_id);
-   if (!res)
-      return;
-
-   vkr_context_detach_resource(ctx, res);
-
-   virgl_resource_remove(res_id);
+   if (ctx)
+      vkr_context_detach_resource(ctx, res_id);
 }

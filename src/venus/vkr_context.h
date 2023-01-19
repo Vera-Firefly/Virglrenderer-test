@@ -9,19 +9,21 @@
 #include "vkr_common.h"
 
 #include "venus-protocol/vn_protocol_renderer_defines.h"
+#include "virgl_resource.h"
 
 #include "vkr_cs.h"
 
 struct virgl_context_blob;
-struct virgl_resource;
 
 /*
- * When a virgl_resource is attached in vkr_context_attach_resource, a
- * vkr_resource_attachment is created.  A vkr_resource_attachment is valid
- * until the resource it tracks is detached.
+ * When vkr_context_attach_resource is called, a vkr_resource is created. A
+ * vkr_resource is valid until the resource is detached.
  */
-struct vkr_resource_attachment {
-   struct virgl_resource *resource;
+struct vkr_resource {
+   uint32_t res_id;
+
+   enum virgl_resource_fd_type fd_type;
+   int fd;
 
    uint8_t *data;
    size_t size;
@@ -89,12 +91,16 @@ vkr_context_get_blob(struct vkr_context *ctx,
                      struct virgl_context_blob *blob);
 
 void
-vkr_context_attach_resource(struct vkr_context *ctx, struct virgl_resource *res);
+vkr_context_attach_resource(struct vkr_context *ctx,
+                            uint32_t res_id,
+                            enum virgl_resource_fd_type fd_type,
+                            int fd,
+                            uint64_t size);
 
 void
-vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res);
+vkr_context_detach_resource(struct vkr_context *ctx, uint32_t res_id);
 
-static inline struct vkr_resource_attachment *
+static inline struct vkr_resource *
 vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 {
    const struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);

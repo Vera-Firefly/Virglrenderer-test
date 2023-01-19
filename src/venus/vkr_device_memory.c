@@ -17,21 +17,15 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
                                    const VkImportMemoryResourceInfoMESA *res_info,
                                    VkImportMemoryFdInfoKHR *out)
 {
-   struct vkr_resource_attachment *att =
-      vkr_context_get_resource(ctx, res_info->resourceId);
-   if (!att) {
+   struct vkr_resource *res = vkr_context_get_resource(ctx, res_info->resourceId);
+   if (!res) {
       vkr_log("failed to import resource: invalid res_id %u", res_info->resourceId);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return false;
    }
 
-   int fd = -1;
-   enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &fd);
-   if (fd_type == VIRGL_RESOURCE_FD_INVALID)
-      return false;
-
    VkExternalMemoryHandleTypeFlagBits handle_type;
-   switch (fd_type) {
+   switch (res->fd_type) {
    case VIRGL_RESOURCE_FD_DMABUF:
       handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
       break;
@@ -39,9 +33,12 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
       handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
       break;
    default:
-      close(fd);
       return false;
    }
+
+   int fd = os_dupfd_cloexec(res->fd);
+   if (fd < 0)
+      return false;
 
    *out = (VkImportMemoryFdInfoKHR){
       .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
@@ -267,14 +264,13 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
-   struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, args->resourceId);
-   if (!att) {
+   struct vkr_resource *res = vkr_context_get_resource(ctx, args->resourceId);
+   if (!res) {
       vkr_log("failed to query resource props: invalid res_id %u", args->resourceId);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
-   struct virgl_resource *res = att->resource;
    if (res->fd_type != VIRGL_RESOURCE_FD_DMABUF) {
       args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
       return;
@@ -299,7 +295,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
       args->pMemoryResourceProperties->pNext,
       VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
    if (alloc_size_props)
-      alloc_size_props->allocationSize = res->map_size;
+      alloc_size_props->allocationSize = res->size;
 }
 
 void

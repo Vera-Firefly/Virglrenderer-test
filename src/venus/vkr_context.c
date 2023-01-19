@@ -215,15 +215,19 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 static inline void
 vkr_context_free_resource(struct hash_entry *entry)
 {
-   struct vkr_resource_attachment *att = entry->data;
-   free(att);
+   struct vkr_resource *res = entry->data;
+   if (res->fd >= 0)
+      close(res->fd);
+   if (res->fd_type == VIRGL_RESOURCE_FD_SHM)
+      munmap(res->data, res->size);
+   free(res);
 }
 
 static inline void
-vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource_attachment *att)
+vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource *res)
 {
-   assert(!_mesa_hash_table_search(ctx->resource_table, &att->resource->res_id));
-   _mesa_hash_table_insert(ctx->resource_table, &att->resource->res_id, att);
+   assert(!_mesa_hash_table_search(ctx->resource_table, &res->res_id));
+   _mesa_hash_table_insert(ctx->resource_table, &res->res_id, res);
 }
 
 static inline void
@@ -368,49 +372,64 @@ vkr_context_get_blob(struct vkr_context *ctx,
 }
 
 static void
-vkr_context_attach_resource_locked(struct vkr_context *ctx, struct virgl_resource *res)
+vkr_context_attach_resource_locked(struct vkr_context *ctx,
+                                   uint32_t res_id,
+                                   enum virgl_resource_fd_type fd_type,
+                                   int fd,
+                                   uint64_t size)
 {
-   struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res->res_id);
-   if (att) {
-      assert(att->resource == res);
-      return;
-   }
+   assert(!vkr_context_get_resource(ctx, res_id));
 
-   att = calloc(1, sizeof(*att));
-   if (!att)
+   struct vkr_resource *res = calloc(1, sizeof(*res));
+   if (!res)
       return;
 
-   if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
-      void *mmap_ptr =
-         mmap(NULL, res->map_size, PROT_WRITE | PROT_READ, MAP_SHARED, res->fd, 0);
+   if (fd_type == VIRGL_RESOURCE_FD_SHM) {
+      void *mmap_ptr = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
       if (mmap_ptr == MAP_FAILED) {
-         free(att);
+         free(res);
          return;
       }
 
-      att->data = mmap_ptr;
-      att->size = res->map_size;
+      res->data = mmap_ptr;
+
+      /* close the fd for shm since the mapping holds a ref now */
+      close(fd);
+      fd = -1;
    }
 
-   att->resource = res;
-   vkr_context_add_resource(ctx, att);
+   res->res_id = res_id;
+   res->fd_type = fd_type;
+   res->fd = fd;
+   res->size = size;
+
+   vkr_context_add_resource(ctx, res);
 }
 
 void
-vkr_context_attach_resource(struct vkr_context *ctx, struct virgl_resource *res)
+vkr_context_attach_resource(struct vkr_context *ctx,
+                            uint32_t res_id,
+                            enum virgl_resource_fd_type fd_type,
+                            int fd,
+                            uint64_t size)
 {
    mtx_lock(&ctx->mutex);
-   vkr_context_attach_resource_locked(ctx, res);
+   vkr_context_attach_resource_locked(ctx, res_id, fd_type, fd, size);
    mtx_unlock(&ctx->mutex);
 }
 
 void
-vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res)
+vkr_context_detach_resource(struct vkr_context *ctx, uint32_t res_id)
 {
    mtx_lock(&ctx->mutex);
 
-   const struct vkr_resource_attachment *att = ctx->encoder.stream.attachment;
-   if (att && att->resource == res) {
+   struct vkr_resource *res = vkr_context_get_resource(ctx, res_id);
+   if (!res) {
+      mtx_unlock(&ctx->mutex);
+      return;
+   }
+
+   if (ctx->encoder.stream.resource && ctx->encoder.stream.resource == res) {
       /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset.
        * Until then, and until we can ignore older guests, treat this as
        * non-fatal
@@ -420,7 +439,7 @@ vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res)
 
    struct vkr_ring *ring, *ring_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
-      if (ring->attachment->resource != res)
+      if (ring->resource != res)
          continue;
 
       vkr_cs_decoder_set_fatal(&ctx->decoder);
@@ -432,13 +451,7 @@ vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res)
       vkr_ring_destroy(ring);
    }
 
-   if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
-      struct vkr_resource_attachment *att = vkr_context_get_resource(ctx, res->res_id);
-      if (att)
-         munmap(att->data, att->size);
-   }
-
-   vkr_context_remove_resource(ctx, res->res_id);
+   vkr_context_remove_resource(ctx, res_id);
 
    mtx_unlock(&ctx->mutex);
 }

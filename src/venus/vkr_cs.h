@@ -19,7 +19,7 @@ struct vkr_cs_encoder {
    bool *fatal_error;
 
    struct {
-      const struct vkr_resource_attachment *attachment;
+      const struct vkr_resource *resource;
       size_t offset;
       size_t size;
    } stream;
@@ -84,7 +84,7 @@ vkr_cs_encoder_set_fatal(const struct vkr_cs_encoder *enc)
 
 void
 vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
-                          const struct vkr_resource_attachment *att,
+                          const struct vkr_resource *res,
                           size_t offset,
                           size_t size);
 

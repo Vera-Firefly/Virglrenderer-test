@@ -17,16 +17,14 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vn_command_vkSetReplyCommandStreamMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   struct vkr_resource_attachment *att;
-
-   att = vkr_context_get_resource(ctx, args->pStream->resourceId);
-   if (!att) {
+   struct vkr_resource *res = vkr_context_get_resource(ctx, args->pStream->resourceId);
+   if (!res) {
       vkr_log("failed to set reply stream: invalid res_id %u", args->pStream->resourceId);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
-   vkr_cs_encoder_set_stream(&ctx->encoder, att, args->pStream->offset,
+   vkr_cs_encoder_set_stream(&ctx->encoder, res, args->pStream->offset,
                              args->pStream->size);
 }
 
@@ -68,23 +66,22 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
       if (!stream->size)
          continue;
 
-      struct vkr_resource_attachment *att =
-         vkr_context_get_resource(ctx, stream->resourceId);
-      if (!att) {
+      struct vkr_resource *res = vkr_context_get_resource(ctx, stream->resourceId);
+      if (!res) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
          vkr_cs_decoder_set_fatal(&ctx->decoder);
          break;
       }
 
-      if (stream->offset + stream->size > att->size) {
+      if (stream->offset + stream->size > res->size) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
          vkr_cs_decoder_set_fatal(&ctx->decoder);
          break;
       }
 
-      vkr_cs_decoder_set_stream(&ctx->decoder, att->data + stream->offset, stream->size);
+      vkr_cs_decoder_set_stream(&ctx->decoder, res->data + stream->offset, stream->size);
       while (vkr_cs_decoder_has_command(&ctx->decoder)) {
          vn_dispatch_command(&ctx->dispatch);
          if (vkr_cs_decoder_get_fatal(&ctx->decoder))
@@ -111,16 +108,16 @@ lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 
 static bool
 vkr_ring_layout_init(struct vkr_ring_layout *layout,
-                     const struct vkr_resource_attachment *att,
+                     const struct vkr_resource *res,
                      const VkRingCreateInfoMESA *info)
 {
    *layout = (struct vkr_ring_layout){
-      .attachment = att,
-      .head   = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
-      .tail   = VKR_REGION_INIT(info->offset + info->tailOffset, sizeof(uint32_t)),
+      .resource = res,
+      .head = VKR_REGION_INIT(info->offset + info->headOffset, sizeof(uint32_t)),
+      .tail = VKR_REGION_INIT(info->offset + info->tailOffset, sizeof(uint32_t)),
       .status = VKR_REGION_INIT(info->offset + info->statusOffset, sizeof(uint32_t)),
       .buffer = VKR_REGION_INIT(info->offset + info->bufferOffset, info->bufferSize),
-      .extra  = VKR_REGION_INIT(info->offset + info->extraOffset, info->extraSize),
+      .extra = VKR_REGION_INIT(info->offset + info->extraOffset, info->extraSize),
    };
 
    const struct vkr_region res_region = VKR_REGION_INIT(info->offset, info->size);
@@ -128,7 +125,7 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
       &layout->head, &layout->tail, &layout->status, &layout->buffer, &layout->extra,
    };
 
-   const struct vkr_region res_size = VKR_REGION_INIT(0, att->size);
+   const struct vkr_region res_size = VKR_REGION_INIT(0, res->size);
    if (!vkr_region_is_valid(&res_region) || !vkr_region_is_within(&res_region, &res_size))
       return false;
 
@@ -182,23 +179,21 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
    const VkRingCreateInfoMESA *info = args->pCreateInfo;
-   const struct vkr_resource_attachment *att;
-   struct vkr_ring *ring;
 
-   att = vkr_context_get_resource(ctx, info->resourceId);
-   if (!att) {
+   const struct vkr_resource *res = vkr_context_get_resource(ctx, info->resourceId);
+   if (!res) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
    struct vkr_ring_layout layout;
-   if (!vkr_ring_layout_init(&layout, att, info)) {
+   if (!vkr_ring_layout_init(&layout, res, info)) {
       vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
    }
 
-   ring = vkr_ring_create(&layout, ctx, info->idleTimeout);
+   struct vkr_ring *ring = vkr_ring_create(&layout, ctx, info->idleTimeout);
    if (!ring) {
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return;
