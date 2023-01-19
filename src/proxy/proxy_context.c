@@ -427,6 +427,10 @@ proxy_context_detach_resource(struct virgl_context *base, struct virgl_resource 
    struct proxy_context *ctx = (struct proxy_context *)base;
    const uint32_t res_id = res->res_id;
 
+   /* avoid detaching resource not belonging to this context */
+   if (!proxy_context_resource_find(ctx, res_id))
+      return;
+
    const struct render_context_op_destroy_resource_request req = {
       .header.op = RENDER_CONTEXT_OP_DESTROY_RESOURCE,
       .res_id = res_id,
