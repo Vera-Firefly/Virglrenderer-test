@@ -13,55 +13,32 @@
 #include "vkr_physical_device.h"
 
 static bool
-vkr_get_fd_handle_type_from_virgl_fd_type(
-   struct vkr_physical_device *dev,
-   enum virgl_resource_fd_type fd_type,
-   VkExternalMemoryHandleTypeFlagBits *out_handle_type)
-{
-   assert(dev);
-   assert(out_handle_type);
-
-   switch (fd_type) {
-   case VIRGL_RESOURCE_FD_DMABUF:
-      if (!dev->EXT_external_memory_dma_buf)
-         return false;
-      *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-      break;
-   case VIRGL_RESOURCE_FD_OPAQUE:
-      if (!dev->KHR_external_memory_fd)
-         return false;
-      *out_handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-      break;
-   default:
-      return false;
-   }
-
-   return true;
-}
-
-static bool
 vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
-                                   struct vkr_physical_device *physical_dev,
                                    const VkImportMemoryResourceInfoMESA *res_info,
                                    VkImportMemoryFdInfoKHR *out)
 {
-   struct vkr_resource_attachment *att = NULL;
-   enum virgl_resource_fd_type fd_type;
-   int fd = -1;
-   VkExternalMemoryHandleTypeFlagBits handle_type;
-
-   att = vkr_context_get_resource(ctx, res_info->resourceId);
+   struct vkr_resource_attachment *att =
+      vkr_context_get_resource(ctx, res_info->resourceId);
    if (!att) {
       vkr_log("failed to import resource: invalid res_id %u", res_info->resourceId);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return false;
    }
 
-   fd_type = virgl_resource_export_fd(att->resource, &fd);
+   int fd = -1;
+   enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &fd);
    if (fd_type == VIRGL_RESOURCE_FD_INVALID)
       return false;
 
-   if (!vkr_get_fd_handle_type_from_virgl_fd_type(physical_dev, fd_type, &handle_type)) {
+   VkExternalMemoryHandleTypeFlagBits handle_type;
+   switch (fd_type) {
+   case VIRGL_RESOURCE_FD_DMABUF:
+      handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+      break;
+   case VIRGL_RESOURCE_FD_OPAQUE:
+      handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+      break;
+   default:
       close(fd);
       return false;
    }
@@ -151,8 +128,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       args->pAllocateInfo, VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA);
    if (prev_of_res_info) {
       res_info = (VkImportMemoryResourceInfoMESA *)prev_of_res_info->pNext;
-      if (!vkr_get_fd_info_from_resource_info(ctx, physical_dev, res_info,
-                                              &local_import_info)) {
+      if (!vkr_get_fd_info_from_resource_info(ctx, res_info, &local_import_info)) {
          args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
          return;
       }
@@ -298,28 +274,24 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
       return;
    }
 
-   int fd = -1;
-   enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(att->resource, &fd);
-   VkExternalMemoryHandleTypeFlagBits handle_type;
-   if (!vkr_get_fd_handle_type_from_virgl_fd_type(dev->physical_device, fd_type,
-                                                  &handle_type) ||
-       handle_type != VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) {
-      close(fd);
+   struct virgl_resource *res = att->resource;
+   if (res->fd_type != VIRGL_RESOURCE_FD_DMABUF) {
       args->ret = VK_ERROR_INVALID_EXTERNAL_HANDLE;
       return;
    }
 
+   static const VkExternalMemoryHandleTypeFlagBits handle_type =
+      VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
    VkMemoryFdPropertiesKHR mem_fd_props = {
       .sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR,
       .pNext = NULL,
       .memoryTypeBits = 0,
    };
    vn_replace_vkGetMemoryResourcePropertiesMESA_args_handle(args);
-   args->ret = vk->GetMemoryFdPropertiesKHR(args->device, handle_type, fd, &mem_fd_props);
-   if (args->ret != VK_SUCCESS) {
-      close(fd);
+   args->ret =
+      vk->GetMemoryFdPropertiesKHR(args->device, handle_type, res->fd, &mem_fd_props);
+   if (args->ret != VK_SUCCESS)
       return;
-   }
 
    args->pMemoryResourceProperties->memoryTypeBits = mem_fd_props.memoryTypeBits;
 
@@ -327,9 +299,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
       args->pMemoryResourceProperties->pNext,
       VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
    if (alloc_size_props)
-      alloc_size_props->allocationSize = lseek(fd, 0, SEEK_END);
-
-   close(fd);
+      alloc_size_props->allocationSize = res->map_size;
 }
 
 void
