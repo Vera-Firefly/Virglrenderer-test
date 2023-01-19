@@ -328,14 +328,15 @@ render_context_init_name(struct render_context *ctx,
 
    strcpy(ctx->name, ctx_name);
 
-   render_context_set_thread_name(ctx_id, ctx->name);
+   /* Overrides the executable name used only by mesa to load app-specific
+    * driver configuration.
+    */
+   setenv("MESA_DRICONF_EXECUTABLE_OVERRIDE", ctx->name, 0);
 
-#ifdef _GNU_SOURCE
-   /* Sets the guest app executable name used by mesa to load app-specific driver
-    * configuration. */
-   program_invocation_name = ctx->name;
-   program_invocation_short_name = ctx->name;
-#endif
+   /* Host Mesa still sees the process name as "virgl_render_server" unless
+    * additionally overridden by setenv("MESA_PROCESS_NAME", ...).
+    */
+   render_context_set_thread_name(ctx_id, ctx->name);
 
    return true;
 }
