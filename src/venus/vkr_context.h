@@ -94,26 +94,6 @@ vkr_context_attach_resource(struct vkr_context *ctx, struct virgl_resource *res)
 void
 vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res);
 
-void
-vkr_context_free_resource(struct hash_entry *entry);
-
-static inline void
-vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource_attachment *att)
-{
-   assert(!_mesa_hash_table_search(ctx->resource_table, &att->resource->res_id));
-   _mesa_hash_table_insert(ctx->resource_table, &att->resource->res_id, att);
-}
-
-static inline void
-vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
-{
-   struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
-   if (likely(entry)) {
-      vkr_context_free_resource(entry);
-      _mesa_hash_table_remove(ctx->resource_table, entry);
-   }
-}
-
 static inline struct vkr_resource_attachment *
 vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 {
@@ -185,16 +165,6 @@ vkr_context_get_object(struct vkr_context *ctx, vkr_object_id obj_id)
 {
    const struct hash_entry *entry = _mesa_hash_table_search(ctx->object_table, &obj_id);
    return likely(entry) ? entry->data : NULL;
-}
-
-static inline const char *
-vkr_context_get_name(const struct vkr_context *ctx)
-{
-   /* ctx->instance_name is the application name while ctx->debug_name is
-    * usually the guest process name or the hypervisor name.  This never
-    * returns NULL because ctx->debug_name is never NULL.
-    */
-   return ctx->instance_name ? ctx->instance_name : ctx->debug_name;
 }
 
 void

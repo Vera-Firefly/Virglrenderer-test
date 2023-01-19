@@ -212,6 +212,30 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
    return ret;
 }
 
+static inline void
+vkr_context_free_resource(struct hash_entry *entry)
+{
+   struct vkr_resource_attachment *att = entry->data;
+   free(att);
+}
+
+static inline void
+vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource_attachment *att)
+{
+   assert(!_mesa_hash_table_search(ctx->resource_table, &att->resource->res_id));
+   _mesa_hash_table_insert(ctx->resource_table, &att->resource->res_id, att);
+}
+
+static inline void
+vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
+{
+   struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
+   if (likely(entry)) {
+      vkr_context_free_resource(entry);
+      _mesa_hash_table_remove(ctx->resource_table, entry);
+   }
+}
+
 static int
 vkr_context_get_blob_locked(struct vkr_context *ctx,
                             uint64_t blob_id,
@@ -419,6 +443,16 @@ vkr_context_detach_resource(struct vkr_context *ctx, struct virgl_resource *res)
    mtx_unlock(&ctx->mutex);
 }
 
+static inline const char *
+vkr_context_get_name(const struct vkr_context *ctx)
+{
+   /* ctx->instance_name is the application name while ctx->debug_name is
+    * usually the guest process name or the hypervisor name.  This never
+    * returns NULL because ctx->debug_name is never NULL.
+    */
+   return ctx->instance_name ? ctx->instance_name : ctx->debug_name;
+}
+
 void
 vkr_context_destroy(struct vkr_context *ctx)
 {
@@ -465,13 +499,6 @@ vkr_context_free_object(struct hash_entry *entry)
 {
    struct vkr_object *obj = entry->data;
    free(obj);
-}
-
-void
-vkr_context_free_resource(struct hash_entry *entry)
-{
-   struct vkr_resource_attachment *att = entry->data;
-   free(att);
 }
 
 struct vkr_context *
