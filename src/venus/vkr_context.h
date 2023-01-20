@@ -14,8 +14,8 @@
 #include "vkr_cs.h"
 
 /*
- * When vkr_context_attach_resource is called, a vkr_resource is created. A
- * vkr_resource is valid until the resource is detached.
+ * When vkr_context_create_resource or vkr_context_import_resource is called, a
+ * vkr_resource is created, and is valid until vkr_context_destroy_resource.
  */
 struct vkr_resource {
    uint32_t res_id;
@@ -85,23 +85,23 @@ vkr_context_submit_fence(struct vkr_context *ctx,
 bool
 vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size);
 
-int
-vkr_context_get_blob(struct vkr_context *ctx,
-                     uint32_t res_id,
-                     uint64_t blob_id,
-                     uint64_t blob_size,
-                     uint32_t blob_flags,
-                     struct virgl_context_blob *blob);
+bool
+vkr_context_create_resource(struct vkr_context *ctx,
+                            uint32_t res_id,
+                            uint64_t blob_id,
+                            uint64_t blob_size,
+                            uint32_t blob_flags,
+                            struct virgl_context_blob *out_blob);
 
-void
-vkr_context_attach_resource(struct vkr_context *ctx,
+bool
+vkr_context_import_resource(struct vkr_context *ctx,
                             uint32_t res_id,
                             enum virgl_resource_fd_type fd_type,
                             int fd,
                             uint64_t size);
 
 void
-vkr_context_detach_resource(struct vkr_context *ctx, uint32_t res_id);
+vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id);
 
 static inline struct vkr_resource *
 vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)

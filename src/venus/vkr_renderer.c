@@ -188,30 +188,11 @@ vkr_renderer_create_resource(uint32_t ctx_id,
       return false;
 
    struct virgl_context_blob blob;
-   int ret = vkr_context_get_blob(ctx, res_id, blob_id, blob_size, blob_flags, &blob);
-   if (ret)
+   if (!vkr_context_create_resource(ctx, res_id, blob_id, blob_size, blob_flags, &blob))
       return false;
 
    assert(blob.type == VIRGL_RESOURCE_FD_SHM || blob.type == VIRGL_RESOURCE_FD_DMABUF ||
           blob.type == VIRGL_RESOURCE_FD_OPAQUE);
-
-
-   /* store fd only for dma_buf fd prop query or shm mapping setup */
-   int fd = -1;
-   if ((blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) ||
-       blob.type == VIRGL_RESOURCE_FD_SHM) {
-      fd = os_dupfd_cloexec(blob.u.fd);
-      if (fd < 0) {
-         close(blob.u.fd);
-         return false;
-      }
-   }
-
-   /*
-    * RENDER_CONTEXT_OP_CREATE_RESOURCE implies attach and proxy will not send
-    * RENDER_CONTEXT_OP_IMPORT_RESOURCE to attach the resource again.
-    */
-   vkr_context_attach_resource(ctx, res_id, blob.type, fd, blob_size);
 
    *out_fd_type = blob.type;
    *out_res_fd = blob.u.fd;
@@ -235,8 +216,7 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    TRACE_FUNC();
 
    assert(res_id);
-   assert(fd_type == VIRGL_RESOURCE_FD_SHM || fd_type == VIRGL_RESOURCE_FD_DMABUF ||
-          fd_type == VIRGL_RESOURCE_FD_OPAQUE);
+   assert(fd_type == VIRGL_RESOURCE_FD_DMABUF || fd_type == VIRGL_RESOURCE_FD_OPAQUE);
    assert(fd >= 0);
    assert(size);
 
@@ -244,9 +224,7 @@ vkr_renderer_import_resource(uint32_t ctx_id,
    if (!ctx)
       return false;
 
-   vkr_context_attach_resource(ctx, res_id, fd_type, fd, size);
-
-   return true;
+   return vkr_context_import_resource(ctx, res_id, fd_type, fd, size);
 }
 
 void
@@ -256,5 +234,5 @@ vkr_renderer_destroy_resource(uint32_t ctx_id, uint32_t res_id)
 
    struct vkr_context *ctx = vkr_renderer_lookup_context(ctx_id);
    if (ctx)
-      vkr_context_detach_resource(ctx, res_id);
+      vkr_context_destroy_resource(ctx, res_id);
 }

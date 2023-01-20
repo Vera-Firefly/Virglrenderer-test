@@ -191,11 +191,11 @@ vkr_context_free_resource(struct hash_entry *entry)
    free(res);
 }
 
-static inline void
+static inline bool
 vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource *res)
 {
    assert(!_mesa_hash_table_search(ctx->resource_table, &res->res_id));
-   _mesa_hash_table_insert(ctx->resource_table, &res->res_id, res);
+   return !!_mesa_hash_table_insert(ctx->resource_table, &res->res_id, res);
 }
 
 static inline void
@@ -208,98 +208,155 @@ vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
    }
 }
 
-static int
-vkr_context_get_blob_locked(struct vkr_context *ctx,
-                            uint64_t blob_id,
-                            uint64_t blob_size,
-                            uint32_t blob_flags,
-                            struct virgl_context_blob *blob)
-{
-   /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
-    * shm allocation. It is logically contiguous and it can be exported.
-    */
-   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      int fd = os_create_anonymous_file(blob_size, "vkr-shmem");
-      if (fd < 0)
-         return -ENOMEM;
-
-      blob->type = VIRGL_RESOURCE_FD_SHM;
-      blob->u.fd = fd;
-      blob->map_info = VIRGL_RENDERER_MAP_CACHE_CACHED;
-      return 0;
-   }
-
-   struct vkr_device_memory *mem = vkr_context_get_object(ctx, blob_id);
-   if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
-      return -EINVAL;
-
-   return !vkr_device_memory_export_blob(mem, blob_size, blob_flags, blob);
-}
-
-int
-vkr_context_get_blob(struct vkr_context *ctx,
-                     UNUSED uint32_t res_id,
-                     uint64_t blob_id,
-                     uint64_t blob_size,
-                     uint32_t blob_flags,
-                     struct virgl_context_blob *blob)
-{
-   mtx_lock(&ctx->mutex);
-   int ret = vkr_context_get_blob_locked(ctx, blob_id, blob_size, blob_flags, blob);
-   mtx_unlock(&ctx->mutex);
-
-   return ret;
-}
-
-static void
-vkr_context_attach_resource_locked(struct vkr_context *ctx,
+static bool
+vkr_context_import_resource_locked(struct vkr_context *ctx,
                                    uint32_t res_id,
+                                   uint64_t blob_size,
                                    enum virgl_resource_fd_type fd_type,
                                    int fd,
-                                   uint64_t size)
+                                   void *mmap_ptr)
 {
    assert(!vkr_context_get_resource(ctx, res_id));
 
-   struct vkr_resource *res = calloc(1, sizeof(*res));
+   struct vkr_resource *res = malloc(sizeof(*res));
    if (!res)
-      return;
-
-   if (fd_type == VIRGL_RESOURCE_FD_SHM) {
-      void *mmap_ptr = mmap(NULL, size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
-      if (mmap_ptr == MAP_FAILED) {
-         free(res);
-         return;
-      }
-
-      res->u.data = mmap_ptr;
-
-      /* close the fd for shm since the mapping holds a ref now */
-      close(fd);
-   } else {
-      res->u.fd = fd;
-   }
+      return false;
 
    res->res_id = res_id;
    res->fd_type = fd_type;
-   res->size = size;
+   res->size = blob_size;
 
-   vkr_context_add_resource(ctx, res);
+   /* fd and mmap_ptr cannot be valid at the same time, but allowed to be -1 and NULL */
+   assert(fd < 0 || !mmap_ptr);
+   if (mmap_ptr)
+      res->u.data = mmap_ptr;
+   else
+      res->u.fd = fd;
+
+   if (!vkr_context_add_resource(ctx, res)) {
+      free(res);
+      return false;
+   }
+
+   return true;
 }
 
-void
-vkr_context_attach_resource(struct vkr_context *ctx,
+static bool
+vkr_context_create_resource_from_shm_locked(struct vkr_context *ctx,
+                                            uint32_t res_id,
+                                            uint64_t blob_size,
+                                            struct virgl_context_blob *out_blob)
+{
+   assert(!vkr_context_get_resource(ctx, res_id));
+
+   int fd = os_create_anonymous_file(blob_size, "vkr-shmem");
+   if (fd < 0)
+      return false;
+
+   void *mmap_ptr = mmap(NULL, blob_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+   if (mmap_ptr == MAP_FAILED) {
+      close(fd);
+      return false;
+   }
+
+   if (!vkr_context_import_resource_locked(ctx, res_id, blob_size, VIRGL_RESOURCE_FD_SHM,
+                                           -1, mmap_ptr)) {
+      munmap(mmap_ptr, blob_size);
+      close(fd);
+      return false;
+   }
+
+   *out_blob = (struct virgl_context_blob){
+      .type = VIRGL_RESOURCE_FD_SHM,
+      .u.fd = fd,
+      .map_info = VIRGL_RENDERER_MAP_CACHE_CACHED,
+   };
+
+   return true;
+}
+
+static bool
+vkr_context_create_resource_from_device_memory_locked(struct vkr_context *ctx,
+                                                      uint32_t res_id,
+                                                      uint64_t blob_id,
+                                                      uint64_t blob_size,
+                                                      uint32_t blob_flags,
+                                                      struct virgl_context_blob *out_blob)
+{
+   assert(!vkr_context_get_resource(ctx, res_id));
+
+   struct vkr_device_memory *mem = vkr_context_get_object(ctx, blob_id);
+   if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
+      return false;
+
+   struct virgl_context_blob blob;
+   if (!vkr_device_memory_export_blob(mem, blob_size, blob_flags, &blob))
+      return false;
+
+   /* For CROSS_DEVICE, store a dup'ed fd in vkr_resource for:
+    * - vkAllocateMemory for dma_buf import
+    * - vkGetMemoryFdPropertiesKHR for dma_buf fd properties query
+    */
+   int res_fd = -1;
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
+      res_fd = os_dupfd_cloexec(blob.u.fd);
+      if (res_fd < 0) {
+         close(blob.u.fd);
+         return false;
+      }
+   }
+
+   if (!vkr_context_import_resource_locked(ctx, res_id, blob_size, blob.type, res_fd,
+                                           NULL)) {
+      if (res_fd >= 0)
+         close(res_fd);
+      close(blob.u.fd);
+      return false;
+   }
+
+   *out_blob = blob;
+
+   return true;
+}
+
+bool
+vkr_context_create_resource(struct vkr_context *ctx,
+                            uint32_t res_id,
+                            uint64_t blob_id,
+                            uint64_t blob_size,
+                            uint32_t blob_flags,
+                            struct virgl_context_blob *out_blob)
+{
+   bool ok;
+   mtx_lock(&ctx->mutex);
+   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+      /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies
+       * a shm allocation. It is logically contiguous and it can be exported.
+       */
+      ok = vkr_context_create_resource_from_shm_locked(ctx, res_id, blob_size, out_blob);
+   } else {
+      ok = vkr_context_create_resource_from_device_memory_locked(
+         ctx, res_id, blob_id, blob_size, blob_flags, out_blob);
+   }
+   mtx_unlock(&ctx->mutex);
+   return ok;
+}
+
+bool
+vkr_context_import_resource(struct vkr_context *ctx,
                             uint32_t res_id,
                             enum virgl_resource_fd_type fd_type,
                             int fd,
                             uint64_t size)
 {
    mtx_lock(&ctx->mutex);
-   vkr_context_attach_resource_locked(ctx, res_id, fd_type, fd, size);
+   bool ok = vkr_context_import_resource_locked(ctx, res_id, size, fd_type, fd, NULL);
    mtx_unlock(&ctx->mutex);
+   return ok;
 }
 
 void
-vkr_context_detach_resource(struct vkr_context *ctx, uint32_t res_id)
+vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
 {
    mtx_lock(&ctx->mutex);
 
