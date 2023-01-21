@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "pipe/p_state.h"
 #include "util/anon_file.h"
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
 

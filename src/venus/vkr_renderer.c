@@ -9,7 +9,6 @@
 #include "util/u_debug.h"
 #include "venus-protocol/vn_protocol_renderer_info.h"
 #include "virgl_context.h"
-#include "virgl_resource.h"
 #include "virglrenderer_hw.h"
 
 #include "vkr_allocator.h"

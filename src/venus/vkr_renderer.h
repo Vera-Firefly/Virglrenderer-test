@@ -11,7 +11,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "util/os_misc.h"
 #include "virgl_resource.h"
 #include "virgl_util.h"
 
