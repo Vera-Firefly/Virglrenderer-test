@@ -149,7 +149,7 @@ vkr_renderer_submit_cmd(uint32_t ctx_id, void *cmd, uint32_t size)
    if (!ctx)
       return false;
 
-   return !vkr_context_submit_cmd(ctx, cmd, size);
+   return vkr_context_submit_cmd(ctx, cmd, size);
 }
 
 bool
@@ -165,7 +165,7 @@ vkr_renderer_submit_fence(uint32_t ctx_id,
       return false;
 
    assert(vkr_state.cbs->retire_fence);
-   return !vkr_context_submit_fence(ctx, flags, ring_idx, fence_id);
+   return vkr_context_submit_fence(ctx, flags, ring_idx, fence_id);
 }
 
 bool

@@ -71,15 +71,6 @@ vkr_context_init_semaphore_dispatch(struct vkr_context *ctx);
 void
 vkr_context_init_event_dispatch(struct vkr_context *ctx);
 
-struct vkr_queue_sync *
-vkr_device_alloc_queue_sync(struct vkr_device *dev,
-                            uint32_t fence_flags,
-                            uint32_t ring_idx,
-                            uint64_t fence_id);
-
-void
-vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync);
-
 struct vkr_queue *
 vkr_queue_create(struct vkr_context *ctx,
                  struct vkr_device *dev,
@@ -90,5 +81,11 @@ vkr_queue_create(struct vkr_context *ctx,
 
 void
 vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue);
+
+bool
+vkr_queue_sync_submit(struct vkr_queue *queue,
+                      uint32_t flags,
+                      uint32_t ring_idx,
+                      uint64_t fence_id);
 
 #endif /* VKR_QUEUE_H */

@@ -11,7 +11,7 @@
 #include "vkr_physical_device.h"
 #include "vkr_queue_gen.h"
 
-struct vkr_queue_sync *
+static struct vkr_queue_sync *
 vkr_device_alloc_queue_sync(struct vkr_device *dev,
                             uint32_t fence_flags,
                             uint32_t ring_idx,
@@ -40,6 +40,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
          vk->CreateFence(dev->base.handle.device, &create_info, NULL, &sync->fence);
       if (result != VK_SUCCESS) {
          free(sync);
+         vkr_log("failed to create sync fence for fence_id %" PRIu64, fence_id);
          return NULL;
       }
    } else {
@@ -58,7 +59,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    return sync;
 }
 
-void
+static void
 vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 {
    mtx_lock(&dev->free_sync_mutex);
@@ -67,16 +68,46 @@ vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 }
 
 static inline void
-vkr_queue_sync_retire(struct vkr_context *ctx,
-                      struct vkr_device *dev,
-                      struct vkr_queue_sync *sync)
+vkr_queue_sync_retire(struct vkr_queue *queue, struct vkr_queue_sync *sync)
 {
-   ctx->retire_fence(ctx->ctx_id, sync->ring_idx, sync->fence_id);
-   vkr_device_free_queue_sync(dev, sync);
+   queue->context->retire_fence(queue->context->ctx_id, sync->ring_idx, sync->fence_id);
+   vkr_device_free_queue_sync(queue->device, sync);
+}
+
+bool
+vkr_queue_sync_submit(struct vkr_queue *queue,
+                      uint32_t flags,
+                      uint32_t ring_idx,
+                      uint64_t fence_id)
+{
+   struct vkr_device *dev = queue->device;
+   struct vn_device_proc_table *vk = &dev->proc_table;
+
+   struct vkr_queue_sync *sync =
+      vkr_device_alloc_queue_sync(dev, flags, ring_idx, fence_id);
+   if (!sync)
+      return false;
+
+   VkResult result = vk->QueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
+   if (result == VK_ERROR_DEVICE_LOST) {
+      sync->device_lost = true;
+      vkr_log("sync submit hit device lost for fence_id %" PRIu64, fence_id);
+   } else if (result != VK_SUCCESS) {
+      vkr_device_free_queue_sync(dev, sync);
+      vkr_log("sync submit failed (vk ret %d) for fence_id %" PRIu64, result, fence_id);
+      return false;
+   }
+
+   mtx_lock(&queue->mutex);
+   list_addtail(&sync->head, &queue->pending_syncs);
+   mtx_unlock(&queue->mutex);
+   cnd_signal(&queue->cond);
+
+   return true;
 }
 
 static void
-vkr_queue_retire_all_syncs(struct vkr_context *ctx, struct vkr_queue *queue)
+vkr_queue_retire_all_syncs(struct vkr_queue *queue)
 {
    mtx_lock(&queue->mutex);
    queue->join = true;
@@ -87,14 +118,14 @@ vkr_queue_retire_all_syncs(struct vkr_context *ctx, struct vkr_queue *queue)
 
    struct vkr_queue_sync *sync, *tmp;
    LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
-      vkr_queue_sync_retire(ctx, queue->device, sync);
+      vkr_queue_sync_retire(queue, sync);
 }
 
 void
 vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
 {
    /* vkDeviceWaitIdle has been called */
-   vkr_queue_retire_all_syncs(ctx, queue);
+   vkr_queue_retire_all_syncs(queue);
 
    mtx_destroy(&queue->mutex);
    cnd_destroy(&queue->cond);
@@ -151,8 +182,7 @@ vkr_queue_thread(void *arg)
 
       list_del(&sync->head);
 
-      ctx->retire_fence(ctx->ctx_id, sync->ring_idx, sync->fence_id);
-      vkr_device_free_queue_sync(queue->device, sync);
+      vkr_queue_sync_retire(queue, sync);
    }
    mtx_unlock(&queue->mutex);
 

@@ -78,13 +78,13 @@ vkr_context_create(uint32_t ctx_id,
 void
 vkr_context_destroy(struct vkr_context *ctx);
 
-int
+bool
 vkr_context_submit_fence(struct vkr_context *ctx,
                          uint32_t flags,
                          uint32_t ring_idx,
                          uint64_t fence_id);
 
-int
+bool
 vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size);
 
 int

@@ -120,87 +120,56 @@ vkr_context_init_dispatch(struct vkr_context *ctx)
    vkr_context_init_command_buffer_dispatch(ctx);
 }
 
-static int
-vkr_context_submit_fence_locked(struct vkr_context *ctx,
-                                uint32_t flags,
-                                uint32_t ring_idx,
-                                uint64_t fence_id)
-{
-   VkResult result;
-
-   if (ring_idx >= ARRAY_SIZE(ctx->sync_queues)) {
-      vkr_log("invalid sync ring_idx %u", ring_idx);
-      return -EINVAL;
-   }
-
-   if (ring_idx == 0) {
-      ctx->retire_fence(ctx->ctx_id, ring_idx, fence_id);
-      return 0;
-   } else if (!ctx->sync_queues[ring_idx]) {
-      vkr_log("invalid ring_idx %u", ring_idx);
-      return -EINVAL;
-   }
-
-   struct vkr_queue *queue = ctx->sync_queues[ring_idx];
-   struct vkr_device *dev = queue->device;
-   struct vn_device_proc_table *vk = &dev->proc_table;
-
-   struct vkr_queue_sync *sync =
-      vkr_device_alloc_queue_sync(dev, flags, ring_idx, fence_id);
-   if (!sync)
-      return -ENOMEM;
-
-   result = vk->QueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
-   if (result == VK_ERROR_DEVICE_LOST) {
-      sync->device_lost = true;
-   } else if (result != VK_SUCCESS) {
-      vkr_device_free_queue_sync(dev, sync);
-      return -1;
-   }
-
-   mtx_lock(&queue->mutex);
-   list_addtail(&sync->head, &queue->pending_syncs);
-   mtx_unlock(&queue->mutex);
-   cnd_signal(&queue->cond);
-
-   return 0;
-}
-
-int
+bool
 vkr_context_submit_fence(struct vkr_context *ctx,
                          uint32_t flags,
                          uint32_t ring_idx,
                          uint64_t fence_id)
 {
+   /* retire fence on cpu timeline directly */
+   if (ring_idx == 0) {
+      ctx->retire_fence(ctx->ctx_id, ring_idx, fence_id);
+      return true;
+   }
+
+   mtx_lock(&ctx->mutex);
+
+   if (ring_idx >= ARRAY_SIZE(ctx->sync_queues) || !ctx->sync_queues[ring_idx]) {
+      mtx_unlock(&ctx->mutex);
+      vkr_log("submit_fence: invalid ring_idx %u", ring_idx);
+      return false;
+   }
+
    /* always merge fences */
    assert(!(flags & ~VIRGL_RENDERER_FENCE_FLAG_MERGEABLE));
    flags = VIRGL_RENDERER_FENCE_FLAG_MERGEABLE;
+   bool ok = vkr_queue_sync_submit(ctx->sync_queues[ring_idx], flags, ring_idx, fence_id);
 
-   mtx_lock(&ctx->mutex);
-   int ret = vkr_context_submit_fence_locked(ctx, flags, ring_idx, fence_id);
    mtx_unlock(&ctx->mutex);
-   return ret;
+
+   return ok;
 }
 
-int
+bool
 vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 {
-   int ret = 0;
-
    mtx_lock(&ctx->mutex);
 
    /* CS error is considered fatal (destroy the context?) */
    if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
       mtx_unlock(&ctx->mutex);
-      return -EINVAL;
+      vkr_log("submit_cmd: early bail due to fatal decoder state");
+      return false;
    }
 
    vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
 
+   bool ok = true;
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
       if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
-         ret = -EINVAL;
+         vkr_log("submit_cmd: vn_dispatch_command failed");
+         ok = false;
          break;
       }
    }
@@ -209,7 +178,7 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 
    mtx_unlock(&ctx->mutex);
 
-   return ret;
+   return ok;
 }
 
 static inline void
