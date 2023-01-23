@@ -53,6 +53,7 @@ warnings = [
    '-Wmissing-prototypes',
    '-Werror=incompatible-pointer-types',
    '-Werror=int-to-pointer-cast',
+   '-Werror=switch',
    '-Wno-overlength-strings',
 ]
 

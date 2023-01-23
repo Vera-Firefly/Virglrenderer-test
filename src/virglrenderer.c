@@ -1062,7 +1062,11 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
       case VIRGL_RESOURCE_FD_OPAQUE:
          ret = vkr_allocator_resource_map(res, &map, &map_size);
          break;
-      default:
+      case VIRGL_RESOURCE_OPAQUE_HANDLE:
+      case VIRGL_RESOURCE_FD_INVALID:
+         /* Avoid a default case so that -Wswitch will tell us at compile time
+          * if a new virgl resource type is added without being handled here.
+          */
          break;
       }
    }
@@ -1095,7 +1099,11 @@ int virgl_renderer_resource_unmap(uint32_t res_handle)
       case VIRGL_RESOURCE_FD_OPAQUE:
          ret = vkr_allocator_resource_unmap(res);
          break;
-      default:
+      case VIRGL_RESOURCE_OPAQUE_HANDLE:
+      case VIRGL_RESOURCE_FD_INVALID:
+         /* Avoid a default case so that -Wswitch will tell us at compile time
+          * if a new virgl resource type is added without being handled here.
+          */
          ret = -EINVAL;
          break;
       }
@@ -1127,7 +1135,7 @@ virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd)
    TRACE_FUNC();
    struct virgl_resource *res = virgl_resource_lookup(res_id);
    if (!res)
-      return EINVAL;
+      return -EINVAL;
 
    switch (virgl_resource_export_fd(res, fd)) {
    case VIRGL_RESOURCE_FD_DMABUF:
@@ -1139,8 +1147,12 @@ virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd)
    case VIRGL_RESOURCE_FD_SHM:
       *fd_type = VIRGL_RENDERER_BLOB_FD_TYPE_SHM;
       break;
-   default:
-      return EINVAL;
+   case VIRGL_RESOURCE_OPAQUE_HANDLE:
+   case VIRGL_RESOURCE_FD_INVALID:
+      /* Avoid a default case so that -Wswitch will tell us at compile time if a
+       * new virgl resource type is added without being handled here.
+       */
+      return -EINVAL;
    }
 
    return 0;
