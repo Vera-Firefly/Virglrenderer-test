@@ -33,7 +33,9 @@
 #define EGL_EGLEXT_PROTOTYPES
 #include <errno.h>
 #include <fcntl.h>
+#ifndef _WIN32
 #include <poll.h>
+#endif
 #include <stdbool.h>
 #include <unistd.h>
 #include <xf86drm.h>
@@ -736,18 +738,24 @@ void virgl_egl_fence_destroy(struct virgl_egl *egl, EGLSyncKHR fence) {
    eglDestroySyncKHR(egl->egl_display, fence);
 }
 
+static bool client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool blocking)
+{
+   EGLint egl_result = eglClientWaitSyncKHR(egl->egl_display, fence, 0,
+                                            blocking ? EGL_FOREVER_KHR : 0);
+   if (egl_result == EGL_FALSE)
+      vrend_printf("wait sync failed\n");
+   return egl_result != EGL_TIMEOUT_EXPIRED_KHR;
+}
+
 bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool blocking)
 {
+#ifndef _WIN32
    /* attempt to poll the native fence fd instead of eglClientWaitSyncKHR() to
     * avoid Mesa's eglapi global-display-lock synchronizing vrend's sync_thread.
     */
    int fd = -1;
    if (!virgl_egl_export_fence(egl, fence, &fd)) {
-      EGLint egl_result = eglClientWaitSyncKHR(egl->egl_display, fence, 0,
-                                               blocking ? EGL_FOREVER_KHR : 0);
-      if (egl_result == EGL_FALSE)
-         vrend_printf("wait sync failed\n");
-      return egl_result != EGL_TIMEOUT_EXPIRED_KHR;
+      return client_wait_fence(egl, fence, blocking);
    }
    assert(fd >= 0);
 
@@ -768,6 +776,9 @@ bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool b
    if (ret < 0)
       vrend_printf("wait sync failed\n");
    return ret != 0;
+#else
+   return client_wait_fence(egl, fence, blocking);
+#endif
 }
 
 bool virgl_egl_export_signaled_fence(struct virgl_egl *egl, int *out_fd) {
