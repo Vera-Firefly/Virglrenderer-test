@@ -1089,6 +1089,7 @@ int virgl_renderer_resource_unmap(uint32_t res_handle)
    } else {
       switch (res->fd_type) {
       case VIRGL_RESOURCE_FD_DMABUF:
+      case VIRGL_RESOURCE_FD_SHM:
          ret = munmap(res->mapped, res->map_size);
          break;
       case VIRGL_RESOURCE_FD_OPAQUE:
