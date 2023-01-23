@@ -6,7 +6,6 @@
 #include "vkr_common.h"
 
 #include "venus-protocol/vn_protocol_renderer_info.h"
-#include "virgl_context.h"
 #include "virglrenderer_hw.h"
 
 #include "vkr_context.h"

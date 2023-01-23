@@ -28,6 +28,7 @@
 #include "util/u_pointer.h"
 #include "util/u_thread.h"
 #include "venus-protocol/vulkan.h"
+#include "virgl_context.h"
 #include "virgl_util.h"
 #include "virglrenderer.h"
 

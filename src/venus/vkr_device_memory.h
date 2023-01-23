@@ -33,9 +33,10 @@ vkr_context_init_device_memory_dispatch(struct vkr_context *ctx);
 void
 vkr_device_memory_release(struct vkr_device_memory *mem);
 
-int
-vkr_device_memory_export_fd(struct vkr_device_memory *mem,
-                            VkExternalMemoryHandleTypeFlagBits handle_type,
-                            int *out_fd);
+bool
+vkr_device_memory_export_blob(struct vkr_device_memory *mem,
+                              uint64_t blob_size,
+                              uint32_t blob_flags,
+                              struct virgl_context_blob *out_blob);
 
 #endif /* VKR_DEVICE_MEMORY_H */

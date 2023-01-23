@@ -325,36 +325,114 @@ vkr_device_memory_release(struct vkr_device_memory *mem)
       gbm_bo_destroy(mem->gbm_bo);
 }
 
-int
-vkr_device_memory_export_fd(struct vkr_device_memory *mem,
-                            VkExternalMemoryHandleTypeFlagBits handle_type,
-                            int *out_fd)
+bool
+vkr_device_memory_export_blob(struct vkr_device_memory *mem,
+                              uint64_t blob_size,
+                              uint32_t blob_flags,
+                              struct virgl_context_blob *out_blob)
 {
-   struct vn_device_proc_table *vk = &mem->device->proc_table;
-   int fd = -1;
+   /* a memory can only be exported once; we don't want two resources to point
+    * to the same storage.
+    */
+   if (mem->exported) {
+      vkr_log("mem has been exported");
+      return false;
+   }
 
+   uint32_t map_info = VIRGL_RENDERER_MAP_CACHE_NONE;
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
+      const bool visible = mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+      const bool coherent = mem->property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+      const bool cached = mem->property_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+      if (!visible) {
+         vkr_log("mem cannot support mappable blob");
+         return false;
+      }
+
+      /* XXX guessed */
+      map_info = (coherent && cached) ? VIRGL_RENDERER_MAP_CACHE_CACHED
+                                      : VIRGL_RENDERER_MAP_CACHE_WC;
+   }
+
+   const bool can_export_dma_buf = mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_DMABUF);
+   const bool can_export_opaque = mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_OPAQUE);
+   enum virgl_resource_fd_type fd_type;
+   VkExternalMemoryHandleTypeFlagBits handle_type;
+   struct virgl_resource_vulkan_info vulkan_info;
+   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
+      if (!can_export_dma_buf) {
+         vkr_log("mem cannot export to dma_buf for cross device blob sharing");
+         return false;
+      }
+      fd_type = VIRGL_RESOURCE_FD_DMABUF;
+      handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+   } else if (can_export_dma_buf) {
+      /* prefer dmabuf for easier mapping? */
+      fd_type = VIRGL_RESOURCE_FD_DMABUF;
+      handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+   } else if (can_export_opaque) {
+      /* prefer opaque for performance? */
+      fd_type = VIRGL_RESOURCE_FD_OPAQUE;
+      handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
+
+      STATIC_ASSERT(sizeof(vulkan_info.device_uuid) == VK_UUID_SIZE);
+      STATIC_ASSERT(sizeof(vulkan_info.driver_uuid) == VK_UUID_SIZE);
+
+      const VkPhysicalDeviceIDProperties *id_props =
+         &mem->device->physical_device->id_properties;
+      memcpy(vulkan_info.device_uuid, id_props->deviceUUID, VK_UUID_SIZE);
+      memcpy(vulkan_info.driver_uuid, id_props->driverUUID, VK_UUID_SIZE);
+
+      vulkan_info.allocation_size = mem->allocation_size;
+      vulkan_info.memory_type_index = mem->memory_type_index;
+   } else {
+      vkr_log("mem is not exportable");
+      return false;
+   }
+
+   int fd;
    if (mem->gbm_bo) {
-      /* mem->gbm_bo is a gbm bo backing non-external mappable memory */
-      assert((handle_type == VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT) &&
-             (mem->valid_fd_types == 1 << VIRGL_RESOURCE_FD_DMABUF));
+      assert(handle_type == VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
+      assert(can_export_dma_buf && !can_export_opaque);
 
       /* gbm_bo_get_fd returns negative error code on failure */
       fd = gbm_bo_get_fd(mem->gbm_bo);
-      if (fd < 0)
-         return fd;
+      if (fd < 0) {
+         vkr_log("mem gbm_bo_get_fd failed (ret %d)", fd);
+         return false;
+      }
    } else {
-      VkDevice dev_handle = mem->device->base.handle.device;
-      VkDeviceMemory mem_handle = mem->base.handle.device_memory;
+      struct vn_device_proc_table *vk = &mem->device->proc_table;
       const VkMemoryGetFdInfoKHR fd_info = {
          .sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR,
-         .memory = mem_handle,
+         .memory = mem->base.handle.device_memory,
          .handleType = handle_type,
       };
-      VkResult result = vk->GetMemoryFdKHR(dev_handle, &fd_info, &fd);
-      if (result != VK_SUCCESS)
-         return result == VK_ERROR_TOO_MANY_OBJECTS ? -EMFILE : -ENOMEM;
+      VkResult ret = vk->GetMemoryFdKHR(mem->device->base.handle.device, &fd_info, &fd);
+      if (ret != VK_SUCCESS) {
+         vkr_log("mem fd export failed (vk ret %d)", ret);
+         return false;
+      }
    }
 
-   *out_fd = fd;
-   return 0;
+   if (fd_type == VIRGL_RESOURCE_FD_DMABUF) {
+      const off_t dma_buf_size = lseek(fd, 0, SEEK_END);
+      if (dma_buf_size < 0 || (uint64_t)dma_buf_size < blob_size) {
+         vkr_log("mem dma_buf_size %lld < blob_size %" PRIu64, (long long)dma_buf_size,
+                 blob_size);
+         close(fd);
+         return false;
+      }
+   }
+
+   mem->exported = true;
+
+   *out_blob = (struct virgl_context_blob){
+      .type = fd_type,
+      .u.fd = fd,
+      .map_info = map_info,
+      .vulkan_info = vulkan_info,
+   };
+
+   return true;
 }

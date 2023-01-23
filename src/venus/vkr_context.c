@@ -11,7 +11,6 @@
 
 #include "util/anon_file.h"
 #include "venus-protocol/vn_protocol_renderer_dispatches.h"
-#include "virgl_context.h"
 
 #define XXH_INLINE_ALL
 #include "util/xxhash.h"
@@ -216,15 +215,11 @@ vkr_context_get_blob_locked(struct vkr_context *ctx,
                             uint32_t blob_flags,
                             struct virgl_context_blob *blob)
 {
-   struct vkr_device_memory *mem;
-   enum virgl_resource_fd_type fd_type = VIRGL_RESOURCE_FD_INVALID;
-   int fd = -1;
-
    /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a
     * shm allocation. It is logically contiguous and it can be exported.
     */
    if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      fd = os_create_anonymous_file(blob_size, "vkr-shmem");
+      int fd = os_create_anonymous_file(blob_size, "vkr-shmem");
       if (fd < 0)
          return -ENOMEM;
 
@@ -234,95 +229,11 @@ vkr_context_get_blob_locked(struct vkr_context *ctx,
       return 0;
    }
 
-   mem = vkr_context_get_object(ctx, blob_id);
+   struct vkr_device_memory *mem = vkr_context_get_object(ctx, blob_id);
    if (!mem || mem->base.type != VK_OBJECT_TYPE_DEVICE_MEMORY)
       return -EINVAL;
 
-   /* a memory can only be exported once; we don't want two resources to point
-    * to the same storage.
-    */
-   if (mem->exported)
-      return -EINVAL;
-
-   if (!mem->valid_fd_types)
-      return -EINVAL;
-
-   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      const bool host_visible = mem->property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-      if (!host_visible)
-         return -EINVAL;
-   }
-
-   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) {
-      if (!(mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_DMABUF)))
-         return -EINVAL;
-
-      fd_type = VIRGL_RESOURCE_FD_DMABUF;
-   }
-
-   if (fd_type == VIRGL_RESOURCE_FD_INVALID) {
-      /* prefer dmabuf for easier mapping?  prefer opaque for performance? */
-      if (mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_DMABUF))
-         fd_type = VIRGL_RESOURCE_FD_DMABUF;
-      else if (mem->valid_fd_types & (1 << VIRGL_RESOURCE_FD_OPAQUE))
-         fd_type = VIRGL_RESOURCE_FD_OPAQUE;
-   }
-
-   if (fd_type != VIRGL_RESOURCE_FD_INVALID) {
-      VkExternalMemoryHandleTypeFlagBits handle_type;
-      int ret;
-
-      switch (fd_type) {
-      case VIRGL_RESOURCE_FD_DMABUF:
-         handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-         break;
-      case VIRGL_RESOURCE_FD_OPAQUE:
-         handle_type = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
-         assert(sizeof(blob->vulkan_info.driver_uuid) == VK_UUID_SIZE);
-         memcpy(blob->vulkan_info.device_uuid,
-                mem->device->physical_device->id_properties.deviceUUID, VK_UUID_SIZE);
-         memcpy(blob->vulkan_info.driver_uuid,
-                mem->device->physical_device->id_properties.driverUUID, VK_UUID_SIZE);
-         blob->vulkan_info.allocation_size = mem->allocation_size;
-         blob->vulkan_info.memory_type_index = mem->memory_type_index;
-         break;
-      default:
-         return -EINVAL;
-      }
-
-      ret = vkr_device_memory_export_fd(mem, handle_type, &fd);
-      if (ret)
-         return ret;
-
-      if (fd_type == VIRGL_RESOURCE_FD_DMABUF &&
-          (uint64_t)lseek(fd, 0, SEEK_END) < blob_size) {
-         close(fd);
-         return -EINVAL;
-      }
-
-      mem->exported = true;
-   }
-
-   blob->type = fd_type;
-   blob->u.fd = fd;
-
-   if (blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      const bool host_coherent =
-         mem->property_flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-      const bool host_cached = mem->property_flags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
-
-      /* XXX guessed */
-      if (host_coherent) {
-         blob->map_info =
-            host_cached ? VIRGL_RENDERER_MAP_CACHE_CACHED : VIRGL_RENDERER_MAP_CACHE_WC;
-      } else {
-         blob->map_info = VIRGL_RENDERER_MAP_CACHE_WC;
-      }
-   } else {
-      blob->map_info = VIRGL_RENDERER_MAP_CACHE_NONE;
-   }
-
-   return 0;
+   return !vkr_device_memory_export_blob(mem, blob_size, blob_flags, blob);
 }
 
 int

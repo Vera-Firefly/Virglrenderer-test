@@ -13,8 +13,6 @@
 
 #include "vkr_cs.h"
 
-struct virgl_context_blob;
-
 /*
  * When vkr_context_attach_resource is called, a vkr_resource is created. A
  * vkr_resource is valid until the resource is detached.
