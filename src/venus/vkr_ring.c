@@ -18,7 +18,7 @@ static inline void *
 get_resource_pointer(const struct vkr_resource *res, size_t offset)
 {
    assert(offset < res->size);
-   return res->data + offset;
+   return res->u.data + offset;
 }
 
 static void

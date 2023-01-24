@@ -23,9 +23,14 @@ struct vkr_resource {
    uint32_t res_id;
 
    enum virgl_resource_fd_type fd_type;
-   int fd;
 
-   uint8_t *data;
+   union {
+      /* valid when fd_type is dma_buf or opaque */
+      int fd;
+      /* valid when fd_type is shm */
+      uint8_t *data;
+   } u;
+
    size_t size;
 };
 

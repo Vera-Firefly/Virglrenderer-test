@@ -196,10 +196,16 @@ vkr_renderer_create_resource(uint32_t ctx_id,
    assert(blob.type == VIRGL_RESOURCE_FD_SHM || blob.type == VIRGL_RESOURCE_FD_DMABUF ||
           blob.type == VIRGL_RESOURCE_FD_OPAQUE);
 
-   int fd = os_dupfd_cloexec(blob.u.fd);
-   if (fd < 0) {
-      close(blob.u.fd);
-      return false;
+
+   /* store fd only for dma_buf fd prop query or shm mapping setup */
+   int fd = -1;
+   if ((blob_flags & VIRGL_RENDERER_BLOB_FLAG_USE_CROSS_DEVICE) ||
+       blob.type == VIRGL_RESOURCE_FD_SHM) {
+      fd = os_dupfd_cloexec(blob.u.fd);
+      if (fd < 0) {
+         close(blob.u.fd);
+         return false;
+      }
    }
 
    /*

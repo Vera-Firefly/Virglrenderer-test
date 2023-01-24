@@ -36,7 +36,7 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
       return false;
    }
 
-   int fd = os_dupfd_cloexec(res->fd);
+   int fd = os_dupfd_cloexec(res->u.fd);
    if (fd < 0)
       return false;
 
@@ -285,7 +285,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    };
    vn_replace_vkGetMemoryResourcePropertiesMESA_args_handle(args);
    args->ret =
-      vk->GetMemoryFdPropertiesKHR(args->device, handle_type, res->fd, &mem_fd_props);
+      vk->GetMemoryFdPropertiesKHR(args->device, handle_type, res->u.fd, &mem_fd_props);
    if (args->ret != VK_SUCCESS)
       return;
 

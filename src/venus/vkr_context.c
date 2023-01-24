@@ -216,10 +216,10 @@ static inline void
 vkr_context_free_resource(struct hash_entry *entry)
 {
    struct vkr_resource *res = entry->data;
-   if (res->fd >= 0)
-      close(res->fd);
    if (res->fd_type == VIRGL_RESOURCE_FD_SHM)
-      munmap(res->data, res->size);
+      munmap(res->u.data, res->size);
+   else if (res->u.fd >= 0)
+      close(res->u.fd);
    free(res);
 }
 
@@ -391,16 +391,16 @@ vkr_context_attach_resource_locked(struct vkr_context *ctx,
          return;
       }
 
-      res->data = mmap_ptr;
+      res->u.data = mmap_ptr;
 
       /* close the fd for shm since the mapping holds a ref now */
       close(fd);
-      fd = -1;
+   } else {
+      res->u.fd = fd;
    }
 
    res->res_id = res_id;
    res->fd_type = fd_type;
-   res->fd = fd;
    res->size = size;
 
    vkr_context_add_resource(ctx, res);

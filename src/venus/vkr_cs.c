@@ -32,7 +32,7 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
    enc->stream.offset = offset;
    enc->stream.size = size;
 
-   enc->end = res->data + res->size;
+   enc->end = res->u.data + res->size;
 
    vkr_cs_encoder_seek_stream(enc, 0);
 }
@@ -46,7 +46,7 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
       return;
    }
 
-   enc->cur = enc->stream.resource->data + enc->stream.offset + pos;
+   enc->cur = enc->stream.resource->u.data + enc->stream.offset + pos;
 }
 
 void
