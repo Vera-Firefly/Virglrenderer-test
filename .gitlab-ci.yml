@@ -104,6 +104,35 @@ debian/x86_build:
       when: on_success
     - when: never
 
+debian/mingw32-x86_64:
+  stage: build
+  extends:
+    - .set-image-base-tag
+  variables:
+    MESA_IMAGE_PATH: ${DEBIAN_X86_BUILD_MINGW_IMAGE_PATH}
+    MESA_IMAGE_TAG: ${DEBIAN_BUILD_MINGW_TAG}
+    EXTRA_OPTION: >
+      --cross-file=.gitlab-ci/x86_64-w64-mingw32 -Dplatforms= -Dtests=false -Drender-server=false -Dvenus-experimental=false
+  script:
+    - git clone https://github.com/anholt/libepoxy.git && pushd libepoxy && meson _build --cross-file=../.gitlab-ci/x86_64-w64-mingw32 -Dprefix=/usr/x86_64-w64-mingw32 && pushd _build && ninja install && popd && popd
+    - .gitlab-ci/meson/build.sh
+  artifacts:
+    name: "virgl_${CI_JOB_NAME}"
+    when: always
+    paths:
+      - install/
+      - results/
+  rules:
+    - if: *is-scheduled-pipeline
+      when: on_success
+    - if: *is-post-merge
+      when: never
+    - if: *is-forked-branch-or-pre-merge-not-for-marge
+      when: manual
+    - if: *is-pre-merge-for-marge
+      when: on_success
+    - when: never
+
 #
 # Sanity test jobs
 #
