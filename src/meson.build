@@ -226,6 +226,10 @@ if with_video
   virgl_depends += [libva_dep, libvadrm_dep]
 endif
 
+if host_machine.system() == 'windows'
+  virgl_sources += ['mman_win32.c']
+endif
+
 libvirgl = static_library(
    'virgl',
    virgl_sources,

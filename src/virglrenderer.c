@@ -31,7 +31,11 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#ifndef _WIN32
 #include <sys/mman.h>
+#else
+#include "mman_win32.h"
+#endif
 
 #include "pipe/p_state.h"
 #include "util/u_format.h"
