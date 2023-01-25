@@ -306,7 +306,9 @@ with_tests = get_option('tests')
 with_valgrind = get_option('valgrind')
 
 subdir('src')
-subdir('vtest')
+if host_machine.system() != 'windows'
+   subdir('vtest')
+endif
 
 if with_render_server
 subdir('server')
