@@ -67,7 +67,7 @@ add_project_arguments(cc.get_supported_arguments(flags), language : 'c')
 
 prog_python = import('python').find_installation('python3')
 
-libdrm_dep = dependency('libdrm', version : '>=2.4.50')
+libdrm_dep = dependency('libdrm', version : '>=2.4.50', required: get_option('drm'))
 thread_dep = dependency('threads')
 epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
 m_dep = cc.find_library('m', required : false)
@@ -76,6 +76,7 @@ conf_data = configuration_data()
 conf_data.set('VERSION', meson.project_version())
 conf_data.set('_GNU_SOURCE', 1)
 conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
+conf_data.set('ENABLE_DRM', libdrm_dep.found())
 
 has_attribute_cleanup = cc.compiles('''
    void func(void *v) {}
@@ -240,7 +241,6 @@ have_vla = not cc.has_header_symbol('stdlib.h', '__STDC_NO_VLA__')
 # drm/msm support requires the compiler to support VLA:
 with_drm_msm = have_vla and get_option('drm-msm-experimental')
 if with_drm_msm
-  conf_data.set('ENABLE_DRM', 1)
   conf_data.set('ENABLE_DRM_MSM', 1)
 endif
 with_drm = with_drm_msm

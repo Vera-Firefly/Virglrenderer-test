@@ -60,6 +60,13 @@ option(
 )
 
 option(
+  'drm',
+  type : 'feature',
+  value : 'auto',
+  description : 'enable support for drm'
+)
+
+option(
   'drm-msm-experimental',
   type : 'boolean',
   value : 'false',
