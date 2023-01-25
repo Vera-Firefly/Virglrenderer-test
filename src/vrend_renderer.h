@@ -32,7 +32,11 @@
 #include "vrend_debug.h"
 #include "vrend_tweaks.h"
 #include "vrend_iov.h"
+#ifdef ENABLE_GBM
 #include "vrend_winsys_gbm.h"
+#else
+#define VIRGL_GBM_MAX_PLANES 4
+#endif
 #include "virgl_hw.h"
 #include <epoxy/gl.h>
 

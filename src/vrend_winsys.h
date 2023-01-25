@@ -27,8 +27,10 @@
 
 #include "config.h"
 
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
 #include "vrend_winsys_gbm.h"
+#endif
+#ifdef HAVE_EPOXY_EGL_H
 #include "vrend_winsys_egl.h"
 #endif
 

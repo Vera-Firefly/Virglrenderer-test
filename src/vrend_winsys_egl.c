@@ -49,7 +49,9 @@
 #include "vrend_winsys.h"
 #include "vrend_winsys_egl.h"
 #include "virgl_hw.h"
+#ifdef ENABLE_GBM
 #include "vrend_winsys_gbm.h"
+#endif
 #include "virgl_util.h"
 
 #define EGL_KHR_SURFACELESS_CONTEXT            BIT(0)
@@ -77,7 +79,9 @@ static const struct {
 };
 
 struct virgl_egl {
+#ifdef ENABLE_GBM
    struct virgl_gbm *gbm;
+#endif
    EGLDisplay egl_display;
    EGLConfig egl_conf;
    EGLContext egl_ctx;
@@ -272,7 +276,11 @@ static bool virgl_egl_get_display(struct virgl_egl *egl)
 }
 #endif /* ENABLE_MINIGBM_ALLOCATION */
 
+#ifdef ENABLE_GBM
 struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool gles)
+#else
+struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfaceless, bool gles)
+#endif
 {
    static EGLint conf_att[] = {
       EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -302,10 +310,12 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
 
    if (surfaceless)
       conf_att[1] = EGL_PBUFFER_BIT;
+#ifdef ENABLE_GBM
    else if (!gbm)
       goto fail;
-
    egl->gbm = gbm;
+#endif
+
    egl->different_gpu = false;
    const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
 
@@ -324,20 +334,29 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
       if (surfaceless) {
          egl->egl_display = get_platform_display (EGL_PLATFORM_SURFACELESS_MESA,
                                                   EGL_DEFAULT_DISPLAY, NULL);
-      } else
+      }
+#ifdef ENABLE_GBM
+      else
          egl->egl_display = get_platform_display (EGL_PLATFORM_GBM_KHR,
                                                  (EGLNativeDisplayType)egl->gbm->device, NULL);
+#endif
    } else {
+#ifdef ENABLE_GBM
       egl->egl_display = eglGetDisplay((EGLNativeDisplayType)egl->gbm->device);
+#else
+      egl->egl_display = eglGetDisplay(display_id);
+#endif
    }
 
    if (!egl->egl_display) {
+#ifdef ENABLE_GBM
       /*
        * Don't fallback to the default display if the fd provided by (*get_drm_fd)
        * can't be used.
        */
       if (egl->gbm && egl->gbm->fd < 0)
          goto fail;
+#endif
 
       egl->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
       if (!egl->egl_display)
@@ -435,8 +454,10 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
       return NULL;
    }
 
+#ifdef ENABLE_GBM
    gbm = virgl_gbm_init(-1);
    egl->gbm = gbm;
+#endif
 
    return egl;
 }
@@ -476,6 +497,7 @@ virgl_renderer_gl_context virgl_egl_get_current_context(UNUSED struct virgl_egl 
    return (virgl_renderer_gl_context)egl_ctx;
 }
 
+#ifdef ENABLE_GBM
 int virgl_egl_get_fourcc_for_texture(struct virgl_egl *egl, uint32_t tex_id, uint32_t format, int *fourcc)
 {
    int ret = EINVAL;
@@ -574,12 +596,14 @@ int virgl_egl_get_fd_for_texture(struct virgl_egl *egl, uint32_t tex_id, int *fd
    eglDestroyImageKHR(egl->egl_display, image);
    return ret;
 }
+#endif
 
 bool virgl_has_egl_khr_gl_colorspace(struct virgl_egl *egl)
 {
    return has_bit(egl->extension_bits, EGL_KHR_GL_COLORSPACE);
 }
 
+#ifdef ENABLE_GBM
 void *virgl_egl_image_from_dmabuf(struct virgl_egl *egl,
                                   uint32_t width,
                                   uint32_t height,
@@ -645,6 +669,7 @@ void virgl_egl_image_destroy(struct virgl_egl *egl, void *image)
 {
    eglDestroyImageKHR(egl->egl_display, image);
 }
+#endif
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
 void *virgl_egl_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo)

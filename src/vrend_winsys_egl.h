@@ -30,10 +30,17 @@
 #include <epoxy/egl.h>
 
 struct virgl_egl;
+
+#ifdef ENABLE_GBM
 struct virgl_gbm;
 struct gbm_bo;
+#endif
 
+#ifdef ENABLE_GBM
 struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool gles);
+#else
+struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfaceless, bool gles);
+#endif
 
 void virgl_egl_destroy(struct virgl_egl *egl);
 
@@ -50,6 +57,7 @@ virgl_renderer_gl_context virgl_egl_get_current_context(struct virgl_egl *egl);
 
 bool virgl_has_egl_khr_gl_colorspace(struct virgl_egl *egl);
 
+#ifdef ENABLE_GBM
 int virgl_egl_get_fourcc_for_texture(struct virgl_egl *egl, uint32_t tex_id, uint32_t format,
                                      int *fourcc);
 
@@ -71,6 +79,7 @@ void virgl_egl_image_destroy(struct virgl_egl *egl, void *image);
 
 void *virgl_egl_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo);
 void *virgl_egl_aux_plane_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo, int plane);
+#endif
 
 bool virgl_egl_supports_fences(struct virgl_egl *egl);
 EGLSyncKHR virgl_egl_fence_create(struct virgl_egl *egl);

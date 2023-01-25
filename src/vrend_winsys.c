@@ -41,6 +41,9 @@ static int use_context = CONTEXT_NONE;
 
 #ifdef HAVE_EPOXY_EGL_H
 struct virgl_egl *egl = NULL;
+#endif
+
+#ifdef ENABLE_GBM
 struct virgl_gbm *gbm = NULL;
 #endif
 
@@ -51,7 +54,7 @@ static struct virgl_glx *glx_info = NULL;
 int vrend_winsys_init(uint32_t flags, int preferred_fd)
 {
    if (flags & VIRGL_RENDERER_USE_EGL) {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
       /*
        * If the user specifies a preferred DRM fd and we can't use it, fail. If the user doesn't
        * specify an fd, it's possible to initialize EGL without one.
@@ -94,7 +97,7 @@ int vrend_winsys_init(uint32_t flags, int preferred_fd)
 
 void vrend_winsys_cleanup(void)
 {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
    if (use_context == CONTEXT_EGL) {
       virgl_egl_destroy(egl);
       egl = NULL;
@@ -201,7 +204,7 @@ int vrend_winsys_has_gl_colorspace(void)
 
 int vrend_winsys_get_fourcc_for_texture(uint32_t tex_id, uint32_t format, int *fourcc)
 {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
    if (use_context == CONTEXT_EGL)
       return virgl_egl_get_fourcc_for_texture(egl, tex_id, format, fourcc);
 #else
@@ -214,7 +217,7 @@ int vrend_winsys_get_fourcc_for_texture(uint32_t tex_id, uint32_t format, int *f
 
 int vrend_winsys_get_fd_for_texture(uint32_t tex_id, int *fd)
 {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
    if (!egl)
       return -1;
 
@@ -228,7 +231,7 @@ int vrend_winsys_get_fd_for_texture(uint32_t tex_id, int *fd)
 
 int vrend_winsys_get_fd_for_texture2(uint32_t tex_id, int *fd, int *stride, int *offset)
 {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
    if (!egl)
       return -1;
 

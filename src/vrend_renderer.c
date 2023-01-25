@@ -8155,7 +8155,7 @@ void vrend_renderer_resource_destroy(struct vrend_resource *res)
       glDeleteMemoryObjectsEXT(1, &res->memobj);
    }
 
-#if HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
    if (res->egl_image) {
       virgl_egl_image_destroy(egl, res->egl_image);
       for (unsigned i = 0; i < ARRAY_SIZE(res->aux_plane_egl_image); i++) {
@@ -12272,7 +12272,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
 
    /* resource is still untyped */
    if (!res->pipe_resource) {
-#ifdef HAVE_EPOXY_EGL_H
+#ifdef ENABLE_GBM
       const struct vrend_renderer_resource_create_args create_args = {
          .target = PIPE_TEXTURE_2D,
          .format = args->format,
@@ -12340,7 +12340,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
       res->pipe_resource = &gr->base;
 #else /* HAVE_EPOXY_EGL_H */
       (void)args;
-      vrend_printf("%s: no EGL support \n", __func__);
+      vrend_printf("%s: no EGL/GBM support \n", __func__);
       return EINVAL;
 #endif /* HAVE_EPOXY_EGL_H */
    }

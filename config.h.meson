@@ -35,6 +35,7 @@
 #mesondefine ENABLE_MINIGBM_ALLOCATION
 #mesondefine ENABLE_VENUS
 #mesondefine ENABLE_VENUS_VALIDATE
+#mesondefine ENABLE_GBM
 #mesondefine ENABLE_DRM
 #mesondefine ENABLE_DRM_MSM
 #mesondefine ENABLE_RENDER_SERVER
