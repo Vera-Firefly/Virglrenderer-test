@@ -2,23 +2,24 @@
 
 set -ex
 
+alias curl="curl -L --retry 4 -f --retry-all-errors --retry-delay 60"
 MESA_CI_PROJECT_DIR="/builds/${MESA_PROJECT_PATH}"
 mkdir -p ${MESA_CI_PROJECT_DIR}
 cd ${MESA_CI_PROJECT_DIR}
 
 # Deploy Mesa CI artifacts
 MESA_CI_ARTIFACTS_URL="https://${STORAGE_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.zst"
-if wget -q --method=HEAD ${MESA_CI_ARTIFACTS_URL}; then
-    wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xv --zstd
+if curl -s -I ${MESA_CI_ARTIFACTS_URL}; then
+    curl ${MESA_CI_ARTIFACTS_URL} -o - | tar -xv --zstd
 else
     echo -e "\e[31mThe Mesa artifacts has expired, please update to newer Mesa pipeline!\e[0m"
     apt-get update && apt-get -y install jq
     MESA_PROJECT_PATH_ESCAPED=$(echo "$MESA_PROJECT_PATH" | sed 's|/|%2F|')
-    MESA_PROJECT_ID=$(wget -cq "${CI_API_V4_URL}/projects/${MESA_PROJECT_PATH_ESCAPED}" -O - | jq -c '.id')
+    MESA_PROJECT_ID=$(curl -s "${CI_API_V4_URL}/projects/${MESA_PROJECT_PATH_ESCAPED}" -o - | jq -c '.id')
     FALLBACK_PAGE=1
     while :
     do
-        MESA_JOB_ID=$(wget -cq "${CI_API_V4_URL}/projects/${MESA_PROJECT_ID}/pipelines/${MESA_PIPELINE_ID}/jobs?per_page=100&page=${FALLBACK_PAGE}&scope=success" -O - \
+        MESA_JOB_ID=$(curl -s "${CI_API_V4_URL}/projects/${MESA_PROJECT_ID}/pipelines/${MESA_PIPELINE_ID}/jobs?per_page=100&page=${FALLBACK_PAGE}&scope=success" -o - \
           | jq -c '.[] | select(.name == "debian-testing") | .id')
         if [ ! -z "${MESA_JOB_ID}" ]; then
             break
@@ -31,7 +32,7 @@ else
     done
     MESA_CI_ARTIFACTS_URL="${CI_API_V4_URL}/projects/${MESA_PROJECT_ID}/jobs/${MESA_JOB_ID}/artifacts/artifacts/install.tar"
     unset MESA_JOB_ID
-    wget -S --progress=dot:giga -O- ${MESA_CI_ARTIFACTS_URL} | tar -xv
+    curl ${MESA_CI_ARTIFACTS_URL} -o - | tar -xv
 fi
 
 # Overwrite Mesa CI's virglrenderer binaries with self built versions

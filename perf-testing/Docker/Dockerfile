@@ -11,7 +11,7 @@ ARG USER_ID
 ARG GROUP_ID
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates gnupg wget && \
+    apt-get install -y --no-install-recommends ca-certificates gnupg && \
     echo 'deb-src https://deb.debian.org/debian bullseye main' >> /etc/apt/sources.list && \
     cat /etc/apt/sources.list && \
     apt-get update && \
@@ -215,7 +215,7 @@ RUN export uid=$USER_ID gid=$GROUP_ID && \
 
 #crony didn't install cleanly when using --include, so we add it by using an extra apt install
 
-ENV EXTRA_PACKAGES="sudo,strace,libxcb-dri2-0,libxcb-dri3-0,libx11-xcb1,libxcb-xfixes0,libxcb-present0,libxcb-sync1,libxshmfence1,libx11-6,sysvinit-core,libwayland-client0,libwayland-server0,time,inetutils-ping,dnsutils,libpng16-16,libprocps8,valgrind,libsensors5,python3,wget,gnupg,ca-certificates,llvm-dev,chrony"
+ENV EXTRA_PACKAGES="sudo,strace,libxcb-dri2-0,libxcb-dri3-0,libx11-xcb1,libxcb-xfixes0,libxcb-present0,libxcb-sync1,libxshmfence1,libx11-6,sysvinit-core,libwayland-client0,libwayland-server0,time,inetutils-ping,dnsutils,libpng16-16,libprocps8,valgrind,libsensors5,python3,curl,gnupg,ca-certificates,llvm-dev,chrony"
 
 RUN ulimit -n 1024 && \
     debootstrap --variant=minbase --components main,contrib,non-free --include=$EXTRA_PACKAGES  bullseye /rootfs http://deb.debian.org/debian && \
@@ -230,7 +230,9 @@ RUN cd /rootfs && \
 
 COPY perf-testing/Docker/x86_64.config /tmp/.
 RUN mkdir -p kernel && \
-  wget -O- https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.16.tar.xz | tar -xJ --strip-components=1 -C kernel && \
+  curl -L --retry 4 -f --retry-all-errors --retry-delay 60 \
+     https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.10.16.tar.xz -o - | \
+     tar -xJ --strip-components=1 -C kernel && \
   cd kernel && \
   ./scripts/kconfig/merge_config.sh arch/x86/configs/x86_64_defconfig /tmp/x86_64.config && \
   make -j12 vmlinux && \

@@ -16,6 +16,8 @@ export CXXFLAGS="-g3"
 export GIT_DATE="2020-02-02"
 export MESA_DEBUG=1
 
+alias curl="curl -L --retry 4 -f --retry-all-errors --retry-delay 60"
+
 echo 'path-exclude=/usr/share/doc/*' > /etc/dpkg/dpkg.cfg.d/99-exclude-cruft
 echo 'path-exclude=/usr/share/man/*' >> /etc/dpkg/dpkg.cfg.d/99-exclude-cruft
 echo '#!/bin/sh' > /usr/sbin/policy-rc.d
@@ -33,6 +35,7 @@ apt-get -y install --no-install-recommends \
       check \
       clang \
       cmake \
+      curl \
       dbus \
       g++ \
       gcc \
@@ -74,7 +77,6 @@ apt-get -y install --no-install-recommends \
       systemd-coredump \
       time \
       waffle-utils \
-      wget \
       xinit \
       xserver-xorg-core \
       xterm \
@@ -138,9 +140,7 @@ popd
 export BATTERY_VERSION=0.1.24
 mkdir /battery
 pushd /battery
-wget "https://github.com/VoltLang/Battery/releases/download/v${BATTERY_VERSION}/battery-${BATTERY_VERSION}-x86_64-linux.tar.gz" && \
-    tar xzvf battery-${BATTERY_VERSION}-x86_64-linux.tar.gz && \
-    rm battery-${BATTERY_VERSION}-x86_64-linux.tar.gz && \
+curl "https://github.com/VoltLang/Battery/releases/download/v${BATTERY_VERSION}/battery-${BATTERY_VERSION}-x86_64-linux.tar.gz" -o - | tar xzv && \
     mv battery /usr/local/bin
     [ "$?" = "0" ] || exit 1
 popd
