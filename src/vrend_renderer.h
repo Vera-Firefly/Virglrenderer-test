@@ -106,6 +106,7 @@ struct vrend_resource {
 
    uint32_t blob_id;
    struct list_head head;
+   bool is_imported;
 };
 
 #define VIRGL_TEXTURE_NEED_SWIZZLE        (1 << 0)

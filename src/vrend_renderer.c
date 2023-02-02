@@ -2710,6 +2710,16 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    for (enum pipe_swizzle i = 0; i < 4; ++i)
       view->gl_swizzle[i] = to_gl_swizzle(swizzle[i]);
 
+   if (res->is_imported && vrend_format_is_bgra(view->texture->base.format)) {
+      /* Swap R/B channel for vulkan imported texture. */
+      GLenum tmp = view->gl_swizzle[0];
+      view->gl_swizzle[0] = view->gl_swizzle[2];
+      view->gl_swizzle[2] = tmp;
+
+      /* Don't decode vulkan imported texture. */
+      view->srgb_decode = GL_SKIP_DECODE_EXT;
+   }
+
    if (!has_bit(view->texture->storage_bits, VREND_STORAGE_GL_BUFFER)) {
       enum virgl_formats format;
       bool needs_view = false;
@@ -12899,6 +12909,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          glTexParameteri(gr->target, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
          glTexStorageMem2DEXT(gr->target, 1, internalformat, width, height, mem_object, 0);
          glBindTexture(gr->target, 0);
+	 gr->is_imported = true;
       }
       res->pipe_resource = &gr->base;
    }
