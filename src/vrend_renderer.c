@@ -7052,14 +7052,6 @@ static enum virgl_resource_fd_type vrend_pipe_resource_export_fd(UNUSED struct p
    return VIRGL_RESOURCE_FD_INVALID;
 }
 
-static uint64_t vrend_pipe_resource_get_size(struct pipe_resource *pres,
-                                             UNUSED void *data)
-{
-   struct vrend_resource *res = (struct vrend_resource *)pres;
-
-   return res->size;
-}
-
 bool vrend_check_no_error(struct vrend_context *ctx)
 {
    GLenum err;
@@ -7092,7 +7084,6 @@ vrend_renderer_get_pipe_callbacks(void)
       .attach_iov = vrend_pipe_resource_attach_iov,
       .detach_iov = vrend_pipe_resource_detach_iov,
       .export_fd = vrend_pipe_resource_export_fd,
-      .get_size = vrend_pipe_resource_get_size,
    };
 
    return &callbacks;
