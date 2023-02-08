@@ -269,8 +269,9 @@ struct virgl_gbm *virgl_gbm_init(int fd)
    gbm->fd = -1;
    if (fd < 0) {
 #ifdef ENABLE_MINIGBM_ALLOCATION
-      gbm->fd = gbm_get_default_device_fd();
-      if (gbm->fd < 0)
+      gbm->device = minigbm_create_default_device(&gbm->fd);
+      if (gbm->device)
+         return gbm;
 #endif
       gbm->fd = rendernode_open();
       if (gbm->fd < 0)
