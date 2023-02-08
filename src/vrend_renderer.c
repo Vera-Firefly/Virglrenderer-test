@@ -7882,10 +7882,6 @@ static void vrend_resource_gbm_init(struct vrend_resource *gr, uint32_t format)
    else
       gr->map_info = VIRGL_RENDERER_MAP_CACHE_WC;
 
-   int num_planes = gbm_bo_get_plane_count(bo);
-   for (int plane = 0; plane < num_planes; plane++)
-      gr->size += gbm_bo_get_plane_size(bo, plane);
-
    if (!virgl_gbm_gpu_import_required(gr->base.bind))
       return;
 
