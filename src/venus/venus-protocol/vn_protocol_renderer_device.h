@@ -12451,7 +12451,7 @@ static inline void
 vn_decode_VkDrmFormatModifierPropertiesList2EXT_self_partial_temp(struct vn_cs_decoder *dec, VkDrmFormatModifierPropertiesList2EXT *val)
 {
     /* skip val->{sType,pNext} */
-    /* WA1 */ val->drmFormatModifierCount = vn_peek_array_size(dec);
+    vn_decode_uint32_t(dec, &val->drmFormatModifierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->drmFormatModifierCount);
         val->pDrmFormatModifierProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDrmFormatModifierProperties) * iter_count);
