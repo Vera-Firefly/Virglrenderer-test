@@ -548,12 +548,81 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(
 
 static void
 vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(
-   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetPhysicalDeviceFormatProperties2 *args)
 {
+   struct vkr_context *ctx = dispatch->data;
+
    vn_replace_vkGetPhysicalDeviceFormatProperties2_args_handle(args);
+
+   /* translate VkDrmFormatModifierProperties2EXT into
+    * VkDrmFormatModifierPropertiesEXT in place
+    * TODO: remove once venus-protocol WA1 is fixed:
+    *   https://gitlab.freedesktop.org/olv/venus-protocol/-/merge_requests/22
+    *
+    * Expects that VkDrmFormatPropertiesList2EXT is unused, and that the driver
+    * will only send either the "List" variant or the "List2" variant, but
+    * never both. */
+   VkDrmFormatModifierPropertiesList2EXT *modifier_list2 = NULL;
+   VkDrmFormatModifierPropertiesListEXT local_modifier_list;
+
+   VkBaseInStructure *prev =
+      vkr_find_prev_struct(args->pFormatProperties,
+                           VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_2_EXT);
+   if (prev) {
+#ifndef NDEBUG
+      {
+         const VkDrmFormatModifierPropertiesListEXT *list1 =
+            vkr_find_struct(args->pFormatProperties->pNext,
+                            VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
+         assert(!list1);
+      }
+#endif
+      modifier_list2 = (void *)prev->pNext;
+
+      local_modifier_list = (VkDrmFormatModifierPropertiesListEXT){
+         .sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT,
+         .pNext = modifier_list2->pNext,
+         .drmFormatModifierCount = modifier_list2->drmFormatModifierCount,
+      };
+      prev->pNext = (const void *)&local_modifier_list;
+
+      if (modifier_list2->pDrmFormatModifierProperties) {
+         local_modifier_list.pDrmFormatModifierProperties =
+            malloc(local_modifier_list.drmFormatModifierCount *
+                   sizeof(*local_modifier_list.pDrmFormatModifierProperties));
+         if (!local_modifier_list.pDrmFormatModifierProperties) {
+            vkr_cs_decoder_set_fatal(&ctx->decoder);
+            return;
+         }
+      }
+   }
+
    vkGetPhysicalDeviceFormatProperties2(args->physicalDevice, args->format,
                                         args->pFormatProperties);
+
+   if (modifier_list2) {
+      modifier_list2->drmFormatModifierCount = local_modifier_list.drmFormatModifierCount;
+
+      if (modifier_list2->pDrmFormatModifierProperties) {
+         for (uint32_t i = 0; i < modifier_list2->drmFormatModifierCount; i++) {
+            const VkDrmFormatModifierPropertiesEXT *props =
+               &local_modifier_list.pDrmFormatModifierProperties[i];
+
+            modifier_list2->pDrmFormatModifierProperties[i] =
+               (VkDrmFormatModifierProperties2EXT){
+                  .drmFormatModifier = props->drmFormatModifier,
+                  .drmFormatModifierPlaneCount = props->drmFormatModifierPlaneCount,
+                  .drmFormatModifierTilingFeatures =
+                     props->drmFormatModifierTilingFeatures,
+               };
+         }
+
+         free(local_modifier_list.pDrmFormatModifierProperties);
+      }
+
+      prev->pNext = (const void *)modifier_list2;
+   }
 }
 
 static void
