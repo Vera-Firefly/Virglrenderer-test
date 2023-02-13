@@ -29,13 +29,13 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <sys/uio.h>
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "virgl_hw.h"
+#include "vrend_iov.h"
 #include "vrend_winsys_egl.h"
 #include "virglrenderer.h"
 #include "virgl_protocol.h"
@@ -83,6 +83,19 @@ static struct virgl_renderer_callbacks fuzzer_cbs = {
    .destroy_gl_context = fuzzer_destory_gl_context,
    .make_current = fuzzer_make_current,
 };
+
+#ifdef _WIN32
+static int setenv(const char *name, const char *value, int overwrite)
+{
+    int errcode = 0;
+    if(!overwrite) {
+        size_t envsize = 0;
+        errcode = getenv_s(&envsize, NULL, 0, name);
+        if(errcode || envsize) return errcode;
+    }
+    return _putenv_s(name, value);
+}
+#endif
 
 static void initialize_environment()
 {

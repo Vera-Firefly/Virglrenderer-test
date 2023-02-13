@@ -25,11 +25,11 @@
 /* transfer and iov related tests */
 #include <check.h>
 #include <stdlib.h>
-#include <sys/uio.h>
 #include <errno.h>
 #include <virglrenderer.h>
 #include "pipe/p_defines.h"
 #include "virgl_hw.h"
+#include "vrend_iov.h"
 #include "virgl_protocol.h"
 #include "testvirgl_encode.h"
 

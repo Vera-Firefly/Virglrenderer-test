@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/uio.h>
 #include <virglrenderer.h>
 #include "virgl_hw.h"
+#include "vrend_iov.h"
 #include "pipe/p_format.h"
 #include "testvirgl_encode.h"
 #include "virgl_protocol.h"

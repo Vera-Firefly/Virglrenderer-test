@@ -23,9 +23,10 @@
  **************************************************************************/
 
 /* helper functions for testing purposes */
+#include "config.h"
+
 #include <check.h>
 #include <errno.h>
-#include <sys/uio.h>
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
@@ -33,6 +34,7 @@
 #include "testvirgl.h"
 
 #include "virgl_hw.h"
+#include "vrend_iov.h"
 #include "virglrenderer.h"
 
 int context_flags = VIRGL_RENDERER_USE_EGL;

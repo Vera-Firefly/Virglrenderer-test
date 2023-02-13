@@ -27,14 +27,18 @@
  * and context creation tests.
  */
 
+#include "config.h"
+
 #include <check.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <virglrenderer.h>
+#ifdef ENABLE_GBM
 #include <gbm.h>
-#include <sys/uio.h>
+#endif
 #include "testvirgl.h"
 #include "virgl_hw.h"
+#include "vrend_iov.h"
 struct myinfo_struct {
   uint32_t test;
 };
@@ -378,10 +382,12 @@ START_TEST(virgl_test_get_resource_info)
   ret = virgl_renderer_resource_get_info(res.handle, &info);
   ck_assert_int_eq(ret, 0);
 
+#ifdef ENABLE_GBM
   ck_assert(info.drm_fourcc == GBM_FORMAT_ABGR8888 ||
             info.drm_fourcc == GBM_FORMAT_XBGR8888 ||
             info.drm_fourcc == GBM_FORMAT_ARGB8888 ||
             info.drm_fourcc == GBM_FORMAT_XRGB8888);
+#endif
   ck_assert_int_eq(info.virgl_format, res.format);
   ck_assert_int_eq(res.width, info.width);
   ck_assert_int_eq(res.height, info.height);
