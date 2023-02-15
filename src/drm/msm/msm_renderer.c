@@ -508,6 +508,11 @@ msm_renderer_get_blob(struct virgl_context *vctx, uint32_t res_id, uint64_t blob
          return -EINVAL;
       }
 
+      if (blob_size < sizeof(*ictx->shmem)) {
+         drm_log("Invalid blob size");
+         return -EINVAL;
+      }
+
       fd = os_create_anonymous_file(blob_size, "msm-shmem");
       if (fd < 0) {
          drm_log("Failed to create shmem file: %s", strerror(errno));
@@ -559,6 +564,11 @@ msm_renderer_get_blob(struct virgl_context *vctx, uint32_t res_id, uint64_t blob
     */
    if (obj->exported) {
       drm_log("Already exported!");
+      return -EINVAL;
+   }
+
+   if (obj->size != blob_size) {
+      drm_log("Invalid blob size");
       return -EINVAL;
    }
 
