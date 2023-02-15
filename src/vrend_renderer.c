@@ -7051,7 +7051,7 @@ static int thread_sync(UNUSED void *arg)
    u_thread_setname("vrend-sync");
 
    mtx_lock(&vrend_state.fence_mutex);
-   vrend_clicbs->make_current(gl_context);
+   vrend_clicbs->make_current_surfaceless(gl_context);
 
    while (!vrend_state.stop_sync_thread) {
       if (LIST_IS_EMPTY(&vrend_state.fence_wait_list) &&
@@ -7071,8 +7071,8 @@ static int thread_sync(UNUSED void *arg)
       }
    }
 
-   vrend_clicbs->make_current(0);
-   vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
+   vrend_clicbs->make_current_surfaceless(0);
+   vrend_clicbs->destroy_gl_context_surfaceless(vrend_state.sync_context);
    mtx_unlock(&vrend_state.fence_mutex);
    return 0;
 }
@@ -7087,7 +7087,7 @@ static void vrend_renderer_use_threaded_sync(void)
 
    vrend_state.stop_sync_thread = false;
 
-   vrend_state.sync_context = vrend_clicbs->create_gl_context(0, &ctx_params);
+   vrend_state.sync_context = vrend_clicbs->create_gl_context_surfaceless(0, &ctx_params);
    if (vrend_state.sync_context == NULL) {
       vrend_printf( "failed to create sync opengl context\n");
       return;
@@ -7096,7 +7096,7 @@ static void vrend_renderer_use_threaded_sync(void)
    vrend_state.eventfd = create_eventfd(0);
    if (vrend_state.eventfd == -1) {
       vrend_printf( "Failed to create eventfd\n");
-      vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
+      vrend_clicbs->destroy_gl_context_surfaceless(vrend_state.sync_context);
       return;
    }
 
@@ -7110,7 +7110,7 @@ static void vrend_renderer_use_threaded_sync(void)
    if (!vrend_state.sync_thread) {
       close(vrend_state.eventfd);
       vrend_state.eventfd = -1;
-      vrend_clicbs->destroy_gl_context(vrend_state.sync_context);
+      vrend_clicbs->destroy_gl_context_surfaceless(vrend_state.sync_context);
       cnd_destroy(&vrend_state.fence_cond);
       mtx_destroy(&vrend_state.fence_mutex);
       cnd_destroy(&vrend_state.poll_cond);
@@ -12778,4 +12778,3 @@ struct vrend_video_context *vrend_context_get_video_ctx(struct vrend_context *ct
     return ctx->video;
 }
 #endif
-

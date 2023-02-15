@@ -127,6 +127,9 @@ struct vrend_if_cbs {
    void (*destroy_gl_context)(virgl_gl_context ctx);
    int (*make_current)(virgl_gl_context ctx);
    int (*get_drm_fd)(void);
+   virgl_gl_context (*create_gl_context_surfaceless)(int scanout, struct virgl_gl_ctx_param *params);
+   void (*destroy_gl_context_surfaceless)(virgl_gl_context ctx);
+   int (*make_current_surfaceless)(virgl_gl_context ctx);
 };
 
 #define VREND_USE_THREAD_SYNC (1 << 0)

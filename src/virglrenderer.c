@@ -572,6 +572,48 @@ static int make_current(virgl_renderer_gl_context ctx)
    return 0;
 }
 
+static virgl_renderer_gl_context create_gl_context_surfaceless(int scanout_idx, struct virgl_gl_ctx_param *param)
+{
+   struct virgl_renderer_gl_ctx_param vparam;
+
+   if (state.winsys_initialized || state.external_winsys_initialized)
+      return vrend_winsys_create_context(param);
+
+   vparam.version = 1;
+   vparam.shared = param->shared;
+   vparam.major_ver = param->major_ver;
+   vparam.minor_ver = param->minor_ver;
+   return state.cbs->create_gl_context(state.cookie, scanout_idx, &vparam);
+}
+
+static void destroy_gl_context_surfaceless(virgl_renderer_gl_context ctx)
+{
+   if (state.winsys_initialized || state.external_winsys_initialized) {
+      vrend_winsys_destroy_context(ctx);
+      return;
+   }
+
+   state.cbs->destroy_gl_context(state.cookie, ctx);
+}
+
+static int make_current_surfaceless(virgl_renderer_gl_context ctx)
+{
+   int ret;
+
+   if (state.winsys_initialized || state.external_winsys_initialized)
+      return vrend_winsys_make_context_current(ctx);
+
+   ret = state.cbs->make_current(state.cookie, 0, ctx);
+   if (ret && state.cbs->version >= 4) {
+      vrend_printf("%s: Error switching surfaceless context: %d\n",
+                   __func__, ret);
+      assert(!ret && "Failed to switch GL context");
+      return -1;
+   }
+
+   return 0;
+}
+
 static int get_drm_fd(void)
 {
    if (state.cbs->get_drm_fd)
@@ -586,6 +628,9 @@ static const struct vrend_if_cbs vrend_cbs = {
    destroy_gl_context,
    make_current,
    get_drm_fd,
+   create_gl_context_surfaceless,
+   destroy_gl_context_surfaceless,
+   make_current_surfaceless,
 };
 
 static int

@@ -142,7 +142,8 @@ int vrend_winsys_init_external(void *egl_display)
 virgl_renderer_gl_context vrend_winsys_create_context(struct virgl_gl_ctx_param *param)
 {
 #ifdef HAVE_EPOXY_EGL_H
-   if (use_context == CONTEXT_EGL)
+   if (use_context == CONTEXT_EGL ||
+       use_context == CONTEXT_EGL_EXTERNAL)
       return virgl_egl_create_context(egl, param);
 #endif
 #ifdef HAVE_EPOXY_GLX_H
@@ -155,7 +156,8 @@ virgl_renderer_gl_context vrend_winsys_create_context(struct virgl_gl_ctx_param 
 void vrend_winsys_destroy_context(virgl_renderer_gl_context ctx)
 {
 #ifdef HAVE_EPOXY_EGL_H
-   if (use_context == CONTEXT_EGL) {
+   if (use_context == CONTEXT_EGL ||
+       use_context == CONTEXT_EGL_EXTERNAL) {
       virgl_egl_destroy_context(egl, ctx);
       return;
    }
@@ -172,7 +174,8 @@ int vrend_winsys_make_context_current(virgl_renderer_gl_context ctx)
 {
    int ret = -1;
 #ifdef HAVE_EPOXY_EGL_H
-   if (use_context == CONTEXT_EGL) {
+   if (use_context == CONTEXT_EGL ||
+       use_context == CONTEXT_EGL_EXTERNAL) {
       ret = virgl_egl_make_context_current(egl, ctx);
       if (ret)
          vrend_printf("%s: Error switching context: %s\n",
