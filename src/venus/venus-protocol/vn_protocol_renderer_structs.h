@@ -11,7 +11,7 @@
 #include "vn_protocol_renderer_handles.h"
 
 #pragma GCC diagnostic push
-#ifndef __clang__
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 12
 #pragma GCC diagnostic ignored "-Wdangling-pointer"
 #endif
 #pragma GCC diagnostic ignored "-Wpointer-arith"
