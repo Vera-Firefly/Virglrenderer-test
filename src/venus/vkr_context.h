@@ -53,6 +53,8 @@ struct vkr_context {
 
    struct list_head rings;
    struct hash_table *object_table;
+
+   mtx_t resource_mutex;
    struct hash_table *resource_table;
 
    struct vkr_cs_encoder encoder;
@@ -106,7 +108,10 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id);
 static inline struct vkr_resource *
 vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 {
+   mtx_lock(&ctx->resource_mutex);
    const struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
+   mtx_unlock(&ctx->resource_mutex);
+
    return likely(entry) ? entry->data : NULL;
 }
 

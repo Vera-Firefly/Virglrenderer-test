@@ -189,27 +189,34 @@ vkr_context_free_resource(struct hash_entry *entry)
 static inline bool
 vkr_context_add_resource(struct vkr_context *ctx, struct vkr_resource *res)
 {
+   mtx_lock(&ctx->resource_mutex);
    assert(!_mesa_hash_table_search(ctx->resource_table, &res->res_id));
-   return !!_mesa_hash_table_insert(ctx->resource_table, &res->res_id, res);
+   struct hash_entry *entry =
+      _mesa_hash_table_insert(ctx->resource_table, &res->res_id, res);
+   mtx_unlock(&ctx->resource_mutex);
+
+   return entry;
 }
 
 static inline void
 vkr_context_remove_resource(struct vkr_context *ctx, uint32_t res_id)
 {
+   mtx_lock(&ctx->resource_mutex);
    struct hash_entry *entry = _mesa_hash_table_search(ctx->resource_table, &res_id);
    if (likely(entry)) {
       vkr_context_free_resource(entry);
       _mesa_hash_table_remove(ctx->resource_table, entry);
    }
+   mtx_unlock(&ctx->resource_mutex);
 }
 
 static bool
-vkr_context_import_resource_locked(struct vkr_context *ctx,
-                                   uint32_t res_id,
-                                   uint64_t blob_size,
-                                   enum virgl_resource_fd_type fd_type,
-                                   int fd,
-                                   void *mmap_ptr)
+vkr_context_import_resource_internal(struct vkr_context *ctx,
+                                     uint32_t res_id,
+                                     uint64_t blob_size,
+                                     enum virgl_resource_fd_type fd_type,
+                                     int fd,
+                                     void *mmap_ptr)
 {
    assert(!vkr_context_get_resource(ctx, res_id));
 
@@ -237,10 +244,10 @@ vkr_context_import_resource_locked(struct vkr_context *ctx,
 }
 
 static bool
-vkr_context_create_resource_from_shm_locked(struct vkr_context *ctx,
-                                            uint32_t res_id,
-                                            uint64_t blob_size,
-                                            struct virgl_context_blob *out_blob)
+vkr_context_create_resource_from_shm(struct vkr_context *ctx,
+                                     uint32_t res_id,
+                                     uint64_t blob_size,
+                                     struct virgl_context_blob *out_blob)
 {
    assert(!vkr_context_get_resource(ctx, res_id));
 
@@ -254,8 +261,8 @@ vkr_context_create_resource_from_shm_locked(struct vkr_context *ctx,
       return false;
    }
 
-   if (!vkr_context_import_resource_locked(ctx, res_id, blob_size, VIRGL_RESOURCE_FD_SHM,
-                                           -1, mmap_ptr)) {
+   if (!vkr_context_import_resource_internal(ctx, res_id, blob_size,
+                                             VIRGL_RESOURCE_FD_SHM, -1, mmap_ptr)) {
       munmap(mmap_ptr, blob_size);
       close(fd);
       return false;
@@ -301,8 +308,8 @@ vkr_context_create_resource_from_device_memory_locked(struct vkr_context *ctx,
       }
    }
 
-   if (!vkr_context_import_resource_locked(ctx, res_id, blob_size, blob.type, res_fd,
-                                           NULL)) {
+   if (!vkr_context_import_resource_internal(ctx, res_id, blob_size, blob.type, res_fd,
+                                             NULL)) {
       if (res_fd >= 0)
          close(res_fd);
       close(blob.u.fd);
@@ -322,18 +329,17 @@ vkr_context_create_resource(struct vkr_context *ctx,
                             uint32_t blob_flags,
                             struct virgl_context_blob *out_blob)
 {
-   bool ok;
+   /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies a shm
+    * allocation. It is logically contiguous and it can be exported.
+    */
+   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE)
+      return vkr_context_create_resource_from_shm(ctx, res_id, blob_size, out_blob);
+
    mtx_lock(&ctx->mutex);
-   if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE) {
-      /* blob_id == 0 does not refer to an existing VkDeviceMemory, but implies
-       * a shm allocation. It is logically contiguous and it can be exported.
-       */
-      ok = vkr_context_create_resource_from_shm_locked(ctx, res_id, blob_size, out_blob);
-   } else {
-      ok = vkr_context_create_resource_from_device_memory_locked(
-         ctx, res_id, blob_id, blob_size, blob_flags, out_blob);
-   }
+   bool ok = vkr_context_create_resource_from_device_memory_locked(
+      ctx, res_id, blob_id, blob_size, blob_flags, out_blob);
    mtx_unlock(&ctx->mutex);
+
    return ok;
 }
 
@@ -344,23 +350,17 @@ vkr_context_import_resource(struct vkr_context *ctx,
                             int fd,
                             uint64_t size)
 {
-   mtx_lock(&ctx->mutex);
-   bool ok = vkr_context_import_resource_locked(ctx, res_id, size, fd_type, fd, NULL);
-   mtx_unlock(&ctx->mutex);
-   return ok;
+   return vkr_context_import_resource_internal(ctx, res_id, size, fd_type, fd, NULL);
 }
 
 void
 vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
 {
-   mtx_lock(&ctx->mutex);
-
    struct vkr_resource *res = vkr_context_get_resource(ctx, res_id);
-   if (!res) {
-      mtx_unlock(&ctx->mutex);
+   if (!res)
       return;
-   }
 
+   mtx_lock(&ctx->mutex);
    if (ctx->encoder.stream.resource && ctx->encoder.stream.resource == res) {
       /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset.
        * Until then, and until we can ignore older guests, treat this as
@@ -382,10 +382,9 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
       mtx_lock(&ctx->mutex);
       vkr_ring_destroy(ring);
    }
+   mtx_unlock(&ctx->mutex);
 
    vkr_context_remove_resource(ctx, res_id);
-
-   mtx_unlock(&ctx->mutex);
 }
 
 static inline const char *
@@ -418,6 +417,8 @@ vkr_context_destroy(struct vkr_context *ctx)
    }
 
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
+   mtx_destroy(&ctx->resource_mutex);
+
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 
    vkr_cs_decoder_fini(&ctx->decoder);
@@ -482,6 +483,9 @@ vkr_context_create(uint32_t ctx_id,
    if (!ctx->object_table)
       goto err_ctx_object_table;
 
+   if (mtx_init(&ctx->resource_mutex, mtx_plain) != thrd_success)
+      goto err_ctx_resource_mutex;
+
    ctx->resource_table =
       _mesa_hash_table_create(NULL, _mesa_hash_u32, _mesa_key_u32_equal);
    if (!ctx->resource_table)
@@ -497,6 +501,8 @@ vkr_context_create(uint32_t ctx_id,
    return ctx;
 
 err_ctx_resource_table:
+   mtx_destroy(&ctx->resource_mutex);
+err_ctx_resource_mutex:
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 err_ctx_object_table:
    mtx_destroy(&ctx->mutex);
