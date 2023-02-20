@@ -131,10 +131,7 @@ vkr_context_submit_fence(struct vkr_context *ctx,
       return true;
    }
 
-   mtx_lock(&ctx->mutex);
-
    if (ring_idx >= ARRAY_SIZE(ctx->sync_queues) || !ctx->sync_queues[ring_idx]) {
-      mtx_unlock(&ctx->mutex);
       vkr_log("submit_fence: invalid ring_idx %u", ring_idx);
       return false;
    }
@@ -143,8 +140,6 @@ vkr_context_submit_fence(struct vkr_context *ctx,
    assert(!(flags & ~VIRGL_RENDERER_FENCE_FLAG_MERGEABLE));
    flags = VIRGL_RENDERER_FENCE_FLAG_MERGEABLE;
    bool ok = vkr_queue_sync_submit(ctx->sync_queues[ring_idx], flags, ring_idx, fence_id);
-
-   mtx_unlock(&ctx->mutex);
 
    return ok;
 }

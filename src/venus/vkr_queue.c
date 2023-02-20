@@ -88,7 +88,10 @@ vkr_queue_sync_submit(struct vkr_queue *queue,
    if (!sync)
       return false;
 
+   mtx_lock(&queue->vk_mutex);
    VkResult result = vk->QueueSubmit(queue->base.handle.queue, 0, NULL, sync->fence);
+   mtx_unlock(&queue->vk_mutex);
+
    if (result == VK_ERROR_DEVICE_LOST) {
       sync->device_lost = true;
       vkr_log("sync submit hit device lost for fence_id %" PRIu64, fence_id);
@@ -131,6 +134,8 @@ vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
    vkr_queue_sync_thread_fini(queue);
 
    list_del(&queue->base.track_head);
+
+   mtx_destroy(&queue->vk_mutex);
 
    if (queue->ring_idx > 0)
       ctx->sync_queues[queue->ring_idx] = NULL;
@@ -237,7 +242,13 @@ vkr_queue_create(struct vkr_context *ctx,
    queue->family = family;
    queue->index = index;
 
+   if (mtx_init(&queue->vk_mutex, mtx_plain)) {
+      free(queue);
+      return NULL;
+   }
+
    if (vkr_queue_sync_thread_init(queue)) {
+      mtx_destroy(&queue->vk_mutex);
       free(queue);
       return NULL;
    }
@@ -350,8 +361,11 @@ vkr_dispatch_vkQueueSubmit(UNUSED struct vn_dispatch_context *dispatch,
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 
    vn_replace_vkQueueSubmit_args_handle(args);
+
+   mtx_lock(&queue->vk_mutex);
    args->ret =
       vk->QueueSubmit(args->queue, args->submitCount, args->pSubmits, args->fence);
+   mtx_unlock(&queue->vk_mutex);
 }
 
 static void
@@ -362,8 +376,11 @@ vkr_dispatch_vkQueueBindSparse(UNUSED struct vn_dispatch_context *dispatch,
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 
    vn_replace_vkQueueBindSparse_args_handle(args);
+
+   mtx_lock(&queue->vk_mutex);
    args->ret =
       vk->QueueBindSparse(args->queue, args->bindInfoCount, args->pBindInfo, args->fence);
+   mtx_unlock(&queue->vk_mutex);
 }
 
 static void
@@ -383,8 +400,11 @@ vkr_dispatch_vkQueueSubmit2(UNUSED struct vn_dispatch_context *dispatch,
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 
    vn_replace_vkQueueSubmit2_args_handle(args);
+
+   mtx_lock(&queue->vk_mutex);
    args->ret =
       vk->QueueSubmit2(args->queue, args->submitCount, args->pSubmits, args->fence);
+   mtx_unlock(&queue->vk_mutex);
 }
 
 static void

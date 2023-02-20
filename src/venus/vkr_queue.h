@@ -32,6 +32,11 @@ struct vkr_queue {
    /* only used when client driver uses multiple timelines */
    uint32_t ring_idx;
 
+   /* Ensure host access to VkQueue being externally synchronized between renderer main
+    * thread and ring thread.
+    */
+   mtx_t vk_mutex;
+
    /* Submitted fences are added to sync_thread.syncs first. With required
     * VKR_RENDERER_THREAD_SYNC and VKR_RENDERER_ASYNC_FENCE_CB in render server, the sync
     * thread calls vkWaitForFences and retires signaled fences in order.
