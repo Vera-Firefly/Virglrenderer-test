@@ -98,37 +98,37 @@ vkr_queue_sync_submit(struct vkr_queue *queue,
       return false;
    }
 
-   mtx_lock(&queue->mutex);
-   list_addtail(&sync->head, &queue->pending_syncs);
-   mtx_unlock(&queue->mutex);
-   cnd_signal(&queue->cond);
+   mtx_lock(&queue->sync_thread.mutex);
+   list_addtail(&sync->head, &queue->sync_thread.syncs);
+   mtx_unlock(&queue->sync_thread.mutex);
+   cnd_signal(&queue->sync_thread.cond);
 
    return true;
 }
 
 static void
-vkr_queue_retire_all_syncs(struct vkr_queue *queue)
+vkr_queue_sync_thread_fini(struct vkr_queue *queue)
 {
-   mtx_lock(&queue->mutex);
-   queue->join = true;
-   mtx_unlock(&queue->mutex);
+   /* vkDeviceWaitIdle has been called */
+   mtx_lock(&queue->sync_thread.mutex);
+   queue->sync_thread.join = true;
+   mtx_unlock(&queue->sync_thread.mutex);
 
-   cnd_signal(&queue->cond);
-   thrd_join(queue->thread, NULL);
+   cnd_signal(&queue->sync_thread.cond);
+   thrd_join(queue->sync_thread.thread, NULL);
 
    struct vkr_queue_sync *sync, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->pending_syncs, head)
+   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->sync_thread.syncs, head)
       vkr_queue_sync_retire(queue, sync);
+
+   mtx_destroy(&queue->sync_thread.mutex);
+   cnd_destroy(&queue->sync_thread.cond);
 }
 
 void
 vkr_queue_destroy(struct vkr_context *ctx, struct vkr_queue *queue)
 {
-   /* vkDeviceWaitIdle has been called */
-   vkr_queue_retire_all_syncs(queue);
-
-   mtx_destroy(&queue->mutex);
-   cnd_destroy(&queue->cond);
+   vkr_queue_sync_thread_fini(queue);
 
    list_del(&queue->base.track_head);
 
@@ -154,18 +154,18 @@ vkr_queue_thread(void *arg)
    snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-queue-%d", ctx->ctx_id);
    u_thread_setname(thread_name);
 
-   mtx_lock(&queue->mutex);
+   mtx_lock(&queue->sync_thread.mutex);
    while (true) {
-      while (LIST_IS_EMPTY(&queue->pending_syncs) && !queue->join)
-         cnd_wait(&queue->cond, &queue->mutex);
+      while (LIST_IS_EMPTY(&queue->sync_thread.syncs) && !queue->sync_thread.join)
+         cnd_wait(&queue->sync_thread.cond, &queue->sync_thread.mutex);
 
-      if (queue->join)
+      if (queue->sync_thread.join)
          break;
 
       struct vkr_queue_sync *sync =
-         LIST_ENTRY(struct vkr_queue_sync, queue->pending_syncs.next, head);
+         LIST_ENTRY(struct vkr_queue_sync, queue->sync_thread.syncs.next, head);
 
-      mtx_unlock(&queue->mutex);
+      mtx_unlock(&queue->sync_thread.mutex);
 
       VkResult result;
       if (sync->device_lost) {
@@ -175,7 +175,7 @@ vkr_queue_thread(void *arg)
                                     ns_per_sec * 3);
       }
 
-      mtx_lock(&queue->mutex);
+      mtx_lock(&queue->sync_thread.mutex);
 
       if (result == VK_TIMEOUT)
          continue;
@@ -184,9 +184,36 @@ vkr_queue_thread(void *arg)
 
       vkr_queue_sync_retire(queue, sync);
    }
-   mtx_unlock(&queue->mutex);
+   mtx_unlock(&queue->sync_thread.mutex);
 
    return 0;
+}
+
+static int
+vkr_queue_sync_thread_init(struct vkr_queue *queue)
+{
+   STATIC_ASSERT(thrd_success == 0);
+
+   int ret = mtx_init(&queue->sync_thread.mutex, mtx_plain);
+   if (ret != thrd_success)
+      return ret;
+
+   ret = cnd_init(&queue->sync_thread.cond);
+   if (ret != thrd_success)
+      goto fail_cnd_init;
+
+   ret = thrd_create(&queue->sync_thread.thread, vkr_queue_thread, queue);
+   if (ret != thrd_success)
+      goto fail_thrd_create;
+
+   list_inithead(&queue->sync_thread.syncs);
+   return 0;
+
+fail_thrd_create:
+   mtx_destroy(&queue->sync_thread.mutex);
+fail_cnd_init:
+   cnd_destroy(&queue->sync_thread.cond);
+   return ret;
 }
 
 struct vkr_queue *
@@ -197,11 +224,8 @@ vkr_queue_create(struct vkr_context *ctx,
                  uint32_t index,
                  VkQueue handle)
 {
-   struct vkr_queue *queue;
-   int ret;
-
    /* id is set to 0 until vkr_queue_assign_object_id */
-   queue = vkr_object_alloc(sizeof(*queue), VK_OBJECT_TYPE_QUEUE, 0);
+   struct vkr_queue *queue = vkr_object_alloc(sizeof(*queue), VK_OBJECT_TYPE_QUEUE, 0);
    if (!queue)
       return NULL;
 
@@ -213,24 +237,7 @@ vkr_queue_create(struct vkr_context *ctx,
    queue->family = family;
    queue->index = index;
 
-   list_inithead(&queue->pending_syncs);
-
-   ret = mtx_init(&queue->mutex, mtx_plain);
-   if (ret != thrd_success) {
-      free(queue);
-      return NULL;
-   }
-   ret = cnd_init(&queue->cond);
-   if (ret != thrd_success) {
-      mtx_destroy(&queue->mutex);
-      free(queue);
-      return NULL;
-   }
-
-   ret = thrd_create(&queue->thread, vkr_queue_thread, queue);
-   if (ret != thrd_success) {
-      mtx_destroy(&queue->mutex);
-      cnd_destroy(&queue->cond);
+   if (vkr_queue_sync_thread_init(queue)) {
       free(queue);
       return NULL;
    }

@@ -32,15 +32,17 @@ struct vkr_queue {
    /* only used when client driver uses multiple timelines */
    uint32_t ring_idx;
 
-   /* Submitted fences are added to pending_syncs first. With required
+   /* Submitted fences are added to sync_thread.syncs first. With required
     * VKR_RENDERER_THREAD_SYNC and VKR_RENDERER_ASYNC_FENCE_CB in render server, the sync
-    * thread calls vkWaitForFences and retires signaled fences in pending_syncs in order.
+    * thread calls vkWaitForFences and retires signaled fences in order.
     */
-   thrd_t thread;
-   mtx_t mutex;
-   cnd_t cond;
-   bool join;
-   struct list_head pending_syncs;
+   struct {
+      mtx_t mutex;
+      cnd_t cond;
+      thrd_t thread;
+      bool join;
+      struct list_head syncs;
+   } sync_thread;
 };
 VKR_DEFINE_OBJECT_CAST(queue, VK_OBJECT_TYPE_QUEUE, VkQueue)
 
