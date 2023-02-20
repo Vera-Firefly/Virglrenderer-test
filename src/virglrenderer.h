@@ -444,6 +444,13 @@ virgl_renderer_export_fence(uint32_t client_fence_id, int *fd);
 VIRGL_EXPORT void virgl_renderer_context_poll(uint32_t ctx_id); /* force fences */
 VIRGL_EXPORT int virgl_renderer_context_get_poll_fd(uint32_t ctx_id);
 
+VIRGL_EXPORT int
+virgl_renderer_submit_cmd2(void *buffer,
+                           int ctx_id,
+                           int ndw,
+                           uint64_t *in_fence_ids,
+                           uint32_t num_in_fences);
+
 #endif /* VIRGL_RENDERER_UNSTABLE_APIS */
 
 #endif

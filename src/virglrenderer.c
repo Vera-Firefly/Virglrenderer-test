@@ -46,6 +46,10 @@
 #include "proxy/proxy_renderer.h"
 #include "vrend_winsys.h"
 
+#ifndef WIN32
+#include "util/libsync.h"
+#endif
+
 #include "virglrenderer.h"
 #include "virglrenderer_hw.h"
 
@@ -250,6 +254,7 @@ int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
       return ENOMEM;
 
    ctx->ctx_id = ctx_id;
+   ctx->in_fence_fd = -1;
    ctx->capset_id = capset_id;
    ctx->fence_retire = per_context_fence_retire;
 
@@ -1374,4 +1379,75 @@ virgl_renderer_export_fence(uint32_t client_fence_id, int *fd)
 {
    TRACE_FUNC();
    return vrend_renderer_export_ctx0_fence(client_fence_id, fd);
+}
+
+static int virgl_renderer_context_attach_in_fence(struct virgl_context *ctx,
+                                                  uint64_t fence_id)
+{
+   int ret = -EINVAL;
+
+   /*
+    * FD will be -1 in two cases:
+    *
+    *    1. Fence was signalled and retired.
+    *    2. Fence ID is invalid. Virglrenderer doesn't take responsibility
+    *       for handling invalid fences and assumes that all supplied fence
+    *       IDs are always valid. It's caller's responsibility to validate
+    *       fence IDs.
+    */
+   int fd = virgl_fence_get_fd(fence_id);
+   if (fd < 0)
+      return 0;
+
+#ifndef WIN32
+   ret = sync_accumulate("virglrenderer", &ctx->in_fence_fd, fd);
+#endif
+   close(fd);
+
+   if (ret)
+      virgl_error("%s: sync_accumulate failed for fence_id=%" PRIu64 " err=%d\n",
+                  __func__, fence_id, ret);
+
+   return ret;
+}
+
+static int virgl_renderer_context_attach_in_fences(struct virgl_context *ctx,
+                                                   uint64_t *fence_ids,
+                                                   uint32_t num_fences)
+{
+   TRACE_FUNC();
+
+   if (!ctx->supports_fence_sharing)
+      return -EINVAL;
+
+   for (uint32_t i = 0; i < num_fences; i++) {
+      int ret = virgl_renderer_context_attach_in_fence(ctx, fence_ids[i]);
+      if (ret)
+         return ret;
+   }
+
+   return 0;
+}
+
+int virgl_renderer_submit_cmd2(void *buffer,
+                               int ctx_id,
+                               int ndw,
+                               uint64_t *in_fence_ids,
+                               uint32_t num_in_fences)
+{
+   TRACE_FUNC();
+   struct virgl_context *ctx = virgl_context_lookup(ctx_id);
+   if (!ctx)
+      return EINVAL;
+
+   if (ndw < 0 || (unsigned)ndw > UINT32_MAX / sizeof(uint32_t))
+      return EINVAL;
+
+   if (num_in_fences) {
+      int err = virgl_renderer_context_attach_in_fences(ctx, in_fence_ids, num_in_fences);
+      if (err)
+         return err;
+   }
+
+   return ctx->submit_cmd(ctx, buffer, ndw * sizeof(uint32_t));
 }
