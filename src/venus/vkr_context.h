@@ -52,6 +52,8 @@ struct vkr_context {
    mtx_t mutex;
 
    struct list_head rings;
+
+   mtx_t object_mutex;
    struct hash_table *object_table;
 
    mtx_t resource_mutex;
@@ -118,11 +120,14 @@ vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
 static inline bool
 vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
 {
+   mtx_lock(&ctx->object_mutex);
    if (unlikely(!id || _mesa_hash_table_search(ctx->object_table, &id))) {
+      mtx_unlock(&ctx->object_mutex);
       vkr_log("invalid object id %" PRIu64, id);
       vkr_cs_decoder_set_fatal(&ctx->decoder);
       return false;
    }
+   mtx_unlock(&ctx->object_mutex);
 
    return true;
 }
@@ -148,13 +153,15 @@ vkr_context_add_object(struct vkr_context *ctx, struct vkr_object *obj)
 {
    assert(vkr_is_recognized_object_type(obj->type));
    assert(obj->id);
-   assert(!_mesa_hash_table_search(ctx->object_table, &obj->id));
 
+   mtx_lock(&ctx->object_mutex);
+   assert(!_mesa_hash_table_search(ctx->object_table, &obj->id));
    _mesa_hash_table_insert(ctx->object_table, &obj->id, obj);
+   mtx_unlock(&ctx->object_mutex);
 }
 
 static inline void
-vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
+vkr_context_remove_object_locked(struct vkr_context *ctx, struct vkr_object *obj)
 {
    assert(_mesa_hash_table_search(ctx->object_table, &obj->id));
 
@@ -166,18 +173,30 @@ vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
 }
 
 static inline void
+vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
+{
+   mtx_lock(&ctx->object_mutex);
+   vkr_context_remove_object_locked(ctx, obj);
+   mtx_unlock(&ctx->object_mutex);
+}
+
+static inline void
 vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
 {
    struct vkr_object *obj, *tmp;
+   mtx_lock(&ctx->object_mutex);
    LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, objects, track_head)
-      vkr_context_remove_object(ctx, obj);
+      vkr_context_remove_object_locked(ctx, obj);
+   mtx_unlock(&ctx->object_mutex);
    /* objects should be reinitialized if to be reused */
 }
 
 static inline void *
 vkr_context_get_object(struct vkr_context *ctx, vkr_object_id obj_id)
 {
+   mtx_lock(&ctx->object_mutex);
    const struct hash_entry *entry = _mesa_hash_table_search(ctx->object_table, &obj_id);
+   mtx_unlock(&ctx->object_mutex);
    return likely(entry) ? entry->data : NULL;
 }
 

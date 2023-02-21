@@ -278,12 +278,12 @@ vkr_context_create_resource_from_shm(struct vkr_context *ctx,
 }
 
 static bool
-vkr_context_create_resource_from_device_memory_locked(struct vkr_context *ctx,
-                                                      uint32_t res_id,
-                                                      uint64_t blob_id,
-                                                      uint64_t blob_size,
-                                                      uint32_t blob_flags,
-                                                      struct virgl_context_blob *out_blob)
+vkr_context_create_resource_from_device_memory(struct vkr_context *ctx,
+                                               uint32_t res_id,
+                                               uint64_t blob_id,
+                                               uint64_t blob_size,
+                                               uint32_t blob_flags,
+                                               struct virgl_context_blob *out_blob)
 {
    assert(!vkr_context_get_resource(ctx, res_id));
 
@@ -335,12 +335,8 @@ vkr_context_create_resource(struct vkr_context *ctx,
    if (!blob_id && blob_flags == VIRGL_RENDERER_BLOB_FLAG_USE_MAPPABLE)
       return vkr_context_create_resource_from_shm(ctx, res_id, blob_size, out_blob);
 
-   mtx_lock(&ctx->mutex);
-   bool ok = vkr_context_create_resource_from_device_memory_locked(
-      ctx, res_id, blob_id, blob_size, blob_flags, out_blob);
-   mtx_unlock(&ctx->mutex);
-
-   return ok;
+   return vkr_context_create_resource_from_device_memory(ctx, res_id, blob_id, blob_size,
+                                                         blob_flags, out_blob);
 }
 
 bool
@@ -420,6 +416,7 @@ vkr_context_destroy(struct vkr_context *ctx)
    mtx_destroy(&ctx->resource_mutex);
 
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
+   mtx_destroy(&ctx->object_mutex);
 
    vkr_cs_decoder_fini(&ctx->decoder);
 
@@ -479,6 +476,9 @@ vkr_context_create(uint32_t ctx_id,
    if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success)
       goto err_mtx_init;
 
+   if (mtx_init(&ctx->object_mutex, mtx_plain) != thrd_success)
+      goto err_ctx_object_mutex;
+
    ctx->object_table = _mesa_hash_table_create(NULL, vkr_hash_u64, vkr_key_u64_equal);
    if (!ctx->object_table)
       goto err_ctx_object_table;
@@ -505,6 +505,8 @@ err_ctx_resource_table:
 err_ctx_resource_mutex:
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
 err_ctx_object_table:
+   mtx_destroy(&ctx->object_mutex);
+err_ctx_object_mutex:
    mtx_destroy(&ctx->mutex);
 err_mtx_init:
    free(ctx->debug_name);
