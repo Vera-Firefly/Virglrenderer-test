@@ -100,10 +100,14 @@ static struct vkr_ring *
 lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 {
    struct vkr_ring *ring;
+   mtx_lock(&ctx->ring_mutex);
    LIST_FOR_EACH_ENTRY (ring, &ctx->rings, head) {
-      if (ring->id == ring_id)
+      if (ring->id == ring_id) {
+         mtx_unlock(&ctx->ring_mutex);
          return ring;
+      }
    }
+   mtx_unlock(&ctx->ring_mutex);
    return NULL;
 }
 
@@ -201,7 +205,10 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    }
 
    ring->id = args->ring;
+
+   mtx_lock(&ctx->ring_mutex);
    list_addtail(&ring->head, &ctx->rings);
+   mtx_unlock(&ctx->ring_mutex);
 
    vkr_ring_start(ring);
 }
@@ -217,7 +224,9 @@ vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   mtx_lock(&ctx->ring_mutex);
    vkr_ring_destroy(ring);
+   mtx_unlock(&ctx->ring_mutex);
 }
 
 static void

@@ -51,6 +51,7 @@ struct vkr_context {
 
    mtx_t mutex;
 
+   mtx_t ring_mutex;
    struct list_head rings;
 
    mtx_t object_mutex;

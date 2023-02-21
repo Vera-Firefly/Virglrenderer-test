@@ -364,21 +364,23 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
        */
       vkr_cs_encoder_set_stream(&ctx->encoder, NULL, 0, 0);
    }
+   mtx_unlock(&ctx->mutex);
 
+   mtx_lock(&ctx->ring_mutex);
    struct vkr_ring *ring, *ring_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
       if (ring->resource != res)
          continue;
 
       vkr_cs_decoder_set_fatal(&ctx->decoder);
-      mtx_unlock(&ctx->mutex);
 
+      mtx_unlock(&ctx->ring_mutex);
       vkr_ring_stop(ring);
+      mtx_lock(&ctx->ring_mutex);
 
-      mtx_lock(&ctx->mutex);
       vkr_ring_destroy(ring);
    }
-   mtx_unlock(&ctx->mutex);
+   mtx_unlock(&ctx->ring_mutex);
 
    vkr_context_remove_resource(ctx, res_id);
 }
@@ -404,6 +406,7 @@ vkr_context_destroy(struct vkr_context *ctx)
       vkr_ring_stop(ring);
       vkr_ring_destroy(ring);
    }
+   mtx_destroy(&ctx->ring_mutex);
 
    if (ctx->instance) {
       vkr_log("destroying context %d (%s) with a valid instance", ctx->ctx_id,
@@ -496,10 +499,15 @@ vkr_context_create(uint32_t ctx_id,
 
    vkr_context_init_dispatch(ctx);
 
+   if (mtx_init(&ctx->ring_mutex, mtx_plain) != thrd_success)
+      goto err_ctx_ring_mutex;
+
    list_inithead(&ctx->rings);
 
    return ctx;
 
+err_ctx_ring_mutex:
+   _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
 err_ctx_resource_table:
    mtx_destroy(&ctx->resource_mutex);
 err_ctx_resource_mutex:
