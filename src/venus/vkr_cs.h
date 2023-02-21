@@ -18,6 +18,9 @@
 struct vkr_cs_encoder {
    bool *fatal_error;
 
+   /* protect stream resource */
+   mtx_t mutex;
+
    struct {
       const struct vkr_resource *resource;
       size_t offset;
@@ -69,11 +72,19 @@ struct vkr_cs_decoder {
    const uint8_t *end;
 };
 
-static inline void
+static inline int
 vkr_cs_encoder_init(struct vkr_cs_encoder *enc, bool *fatal_error)
 {
    memset(enc, 0, sizeof(*enc));
    enc->fatal_error = fatal_error;
+
+   return mtx_init(&enc->mutex, mtx_plain);
+}
+
+static inline void
+vkr_cs_encoder_fini(struct vkr_cs_encoder *enc)
+{
+   mtx_destroy(&enc->mutex);
 }
 
 static inline void

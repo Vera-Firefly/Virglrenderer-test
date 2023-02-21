@@ -356,15 +356,17 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    if (!res)
       return;
 
-   mtx_lock(&ctx->mutex);
+   mtx_lock(&ctx->encoder.mutex);
    if (ctx->encoder.stream.resource && ctx->encoder.stream.resource == res) {
-      /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset.
-       * Until then, and until we can ignore older guests, treat this as
-       * non-fatal
+      /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset. Until then,
+       * and until we can ignore older guests, treat this as non-fatal. This can happen
+       * when the driver side reply shmem has lost its last ref for being used as reply
+       * shmem (it can still live in the driver side shmem cache but will be used for
+       * other purposes the next time being allocated out).
        */
       vkr_cs_encoder_set_stream(&ctx->encoder, NULL, 0, 0);
    }
-   mtx_unlock(&ctx->mutex);
+   mtx_unlock(&ctx->encoder.mutex);
 
    mtx_lock(&ctx->ring_mutex);
    struct vkr_ring *ring, *ring_tmp;
@@ -421,6 +423,7 @@ vkr_context_destroy(struct vkr_context *ctx)
    _mesa_hash_table_destroy(ctx->object_table, vkr_context_free_object);
    mtx_destroy(&ctx->object_mutex);
 
+   vkr_cs_encoder_fini(&ctx->encoder);
    vkr_cs_decoder_fini(&ctx->decoder);
 
    mtx_destroy(&ctx->mutex);
@@ -495,7 +498,8 @@ vkr_context_create(uint32_t ctx_id,
       goto err_ctx_resource_table;
 
    vkr_cs_decoder_init(&ctx->decoder, ctx->object_table);
-   vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error);
+   if (vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error))
+      goto err_cs_encoder_init;
 
    vkr_context_init_dispatch(ctx);
 
@@ -507,6 +511,8 @@ vkr_context_create(uint32_t ctx_id,
    return ctx;
 
 err_ctx_ring_mutex:
+   vkr_cs_encoder_fini(&ctx->encoder);
+err_cs_encoder_init:
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
 err_ctx_resource_table:
    mtx_destroy(&ctx->resource_mutex);
