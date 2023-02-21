@@ -62,7 +62,7 @@ struct vkr_cs_decoder_temp_pool {
 struct vkr_cs_decoder {
    const struct hash_table *object_table;
 
-   bool fatal_error;
+   bool *fatal_error;
    struct vkr_cs_decoder_temp_pool temp_pool;
 
    struct vkr_cs_decoder_saved_state saved_states[1];
@@ -122,7 +122,9 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
 }
 
 void
-vkr_cs_decoder_init(struct vkr_cs_decoder *dec, const struct hash_table *object_table);
+vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
+                    bool *fatal_error,
+                    const struct hash_table *object_table);
 
 void
 vkr_cs_decoder_fini(struct vkr_cs_decoder *dec);
@@ -133,13 +135,13 @@ vkr_cs_decoder_reset(struct vkr_cs_decoder *dec);
 static inline void
 vkr_cs_decoder_set_fatal(const struct vkr_cs_decoder *dec)
 {
-   ((struct vkr_cs_decoder *)dec)->fatal_error = true;
+   *((struct vkr_cs_decoder *)dec)->fatal_error = true;
 }
 
 static inline bool
 vkr_cs_decoder_get_fatal(const struct vkr_cs_decoder *dec)
 {
-   return dec->fatal_error;
+   return *dec->fatal_error;
 }
 
 static inline void

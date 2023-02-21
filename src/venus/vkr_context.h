@@ -60,6 +60,7 @@ struct vkr_context {
    mtx_t resource_mutex;
    struct hash_table *resource_table;
 
+   bool cs_fatal_error;
    struct vkr_cs_encoder encoder;
    struct vkr_cs_decoder decoder;
    struct vn_dispatch_context dispatch;

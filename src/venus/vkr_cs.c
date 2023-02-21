@@ -50,9 +50,12 @@ vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
 }
 
 void
-vkr_cs_decoder_init(struct vkr_cs_decoder *dec, const struct hash_table *object_table)
+vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
+                    bool *fatal_error,
+                    const struct hash_table *object_table)
 {
    memset(dec, 0, sizeof(*dec));
+   dec->fatal_error = fatal_error;
    dec->object_table = object_table;
 }
 

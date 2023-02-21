@@ -497,8 +497,8 @@ vkr_context_create(uint32_t ctx_id,
    if (!ctx->resource_table)
       goto err_ctx_resource_table;
 
-   vkr_cs_decoder_init(&ctx->decoder, ctx->object_table);
-   if (vkr_cs_encoder_init(&ctx->encoder, &ctx->decoder.fatal_error))
+   vkr_cs_decoder_init(&ctx->decoder, &ctx->cs_fatal_error, ctx->object_table);
+   if (vkr_cs_encoder_init(&ctx->encoder, &ctx->cs_fatal_error))
       goto err_cs_encoder_init;
 
    vkr_context_init_dispatch(ctx);
