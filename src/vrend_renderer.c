@@ -212,6 +212,7 @@ enum features_id
    feat_implicit_msaa,
    feat_anisotropic_filter,
    feat_seamless_cubemap_per_texture,
+   feat_vs_layer_viewport,
    feat_last,
 };
 
@@ -317,6 +318,7 @@ static const  struct {
    FEAT(implicit_msaa, UNAVAIL, UNAVAIL,  "GL_EXT_multisampled_render_to_texture"),
    FEAT(anisotropic_filter, 46, UNAVAIL,  "GL_EXT_texture_filter_anisotropic", "GL_ARB_texture_filter_anisotropic"),
    FEAT(seamless_cubemap_per_texture, UNAVAIL, UNAVAIL,  "GL_AMD_seamless_cubemap_per_texture" ),
+   FEAT(vs_layer_viewport, UNAVAIL, UNAVAIL, "GL_AMD_vertex_shader_layer"),
 };
 
 struct global_renderer_state {
@@ -11777,6 +11779,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_separate_shader_objects))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_SSO;
+
+   if (has_feature(feat_vs_layer_viewport))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_VS_VERTEX_LAYER;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
