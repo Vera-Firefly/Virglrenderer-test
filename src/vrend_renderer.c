@@ -3736,6 +3736,10 @@ void vrend_memory_barrier(UNUSED struct vrend_context *ctx,
          gl_barrier |= GL_FRAMEBUFFER_BARRIER_BIT;
       if (flags & PIPE_BARRIER_STREAMOUT_BUFFER)
          gl_barrier |= GL_TRANSFORM_FEEDBACK_BARRIER_BIT;
+      if (flags & PIPE_BARRIER_UPDATE_BUFFER)
+         gl_barrier |= GL_BUFFER_UPDATE_BARRIER_BIT;
+      if (flags & PIPE_BARRIER_UPDATE_TEXTURE)
+         gl_barrier |= GL_TEXTURE_UPDATE_BARRIER_BIT;
       if (flags & PIPE_BARRIER_SHADER_BUFFER) {
          gl_barrier |= GL_ATOMIC_COUNTER_BARRIER_BIT;
          if (has_feature(feat_ssbo_barrier))

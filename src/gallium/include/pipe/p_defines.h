@@ -364,7 +364,9 @@ enum pipe_flush_flags {
 #define PIPE_BARRIER_FRAMEBUFFER       (1 << 9)
 #define PIPE_BARRIER_STREAMOUT_BUFFER  (1 << 10)
 #define PIPE_BARRIER_GLOBAL_BUFFER     (1 << 11)
-#define PIPE_BARRIER_ALL               ((1 << 12) - 1)
+#define PIPE_BARRIER_UPDATE_BUFFER     (1 << 12)
+#define PIPE_BARRIER_UPDATE_TEXTURE    (1 << 13)
+#define PIPE_BARRIER_ALL               ((1 << 14) - 1)
 
 /**
  * Flags for pipe_context::texture_barrier.
