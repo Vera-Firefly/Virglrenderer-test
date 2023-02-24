@@ -356,17 +356,7 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    if (!res)
       return;
 
-   mtx_lock(&ctx->encoder.mutex);
-   if (ctx->encoder.stream.resource && ctx->encoder.stream.resource == res) {
-      /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset. Until then,
-       * and until we can ignore older guests, treat this as non-fatal. This can happen
-       * when the driver side reply shmem has lost its last ref for being used as reply
-       * shmem (it can still live in the driver side shmem cache but will be used for
-       * other purposes the next time being allocated out).
-       */
-      vkr_cs_encoder_set_stream(&ctx->encoder, NULL, 0, 0);
-   }
-   mtx_unlock(&ctx->encoder.mutex);
+   vkr_cs_encoder_check_stream(&ctx->encoder, res);
 
    mtx_lock(&ctx->ring_mutex);
    struct vkr_ring *ring, *ring_tmp;

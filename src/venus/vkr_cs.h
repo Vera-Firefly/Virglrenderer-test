@@ -103,6 +103,22 @@ void
 vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos);
 
 static inline void
+vkr_cs_encoder_check_stream(struct vkr_cs_encoder *enc, const struct vkr_resource *res)
+{
+   mtx_lock(&enc->mutex);
+   if (enc->stream.resource && enc->stream.resource == res) {
+      /* TODO vkSetReplyCommandStreamMESA should support res_id 0 to unset. Until then,
+       * and until we can ignore older guests, treat this as non-fatal. This can happen
+       * when the driver side reply shmem has lost its last ref for being used as reply
+       * shmem (it can still live in the driver side shmem cache but will be used for
+       * other purposes the next time being allocated out).
+       */
+      vkr_cs_encoder_set_stream(enc, NULL, 0, 0);
+   }
+   mtx_unlock(&enc->mutex);
+}
+
+static inline void
 vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
                      size_t size,
                      const void *val,
