@@ -26,8 +26,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
 
    struct vkr_cs_encoder *enc = (struct vkr_cs_encoder *)dispatch->encoder;
    mtx_lock(&enc->mutex);
-   vkr_cs_encoder_set_stream(&ctx->encoder, res, args->pStream->offset,
-                             args->pStream->size);
+   vkr_cs_encoder_set_stream(enc, res, args->pStream->offset, args->pStream->size);
    mtx_unlock(&enc->mutex);
 }
 
@@ -36,8 +35,8 @@ vkr_dispatch_vkSeekReplyCommandStreamMESA(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkSeekReplyCommandStreamMESA *args)
 {
-   struct vkr_context *ctx = dispatch->data;
-   vkr_cs_encoder_seek_stream(&ctx->encoder, args->position);
+   struct vkr_cs_encoder *enc = (struct vkr_cs_encoder *)dispatch->encoder;
+   vkr_cs_encoder_seek_stream(enc, args->position);
 }
 
 static void
@@ -46,6 +45,8 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
    struct vn_command_vkExecuteCommandStreamsMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+   struct vkr_cs_decoder *dec = (struct vkr_cs_decoder *)dispatch->decoder;
+   struct vkr_cs_encoder *enc = (struct vkr_cs_encoder *)dispatch->encoder;
 
    if (unlikely(!args->streamCount)) {
       vkr_log("failed to execute command streams: no stream specified");
@@ -54,7 +55,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
    }
 
    /* note that nested vkExecuteCommandStreamsMESA is not allowed */
-   if (unlikely(!vkr_cs_decoder_push_state(&ctx->decoder))) {
+   if (unlikely(!vkr_cs_decoder_push_state(dec))) {
       vkr_log("failed to execute command streams: nested execution");
       vkr_context_set_fatal(ctx);
       return;
@@ -64,7 +65,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
       const VkCommandStreamDescriptionMESA *stream = &args->pStreams[i];
 
       if (args->pReplyPositions)
-         vkr_cs_encoder_seek_stream(&ctx->encoder, args->pReplyPositions[i]);
+         vkr_cs_encoder_seek_stream(enc, args->pReplyPositions[i]);
 
       if (!stream->size)
          continue;
@@ -84,10 +85,9 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
       }
 
-      vkr_cs_decoder_set_stream(&ctx->decoder, res->u.data + stream->offset,
-                                stream->size);
-      while (vkr_cs_decoder_has_command(&ctx->decoder)) {
-         vn_dispatch_command(&ctx->dispatch);
+      vkr_cs_decoder_set_stream(dec, res->u.data + stream->offset, stream->size);
+      while (vkr_cs_decoder_has_command(dec)) {
+         vn_dispatch_command(dispatch);
          if (vkr_context_get_fatal(ctx))
             break;
       }
@@ -96,7 +96,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
    }
 
-   vkr_cs_decoder_pop_state(&ctx->decoder);
+   vkr_cs_decoder_pop_state(dec);
 }
 
 static struct vkr_ring *
