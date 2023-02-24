@@ -68,7 +68,7 @@ vkr_validation_callback(UNUSED VkDebugUtilsMessageSeverityFlagBitsEXT messageSev
    if (!ctx->validate_fatal)
       return false;
 
-   vkr_cs_decoder_set_fatal(&ctx->decoder);
+   vkr_context_set_fatal(ctx);
 
    /* The spec says we "should" return false, because the meaning of true is
     * layer-defined and is reserved for layer development.  And we know that,
@@ -85,7 +85,7 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
 
    if (ctx->instance) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -255,7 +255,7 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
    struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
 
    if (ctx->instance != instance) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 

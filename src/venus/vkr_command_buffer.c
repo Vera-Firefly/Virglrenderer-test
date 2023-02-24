@@ -79,7 +79,7 @@ vkr_dispatch_vkAllocateCommandBuffers(struct vn_dispatch_context *dispatch,
    struct object_array arr;
 
    if (!pool) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -98,7 +98,7 @@ vkr_dispatch_vkFreeCommandBuffers(struct vn_dispatch_context *dispatch,
 
    /* args->pCommandBuffers is marked noautovalidity="true" */
    if (args->commandBufferCount && !args->pCommandBuffers) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 

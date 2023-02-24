@@ -20,7 +20,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    struct vkr_resource *res = vkr_context_get_resource(ctx, args->pStream->resourceId);
    if (!res) {
       vkr_log("failed to set reply stream: invalid res_id %u", args->pStream->resourceId);
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -49,14 +49,14 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
 
    if (unlikely(!args->streamCount)) {
       vkr_log("failed to execute command streams: no stream specified");
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
    /* note that nested vkExecuteCommandStreamsMESA is not allowed */
    if (unlikely(!vkr_cs_decoder_push_state(&ctx->decoder))) {
       vkr_log("failed to execute command streams: nested execution");
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -73,14 +73,14 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
       if (!res) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         vkr_context_set_fatal(ctx);
          break;
       }
 
       if (stream->offset + stream->size > res->size) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         vkr_context_set_fatal(ctx);
          break;
       }
 
@@ -88,11 +88,11 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
                                 stream->size);
       while (vkr_cs_decoder_has_command(&ctx->decoder)) {
          vn_dispatch_command(&ctx->dispatch);
-         if (vkr_cs_decoder_get_fatal(&ctx->decoder))
+         if (vkr_context_get_fatal(ctx))
             break;
       }
 
-      if (vkr_cs_decoder_get_fatal(&ctx->decoder))
+      if (vkr_context_get_fatal(ctx))
          break;
    }
 
@@ -190,20 +190,20 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
 
    const struct vkr_resource *res = vkr_context_get_resource(ctx, info->resourceId);
    if (!res) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
    struct vkr_ring_layout layout;
    if (!vkr_ring_layout_init(&layout, res, info)) {
       vkr_log("vkCreateRingMESA supplied with invalid buffer layout parameters");
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
    struct vkr_ring *ring = vkr_ring_create(&layout, ctx, info->idleTimeout);
    if (!ring) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -223,7 +223,7 @@ vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring || !vkr_ring_stop(ring)) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -239,7 +239,7 @@ vkr_dispatch_vkNotifyRingMESA(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -253,12 +253,12 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
    if (!vkr_ring_write_extra(ring, args->offset, args->value))
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
 }
 
 static void

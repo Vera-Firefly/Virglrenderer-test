@@ -262,7 +262,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
 
    struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
    if (instance != ctx->instance) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -293,7 +293,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
 
       if (physical_dev) {
          if (physical_dev->base.id != id) {
-            vkr_cs_decoder_set_fatal(&ctx->decoder);
+            vkr_context_set_fatal(ctx);
             break;
          }
          continue;
@@ -347,7 +347,7 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
 
    struct vkr_instance *instance = vkr_instance_from_handle(args->instance);
    if (instance != ctx->instance) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -411,7 +411,7 @@ vkr_dispatch_vkEnumerateDeviceExtensionProperties(
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
    if (args->pLayerName) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 

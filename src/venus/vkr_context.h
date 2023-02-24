@@ -119,6 +119,18 @@ vkr_context_get_resource(struct vkr_context *ctx, uint32_t res_id)
    return likely(entry) ? entry->data : NULL;
 }
 
+static inline void
+vkr_context_set_fatal(struct vkr_context *ctx)
+{
+   ctx->cs_fatal_error = true;
+}
+
+static inline bool
+vkr_context_get_fatal(struct vkr_context *ctx)
+{
+   return ctx->cs_fatal_error;
+}
+
 static inline bool
 vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
 {
@@ -126,7 +138,7 @@ vkr_context_validate_object_id(struct vkr_context *ctx, vkr_object_id id)
    if (unlikely(!id || _mesa_hash_table_search(ctx->object_table, &id))) {
       mtx_unlock(&ctx->object_mutex);
       vkr_log("invalid object id %" PRIu64, id);
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return false;
    }
    mtx_unlock(&ctx->object_mutex);

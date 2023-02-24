@@ -318,7 +318,7 @@ vkr_dispatch_vkDeviceWaitIdle(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
    /* no blocking call */
-   vkr_cs_decoder_set_fatal(&ctx->decoder);
+   vkr_context_set_fatal(ctx);
 }
 
 static void

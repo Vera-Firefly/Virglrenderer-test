@@ -265,7 +265,7 @@ vkr_queue_assign_object_id(struct vkr_context *ctx,
 {
    if (queue->base.id) {
       if (queue->base.id != id)
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         vkr_context_set_fatal(ctx);
       return;
    }
    if (!vkr_context_validate_object_id(ctx, id))
@@ -303,7 +303,7 @@ vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
    struct vkr_queue *queue = vkr_device_lookup_queue(
       dev, 0 /* flags */, args->queueFamilyIndex, args->queueIndex);
    if (!queue) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -324,7 +324,7 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
                                                      args->pQueueInfo->queueFamilyIndex,
                                                      args->pQueueInfo->queueIndex);
    if (!queue) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -334,13 +334,13 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
       if (timeline_info->ringIdx == 0 ||
           timeline_info->ringIdx >= ARRAY_SIZE(ctx->sync_queues)) {
          vkr_log("invalid ring_idx %d", timeline_info->ringIdx);
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         vkr_context_set_fatal(ctx);
          return;
       }
 
       if (ctx->sync_queues[timeline_info->ringIdx]) {
          vkr_log("sync_queue %d already bound", timeline_info->ringIdx);
-         vkr_cs_decoder_set_fatal(&ctx->decoder);
+         vkr_context_set_fatal(ctx);
          return;
       }
 
@@ -389,7 +389,7 @@ vkr_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *dispatch,
 {
    struct vkr_context *ctx = dispatch->data;
    /* no blocking call */
-   vkr_cs_decoder_set_fatal(&ctx->decoder);
+   vkr_context_set_fatal(ctx);
 }
 
 static void
@@ -456,7 +456,7 @@ vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch,
                                  args->waitAll, args->timeout);
 
    if (args->ret == VK_ERROR_DEVICE_LOST)
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
 }
 
 static void
@@ -478,7 +478,7 @@ vkr_dispatch_vkResetFenceResource100000MESA(
    };
    VkResult result = vk->GetFenceFdKHR(args->device, &info, &fd);
    if (result != VK_SUCCESS) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -523,7 +523,7 @@ vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
    args->ret = vk->WaitSemaphores(args->device, args->pWaitInfo, args->timeout);
 
    if (args->ret == VK_ERROR_DEVICE_LOST)
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
 }
 
 static void
@@ -556,7 +556,7 @@ vkr_dispatch_vkWaitSemaphoreResource100000MESA(
    };
    VkResult result = vk->GetSemaphoreFdKHR(args->device, &info, &fd);
    if (result != VK_SUCCESS) {
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 
@@ -589,7 +589,7 @@ vkr_dispatch_vkImportSemaphoreResource100000MESA(
       .fd = -1,
    };
    if (vk->ImportSemaphoreFdKHR(args->device, &import_info) != VK_SUCCESS)
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
 }
 
 static void

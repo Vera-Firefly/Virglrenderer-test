@@ -20,7 +20,7 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
    struct vkr_resource *res = vkr_context_get_resource(ctx, res_info->resourceId);
    if (!res) {
       vkr_log("failed to import resource: invalid res_id %u", res_info->resourceId);
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return false;
    }
 
@@ -267,7 +267,7 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
    struct vkr_resource *res = vkr_context_get_resource(ctx, args->resourceId);
    if (!res) {
       vkr_log("failed to query resource props: invalid res_id %u", args->resourceId);
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
       return;
    }
 

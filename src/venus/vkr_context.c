@@ -150,7 +150,7 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
    mtx_lock(&ctx->mutex);
 
    /* CS error is considered fatal (destroy the context?) */
-   if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
+   if (vkr_context_get_fatal(ctx)) {
       mtx_unlock(&ctx->mutex);
       vkr_log("submit_cmd: early bail due to fatal decoder state");
       return false;
@@ -161,7 +161,7 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
    bool ok = true;
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
-      if (vkr_cs_decoder_get_fatal(&ctx->decoder)) {
+      if (vkr_context_get_fatal(ctx)) {
          vkr_log("submit_cmd: vn_dispatch_command failed");
          ok = false;
          break;
@@ -374,7 +374,7 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
       if (ring->resource != res)
          continue;
 
-      vkr_cs_decoder_set_fatal(&ctx->decoder);
+      vkr_context_set_fatal(ctx);
 
       mtx_unlock(&ctx->ring_mutex);
       vkr_ring_stop(ring);
