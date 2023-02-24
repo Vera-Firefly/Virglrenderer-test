@@ -61,12 +61,12 @@ vkr_ring_init_control(struct vkr_ring *ring, const struct vkr_ring_layout *layou
 }
 
 static void
-vkr_ring_store_head(struct vkr_ring *ring)
+vkr_ring_store_head(struct vkr_ring *ring, uint32_t ring_head)
 {
    /* the renderer is expected to load the head with memory_order_acquire,
     * forming a release-acquire ordering
     */
-   atomic_store_explicit(ring->control.head, ring->buffer.cur, memory_order_release);
+   atomic_store_explicit(ring->control.head, ring_head, memory_order_release);
 }
 
 static uint32_t
@@ -205,26 +205,34 @@ vkr_ring_relax(uint32_t *iter)
 }
 
 static bool
-vkr_ring_submit_cmd(struct vkr_ring *ring, const void *buffer, size_t size)
+vkr_ring_submit_cmd(struct vkr_ring *ring,
+                    const uint8_t *buffer,
+                    size_t size,
+                    uint32_t ring_head)
 {
-   if (vkr_cs_decoder_get_fatal(&ring->decoder)) {
+   struct vkr_cs_decoder *dec = &ring->decoder;
+   if (vkr_cs_decoder_get_fatal(dec)) {
       vkr_log("ring_submit_cmd: early bail due to fatal decoder state");
       return false;
    }
 
-   vkr_cs_decoder_set_stream(&ring->decoder, buffer, size);
+   vkr_cs_decoder_set_stream(dec, buffer, size);
 
-   while (vkr_cs_decoder_has_command(&ring->decoder)) {
+   while (vkr_cs_decoder_has_command(dec)) {
       vn_dispatch_command(&ring->dispatch);
-      if (vkr_cs_decoder_get_fatal(&ring->decoder)) {
+      if (vkr_cs_decoder_get_fatal(dec)) {
          vkr_log("ring_submit_cmd: vn_dispatch_command failed");
 
-         vkr_cs_decoder_reset(&ring->decoder);
+         vkr_cs_decoder_reset(dec);
          return false;
       }
+
+      /* update the ring head intra-cs to optimize ring space */
+      const uint32_t cur_ring_head = ring_head + (dec->cur - buffer);
+      vkr_ring_store_head(ring, cur_ring_head);
    }
 
-   vkr_cs_decoder_reset(&ring->decoder);
+   vkr_cs_decoder_reset(dec);
    return true;
 }
 
@@ -243,8 +251,6 @@ vkr_ring_thread(void *arg)
    int ret = 0;
    while (ring->started) {
       bool wait = false;
-      uint32_t cmd_size;
-
       if (vkr_ring_now() >= last_submit + ring->idle_timeout) {
          ring->pending_notify = false;
          vkr_ring_store_status(ring, VKR_RING_STATUS_IDLE);
@@ -269,16 +275,16 @@ vkr_ring_thread(void *arg)
          relax_iter = 0;
       }
 
-      cmd_size = vkr_ring_load_tail(ring) - ring->buffer.cur;
+      const uint32_t cmd_size = vkr_ring_load_tail(ring) - ring->buffer.cur;
       if (cmd_size) {
          if (cmd_size > ring->buffer.size) {
             ret = -EINVAL;
             break;
          }
 
+         const uint32_t ring_head = ring->buffer.cur;
          vkr_ring_read_buffer(ring, ring->cmd, cmd_size);
-         vkr_ring_submit_cmd(ring, ring->cmd, cmd_size);
-         vkr_ring_store_head(ring);
+         vkr_ring_submit_cmd(ring, ring->cmd, cmd_size, ring_head);
 
          last_submit = vkr_ring_now();
          relax_iter = 0;
