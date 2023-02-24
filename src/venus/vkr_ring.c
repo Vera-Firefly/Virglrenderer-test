@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "venus-protocol/vn_protocol_renderer_dispatches.h"
+
 #include "vkr_context.h"
 
 enum vkr_ring_status_flag {
@@ -101,6 +103,14 @@ vkr_ring_read_buffer(struct vkr_ring *ring, void *data, uint32_t size)
    buf->cur += size;
 }
 
+static inline void
+vkr_ring_init_dispatch(struct vkr_ring *ring, struct vkr_context *ctx)
+{
+   ring->dispatch = ctx->dispatch;
+   ring->dispatch.encoder = (struct vn_cs_encoder *)&ring->encoder;
+   ring->dispatch.decoder = (struct vn_cs_decoder *)&ring->decoder;
+}
+
 struct vkr_ring *
 vkr_ring_create(const struct vkr_ring_layout *layout,
                 struct vkr_context *ctx,
@@ -122,7 +132,12 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    if (!ring->cmd)
       goto err_cmd_malloc;
 
-   ring->context = ctx;
+   vkr_cs_decoder_init(&ring->decoder, &ctx->cs_fatal_error, ctx->object_table);
+   if (vkr_cs_encoder_init(&ring->encoder, &ctx->cs_fatal_error))
+      goto err_cs_encoder_init;
+
+   vkr_ring_init_dispatch(ring, ctx);
+
    ring->idle_timeout = idle_timeout;
 
    if (mtx_init(&ring->mutex, mtx_plain) != thrd_success)
@@ -136,6 +151,8 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
 err_cond_init:
    mtx_destroy(&ring->mutex);
 err_mtx_init:
+   vkr_cs_encoder_fini(&ring->encoder);
+err_cs_encoder_init:
    free(ring->cmd);
 err_cmd_malloc:
 err_init_control:
@@ -187,11 +204,35 @@ vkr_ring_relax(uint32_t *iter)
    clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
 }
 
+static bool
+vkr_ring_submit_cmd(struct vkr_ring *ring, const void *buffer, size_t size)
+{
+   if (vkr_cs_decoder_get_fatal(&ring->decoder)) {
+      vkr_log("ring_submit_cmd: early bail due to fatal decoder state");
+      return false;
+   }
+
+   vkr_cs_decoder_set_stream(&ring->decoder, buffer, size);
+
+   while (vkr_cs_decoder_has_command(&ring->decoder)) {
+      vn_dispatch_command(&ring->dispatch);
+      if (vkr_cs_decoder_get_fatal(&ring->decoder)) {
+         vkr_log("ring_submit_cmd: vn_dispatch_command failed");
+
+         vkr_cs_decoder_reset(&ring->decoder);
+         return false;
+      }
+   }
+
+   vkr_cs_decoder_reset(&ring->decoder);
+   return true;
+}
+
 static int
 vkr_ring_thread(void *arg)
 {
    struct vkr_ring *ring = arg;
-   struct vkr_context *ctx = ring->context;
+   struct vkr_context *ctx = ring->dispatch.data;
    char thread_name[16];
 
    snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-ring-%d", ctx->ctx_id);
@@ -236,7 +277,7 @@ vkr_ring_thread(void *arg)
          }
 
          vkr_ring_read_buffer(ring, ring->cmd, cmd_size);
-         vkr_context_submit_cmd(ctx, ring->cmd, cmd_size);
+         vkr_ring_submit_cmd(ring, ring->cmd, cmd_size);
          vkr_ring_store_head(ring);
 
          last_submit = vkr_ring_now();

@@ -8,6 +8,8 @@
 
 #include "vkr_common.h"
 
+#include "venus-protocol/vn_protocol_renderer_defines.h"
+
 /* We read from the ring buffer to a temporary buffer for
  * vkr_context_submit_cmd.  Until that is changed, we want to put a limit
  * on the size of the temporary buffer.  It also makes no sense to have huge
@@ -82,8 +84,12 @@ struct vkr_ring {
    struct vkr_ring_buffer buffer;
    struct vkr_ring_extra extra;
 
+   /* ring cs */
+   struct vkr_cs_encoder encoder;
+   struct vkr_cs_decoder decoder;
+   struct vn_dispatch_context dispatch;
+
    /* ring thread */
-   struct vkr_context *context;
    uint64_t idle_timeout;
    void *cmd;
 

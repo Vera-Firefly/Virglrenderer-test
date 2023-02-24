@@ -49,8 +49,6 @@ struct vkr_context {
    enum vkr_context_validate_level validate_level;
    bool validate_fatal;
 
-   mtx_t mutex;
-
    mtx_t ring_mutex;
    struct list_head rings;
 

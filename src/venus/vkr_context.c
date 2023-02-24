@@ -147,32 +147,26 @@ vkr_context_submit_fence(struct vkr_context *ctx,
 bool
 vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
 {
-   mtx_lock(&ctx->mutex);
-
    /* CS error is considered fatal (destroy the context?) */
    if (vkr_context_get_fatal(ctx)) {
-      mtx_unlock(&ctx->mutex);
       vkr_log("submit_cmd: early bail due to fatal decoder state");
       return false;
    }
 
    vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
 
-   bool ok = true;
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
       if (vkr_context_get_fatal(ctx)) {
          vkr_log("submit_cmd: vn_dispatch_command failed");
-         ok = false;
-         break;
+
+         vkr_cs_decoder_reset(&ctx->decoder);
+         return false;
       }
    }
 
    vkr_cs_decoder_reset(&ctx->decoder);
-
-   mtx_unlock(&ctx->mutex);
-
-   return ok;
+   return true;
 }
 
 static inline void
@@ -361,6 +355,8 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    mtx_lock(&ctx->ring_mutex);
    struct vkr_ring *ring, *ring_tmp;
    LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
+      vkr_cs_encoder_check_stream(&ring->encoder, res);
+
       if (ring->resource != res)
          continue;
 
@@ -416,7 +412,6 @@ vkr_context_destroy(struct vkr_context *ctx)
    vkr_cs_encoder_fini(&ctx->encoder);
    vkr_cs_decoder_fini(&ctx->decoder);
 
-   mtx_destroy(&ctx->mutex);
    free(ctx->debug_name);
    free(ctx);
 }
@@ -469,9 +464,6 @@ vkr_context_create(uint32_t ctx_id,
    if (VKR_DEBUG(VALIDATE))
       ctx->validate_level = VKR_CONTEXT_VALIDATE_FULL;
 
-   if (mtx_init(&ctx->mutex, mtx_plain) != thrd_success)
-      goto err_mtx_init;
-
    if (mtx_init(&ctx->object_mutex, mtx_plain) != thrd_success)
       goto err_ctx_object_mutex;
 
@@ -511,8 +503,6 @@ err_ctx_resource_mutex:
 err_ctx_object_table:
    mtx_destroy(&ctx->object_mutex);
 err_ctx_object_mutex:
-   mtx_destroy(&ctx->mutex);
-err_mtx_init:
    free(ctx->debug_name);
 err_debug_name:
    free(ctx);
