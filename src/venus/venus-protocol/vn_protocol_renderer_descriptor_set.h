@@ -417,8 +417,8 @@ static inline void vn_dispatch_vkAllocateDescriptorSets(struct vn_dispatch_conte
         vn_dispatch_debug_log(ctx, "vkAllocateDescriptorSets returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkAllocateDescriptorSets_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkAllocateDescriptorSets_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -446,8 +446,8 @@ static inline void vn_dispatch_vkFreeDescriptorSets(struct vn_dispatch_context *
         vn_dispatch_debug_log(ctx, "vkFreeDescriptorSets returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkFreeDescriptorSets_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkFreeDescriptorSets_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -470,9 +470,8 @@ static inline void vn_dispatch_vkUpdateDescriptorSets(struct vn_dispatch_context
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkUpdateDescriptorSets(ctx, &args);
 
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkUpdateDescriptorSets_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkUpdateDescriptorSets_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

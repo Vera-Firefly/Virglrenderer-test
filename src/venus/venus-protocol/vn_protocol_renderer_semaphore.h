@@ -610,8 +610,8 @@ static inline void vn_dispatch_vkCreateSemaphore(struct vn_dispatch_context *ctx
         vn_dispatch_debug_log(ctx, "vkCreateSemaphore returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkCreateSemaphore_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkCreateSemaphore_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -634,9 +634,8 @@ static inline void vn_dispatch_vkDestroySemaphore(struct vn_dispatch_context *ct
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkDestroySemaphore(ctx, &args);
 
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkDestroySemaphore_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkDestroySemaphore_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -664,8 +663,12 @@ static inline void vn_dispatch_vkGetSemaphoreCounterValue(struct vn_dispatch_con
         vn_dispatch_debug_log(ctx, "vkGetSemaphoreCounterValue returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkGetSemaphoreCounterValue_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkGetSemaphoreCounterValue_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -693,8 +696,12 @@ static inline void vn_dispatch_vkWaitSemaphores(struct vn_dispatch_context *ctx,
         vn_dispatch_debug_log(ctx, "vkWaitSemaphores returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkWaitSemaphores_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkWaitSemaphores_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -722,8 +729,8 @@ static inline void vn_dispatch_vkSignalSemaphore(struct vn_dispatch_context *ctx
         vn_dispatch_debug_log(ctx, "vkSignalSemaphore returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkSignalSemaphore_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkSignalSemaphore_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -746,9 +753,8 @@ static inline void vn_dispatch_vkWaitSemaphoreResource100000MESA(struct vn_dispa
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkWaitSemaphoreResource100000MESA(ctx, &args);
 
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkWaitSemaphoreResource100000MESA_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkWaitSemaphoreResource100000MESA_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -771,9 +777,8 @@ static inline void vn_dispatch_vkImportSemaphoreResource100000MESA(struct vn_dis
     if (!vn_cs_decoder_get_fatal(ctx->decoder))
         ctx->dispatch_vkImportSemaphoreResource100000MESA(ctx, &args);
 
-
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkImportSemaphoreResource100000MESA_reply(ctx->encoder, &args);
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkImportSemaphoreResource100000MESA_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

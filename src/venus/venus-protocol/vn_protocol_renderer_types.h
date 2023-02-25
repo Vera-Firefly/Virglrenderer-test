@@ -2191,4 +2191,18 @@ vn_decode_VkCommandTypeEXT(struct vn_cs_decoder *dec, VkCommandTypeEXT *val)
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+/* enum VkRingStatusFlagBitsMESA */
+
+static inline void
+vn_encode_VkRingStatusFlagBitsMESA(struct vn_cs_encoder *enc, const VkRingStatusFlagBitsMESA *val)
+{
+    vn_encode_int32_t(enc, (const int32_t *)val);
+}
+
+static inline void
+vn_decode_VkRingStatusFlagBitsMESA(struct vn_cs_decoder *dec, VkRingStatusFlagBitsMESA *val)
+{
+    vn_decode_int32_t(dec, (int32_t *)val);
+}
+
 #endif /* VN_PROTOCOL_RENDERER_TYPES_H */

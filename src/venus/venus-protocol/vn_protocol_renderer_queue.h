@@ -1152,8 +1152,12 @@ static inline void vn_dispatch_vkQueueSubmit(struct vn_dispatch_context *ctx, Vk
         vn_dispatch_debug_log(ctx, "vkQueueSubmit returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkQueueSubmit_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkQueueSubmit_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -1181,8 +1185,12 @@ static inline void vn_dispatch_vkQueueWaitIdle(struct vn_dispatch_context *ctx, 
         vn_dispatch_debug_log(ctx, "vkQueueWaitIdle returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkQueueWaitIdle_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkQueueWaitIdle_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -1210,8 +1218,12 @@ static inline void vn_dispatch_vkQueueBindSparse(struct vn_dispatch_context *ctx
         vn_dispatch_debug_log(ctx, "vkQueueBindSparse returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkQueueBindSparse_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkQueueBindSparse_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
@@ -1239,8 +1251,12 @@ static inline void vn_dispatch_vkQueueSubmit2(struct vn_dispatch_context *ctx, V
         vn_dispatch_debug_log(ctx, "vkQueueSubmit2 returned %d", args.ret);
 #endif
 
-    if (!vn_cs_decoder_get_fatal(ctx->decoder) && (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT))
-       vn_encode_vkQueueSubmit2_reply(ctx->encoder, &args);
+    if (flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) {
+        if (!vn_cs_decoder_get_fatal(ctx->decoder))
+            vn_encode_vkQueueSubmit2_reply(ctx->encoder, &args);
+    } else if (args.ret == VK_ERROR_DEVICE_LOST) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+    }
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
