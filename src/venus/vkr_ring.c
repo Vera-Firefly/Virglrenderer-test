@@ -12,10 +12,6 @@
 
 #include "vkr_context.h"
 
-enum vkr_ring_status_flag {
-   VKR_RING_STATUS_IDLE = 1u << 0,
-};
-
 static inline void *
 get_resource_pointer(const struct vkr_resource *res, size_t offset)
 {
@@ -253,10 +249,10 @@ vkr_ring_thread(void *arg)
       bool wait = false;
       if (vkr_ring_now() >= last_submit + ring->idle_timeout) {
          ring->pending_notify = false;
-         vkr_ring_store_status(ring, VKR_RING_STATUS_IDLE);
+         vkr_ring_store_status(ring, VK_RING_STATUS_IDLE_BIT_MESA);
          wait = ring->buffer.cur == vkr_ring_load_tail(ring);
          if (!wait)
-            vkr_ring_store_status(ring, 0);
+            vkr_ring_store_status(ring, VK_RING_STATUS_NONE_MESA);
       }
 
       if (wait) {
@@ -265,7 +261,7 @@ vkr_ring_thread(void *arg)
          mtx_lock(&ring->mutex);
          if (ring->started && !ring->pending_notify)
             cnd_wait(&ring->cond, &ring->mutex);
-         vkr_ring_store_status(ring, 0);
+         vkr_ring_store_status(ring, VK_RING_STATUS_NONE_MESA);
          mtx_unlock(&ring->mutex);
 
          if (!ring->started)
@@ -284,7 +280,11 @@ vkr_ring_thread(void *arg)
 
          const uint32_t ring_head = ring->buffer.cur;
          vkr_ring_read_buffer(ring, ring->cmd, cmd_size);
-         vkr_ring_submit_cmd(ring, ring->cmd, cmd_size, ring_head);
+
+         if (!vkr_ring_submit_cmd(ring, ring->cmd, cmd_size, ring_head)) {
+            ret = -EINVAL;
+            break;
+         }
 
          last_submit = vkr_ring_now();
          relax_iter = 0;
@@ -292,6 +292,9 @@ vkr_ring_thread(void *arg)
          vkr_ring_relax(&relax_iter);
       }
    }
+
+   if (ret < 0)
+      vkr_ring_store_status(ring, VK_RING_STATUS_FATAL_BIT_MESA);
 
    return ret;
 }
