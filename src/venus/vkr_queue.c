@@ -444,19 +444,15 @@ vkr_dispatch_vkGetFenceStatus(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkWaitForFences(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkWaitForFences(UNUSED struct vn_dispatch_context *dispatch,
                              struct vn_command_vkWaitForFences *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkWaitForFences_args_handle(args);
    args->ret = vk->WaitForFences(args->device, args->fenceCount, args->pFences,
                                  args->waitAll, args->timeout);
-
-   if (args->ret == VK_ERROR_DEVICE_LOST)
-      vkr_context_set_fatal(ctx);
 }
 
 static void
@@ -512,18 +508,14 @@ vkr_dispatch_vkGetSemaphoreCounterValue(UNUSED struct vn_dispatch_context *dispa
 }
 
 static void
-vkr_dispatch_vkWaitSemaphores(struct vn_dispatch_context *dispatch,
+vkr_dispatch_vkWaitSemaphores(UNUSED struct vn_dispatch_context *dispatch,
                               struct vn_command_vkWaitSemaphores *args)
 {
-   struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
    vn_replace_vkWaitSemaphores_args_handle(args);
    args->ret = vk->WaitSemaphores(args->device, args->pWaitInfo, args->timeout);
-
-   if (args->ret == VK_ERROR_DEVICE_LOST)
-      vkr_context_set_fatal(ctx);
 }
 
 static void
