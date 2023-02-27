@@ -11204,7 +11204,7 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
          caps->v1.bset.seamless_cube_map = 1;
    }
 
-   if (epoxy_has_gl_extension("GL_AMD_seamless_cube_map_per_texture")) {
+   if (epoxy_has_gl_extension("GL_AMD_seamless_cubemap_per_texture")) {
       caps->v1.bset.seamless_cube_map_per_texture = 1;
    }
 
