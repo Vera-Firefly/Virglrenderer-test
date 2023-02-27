@@ -735,6 +735,7 @@ struct vrend_sub_context {
 
    struct vrend_ssbo ssbo[PIPE_SHADER_TYPES][PIPE_MAX_SHADER_BUFFERS];
    uint32_t ssbo_used_mask[PIPE_SHADER_TYPES];
+   uint32_t ssbo_binding_offset[PIPE_SHADER_TYPES];
 
    struct vrend_abo abo[PIPE_MAX_HW_ATOMIC_BUFFERS];
    uint32_t abo_used_mask;
@@ -5018,7 +5019,6 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx,
    uint32_t mask;
    struct vrend_ssbo *ssbo;
    struct vrend_resource *res;
-   int i;
 
    if (!has_feature(feat_ssbo))
       return;
@@ -5029,13 +5029,16 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx,
    if (!sub_ctx->ssbo_used_mask[shader_type])
       return;
 
-   mask = sub_ctx->ssbo_used_mask[shader_type];
+   uint32_t offset = sub_ctx->shaders[shader_type]->sinfo.ssbo_binding_offset;
+   mask = sub_ctx->ssbo_used_mask[shader_type] &
+         (sub_ctx->prog->ssbo_used_mask[shader_type] >> offset);
+
    while (mask) {
-      i = u_bit_scan(&mask);
+      int i = u_bit_scan(&mask);
 
       ssbo = &sub_ctx->ssbo[shader_type][i];
       res = (struct vrend_resource *)ssbo->res;
-      glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i, res->id,
+      glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i + offset, res->id,
                         ssbo->buffer_offset, ssbo->buffer_size);
    }
 }
@@ -11369,7 +11372,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 15;
+   caps->v2.host_feature_check_version = 16;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);

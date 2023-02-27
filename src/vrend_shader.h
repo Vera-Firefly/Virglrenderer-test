@@ -136,6 +136,7 @@ struct vrend_shader_info {
    uint32_t images_used_mask;
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
+   uint32_t ssbo_binding_offset;
    uint32_t shadow_samp_mask;
    uint32_t attrib_input_mask;
    uint32_t fs_blend_equation_advanced;

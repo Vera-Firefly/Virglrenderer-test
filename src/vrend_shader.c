@@ -227,6 +227,7 @@ struct dump_ctx {
    uint32_t samplers_used;
 
    uint32_t ssbo_used_mask;
+   uint32_t ssbo_binding_offset;
    uint32_t ssbo_atomic_mask;
    uint32_t ssbo_array_base;
    uint32_t ssbo_atomic_array_base;
@@ -1823,6 +1824,9 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       }
       ctx->ssbo_used_mask |= (1 << decl->Range.First);
+      if (ctx->ssbo_binding_offset > decl->Range.First)
+         ctx->ssbo_binding_offset = decl->Range.First;
+
       if (decl->Declaration.Atomic) {
          if (decl->Range.First < ctx->ssbo_atomic_array_base)
             ctx->ssbo_atomic_array_base = decl->Range.First;
@@ -7596,6 +7600,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->fog_output_mask = ctx->fog_output_mask;
 
    sinfo->ssbo_used_mask = ctx->ssbo_used_mask;
+   sinfo->ssbo_binding_offset  = ctx->ssbo_binding_offset != 0xffffffff ? ctx->ssbo_binding_offset : 0;
+
 
    sinfo->ubo_indirect = !!(ctx->info.dimension_indirect_files & (1 << TGSI_FILE_CONSTANT));
 
@@ -7860,6 +7866,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.key = key;
    ctx.cfg = cfg;
    ctx.prog_type = -1;
+   ctx.ssbo_binding_offset = 0xffffffff;
    ctx.num_image_arrays = 0;
    ctx.image_arrays = NULL;
    ctx.num_sampler_arrays = 0;
