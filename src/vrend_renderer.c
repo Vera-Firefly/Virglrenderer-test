@@ -211,6 +211,7 @@ enum features_id
    feat_viewport_array,
    feat_implicit_msaa,
    feat_anisotropic_filter,
+   feat_seamless_cubemap_per_texture,
    feat_last,
 };
 
@@ -315,6 +316,7 @@ static const  struct {
    FEAT(viewport_array, 41, UNAVAIL,  "GL_ARB_viewport_array", "GL_OES_viewport_array"),
    FEAT(implicit_msaa, UNAVAIL, UNAVAIL,  "GL_EXT_multisampled_render_to_texture"),
    FEAT(anisotropic_filter, 46, UNAVAIL,  "GL_EXT_texture_filter_anisotropic", "GL_ARB_texture_filter_anisotropic"),
+   FEAT(seamless_cubemap_per_texture, UNAVAIL, UNAVAIL,  "GL_AMD_seamless_cubemap_per_texture" ),
 };
 
 struct global_renderer_state {
@@ -2455,8 +2457,9 @@ int vrend_create_sampler_state(struct vrend_context *ctx,
                report_gles_warn(ctx, GLES_WARN_SEAMLESS_CUBE_MAP);
             }
          } else {
-            glSamplerParameteri(state->ids[i], GL_TEXTURE_CUBE_MAP_SEAMLESS, templ->seamless_cube_map);
-
+            if (has_feature(feat_seamless_cubemap_per_texture)) {
+               glSamplerParameteri(state->ids[i], GL_TEXTURE_CUBE_MAP_SEAMLESS, templ->seamless_cube_map);
+            }
          }
 
          apply_sampler_border_color(state->ids[i], templ->border_color.ui);
@@ -11204,9 +11207,8 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
          caps->v1.bset.seamless_cube_map = 1;
    }
 
-   if (epoxy_has_gl_extension("GL_AMD_seamless_cubemap_per_texture")) {
+   if (has_feature(feat_seamless_cubemap_per_texture))
       caps->v1.bset.seamless_cube_map_per_texture = 1;
-   }
 
    if (has_feature(feat_texture_multisample))
       caps->v1.bset.texture_multisample = 1;
