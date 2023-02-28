@@ -207,6 +207,9 @@ enum features_id
    feat_texture_barrier,
    feat_texture_buffer_range,
    feat_texture_gather,
+   feat_texture_mirror_clamp_to_edge,
+   feat_texture_mirror_clamp,
+   feat_texture_mirror_clamp_to_border,
    feat_texture_multisample,
    feat_texture_query_lod,
    feat_texture_shadow_lod,
@@ -317,6 +320,9 @@ static const  struct {
    FEAT(texture_barrier, 45, UNAVAIL,  "GL_ARB_texture_barrier" ),
    FEAT(texture_buffer_range, 43, 32,  "GL_ARB_texture_buffer_range" ),
    FEAT(texture_gather, 40, 31,  "GL_ARB_texture_gather" ),
+   FEAT(texture_mirror_clamp_to_edge, UNAVAIL, UNAVAIL, "GL_ATI_texture_mirror_once", "GL_EXT_texture_mirror_clamp", "GL_ARB_texture_mirror_clamp_to_edge", "GL_EXT_texture_mirror_clamp_to_edge"),
+   FEAT(texture_mirror_clamp, UNAVAIL, UNAVAIL, "GL_ATI_texture_mirror_once", "GL_EXT_texture_mirror_clamp"),
+   FEAT(texture_mirror_clamp_to_border, UNAVAIL, UNAVAIL, "GL_EXT_texture_mirror_clamp"),
    FEAT(texture_multisample, 32, 31,  "GL_ARB_texture_multisample" ),
    FEAT(texture_query_lod, 40, UNAVAIL, "GL_ARB_texture_query_lod", "GL_EXT_texture_query_lod"),
    FEAT(texture_shadow_lod, UNAVAIL, UNAVAIL, "GL_EXT_texture_shadow_lod"),
@@ -1073,6 +1079,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION]  = "Unsupported host function called",
    [VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE] = "Illegal shader program pipeline",
    [VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES] = "Too many vertex attributes are requested",
+   [VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP] = "Unsupported texture mirror wrapping, default to GL_MIRROR_REPEAT",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -2494,7 +2501,7 @@ static void vrend_destroy_dsa_object(void *obj_ptr)
    FREE(state);
 }
 
-static GLuint convert_wrap(int wrap)
+static GLuint convert_wrap(struct vrend_context *ctx, int wrap)
 {
    switch(wrap){
    case PIPE_TEX_WRAP_REPEAT: return GL_REPEAT;
@@ -2504,9 +2511,27 @@ static GLuint convert_wrap(int wrap)
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER: return GL_CLAMP_TO_BORDER;
 
    case PIPE_TEX_WRAP_MIRROR_REPEAT: return GL_MIRRORED_REPEAT;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP: return GL_MIRROR_CLAMP_EXT;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE: return GL_MIRROR_CLAMP_TO_EDGE_EXT;
-   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER: return GL_MIRROR_CLAMP_TO_BORDER_EXT;
+   case PIPE_TEX_WRAP_MIRROR_CLAMP:
+      if (has_feature(feat_texture_mirror_clamp))
+         return GL_MIRROR_CLAMP_EXT;
+      else {
+          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP, wrap);
+          return GL_MIRRORED_REPEAT;
+      }
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+      if (has_feature(feat_texture_mirror_clamp_to_edge))
+         return GL_MIRROR_CLAMP_TO_EDGE_EXT;
+      else {
+         vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP, wrap);
+         return GL_MIRRORED_REPEAT;
+      }
+   case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+      if (has_feature(feat_texture_mirror_clamp_to_border)) {
+         return GL_MIRROR_CLAMP_TO_BORDER_EXT;
+      } else {
+         vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP, wrap);
+         return GL_MIRRORED_REPEAT;
+      }
    default:
       assert(0);
       return -1;
@@ -2565,9 +2590,9 @@ int vrend_create_sampler_state(struct vrend_context *ctx,
       glGenSamplers(2, state->ids);
 
       for (int i = 0; i < 2; ++i) {
-         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_S, convert_wrap(templ->wrap_s));
-         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_T, convert_wrap(templ->wrap_t));
-         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_R, convert_wrap(templ->wrap_r));
+         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_S, convert_wrap(ctx, templ->wrap_s));
+         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_T, convert_wrap(ctx, templ->wrap_t));
+         glSamplerParameteri(state->ids[i], GL_TEXTURE_WRAP_R, convert_wrap(ctx, templ->wrap_r));
          glSamplerParameterf(state->ids[i], GL_TEXTURE_MIN_FILTER, convert_min_filter(templ->min_img_filter, templ->min_mip_filter));
          glSamplerParameterf(state->ids[i], GL_TEXTURE_MAG_FILTER, convert_mag_filter(templ->mag_img_filter));
          glSamplerParameterf(state->ids[i], GL_TEXTURE_MIN_LOD, templ->min_lod);
@@ -6918,11 +6943,11 @@ static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
       set_all = true;
 
    if (tex->state.wrap_s != state->wrap_s || set_all)
-      glTexParameteri(target, GL_TEXTURE_WRAP_S, convert_wrap(state->wrap_s));
+      glTexParameteri(target, GL_TEXTURE_WRAP_S, convert_wrap(sub_ctx->parent, state->wrap_s));
    if (tex->state.wrap_t != state->wrap_t || set_all)
-      glTexParameteri(target, GL_TEXTURE_WRAP_T, convert_wrap(state->wrap_t));
+      glTexParameteri(target, GL_TEXTURE_WRAP_T, convert_wrap(sub_ctx->parent, state->wrap_t));
    if (tex->state.wrap_r != state->wrap_r || set_all)
-      glTexParameteri(target, GL_TEXTURE_WRAP_R, convert_wrap(state->wrap_r));
+      glTexParameteri(target, GL_TEXTURE_WRAP_R, convert_wrap(sub_ctx->parent, state->wrap_r));
    if (tex->state.min_img_filter != state->min_img_filter ||
        tex->state.min_mip_filter != state->min_mip_filter || set_all)
       glTexParameterf(target, GL_TEXTURE_MIN_FILTER, convert_min_filter(state->min_img_filter, state->min_mip_filter));
@@ -11849,11 +11874,9 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
    if (has_feature(feat_transform_feedback_overflow_query))
      caps->v1.bset.transform_feedback_overflow_query = 1;
 
-   if (epoxy_has_gl_extension("GL_EXT_texture_mirror_clamp") ||
-       epoxy_has_gl_extension("GL_ARB_texture_mirror_clamp_to_edge") ||
-       epoxy_has_gl_extension("GL_EXT_texture_mirror_clamp_to_edge")) {
+   if (has_feature(feat_texture_mirror_clamp) ||
+       has_feature(feat_texture_mirror_clamp_to_edge))
       caps->v1.bset.mirror_clamp = true;
-   }
 
    if (has_feature(feat_texture_array)) {
       glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &max);
@@ -11946,7 +11969,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 19;
+   caps->v2.host_feature_check_version = 20;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
@@ -12384,6 +12407,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_group_vote))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_GROUP_VOTE;
+
+   if (has_feature(feat_texture_mirror_clamp_to_edge))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_MIRROR_CLAMP_TO_EDGE;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
