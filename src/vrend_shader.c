@@ -78,6 +78,7 @@
 #define SHADER_REQ_EXPLICIT_ATTRIB_LOCATION (1ULL << 34)
 #define SHADER_REQ_SHADER_NOPERSPECTIVE_INTERPOLATION (1ULL << 35)
 #define SHADER_REQ_TEXTURE_SHADOW_LOD (1ULL << 36)
+#define SHADER_REQ_AMD_VS_LAYER (1ULL << 37)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -347,6 +348,7 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_CONSERVATIVE_DEPTH, "ARB_conservative_depth"},
     {SHADER_REQ_BLEND_EQUATION_ADVANCED, "KHR_blend_equation_advanced"},
     { SHADER_REQ_TEXTURE_SHADOW_LOD, "EXT_texture_shadow_lod"},
+    { SHADER_REQ_AMD_VS_LAYER, "AMD_vertex_shader_layer"},
 };
 
 enum vrend_type_qualifier {
@@ -1699,12 +1701,16 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          break;
       case TGSI_SEMANTIC_LAYER:
-         if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+         if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
+             (iter->processor.Processor == TGSI_PROCESSOR_VERTEX &&
+              ctx->cfg->has_vs_layer)) {
             ctx->outputs[i].glsl_predefined_no_emit = true;
             ctx->outputs[i].glsl_no_index = true;
             ctx->outputs[i].override_no_wm = true;
             ctx->outputs[i].is_int = true;
             name_prefix = "gl_Layer";
+            if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX)
+               ctx->shader_req_bits |= SHADER_REQ_AMD_VS_LAYER;
          }
          break;
       case TGSI_SEMANTIC_PRIMID:

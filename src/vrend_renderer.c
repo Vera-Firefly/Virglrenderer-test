@@ -7452,6 +7452,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->shader_cfg.has_cull_distance = has_feature(feat_cull_distance);
    grctx->shader_cfg.has_nopersective = has_feature(feat_shader_noperspective_interpolation);
    grctx->shader_cfg.has_texture_shadow_lod = has_feature(feat_texture_shadow_lod);
+   grctx->shader_cfg.has_vs_layer = has_feature(feat_vs_layer_viewport);
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
