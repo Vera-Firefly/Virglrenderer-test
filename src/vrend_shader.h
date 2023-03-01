@@ -251,6 +251,7 @@ struct vrend_shader_cfg {
    uint32_t has_nopersective : 1;
    uint32_t has_texture_shadow_lod : 1;
    uint32_t has_vs_layer : 1;
+   uint32_t has_vs_viewport_index : 1;
 };
 
 struct vrend_context;

@@ -213,6 +213,7 @@ enum features_id
    feat_anisotropic_filter,
    feat_seamless_cubemap_per_texture,
    feat_vs_layer_viewport,
+   feat_vs_viewport_index,
    feat_last,
 };
 
@@ -319,6 +320,7 @@ static const  struct {
    FEAT(anisotropic_filter, 46, UNAVAIL,  "GL_EXT_texture_filter_anisotropic", "GL_ARB_texture_filter_anisotropic"),
    FEAT(seamless_cubemap_per_texture, UNAVAIL, UNAVAIL,  "GL_AMD_seamless_cubemap_per_texture" ),
    FEAT(vs_layer_viewport, UNAVAIL, UNAVAIL, "GL_AMD_vertex_shader_layer"),
+   FEAT(vs_viewport_index, UNAVAIL, UNAVAIL, "GL_AMD_vertex_shader_viewport_index"),
 };
 
 struct global_renderer_state {
@@ -7453,6 +7455,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->shader_cfg.has_nopersective = has_feature(feat_shader_noperspective_interpolation);
    grctx->shader_cfg.has_texture_shadow_lod = has_feature(feat_texture_shadow_lod);
    grctx->shader_cfg.has_vs_layer = has_feature(feat_vs_layer_viewport);
+   grctx->shader_cfg.has_vs_viewport_index = has_feature(feat_vs_viewport_index);
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
@@ -11790,6 +11793,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_vs_layer_viewport))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_VS_VERTEX_LAYER;
+
+   if (has_feature(feat_vs_viewport_index))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_VS_VIEWPORT_INDEX;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
