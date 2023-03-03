@@ -262,6 +262,36 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
 }
 
 static void
+vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args)
+{
+   struct vkr_context *ctx = dispatch->data;
+   struct vkr_ring *ring = lookup_ring(ctx, args->ring);
+   if (!ring) {
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
+   vkr_ring_submit_virtqueue_seqno(ring, args->seqno);
+}
+
+static void
+vkr_dispatch_vkWaitVirtqueueSeqno100000MESA(
+   struct vn_dispatch_context *dispatch,
+   struct vn_command_vkWaitVirtqueueSeqno100000MESA *args)
+{
+   struct vkr_context *ctx = dispatch->data;
+   /* this is for -Wgnu-statement-expression-from-macro-expansion */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+   struct vkr_ring *ring = container_of(dispatch, struct vkr_ring, dispatch);
+#pragma GCC diagnostic pop
+   if (!vkr_ring_wait_virtqueue_seqno(ring, args->seqno))
+      vkr_context_set_fatal(ctx);
+}
+
+static void
 vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
@@ -299,6 +329,10 @@ vkr_context_init_transport_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkDestroyRingMESA = vkr_dispatch_vkDestroyRingMESA;
    dispatch->dispatch_vkNotifyRingMESA = vkr_dispatch_vkNotifyRingMESA;
    dispatch->dispatch_vkWriteRingExtraMESA = vkr_dispatch_vkWriteRingExtraMESA;
+   dispatch->dispatch_vkSubmitVirtqueueSeqno100000MESA =
+      vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA;
+   dispatch->dispatch_vkWaitVirtqueueSeqno100000MESA =
+      vkr_dispatch_vkWaitVirtqueueSeqno100000MESA;
 
    dispatch->dispatch_vkGetVenusExperimentalFeatureData100000MESA =
       vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA;

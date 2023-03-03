@@ -365,3 +365,37 @@ vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val)
 
    return true;
 }
+
+void
+vkr_ring_submit_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno)
+{
+   mtx_lock(&ring->mutex);
+   ring->virtqueue_seqno = seqno;
+
+   /* There are 3 cases:
+    * 1. ring is not waiting on the cond thus no-op
+    * 2. ring is idle and then wakes up earlier
+    * 3. ring is waiting for roundtrip and then checks seqno again
+    */
+   cnd_signal(&ring->cond);
+   mtx_unlock(&ring->mutex);
+
+   {
+      TRACE_SCOPE("submit vq seqno done");
+   }
+}
+
+bool
+vkr_ring_wait_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno)
+{
+   TRACE_FUNC();
+
+   bool ok = true;
+
+   mtx_lock(&ring->mutex);
+   while (ok && ring->started && ring->virtqueue_seqno < seqno)
+      ok = cnd_wait(&ring->cond, &ring->mutex) == thrd_success;
+   mtx_unlock(&ring->mutex);
+
+   return ok;
+}

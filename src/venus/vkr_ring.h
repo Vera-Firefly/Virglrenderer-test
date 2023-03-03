@@ -98,6 +98,7 @@ struct vkr_ring {
    thrd_t thread;
    atomic_bool started;
    atomic_bool pending_notify;
+   uint64_t virtqueue_seqno;
 };
 
 struct vkr_ring *
@@ -119,5 +120,11 @@ vkr_ring_notify(struct vkr_ring *ring);
 
 bool
 vkr_ring_write_extra(struct vkr_ring *ring, size_t offset, uint32_t val);
+
+void
+vkr_ring_submit_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno);
+
+bool
+vkr_ring_wait_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno);
 
 #endif /* VKR_RING_H */
