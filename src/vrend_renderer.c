@@ -552,6 +552,7 @@ struct vrend_image_view {
       } buf;
    } u;
    struct vrend_resource *texture;
+   GLuint view_id;
 };
 
 struct vrend_ssbo {
@@ -5131,7 +5132,25 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
          level = iview->u.tex.level;
          first_layer = iview->u.tex.first_layer;
          layered = !((iview->texture->base.array_size > 1 ||
-                      iview->texture->base.depth0 > 1) && (iview->u.tex.first_layer == iview->u.tex.last_layer));
+                      iview->texture->base.depth0 > 1) &&
+                     (first_layer == iview->u.tex.last_layer));
+
+         /* Do we need a texture view? */
+         uint32_t num_layers = iview->u.tex.last_layer - first_layer + 1;
+
+         if (layered &&
+             (iview->u.tex.first_layer != 0 ||
+              num_layers != MAX2(iview->texture->base.array_size,  iview->texture->base.depth0))) {
+
+            if (iview->view_id)
+               glDeleteTextures(1, &iview->view_id);
+
+            glGenTextures(1, &iview->view_id);
+            glTextureView(iview->view_id, iview->texture->target, iview->texture->id,
+                          tex_conv_table[iview->texture->base.format].internalformat, level, 1,
+                          first_layer, num_layers);
+            tex_id = iview->view_id;
+         }
       }
 
       if (!vrend_state.use_gles)
@@ -7341,6 +7360,9 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 
       for (unsigned i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
          vrend_sampler_view_reference(&sub->views[type].views[i], NULL);
+      }
+      for (unsigned i = 0; i < PIPE_MAX_SHADER_IMAGES; i++) {
+         glDeleteTextures(1, &sub->image_views[type][i].view_id);
       }
    }
 
