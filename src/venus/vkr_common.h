@@ -62,6 +62,7 @@
 
 struct vn_info_extension_table;
 struct vkr_context;
+struct vkr_ring;
 struct vkr_instance;
 struct vkr_physical_device;
 struct vkr_device;

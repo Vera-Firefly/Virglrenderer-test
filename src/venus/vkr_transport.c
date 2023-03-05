@@ -292,6 +292,21 @@ vkr_dispatch_vkWaitVirtqueueSeqno100000MESA(
 }
 
 static void
+vkr_dispatch_vkWaitRingSeqno100000MESA(struct vn_dispatch_context *dispatch,
+                                       struct vn_command_vkWaitRingSeqno100000MESA *args)
+{
+   struct vkr_context *ctx = dispatch->data;
+   struct vkr_ring *ring = lookup_ring(ctx, args->ring);
+   if (!ring) {
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
+   if (!vkr_context_wait_ring_seqno(ctx, ring, args->seqno))
+      vkr_context_set_fatal(ctx);
+}
+
+static void
 vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
    UNUSED struct vn_dispatch_context *dispatch,
    struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
@@ -333,6 +348,7 @@ vkr_context_init_transport_dispatch(struct vkr_context *ctx)
       vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA;
    dispatch->dispatch_vkWaitVirtqueueSeqno100000MESA =
       vkr_dispatch_vkWaitVirtqueueSeqno100000MESA;
+   dispatch->dispatch_vkWaitRingSeqno100000MESA = vkr_dispatch_vkWaitRingSeqno100000MESA;
 
    dispatch->dispatch_vkGetVenusExperimentalFeatureData100000MESA =
       vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA;

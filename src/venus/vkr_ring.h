@@ -127,4 +127,10 @@ vkr_ring_submit_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno);
 bool
 vkr_ring_wait_virtqueue_seqno(struct vkr_ring *ring, uint64_t seqno);
 
+static inline uint32_t
+vkr_ring_load_head(const struct vkr_ring *ring)
+{
+   return atomic_load_explicit(ring->control.head, memory_order_acquire);
+}
+
 #endif /* VKR_RING_H */

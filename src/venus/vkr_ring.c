@@ -226,6 +226,7 @@ vkr_ring_submit_cmd(struct vkr_ring *ring,
       /* update the ring head intra-cs to optimize ring space */
       const uint32_t cur_ring_head = ring_head + (dec->cur - buffer);
       vkr_ring_store_head(ring, cur_ring_head);
+      vkr_context_on_ring_seqno_update(ring->dispatch.data, ring->id, cur_ring_head);
    }
 
    vkr_cs_decoder_reset(dec);

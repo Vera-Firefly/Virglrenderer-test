@@ -52,6 +52,18 @@ struct vkr_context {
    mtx_t ring_mutex;
    struct list_head rings;
 
+   struct {
+      mtx_t mutex;
+      cnd_t cond;
+      uint64_t id;
+      /* This represents the ring head position to be waited on. The protocol supports
+       * 64bit seqno and we only use 32bit internally because the delta between the ring
+       * head and ring current will never exceed the ring size, which is far smaller than
+       * 32bit int limit in practice.
+       */
+      uint32_t seqno;
+   } wait_ring;
+
    mtx_t object_mutex;
    struct hash_table *object_table;
 
@@ -211,6 +223,16 @@ vkr_context_get_object(struct vkr_context *ctx, vkr_object_id obj_id)
    mtx_unlock(&ctx->object_mutex);
    return likely(entry) ? entry->data : NULL;
 }
+
+void
+vkr_context_on_ring_seqno_update(struct vkr_context *ctx,
+                                 uint64_t ring_id,
+                                 uint64_t ring_seqno);
+
+bool
+vkr_context_wait_ring_seqno(struct vkr_context *ctx,
+                            struct vkr_ring *ring,
+                            uint64_t ring_seqno);
 
 void
 vkr_context_add_instance(struct vkr_context *ctx,

@@ -373,6 +373,45 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    vkr_context_remove_resource(ctx, res_id);
 }
 
+static inline bool
+vkr_seqno_ge(uint32_t a, uint32_t b)
+{
+   /* a >= b, but deal with wrapping as well */
+   return (a - b) <= INT32_MAX;
+}
+
+void
+vkr_context_on_ring_seqno_update(struct vkr_context *ctx,
+                                 uint64_t ring_id,
+                                 uint64_t ring_seqno)
+{
+   mtx_lock(&ctx->wait_ring.mutex);
+   if (ctx->wait_ring.id == ring_id && vkr_seqno_ge(ring_seqno, ctx->wait_ring.seqno))
+      cnd_signal(&ctx->wait_ring.cond);
+   mtx_unlock(&ctx->wait_ring.mutex);
+}
+
+bool
+vkr_context_wait_ring_seqno(struct vkr_context *ctx,
+                            struct vkr_ring *ring,
+                            uint64_t ring_seqno)
+{
+   TRACE_FUNC();
+
+   bool ok = true;
+
+   mtx_lock(&ctx->wait_ring.mutex);
+   ctx->wait_ring.id = ring->id;
+   ctx->wait_ring.seqno = ring_seqno;
+   while (ok && !vkr_seqno_ge(vkr_ring_load_head(ring), ring_seqno)) {
+      ok = cnd_wait(&ctx->wait_ring.cond, &ctx->wait_ring.mutex) == thrd_success;
+   }
+   ctx->wait_ring.id = 0;
+   mtx_unlock(&ctx->wait_ring.mutex);
+
+   return ok;
+}
+
 static inline const char *
 vkr_context_get_name(const struct vkr_context *ctx)
 {
@@ -381,6 +420,27 @@ vkr_context_get_name(const struct vkr_context *ctx)
     * returns NULL because ctx->debug_name is never NULL.
     */
    return ctx->instance_name ? ctx->instance_name : ctx->debug_name;
+}
+
+static inline void
+vkr_context_wait_ring_fini(struct vkr_context *ctx)
+{
+   cnd_destroy(&ctx->wait_ring.cond);
+   mtx_destroy(&ctx->wait_ring.mutex);
+}
+
+static bool
+vkr_context_wait_ring_init(struct vkr_context *ctx)
+{
+   if (mtx_init(&ctx->wait_ring.mutex, mtx_plain) != thrd_success)
+      return false;
+
+   if (cnd_init(&ctx->wait_ring.cond) != thrd_success) {
+      mtx_destroy(&ctx->wait_ring.mutex);
+      return false;
+   }
+
+   return true;
 }
 
 void
@@ -395,6 +455,8 @@ vkr_context_destroy(struct vkr_context *ctx)
       vkr_ring_destroy(ring);
    }
    mtx_destroy(&ctx->ring_mutex);
+
+   vkr_context_wait_ring_fini(ctx);
 
    if (ctx->instance) {
       vkr_log("destroying context %d (%s) with a valid instance", ctx->ctx_id,
@@ -464,6 +526,9 @@ vkr_context_create(uint32_t ctx_id,
    if (VKR_DEBUG(VALIDATE))
       ctx->validate_level = VKR_CONTEXT_VALIDATE_FULL;
 
+   if (!vkr_context_wait_ring_init(ctx))
+      goto err_ctx_wait_ring_init;
+
    if (mtx_init(&ctx->object_mutex, mtx_plain) != thrd_success)
       goto err_ctx_object_mutex;
 
@@ -503,6 +568,8 @@ err_ctx_resource_mutex:
 err_ctx_object_table:
    mtx_destroy(&ctx->object_mutex);
 err_ctx_object_mutex:
+   vkr_context_wait_ring_fini(ctx);
+err_ctx_wait_ring_init:
    free(ctx->debug_name);
 err_debug_name:
    free(ctx);
