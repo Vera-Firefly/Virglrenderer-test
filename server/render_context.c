@@ -66,13 +66,7 @@ render_context_dispatch_submit_cmd(struct render_context *ctx,
    if (cmd != req->cmd)
       free(cmd);
 
-   const struct render_context_op_submit_cmd_reply reply = {
-      .ok = ok,
-   };
-   if (!render_socket_send_reply(&ctx->socket, &reply, sizeof(reply)))
-      return false;
-
-   return true;
+   return ok;
 }
 
 static bool

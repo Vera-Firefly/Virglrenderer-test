@@ -193,10 +193,6 @@ struct render_context_op_submit_cmd_request {
     */
 };
 
-struct render_context_op_submit_cmd_reply {
-   bool ok;
-};
-
 /* Submit a fence to the context.
  *
  * This submits a fence to the specified ring.  When the fence signals, the

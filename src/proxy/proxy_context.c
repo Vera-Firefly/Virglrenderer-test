@@ -294,16 +294,7 @@ proxy_context_submit_cmd(struct virgl_context *base, const void *buffer, size_t 
       }
    }
 
-   /* XXX this is forced a roundtrip to avoid surprises; vtest requires this
-    * at least
-    */
-   struct render_context_op_submit_cmd_reply reply;
-   if (!proxy_socket_receive_reply(&ctx->socket, &reply, sizeof(reply))) {
-      proxy_log("failed to get submit result");
-      return -1;
-   }
-
-   return reply.ok ? 0 : -1;
+   return 0;
 }
 
 static bool
