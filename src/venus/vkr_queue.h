@@ -44,9 +44,9 @@ struct vkr_queue {
    struct {
       mtx_t mutex;
       cnd_t cond;
+      struct list_head syncs;
       thrd_t thread;
       bool join;
-      struct list_head syncs;
    } sync_thread;
 };
 VKR_DEFINE_OBJECT_CAST(queue, VK_OBJECT_TYPE_QUEUE, VkQueue)

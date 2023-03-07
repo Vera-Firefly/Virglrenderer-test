@@ -103,8 +103,8 @@ vkr_queue_sync_submit(struct vkr_queue *queue,
 
    mtx_lock(&queue->sync_thread.mutex);
    list_addtail(&sync->head, &queue->sync_thread.syncs);
-   mtx_unlock(&queue->sync_thread.mutex);
    cnd_signal(&queue->sync_thread.cond);
+   mtx_unlock(&queue->sync_thread.mutex);
 
    return true;
 }
@@ -115,9 +115,9 @@ vkr_queue_sync_thread_fini(struct vkr_queue *queue)
    /* vkDeviceWaitIdle has been called */
    mtx_lock(&queue->sync_thread.mutex);
    queue->sync_thread.join = true;
+   cnd_signal(&queue->sync_thread.cond);
    mtx_unlock(&queue->sync_thread.mutex);
 
-   cnd_signal(&queue->sync_thread.cond);
    thrd_join(queue->sync_thread.thread, NULL);
 
    struct vkr_queue_sync *sync, *tmp;
@@ -168,7 +168,7 @@ vkr_queue_thread(void *arg)
          break;
 
       struct vkr_queue_sync *sync =
-         LIST_ENTRY(struct vkr_queue_sync, queue->sync_thread.syncs.next, head);
+         list_first_entry(&queue->sync_thread.syncs, struct vkr_queue_sync, head);
 
       mtx_unlock(&queue->sync_thread.mutex);
 
@@ -207,11 +207,12 @@ vkr_queue_sync_thread_init(struct vkr_queue *queue)
    if (ret != thrd_success)
       goto fail_cnd_init;
 
+   list_inithead(&queue->sync_thread.syncs);
+
    ret = thrd_create(&queue->sync_thread.thread, vkr_queue_thread, queue);
    if (ret != thrd_success)
       goto fail_thrd_create;
 
-   list_inithead(&queue->sync_thread.syncs);
    return 0;
 
 fail_thrd_create:
