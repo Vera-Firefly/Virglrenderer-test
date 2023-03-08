@@ -282,6 +282,9 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT: return "vkResetFenceResource100000MESA";
     case VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT: return "vkWaitSemaphoreResource100000MESA";
     case VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT: return "vkImportSemaphoreResource100000MESA";
+    case VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT: return "vkSubmitVirtqueueSeqno100000MESA";
+    case VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT: return "vkWaitVirtqueueSeqno100000MESA";
+    case VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT: return "vkWaitRingSeqno100000MESA";
     case VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT: return "vkGetVenusExperimentalFeatureData100000MESA";
     case VK_COMMAND_TYPE_vkGetDeviceProcAddr_EXT: return "vkGetDeviceProcAddr";
     case VK_COMMAND_TYPE_vkGetInstanceProcAddr_EXT: return "vkGetInstanceProcAddr";
@@ -298,7 +301,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     }
 }
 
-static void (*const vn_dispatch_table[251])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[254])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -538,6 +541,9 @@ static void (*const vn_dispatch_table[251])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT] = vn_dispatch_vkResetFenceResource100000MESA,
     [VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT] = vn_dispatch_vkWaitSemaphoreResource100000MESA,
     [VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT] = vn_dispatch_vkImportSemaphoreResource100000MESA,
+    [VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT] = vn_dispatch_vkSubmitVirtqueueSeqno100000MESA,
+    [VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT] = vn_dispatch_vkWaitVirtqueueSeqno100000MESA,
+    [VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT] = vn_dispatch_vkWaitRingSeqno100000MESA,
     [VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT] = vn_dispatch_vkGetVenusExperimentalFeatureData100000MESA,
 };
 
@@ -553,7 +559,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 251 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 254 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

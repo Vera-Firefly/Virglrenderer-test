@@ -355,6 +355,9 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT = 244,
     VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT = 245,
     VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT = 246,
+    VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT = 251,
+    VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT = 252,
+    VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT = 253,
     VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT = 195,
 } VkCommandTypeEXT;
 
@@ -423,6 +426,7 @@ typedef struct VkVenusExperimentalFeatures100000MESA {
     VkBool32 globalFencing;
     VkBool32 largeRing;
     VkBool32 syncFdFencing;
+    VkBool32 asyncRoundtrip;
 } VkVenusExperimentalFeatures100000MESA;
 
 typedef struct VkMemoryResourceAllocationSizeProperties100000MESA {
@@ -2244,6 +2248,20 @@ struct vn_command_vkImportSemaphoreResource100000MESA {
     const VkImportSemaphoreResourceInfo100000MESA* pImportSemaphoreResourceInfo;
 };
 
+struct vn_command_vkSubmitVirtqueueSeqno100000MESA {
+    uint64_t ring;
+    uint64_t seqno;
+};
+
+struct vn_command_vkWaitVirtqueueSeqno100000MESA {
+    uint64_t seqno;
+};
+
+struct vn_command_vkWaitRingSeqno100000MESA {
+    uint64_t ring;
+    uint64_t seqno;
+};
+
 struct vn_command_vkGetVenusExperimentalFeatureData100000MESA {
     size_t* pDataSize;
     void* pData;
@@ -2506,6 +2524,9 @@ struct vn_dispatch_context {
     void (*dispatch_vkResetFenceResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkResetFenceResource100000MESA *args);
     void (*dispatch_vkWaitSemaphoreResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWaitSemaphoreResource100000MESA *args);
     void (*dispatch_vkImportSemaphoreResource100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkImportSemaphoreResource100000MESA *args);
+    void (*dispatch_vkSubmitVirtqueueSeqno100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args);
+    void (*dispatch_vkWaitVirtqueueSeqno100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWaitVirtqueueSeqno100000MESA *args);
+    void (*dispatch_vkWaitRingSeqno100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkWaitRingSeqno100000MESA *args);
     void (*dispatch_vkGetVenusExperimentalFeatureData100000MESA)(struct vn_dispatch_context *ctx, struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args);
 };
 

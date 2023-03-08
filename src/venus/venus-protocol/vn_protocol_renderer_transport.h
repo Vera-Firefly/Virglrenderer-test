@@ -327,6 +327,63 @@ static inline void vn_encode_vkWriteRingExtraMESA_reply(struct vn_cs_encoder *en
     /* skip args->value */
 }
 
+static inline void vn_decode_vkSubmitVirtqueueSeqno100000MESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args)
+{
+    vn_decode_uint64_t(dec, &args->ring);
+    vn_decode_uint64_t(dec, &args->seqno);
+}
+
+static inline void vn_replace_vkSubmitVirtqueueSeqno100000MESA_args_handle(struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args)
+{
+    /* skip args->ring */
+    /* skip args->seqno */
+}
+
+static inline void vn_encode_vkSubmitVirtqueueSeqno100000MESA_reply(struct vn_cs_encoder *enc, const struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT});
+
+    /* skip args->ring */
+    /* skip args->seqno */
+}
+
+static inline void vn_decode_vkWaitVirtqueueSeqno100000MESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkWaitVirtqueueSeqno100000MESA *args)
+{
+    vn_decode_uint64_t(dec, &args->seqno);
+}
+
+static inline void vn_replace_vkWaitVirtqueueSeqno100000MESA_args_handle(struct vn_command_vkWaitVirtqueueSeqno100000MESA *args)
+{
+    /* skip args->seqno */
+}
+
+static inline void vn_encode_vkWaitVirtqueueSeqno100000MESA_reply(struct vn_cs_encoder *enc, const struct vn_command_vkWaitVirtqueueSeqno100000MESA *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT});
+
+    /* skip args->seqno */
+}
+
+static inline void vn_decode_vkWaitRingSeqno100000MESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkWaitRingSeqno100000MESA *args)
+{
+    vn_decode_uint64_t(dec, &args->ring);
+    vn_decode_uint64_t(dec, &args->seqno);
+}
+
+static inline void vn_replace_vkWaitRingSeqno100000MESA_args_handle(struct vn_command_vkWaitRingSeqno100000MESA *args)
+{
+    /* skip args->ring */
+    /* skip args->seqno */
+}
+
+static inline void vn_encode_vkWaitRingSeqno100000MESA_reply(struct vn_cs_encoder *enc, const struct vn_command_vkWaitRingSeqno100000MESA *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT});
+
+    /* skip args->ring */
+    /* skip args->seqno */
+}
+
 static inline void vn_decode_vkGetVenusExperimentalFeatureData100000MESA_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
 {
     if (vn_decode_simple_pointer(dec)) {
@@ -503,6 +560,66 @@ static inline void vn_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *
 
     if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
         vn_encode_vkWriteRingExtraMESA_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkSubmitVirtqueueSeqno100000MESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkSubmitVirtqueueSeqno100000MESA args;
+
+    if (!ctx->dispatch_vkSubmitVirtqueueSeqno100000MESA) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkSubmitVirtqueueSeqno100000MESA_args_temp(ctx->decoder, &args);
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkSubmitVirtqueueSeqno100000MESA(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkSubmitVirtqueueSeqno100000MESA_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkWaitVirtqueueSeqno100000MESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkWaitVirtqueueSeqno100000MESA args;
+
+    if (!ctx->dispatch_vkWaitVirtqueueSeqno100000MESA) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkWaitVirtqueueSeqno100000MESA_args_temp(ctx->decoder, &args);
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkWaitVirtqueueSeqno100000MESA(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkWaitVirtqueueSeqno100000MESA_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkWaitRingSeqno100000MESA(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkWaitRingSeqno100000MESA args;
+
+    if (!ctx->dispatch_vkWaitRingSeqno100000MESA) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkWaitRingSeqno100000MESA_args_temp(ctx->decoder, &args);
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkWaitRingSeqno100000MESA(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkWaitRingSeqno100000MESA_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }
