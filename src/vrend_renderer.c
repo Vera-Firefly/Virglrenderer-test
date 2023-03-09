@@ -11464,8 +11464,10 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
       if (max > PIPE_MAX_SHADER_BUFFERS)
          max = PIPE_MAX_SHADER_BUFFERS;
       caps->v2.max_shader_buffer_frag_compute = max;
-      glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS,
-                    (GLint*)&caps->v2.max_combined_shader_buffers);
+      glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &max);
+      /* We use a 32 bit mask for the binding points and the binding points
+       * must be sufficient for all shader stages combined. */
+      caps->v2.max_combined_shader_buffers = MIN2(max, VREND_MAX_COMBINED_SSBO_BINDING_POINTS);
    }
 
    if (has_feature(feat_images)) {

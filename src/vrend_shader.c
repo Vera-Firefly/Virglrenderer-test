@@ -1835,8 +1835,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       break;
    case TGSI_FILE_BUFFER:
-      if (decl->Range.First >= 32) {
-         vrend_printf( "Buffer view exceeded, max is 32\n");
+      if (decl->Range.First >= VREND_MAX_COMBINED_SSBO_BINDING_POINTS) {
+         vrend_printf( "Buffer view exceeded, max is %d\n", VREND_MAX_COMBINED_SSBO_BINDING_POINTS);
          return false;
       }
       ctx->ssbo_used_mask |= (1 << decl->Range.First);
