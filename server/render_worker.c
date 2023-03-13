@@ -164,6 +164,16 @@ fork_minijail(const struct minijail *template)
 static int
 create_sigchld_fd(void)
 {
+   /* restore the ability of waitid() to catch SIGCHLD, in case parent disabled
+    * it (e.g. virgl_test_server) */
+   struct sigaction sa = { 0 };
+   sa.sa_handler = SIG_DFL;
+   int ret = sigaction(SIGCHLD, &sa, NULL);
+   if (ret) {
+      render_log("failed to set sigaction for SIGCHLD");
+      return ret;
+   }
+
    const int signum = SIGCHLD;
 
    sigset_t set;
