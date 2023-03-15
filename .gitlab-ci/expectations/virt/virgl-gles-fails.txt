@@ -206,11 +206,8 @@ spec@arb_draw_indirect@arb_draw_indirect-draw-elements-prim-restart-ugly,Fail
 spec@arb_enhanced_layouts@linker@component-layout@intrastage-vs,Fail
 spec@arb_enhanced_layouts@linker@component-layout@vs-to-fs,Fail
 spec@arb_enhanced_layouts@matching_basic_types_3_loc_1,Fail
-spec@arb_enhanced_layouts@matching_fp64_types_1,Crash
 spec@arb_enhanced_layouts@matching_fp64_types_1_loc_1,Fail
-spec@arb_enhanced_layouts@matching_fp64_types_2,Crash
 spec@arb_enhanced_layouts@matching_fp64_types_2_loc_1,Fail
-spec@arb_enhanced_layouts@matching_fp64_types_3,Crash
 spec@arb_enhanced_layouts@matching_fp64_types_3_loc_1,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail

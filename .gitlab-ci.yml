@@ -11,7 +11,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 817791
+  MESA_PIPELINE_ID: 830082
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -25,7 +25,7 @@ variables:
 
 include:
   - project: 'freedesktop/ci-templates'
-    ref: 79c325922670137e8f0a4dc5f6f097e0eb57c1af
+    ref: 9f0eb526291fe74651fe1430cbd2397f4c0a819b
     file:
       - '/templates/ci-fairy.yml'
   - project: 'freedesktop/ci-templates'
@@ -37,7 +37,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: e7c5a8b3f8fd850879802be638d045a286d73445
+    ref: aba16defa842ef3559fb29c6f9c4d347895b9b3a
     file:
       - '/.gitlab-ci/image-tags.yml'
 
@@ -374,5 +374,3 @@ venus-lavapipe:
     FDO_CI_CONCURRENT: 32 # Seems to be the fastest value, more gets actually slower
     CROSVM_MEMORY: 3072
     CROSVM_GPU_ARGS: "vulkan=true,gles=false,backend=virglrenderer,egl=true,surfaceless=true"
-  tags:
-    - mesa-swrast

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -ex
 
@@ -34,6 +34,10 @@ else
     unset MESA_JOB_ID
     curl ${MESA_CI_ARTIFACTS_URL} -o - | tar -xv
 fi
+
+# Directory used by crosvm-runner.sh
+export SCRIPTS_DIR=$(pwd)/install
+. ${SCRIPTS_DIR}/setup-test-env.sh
 
 # Overwrite Mesa CI's virglrenderer binaries with self built versions
 cp -a ${CI_PROJECT_DIR}/install/bin/virgl_test_server /usr/local/bin/
