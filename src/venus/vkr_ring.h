@@ -133,4 +133,10 @@ vkr_ring_load_head(const struct vkr_ring *ring)
    return atomic_load_explicit(ring->control.head, memory_order_acquire);
 }
 
+static inline void
+vkr_ring_set_status_bits(struct vkr_ring *ring, uint32_t mask)
+{
+   atomic_fetch_or_explicit(ring->control.status, mask, memory_order_seq_cst);
+}
+
 #endif /* VKR_RING_H */

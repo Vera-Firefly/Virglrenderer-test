@@ -75,9 +75,9 @@ vkr_ring_load_tail(const struct vkr_ring *ring)
 }
 
 static void
-vkr_ring_store_status(struct vkr_ring *ring, uint32_t status)
+vkr_ring_unset_status_bits(struct vkr_ring *ring, uint32_t mask)
 {
-   atomic_store_explicit(ring->control.status, status, memory_order_seq_cst);
+   atomic_fetch_and_explicit(ring->control.status, ~mask, memory_order_seq_cst);
 }
 
 static void
@@ -250,10 +250,10 @@ vkr_ring_thread(void *arg)
       bool wait = false;
       if (vkr_ring_now() >= last_submit + ring->idle_timeout) {
          ring->pending_notify = false;
-         vkr_ring_store_status(ring, VK_RING_STATUS_IDLE_BIT_MESA);
+         vkr_ring_set_status_bits(ring, VK_RING_STATUS_IDLE_BIT_MESA);
          wait = ring->buffer.cur == vkr_ring_load_tail(ring);
          if (!wait)
-            vkr_ring_store_status(ring, VK_RING_STATUS_NONE_MESA);
+            vkr_ring_unset_status_bits(ring, VK_RING_STATUS_IDLE_BIT_MESA);
       }
 
       if (wait) {
@@ -262,7 +262,7 @@ vkr_ring_thread(void *arg)
          mtx_lock(&ring->mutex);
          if (ring->started && !ring->pending_notify)
             cnd_wait(&ring->cond, &ring->mutex);
-         vkr_ring_store_status(ring, VK_RING_STATUS_NONE_MESA);
+         vkr_ring_unset_status_bits(ring, VK_RING_STATUS_IDLE_BIT_MESA);
          mtx_unlock(&ring->mutex);
 
          if (!ring->started)
@@ -295,7 +295,7 @@ vkr_ring_thread(void *arg)
    }
 
    if (ret < 0)
-      vkr_ring_store_status(ring, VK_RING_STATUS_FATAL_BIT_MESA);
+      vkr_ring_set_status_bits(ring, VK_RING_STATUS_FATAL_BIT_MESA);
 
    return ret;
 }
