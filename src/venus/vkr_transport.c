@@ -213,6 +213,37 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    list_addtail(&ring->head, &ctx->rings);
    mtx_unlock(&ctx->ring_mutex);
 
+   const VkRingMonitorInfoMESA *monitor_info =
+      vkr_find_struct(info->pNext, VK_STRUCTURE_TYPE_RING_MONITOR_INFO_MESA);
+   if (monitor_info) {
+      if (!monitor_info->maxReportingPeriodMicroseconds) {
+         vkr_log("invalid ring reporting period");
+         vkr_context_set_fatal(ctx);
+         return;
+      }
+
+      /* Start the ring monitoring thread or update the reporting rate of the running
+       * thread to the smallest maxReportingPeriodMicroseconds recieved so far, and wake
+       * it to begin reporting at the faster rate before the first driver check occurs.
+       */
+      if (!ctx->ring_monitor.started) {
+         if (!vkr_context_ring_monitor_init(
+                ctx, monitor_info->maxReportingPeriodMicroseconds)) {
+            vkr_context_set_fatal(ctx);
+            return;
+         }
+      } else if (monitor_info->maxReportingPeriodMicroseconds <
+                 ctx->ring_monitor.report_period_us) {
+         mtx_lock(&ctx->ring_monitor.mutex);
+         ctx->ring_monitor.report_period_us =
+            monitor_info->maxReportingPeriodMicroseconds;
+         cnd_signal(&ctx->ring_monitor.cond);
+         mtx_unlock(&ctx->ring_monitor.mutex);
+      }
+
+      ring->monitor = true;
+   }
+
    vkr_ring_start(ring);
 }
 
@@ -317,6 +348,7 @@ vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
       .largeRing = VK_TRUE,
       .syncFdFencing = VK_TRUE,
       .asyncRoundtrip = VK_TRUE,
+      .ringMonitoring = VK_TRUE,
    };
 
    vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(args);
