@@ -443,6 +443,108 @@ vkr_context_wait_ring_init(struct vkr_context *ctx)
    return true;
 }
 
+static struct timespec
+timespec_add(struct timespec a, struct timespec b)
+{
+   /* handle only the non-negative case, unless needed. */
+   assert(a.tv_sec >= 0 && a.tv_nsec >= 0 && b.tv_sec >= 0 && b.tv_nsec >= 0);
+
+#define NS_PER_SEC 1000000000
+   a.tv_sec += b.tv_sec;
+   a.tv_nsec += b.tv_nsec;
+   if (a.tv_nsec >= NS_PER_SEC) {
+      a.tv_sec += 1;
+      a.tv_nsec -= NS_PER_SEC;
+   }
+#undef NS_PER_SEC
+
+   return a;
+}
+
+static int
+vkr_context_ring_monitor_thread(void *arg)
+{
+   struct vkr_context *ctx = arg;
+
+   char thread_name[16];
+   snprintf(thread_name, ARRAY_SIZE(thread_name), "vkr-ringmon-%d", ctx->ctx_id);
+   u_thread_setname(thread_name);
+
+   struct timespec ts;
+   int ret = thrd_busy;
+   assert(ctx->ring_monitor.started);
+   while (ctx->ring_monitor.started) {
+      /* only notify at the configured rate, not faster. */
+      if (ret == thrd_busy) {
+         mtx_lock(&ctx->ring_mutex);
+         list_for_each_entry (struct vkr_ring, ring, &ctx->rings, head) {
+            if (ring->monitor)
+               vkr_ring_set_status_bits(ring, VK_RING_STATUS_ALIVE_BIT_MESA);
+         }
+         mtx_unlock(&ctx->ring_mutex);
+         ret = 0;
+      } else if (ret)
+         break;
+
+      mtx_lock(&ctx->ring_monitor.mutex);
+      if ((ret = clock_gettime(CLOCK_REALTIME, &ts))) {
+         mtx_unlock(&ctx->ring_monitor.mutex);
+         break;
+      }
+
+      const uint32_t period_us = ctx->ring_monitor.report_period_us;
+      ts = timespec_add(
+         ts, (struct timespec){ period_us / 1000000, (period_us % 1000000) * 1000 });
+      ret = cnd_timedwait(&ctx->ring_monitor.cond, &ctx->ring_monitor.mutex, &ts);
+      mtx_unlock(&ctx->ring_monitor.mutex);
+   }
+
+   return ret;
+}
+
+bool
+vkr_context_ring_monitor_init(struct vkr_context *ctx, uint32_t report_period_us)
+{
+   int ret;
+   assert(report_period_us > 0);
+   assert(!ctx->ring_monitor.started);
+
+   if (mtx_init(&ctx->ring_monitor.mutex, mtx_plain) != thrd_success)
+      goto err_mtx_init;
+   if (cnd_init(&ctx->ring_monitor.cond) != thrd_success)
+      goto err_cnd_init;
+
+   ctx->ring_monitor.report_period_us = report_period_us;
+   ctx->ring_monitor.started = true;
+   ret = thrd_create(&ctx->ring_monitor.thread, vkr_context_ring_monitor_thread, ctx);
+   if (ret != thrd_success)
+      goto err_monitor_thrd_create;
+
+   return true;
+
+err_monitor_thrd_create:
+   cnd_destroy(&ctx->ring_monitor.cond);
+err_cnd_init:
+   mtx_destroy(&ctx->ring_monitor.mutex);
+err_mtx_init:
+   return false;
+}
+
+static void
+vkr_context_ring_monitor_fini(struct vkr_context *ctx)
+{
+   mtx_lock(&ctx->ring_monitor.mutex);
+   assert(ctx->ring_monitor.started);
+   ctx->ring_monitor.started = false;
+   cnd_signal(&ctx->ring_monitor.cond);
+   mtx_unlock(&ctx->ring_monitor.mutex);
+
+   thrd_join(ctx->ring_monitor.thread, NULL);
+
+   cnd_destroy(&ctx->ring_monitor.cond);
+   mtx_destroy(&ctx->ring_monitor.mutex);
+}
+
 void
 vkr_context_destroy(struct vkr_context *ctx)
 {
@@ -457,6 +559,9 @@ vkr_context_destroy(struct vkr_context *ctx)
    mtx_destroy(&ctx->ring_mutex);
 
    vkr_context_wait_ring_fini(ctx);
+
+   if (ctx->ring_monitor.started)
+      vkr_context_ring_monitor_fini(ctx);
 
    if (ctx->instance) {
       vkr_log("destroying context %d (%s) with a valid instance", ctx->ctx_id,

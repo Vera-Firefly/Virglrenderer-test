@@ -98,6 +98,7 @@ struct vkr_ring {
    thrd_t thread;
    atomic_bool started;
    atomic_bool pending_notify;
+   atomic_bool monitor;
    uint64_t virtqueue_seqno;
 };
 

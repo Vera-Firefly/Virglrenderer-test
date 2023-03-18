@@ -64,6 +64,19 @@ struct vkr_context {
       uint32_t seqno;
    } wait_ring;
 
+   struct {
+      mtx_t mutex;
+      cnd_t cond;
+      thrd_t thread;
+      atomic_bool started;
+
+      /* When monitoring multiple rings, wake to report on all rings at the minimum of
+       * per-ring maxReportingPeriodMicroseconds to ensure that every ring is marked ALIVE
+       * before the next renderer check.
+       */
+      atomic_uint report_period_us;
+   } ring_monitor;
+
    mtx_t object_mutex;
    struct hash_table *object_table;
 
@@ -91,6 +104,9 @@ vkr_context_create(uint32_t ctx_id,
 
 void
 vkr_context_destroy(struct vkr_context *ctx);
+
+bool
+vkr_context_ring_monitor_init(struct vkr_context *ctx, uint32_t report_period_us);
 
 bool
 vkr_context_submit_fence(struct vkr_context *ctx,
