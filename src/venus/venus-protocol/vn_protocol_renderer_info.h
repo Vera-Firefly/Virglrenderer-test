@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[99];
+      bool enabled[100];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -33,6 +33,7 @@ struct vn_info_extension_table {
          bool EXT_index_type_uint8;
          bool EXT_inline_uniform_block;
          bool EXT_line_rasterization;
+         bool EXT_memory_budget;
          bool EXT_multi_draw;
          bool EXT_mutable_descriptor_type;
          bool EXT_pci_bus_info;
@@ -126,8 +127,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 99;
-static const struct vn_info_extension _vn_info_extensions[99] = {
+static const uint32_t _vn_info_extension_count = 100;
+static const struct vn_info_extension _vn_info_extensions[100] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
@@ -147,6 +148,7 @@ static const struct vn_info_extension _vn_info_extensions[99] = {
    { "VK_EXT_index_type_uint8", 266, 1 },
    { "VK_EXT_inline_uniform_block", 139, 1 },
    { "VK_EXT_line_rasterization", 260, 1 },
+   { "VK_EXT_memory_budget", 238, 1 },
    { "VK_EXT_multi_draw", 393, 1 },
    { "VK_EXT_mutable_descriptor_type", 495, 1 },
    { "VK_EXT_pci_bus_info", 213, 2 },

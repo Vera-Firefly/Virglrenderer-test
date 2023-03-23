@@ -13128,12 +13128,86 @@ vn_decode_VkQueueFamilyProperties2_partial_temp(struct vn_cs_decoder *dec, VkQue
     vn_decode_VkQueueFamilyProperties2_self_partial_temp(dec, val);
 }
 
+/* struct VkPhysicalDeviceMemoryBudgetPropertiesEXT chain */
+
+static inline void
+vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_pnext(struct vn_cs_encoder *enc, const void *val)
+{
+    /* no known/supported struct */
+    vn_encode_simple_pointer(enc, NULL);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self(struct vn_cs_encoder *enc, const VkPhysicalDeviceMemoryBudgetPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_encode_array_size(enc, VK_MAX_MEMORY_HEAPS);
+    vn_encode_VkDeviceSize_array(enc, val->heapBudget, VK_MAX_MEMORY_HEAPS);
+    vn_encode_array_size(enc, VK_MAX_MEMORY_HEAPS);
+    vn_encode_VkDeviceSize_array(enc, val->heapUsage, VK_MAX_MEMORY_HEAPS);
+}
+
+static inline void
+vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT(struct vn_cs_encoder *enc, const VkPhysicalDeviceMemoryBudgetPropertiesEXT *val)
+{
+    assert(val->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
+    vn_encode_VkStructureType(enc, &(VkStructureType){ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT });
+    vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_pnext(enc, val->pNext);
+    vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self(enc, val);
+}
+
+static inline void *
+vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_pnext_partial_temp(struct vn_cs_decoder *dec)
+{
+    /* no known/supported struct */
+    if (vn_decode_simple_pointer(dec))
+        vn_cs_decoder_set_fatal(dec);
+    return NULL;
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceMemoryBudgetPropertiesEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    /* skip val->heapBudget */
+    /* skip val->heapUsage */
+}
+
+static inline void
+vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_partial_temp(struct vn_cs_decoder *dec, VkPhysicalDeviceMemoryBudgetPropertiesEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_pnext_partial_temp(dec);
+    vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self_partial_temp(dec, val);
+}
+
 /* struct VkPhysicalDeviceMemoryProperties2 chain */
 
 static inline void
 vn_encode_VkPhysicalDeviceMemoryProperties2_pnext(struct vn_cs_encoder *enc, const void *val)
 {
-    /* no known/supported struct */
+    const VkBaseInStructure *pnext = val;
+
+    while (pnext) {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT:
+            vn_encode_simple_pointer(enc, pnext);
+            vn_encode_VkStructureType(enc, &pnext->sType);
+            vn_encode_VkPhysicalDeviceMemoryProperties2_pnext(enc, pnext->pNext);
+            vn_encode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self(enc, (const VkPhysicalDeviceMemoryBudgetPropertiesEXT *)pnext);
+            return;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    }
+
     vn_encode_simple_pointer(enc, NULL);
 }
 
@@ -13156,10 +13230,30 @@ vn_encode_VkPhysicalDeviceMemoryProperties2(struct vn_cs_encoder *enc, const VkP
 static inline void *
 vn_decode_VkPhysicalDeviceMemoryProperties2_pnext_partial_temp(struct vn_cs_decoder *dec)
 {
-    /* no known/supported struct */
-    if (vn_decode_simple_pointer(dec))
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPhysicalDeviceMemoryBudgetPropertiesEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPhysicalDeviceMemoryProperties2_pnext_partial_temp(dec);
+            vn_decode_VkPhysicalDeviceMemoryBudgetPropertiesEXT_self_partial_temp(dec, (VkPhysicalDeviceMemoryBudgetPropertiesEXT *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
         vn_cs_decoder_set_fatal(dec);
-    return NULL;
+        break;
+    }
+
+    return pnext;
 }
 
 static inline void
