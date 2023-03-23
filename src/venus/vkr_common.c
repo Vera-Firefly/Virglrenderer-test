@@ -109,6 +109,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_image_view_min_lod = true,
    .EXT_index_type_uint8 = true,
    .EXT_line_rasterization = true,
+   .EXT_memory_budget = true,
    .EXT_multi_draw = true,
    .EXT_mutable_descriptor_type = true,
    .EXT_pci_bus_info = true,

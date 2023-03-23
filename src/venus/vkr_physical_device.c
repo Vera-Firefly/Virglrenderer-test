@@ -543,7 +543,17 @@ vkr_dispatch_vkGetPhysicalDeviceMemoryProperties2(
 {
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
-   args->pMemoryProperties->memoryProperties = physical_dev->memory_properties;
+
+   if (args->pMemoryProperties->pNext == NULL) {
+      /* The client is querying only VkPhysicalDeviceMemoryProperties, which is
+       * invariant. Return the cached properties.
+       */
+      args->pMemoryProperties->memoryProperties = physical_dev->memory_properties;
+   } else {
+      vn_replace_vkGetPhysicalDeviceMemoryProperties2_args_handle(args);
+      vkGetPhysicalDeviceMemoryProperties2(args->physicalDevice,
+                                           args->pMemoryProperties);
+   }
 }
 
 static void
