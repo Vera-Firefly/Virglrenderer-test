@@ -68,7 +68,7 @@ add_project_arguments(cc.get_supported_arguments(flags), language : 'c')
 prog_python = import('python').find_installation('python3')
 
 not_found = dependency('', required: false)
-libdrm_dep = dependency('libdrm', version : '>=2.4.50', required: get_option('drm'))
+libdrm_dep = dependency('libdrm', version : '>=2.4.50', required: get_option('drm').enabled() or get_option('venus-experimental'))
 gbm_dep = not_found
 thread_dep = dependency('threads')
 epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
@@ -258,6 +258,7 @@ with_render_server = with_venus
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
 if with_venus
+   gbm_dep = dependency('gbm')
    venus_dep = dependency('vulkan')
 
    conf_data.set('ENABLE_VENUS', 1)
