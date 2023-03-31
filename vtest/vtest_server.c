@@ -182,7 +182,7 @@ static void vtest_server_parse_args(int argc, char **argv)
       {"use-gles",            no_argument, NULL, OPT_USE_GLES},
       {"rendernode",          required_argument, NULL, OPT_RENDERNODE},
       {"venus",               no_argument, NULL, OPT_VENUS},
-      {"socket-path",         optional_argument, NULL, OPT_SOCKET_PATH},
+      {"socket-path",         required_argument, NULL, OPT_SOCKET_PATH},
       {"no-virgl",            no_argument, NULL, OPT_NO_VIRGL},
       {0, 0, 0, 0}
    };
