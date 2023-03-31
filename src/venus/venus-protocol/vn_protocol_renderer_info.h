@@ -12,7 +12,7 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[100];
+      bool enabled[102];
       struct {
          bool EXT_4444_formats;
          bool EXT_calibrated_timestamps;
@@ -33,6 +33,7 @@ struct vn_info_extension_table {
          bool EXT_index_type_uint8;
          bool EXT_inline_uniform_block;
          bool EXT_line_rasterization;
+         bool EXT_load_store_op_none;
          bool EXT_memory_budget;
          bool EXT_multi_draw;
          bool EXT_mutable_descriptor_type;
@@ -44,6 +45,7 @@ struct vn_info_extension_table {
          bool EXT_private_data;
          bool EXT_provoking_vertex;
          bool EXT_queue_family_foreign;
+         bool EXT_rasterization_order_attachment_access;
          bool EXT_robustness2;
          bool EXT_sampler_filter_minmax;
          bool EXT_scalar_block_layout;
@@ -127,8 +129,8 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 100;
-static const struct vn_info_extension _vn_info_extensions[100] = {
+static const uint32_t _vn_info_extension_count = 102;
+static const struct vn_info_extension _vn_info_extensions[102] = {
    { "VK_EXT_4444_formats", 341, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
    { "VK_EXT_command_serialization", 384, 0 },
@@ -148,6 +150,7 @@ static const struct vn_info_extension _vn_info_extensions[100] = {
    { "VK_EXT_index_type_uint8", 266, 1 },
    { "VK_EXT_inline_uniform_block", 139, 1 },
    { "VK_EXT_line_rasterization", 260, 1 },
+   { "VK_EXT_load_store_op_none", 401, 1 },
    { "VK_EXT_memory_budget", 238, 1 },
    { "VK_EXT_multi_draw", 393, 1 },
    { "VK_EXT_mutable_descriptor_type", 495, 1 },
@@ -159,6 +162,7 @@ static const struct vn_info_extension _vn_info_extensions[100] = {
    { "VK_EXT_private_data", 296, 1 },
    { "VK_EXT_provoking_vertex", 255, 1 },
    { "VK_EXT_queue_family_foreign", 127, 1 },
+   { "VK_EXT_rasterization_order_attachment_access", 464, 1 },
    { "VK_EXT_robustness2", 287, 1 },
    { "VK_EXT_sampler_filter_minmax", 131, 2 },
    { "VK_EXT_scalar_block_layout", 222, 1 },
