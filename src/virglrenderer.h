@@ -48,7 +48,7 @@ struct virgl_renderer_gl_ctx_param {
 #ifdef VIRGL_RENDERER_UNSTABLE_APIS
 #define VIRGL_RENDERER_CALLBACKS_VERSION 4
 #else
-#define VIRGL_RENDERER_CALLBACKS_VERSION 2
+#define VIRGL_RENDERER_CALLBACKS_VERSION 3
 #endif
 
 struct virgl_renderer_callbacks {
@@ -77,12 +77,30 @@ struct virgl_renderer_callbacks {
     */
    int (*get_drm_fd)(void *cookie);
 
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
+   /*
+    * v3: Per-context fences signal in creation order only within a context.
+    * Two per-context fences in two contexts might signal in any order.
+    *
+    * When a per-context fence is created, a fence cookie can be specified. The
+    * cookie will be passed to write_context_fence callback. This replaces
+    * fence_id that is used in ctx0 fencing.
+    *
+    * write_context_fence is called on each fence unless the fence has
+    * VIRGL_RENDERER_FENCE_FLAG_MERGEABLE set. When the bit is set,
+    * write_context_fence might be skipped.
+    */
    void (*write_context_fence)(void *cookie, uint32_t ctx_id, uint32_t ring_idx, uint64_t fence_id);
 
-   /* version 0: a connected socket of type SOCK_SEQPACKET */
+   /*
+    * v3: It allows the client to start the render server externally. It can be
+    * used to sandbox the render server, or is required when the client process
+    * is sandboxed and cannot fork/exec/socketpair.
+    *
+    * version 0: a connected socket of type SOCK_SEQPACKET
+    */
    int (*get_server_fd)(void *cookie, uint32_t version);
 
+#ifdef VIRGL_RENDERER_UNSTABLE_APIS
    /*
     * Get the EGLDisplay from caller. It requires create_gl_context,
     * destroy_gl_context, make_current to be implemented by caller.
@@ -102,7 +120,6 @@ struct virgl_renderer_callbacks {
 #define VIRGL_RENDERER_USE_SURFACELESS (1 << 3)
 #define VIRGL_RENDERER_USE_GLES (1 << 4)
 
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 /*
  * Blob resources used with the 3D driver must be able to be represented as file descriptors.
  * The typical use case is the virtual machine manager (or vtest) is running in a multiprocess
@@ -135,6 +152,7 @@ struct virgl_renderer_callbacks {
  */
 #define VIRGL_RENDERER_RENDER_SERVER (1 << 9)
 
+#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 /*
  * Enable drm renderer.
  */
@@ -362,12 +380,6 @@ VIRGL_EXPORT int virgl_renderer_resource_get_map_info(uint32_t res_handle, uint3
 VIRGL_EXPORT int
 virgl_renderer_resource_export_blob(uint32_t res_id, uint32_t *fd_type, int *fd);
 
-/*
- * These are unstable APIs for development only. Use these for development/testing purposes
- * only, not in production
- */
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
-
 struct virgl_renderer_resource_import_blob_args
 {
    uint32_t res_handle;
@@ -380,14 +392,21 @@ struct virgl_renderer_resource_import_blob_args
 VIRGL_EXPORT int
 virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_blob_args *args);
 
-VIRGL_EXPORT int
-virgl_renderer_export_fence(uint32_t client_fence_id, int *fd);
-
 #define VIRGL_RENDERER_FENCE_FLAG_MERGEABLE      (1 << 0)
 VIRGL_EXPORT int virgl_renderer_context_create_fence(uint32_t ctx_id,
                                                      uint32_t flags,
                                                      uint32_t ring_idx,
                                                      uint64_t fence_id);
+
+/*
+ * These are unstable APIs for development only. Use these for development/testing purposes
+ * only, not in production
+ */
+#ifdef VIRGL_RENDERER_UNSTABLE_APIS
+
+VIRGL_EXPORT int
+virgl_renderer_export_fence(uint32_t client_fence_id, int *fd);
+
 VIRGL_EXPORT void virgl_renderer_context_poll(uint32_t ctx_id); /* force fences */
 VIRGL_EXPORT int virgl_renderer_context_get_poll_fd(uint32_t ctx_id);
 
