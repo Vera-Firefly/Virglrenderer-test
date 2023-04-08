@@ -50,8 +50,9 @@
 #include <sys/select.h>
 #endif
 
-enum vtest_client_error {
-   VTEST_CLIENT_ERROR_INPUT_READ = 2, /* for backward compatibility */
+enum vtest_client_result {
+   VTEST_CLIENT_DISCONNECTED = 1,
+   VTEST_CLIENT_ERROR_INPUT_READ,
    VTEST_CLIENT_ERROR_CONTEXT_MISSING,
    VTEST_CLIENT_ERROR_CONTEXT_FAILED,
    VTEST_CLIENT_ERROR_COMMAND_ID,
@@ -468,10 +469,11 @@ static void vtest_server_wait_clients(void)
    }
 }
 
-static const char *vtest_client_error_string(enum vtest_client_error err)
+static const char *vtest_client_result_string(enum vtest_client_result ret)
 {
-   switch (err) {
+   switch (ret) {
 #define CASE(e) case e: return #e;
+   CASE(VTEST_CLIENT_DISCONNECTED)
    CASE(VTEST_CLIENT_ERROR_INPUT_READ)
    CASE(VTEST_CLIENT_ERROR_CONTEXT_MISSING)
    CASE(VTEST_CLIENT_ERROR_CONTEXT_FAILED)
@@ -488,7 +490,7 @@ static void vtest_server_dispatch_clients(void)
    struct vtest_client *client, *tmp;
 
    LIST_FOR_EACH_ENTRY_SAFE(client, tmp, &server.active_clients, head) {
-      int err;
+      int ret;
 
       if (client->context_need_poll) {
          vtest_poll_context(client->context);
@@ -499,10 +501,10 @@ static void vtest_server_dispatch_clients(void)
          continue;
       client->in_fd_ready = false;
 
-      err = vtest_client_dispatch_commands(client);
-      if (err) {
-         fprintf(stderr, "client failed: %s\n",
-                 vtest_client_error_string(err));
+      ret = vtest_client_dispatch_commands(client);
+      if (ret) {
+         fprintf(ret == VTEST_CLIENT_DISCONNECTED ? stdout : stderr, "client: %s\n",
+                 vtest_client_result_string(ret));
          list_del(&client->head);
          list_addtail(&client->head, &server.inactive_clients);
       }
@@ -687,9 +689,10 @@ static int vtest_client_dispatch_commands(struct vtest_client *client)
    uint32_t header[VTEST_HDR_SIZE];
 
    ret = client->input.read(&client->input, &header, sizeof(header));
-   if (ret < 0 || (size_t)ret < sizeof(header)) {
+   if (!ret)
+      return VTEST_CLIENT_DISCONNECTED;
+   else if (ret < 0 || (size_t)ret < sizeof(header))
       return VTEST_CLIENT_ERROR_INPUT_READ;
-   }
 
    if (!client->context) {
       /* The first command MUST be VCMD_CREATE_RENDERER */
