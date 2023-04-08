@@ -291,9 +291,9 @@ vkr_dispatch_vkGetMemoryResourcePropertiesMESA(
 
    args->pMemoryResourceProperties->memoryTypeBits = mem_fd_props.memoryTypeBits;
 
-   VkMemoryResourceAllocationSizeProperties100000MESA *alloc_size_props = vkr_find_struct(
-      args->pMemoryResourceProperties->pNext,
-      VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_100000_MESA);
+   VkMemoryResourceAllocationSizePropertiesMESA *alloc_size_props =
+      vkr_find_struct(args->pMemoryResourceProperties->pNext,
+                      VK_STRUCTURE_TYPE_MEMORY_RESOURCE_ALLOCATION_SIZE_PROPERTIES_MESA);
    if (alloc_size_props)
       alloc_size_props->allocationSize = res->size;
 }

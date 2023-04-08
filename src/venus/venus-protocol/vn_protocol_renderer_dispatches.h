@@ -279,13 +279,12 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkNotifyRingMESA_EXT: return "vkNotifyRingMESA";
     case VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT: return "vkWriteRingExtraMESA";
     case VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT: return "vkGetMemoryResourcePropertiesMESA";
-    case VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT: return "vkResetFenceResource100000MESA";
-    case VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT: return "vkWaitSemaphoreResource100000MESA";
-    case VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT: return "vkImportSemaphoreResource100000MESA";
-    case VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT: return "vkSubmitVirtqueueSeqno100000MESA";
-    case VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT: return "vkWaitVirtqueueSeqno100000MESA";
-    case VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT: return "vkWaitRingSeqno100000MESA";
-    case VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT: return "vkGetVenusExperimentalFeatureData100000MESA";
+    case VK_COMMAND_TYPE_vkResetFenceResourceMESA_EXT: return "vkResetFenceResourceMESA";
+    case VK_COMMAND_TYPE_vkWaitSemaphoreResourceMESA_EXT: return "vkWaitSemaphoreResourceMESA";
+    case VK_COMMAND_TYPE_vkImportSemaphoreResourceMESA_EXT: return "vkImportSemaphoreResourceMESA";
+    case VK_COMMAND_TYPE_vkSubmitVirtqueueSeqnoMESA_EXT: return "vkSubmitVirtqueueSeqnoMESA";
+    case VK_COMMAND_TYPE_vkWaitVirtqueueSeqnoMESA_EXT: return "vkWaitVirtqueueSeqnoMESA";
+    case VK_COMMAND_TYPE_vkWaitRingSeqnoMESA_EXT: return "vkWaitRingSeqnoMESA";
     case VK_COMMAND_TYPE_vkGetDeviceProcAddr_EXT: return "vkGetDeviceProcAddr";
     case VK_COMMAND_TYPE_vkGetInstanceProcAddr_EXT: return "vkGetInstanceProcAddr";
     case VK_COMMAND_TYPE_vkMapMemory_EXT: return "vkMapMemory";
@@ -538,13 +537,12 @@ static void (*const vn_dispatch_table[254])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkNotifyRingMESA_EXT] = vn_dispatch_vkNotifyRingMESA,
     [VK_COMMAND_TYPE_vkWriteRingExtraMESA_EXT] = vn_dispatch_vkWriteRingExtraMESA,
     [VK_COMMAND_TYPE_vkGetMemoryResourcePropertiesMESA_EXT] = vn_dispatch_vkGetMemoryResourcePropertiesMESA,
-    [VK_COMMAND_TYPE_vkResetFenceResource100000MESA_EXT] = vn_dispatch_vkResetFenceResource100000MESA,
-    [VK_COMMAND_TYPE_vkWaitSemaphoreResource100000MESA_EXT] = vn_dispatch_vkWaitSemaphoreResource100000MESA,
-    [VK_COMMAND_TYPE_vkImportSemaphoreResource100000MESA_EXT] = vn_dispatch_vkImportSemaphoreResource100000MESA,
-    [VK_COMMAND_TYPE_vkSubmitVirtqueueSeqno100000MESA_EXT] = vn_dispatch_vkSubmitVirtqueueSeqno100000MESA,
-    [VK_COMMAND_TYPE_vkWaitVirtqueueSeqno100000MESA_EXT] = vn_dispatch_vkWaitVirtqueueSeqno100000MESA,
-    [VK_COMMAND_TYPE_vkWaitRingSeqno100000MESA_EXT] = vn_dispatch_vkWaitRingSeqno100000MESA,
-    [VK_COMMAND_TYPE_vkGetVenusExperimentalFeatureData100000MESA_EXT] = vn_dispatch_vkGetVenusExperimentalFeatureData100000MESA,
+    [VK_COMMAND_TYPE_vkResetFenceResourceMESA_EXT] = vn_dispatch_vkResetFenceResourceMESA,
+    [VK_COMMAND_TYPE_vkWaitSemaphoreResourceMESA_EXT] = vn_dispatch_vkWaitSemaphoreResourceMESA,
+    [VK_COMMAND_TYPE_vkImportSemaphoreResourceMESA_EXT] = vn_dispatch_vkImportSemaphoreResourceMESA,
+    [VK_COMMAND_TYPE_vkSubmitVirtqueueSeqnoMESA_EXT] = vn_dispatch_vkSubmitVirtqueueSeqnoMESA,
+    [VK_COMMAND_TYPE_vkWaitVirtqueueSeqnoMESA_EXT] = vn_dispatch_vkWaitVirtqueueSeqnoMESA,
+    [VK_COMMAND_TYPE_vkWaitRingSeqnoMESA_EXT] = vn_dispatch_vkWaitRingSeqnoMESA,
 };
 
 static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)

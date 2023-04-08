@@ -457,16 +457,15 @@ vkr_dispatch_vkWaitForFences(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkResetFenceResource100000MESA(
-   struct vn_dispatch_context *dispatch,
-   struct vn_command_vkResetFenceResource100000MESA *args)
+vkr_dispatch_vkResetFenceResourceMESA(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkResetFenceResourceMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
    int fd = -1;
 
-   vn_replace_vkResetFenceResource100000MESA_args_handle(args);
+   vn_replace_vkResetFenceResourceMESA_args_handle(args);
 
    const VkFenceGetFdInfoKHR info = {
       .sType = VK_STRUCTURE_TYPE_FENCE_GET_FD_INFO_KHR,
@@ -531,16 +530,16 @@ vkr_dispatch_vkSignalSemaphore(UNUSED struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkWaitSemaphoreResource100000MESA(
+vkr_dispatch_vkWaitSemaphoreResourceMESA(
    struct vn_dispatch_context *dispatch,
-   struct vn_command_vkWaitSemaphoreResource100000MESA *args)
+   struct vn_command_vkWaitSemaphoreResourceMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
    int fd = -1;
 
-   vn_replace_vkWaitSemaphoreResource100000MESA_args_handle(args);
+   vn_replace_vkWaitSemaphoreResourceMESA_args_handle(args);
 
    const VkSemaphoreGetFdInfoKHR info = {
       .sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR,
@@ -558,18 +557,17 @@ vkr_dispatch_vkWaitSemaphoreResource100000MESA(
 }
 
 static void
-vkr_dispatch_vkImportSemaphoreResource100000MESA(
+vkr_dispatch_vkImportSemaphoreResourceMESA(
    struct vn_dispatch_context *dispatch,
-   struct vn_command_vkImportSemaphoreResource100000MESA *args)
+   struct vn_command_vkImportSemaphoreResourceMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vn_device_proc_table *vk = &dev->proc_table;
 
-   vn_replace_vkImportSemaphoreResource100000MESA_args_handle(args);
+   vn_replace_vkImportSemaphoreResourceMESA_args_handle(args);
 
-   const VkImportSemaphoreResourceInfo100000MESA *res_info =
-      args->pImportSemaphoreResourceInfo;
+   const VkImportSemaphoreResourceInfoMESA *res_info = args->pImportSemaphoreResourceInfo;
 
    /* resourceId 0 is for importing a signaled payload to sync_fd fence */
    assert(!res_info->resourceId);
@@ -658,8 +656,7 @@ vkr_context_init_fence_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkGetFenceStatus = vkr_dispatch_vkGetFenceStatus;
    dispatch->dispatch_vkWaitForFences = vkr_dispatch_vkWaitForFences;
 
-   dispatch->dispatch_vkResetFenceResource100000MESA =
-      vkr_dispatch_vkResetFenceResource100000MESA;
+   dispatch->dispatch_vkResetFenceResourceMESA = vkr_dispatch_vkResetFenceResourceMESA;
 }
 
 void
@@ -674,10 +671,10 @@ vkr_context_init_semaphore_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkWaitSemaphores = vkr_dispatch_vkWaitSemaphores;
    dispatch->dispatch_vkSignalSemaphore = vkr_dispatch_vkSignalSemaphore;
 
-   dispatch->dispatch_vkWaitSemaphoreResource100000MESA =
-      vkr_dispatch_vkWaitSemaphoreResource100000MESA;
-   dispatch->dispatch_vkImportSemaphoreResource100000MESA =
-      vkr_dispatch_vkImportSemaphoreResource100000MESA;
+   dispatch->dispatch_vkWaitSemaphoreResourceMESA =
+      vkr_dispatch_vkWaitSemaphoreResourceMESA;
+   dispatch->dispatch_vkImportSemaphoreResourceMESA =
+      vkr_dispatch_vkImportSemaphoreResourceMESA;
 }
 
 void

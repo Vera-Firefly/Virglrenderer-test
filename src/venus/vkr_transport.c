@@ -293,9 +293,8 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
 }
 
 static void
-vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA(
-   struct vn_dispatch_context *dispatch,
-   struct vn_command_vkSubmitVirtqueueSeqno100000MESA *args)
+vkr_dispatch_vkSubmitVirtqueueSeqnoMESA(struct vn_dispatch_context *dispatch,
+                                        struct vn_command_vkSubmitVirtqueueSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
@@ -308,9 +307,8 @@ vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA(
 }
 
 static void
-vkr_dispatch_vkWaitVirtqueueSeqno100000MESA(
-   struct vn_dispatch_context *dispatch,
-   struct vn_command_vkWaitVirtqueueSeqno100000MESA *args)
+vkr_dispatch_vkWaitVirtqueueSeqnoMESA(struct vn_dispatch_context *dispatch,
+                                      struct vn_command_vkWaitVirtqueueSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    /* this is for -Wgnu-statement-expression-from-macro-expansion */
@@ -323,8 +321,8 @@ vkr_dispatch_vkWaitVirtqueueSeqno100000MESA(
 }
 
 static void
-vkr_dispatch_vkWaitRingSeqno100000MESA(struct vn_dispatch_context *dispatch,
-                                       struct vn_command_vkWaitRingSeqno100000MESA *args)
+vkr_dispatch_vkWaitRingSeqnoMESA(struct vn_dispatch_context *dispatch,
+                                 struct vn_command_vkWaitRingSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
@@ -335,31 +333,6 @@ vkr_dispatch_vkWaitRingSeqno100000MESA(struct vn_dispatch_context *dispatch,
 
    if (!vkr_context_wait_ring_seqno(ctx, ring, args->seqno))
       vkr_context_set_fatal(ctx);
-}
-
-static void
-vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA(
-   UNUSED struct vn_dispatch_context *dispatch,
-   struct vn_command_vkGetVenusExperimentalFeatureData100000MESA *args)
-{
-   const VkVenusExperimentalFeatures100000MESA features = {
-      .memoryResourceAllocationSize = VK_TRUE,
-      .globalFencing = VK_FALSE,
-      .largeRing = VK_TRUE,
-      .syncFdFencing = VK_TRUE,
-      .asyncRoundtrip = VK_TRUE,
-      .ringMonitoring = VK_TRUE,
-   };
-
-   vn_replace_vkGetVenusExperimentalFeatureData100000MESA_args_handle(args);
-
-   if (!args->pData) {
-      *args->pDataSize = sizeof(features);
-      return;
-   }
-
-   *args->pDataSize = MIN2(*args->pDataSize, sizeof(features));
-   memcpy(args->pData, &features, *args->pDataSize);
 }
 
 void
@@ -377,12 +350,8 @@ vkr_context_init_transport_dispatch(struct vkr_context *ctx)
    dispatch->dispatch_vkDestroyRingMESA = vkr_dispatch_vkDestroyRingMESA;
    dispatch->dispatch_vkNotifyRingMESA = vkr_dispatch_vkNotifyRingMESA;
    dispatch->dispatch_vkWriteRingExtraMESA = vkr_dispatch_vkWriteRingExtraMESA;
-   dispatch->dispatch_vkSubmitVirtqueueSeqno100000MESA =
-      vkr_dispatch_vkSubmitVirtqueueSeqno100000MESA;
-   dispatch->dispatch_vkWaitVirtqueueSeqno100000MESA =
-      vkr_dispatch_vkWaitVirtqueueSeqno100000MESA;
-   dispatch->dispatch_vkWaitRingSeqno100000MESA = vkr_dispatch_vkWaitRingSeqno100000MESA;
-
-   dispatch->dispatch_vkGetVenusExperimentalFeatureData100000MESA =
-      vkr_dispatch_vkGetVenusExperimentalFeatureData100000MESA;
+   dispatch->dispatch_vkSubmitVirtqueueSeqnoMESA =
+      vkr_dispatch_vkSubmitVirtqueueSeqnoMESA;
+   dispatch->dispatch_vkWaitVirtqueueSeqnoMESA = vkr_dispatch_vkWaitVirtqueueSeqnoMESA;
+   dispatch->dispatch_vkWaitRingSeqnoMESA = vkr_dispatch_vkWaitRingSeqnoMESA;
 }
