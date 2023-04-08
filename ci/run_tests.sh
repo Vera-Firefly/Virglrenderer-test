@@ -69,7 +69,7 @@ run_setup()
    fi
 
    if [ "x$use_venus" = "x1" ]; then
-       export VENUS=-Dvenus-experimental=true
+       export VENUS=-Dvenus=true
    fi
 
    pwd | grep virglrenderer >/dev/null || pushd /virglrenderer && pushd $(pwd)

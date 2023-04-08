@@ -112,7 +112,7 @@ debian/mingw32-x86_64:
     MESA_IMAGE_PATH: ${DEBIAN_X86_BUILD_MINGW_IMAGE_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_BUILD_MINGW_TAG}
     EXTRA_OPTION: >
-      --cross-file=.gitlab-ci/x86_64-w64-mingw32 -Dplatforms= -Dtests=false -Drender-server=false -Dvenus-experimental=false
+      --cross-file=.gitlab-ci/x86_64-w64-mingw32 -Dplatforms= -Dtests=false -Drender-server=false -Dvenus=false
   script:
     - git clone --depth 1 https://github.com/anholt/libepoxy.git && pushd libepoxy && meson setup _build --cross-file=../.gitlab-ci/x86_64-w64-mingw32 -Dprefix=/usr/x86_64-w64-mingw32 && meson install -C _build && popd
     - .gitlab-ci/meson/build.sh

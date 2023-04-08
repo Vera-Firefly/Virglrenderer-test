@@ -39,7 +39,7 @@ option(
 )
 
 option(
-  'venus-experimental',
+  'venus',
   type : 'boolean',
   value : 'false',
   description : 'enable support for venus'
@@ -77,7 +77,7 @@ option(
   'render-server',
   type : 'boolean',
   value : 'false',
-  description : 'DEPRECATED: render server is enabled by venus-experimental automatically'
+  description : 'DEPRECATED: render server is enabled by venus automatically'
 )
 
 option(

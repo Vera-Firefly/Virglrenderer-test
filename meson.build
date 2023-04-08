@@ -68,7 +68,7 @@ add_project_arguments(cc.get_supported_arguments(flags), language : 'c')
 prog_python = import('python').find_installation('python3')
 
 not_found = dependency('', required: false)
-libdrm_dep = dependency('libdrm', version : '>=2.4.50', required: get_option('drm').enabled() or get_option('venus-experimental'))
+libdrm_dep = dependency('libdrm', version : '>=2.4.50', required: get_option('drm').enabled() or get_option('venus'))
 gbm_dep = not_found
 thread_dep = dependency('threads')
 epoxy_dep = dependency('epoxy', version: '>= 1.5.4')
@@ -253,7 +253,7 @@ if with_check_gl_errors
    conf_data.set('CHECK_GL_ERRORS', 1)
 endif
 
-with_venus = get_option('venus-experimental')
+with_venus = get_option('venus')
 with_render_server = with_venus
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')

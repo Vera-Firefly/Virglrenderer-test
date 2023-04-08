@@ -73,7 +73,7 @@ meson setup _build --native-file=native.file \
     -D tests=true \
     -D render-server=true \
     -D render-server-worker=process \
-    -D venus-experimental=true \
+    -D venus=true \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
 pushd _build && \
