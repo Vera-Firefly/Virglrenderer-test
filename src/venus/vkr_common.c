@@ -96,6 +96,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .KHR_external_fence_fd = true,
    .KHR_external_memory_fd = true,
    .KHR_external_semaphore_fd = true,
+   .KHR_pipeline_library = true,
    .KHR_push_descriptor = true,
    .KHR_shader_clock = true,
    /* EXT extensions */
@@ -110,6 +111,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_dynamic_rendering_unused_attachments = true,
    .EXT_external_memory_dma_buf = true,
    .EXT_fragment_shader_interlock = true,
+   .EXT_graphics_pipeline_library = true,
    .EXT_image_2d_view_of_3d = true,
    .EXT_image_drm_format_modifier = true,
    .EXT_image_view_min_lod = true,
