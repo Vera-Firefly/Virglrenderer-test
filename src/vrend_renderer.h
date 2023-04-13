@@ -282,6 +282,9 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
                                    uint32_t shader_type,
                                    uint32_t index,
                                    uint32_t res_handle);
+int vrend_create_dsa(struct vrend_context *ctx,
+                     uint32_t handle,
+                     const struct pipe_depth_stencil_alpha_state *dsa_state);
 
 void vrend_object_bind_blend(struct vrend_context *ctx,
                              uint32_t handle);

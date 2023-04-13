@@ -513,6 +513,11 @@ struct vrend_sampler_state {
    GLuint ids[2];
 };
 
+struct vrend_depth_stencil_alpha_state {
+   struct pipe_depth_stencil_alpha_state base;
+   struct vrend_sub_context *owning_sub;
+};
+
 struct vrend_so_target {
    struct pipe_reference reference;
    GLuint res_handle;
@@ -707,7 +712,7 @@ struct vrend_sub_context {
 
    GLuint blit_fb_ids[2];
 
-   struct pipe_depth_stencil_alpha_state *dsa;
+   struct vrend_depth_stencil_alpha_state *dsa;
 
    struct pipe_clip_state ucp_state;
 
@@ -2303,6 +2308,28 @@ int vrend_create_surface(struct vrend_context *ctx,
    return 0;
 }
 
+int vrend_create_dsa(struct vrend_context *ctx,
+                     uint32_t handle,
+                     const struct pipe_depth_stencil_alpha_state *dsa_state)
+{
+   struct vrend_depth_stencil_alpha_state *vdsa_state;
+   uint32_t ret_handle;
+
+   vdsa_state = CALLOC_STRUCT(vrend_depth_stencil_alpha_state);
+   if (!vdsa_state)
+      return ENOMEM;
+
+   vdsa_state->base = *dsa_state;
+
+   ret_handle = vrend_renderer_object_insert(ctx, vdsa_state, handle, VIRGL_OBJECT_DSA);
+   if (ret_handle == 0) {
+      FREE(vdsa_state);
+      return ENOMEM;
+   }
+
+   return 0;
+}
+
 static void vrend_destroy_surface_object(void *obj_ptr)
 {
    struct vrend_surface *surface = obj_ptr;
@@ -2369,6 +2396,16 @@ static void vrend_destroy_sampler_state_object(void *obj_ptr)
 
    if (has_feature(feat_samplers))
       glDeleteSamplers(2, state->ids);
+   FREE(state);
+}
+
+static void vrend_destroy_dsa_object(void *obj_ptr)
+{
+   struct vrend_depth_stencil_alpha_state *state = obj_ptr;
+
+   if (state->owning_sub && state == state->owning_sub->dsa)
+      vrend_object_bind_dsa(state->owning_sub->parent, 0 /* unbind */);
+
    FREE(state);
 }
 
@@ -6209,14 +6246,19 @@ static void vrend_hw_emit_dsa(struct vrend_context *ctx)
 void vrend_object_bind_dsa(struct vrend_context *ctx,
                            uint32_t handle)
 {
-   struct pipe_depth_stencil_alpha_state *state;
+   struct vrend_depth_stencil_alpha_state *state;
 
    if (handle == 0) {
-      memset(&ctx->sub->dsa_state, 0, sizeof(ctx->sub->dsa_state));
-      ctx->sub->dsa = NULL;
-      ctx->sub->stencil_state_dirty = true;
-      ctx->sub->shader_dirty = true;
-      vrend_hw_emit_dsa(ctx);
+      if (ctx->sub->dsa) {
+         // unbind and set default state
+         memset(&ctx->sub->dsa_state, 0, sizeof(ctx->sub->dsa_state));
+         ctx->sub->dsa->owning_sub = NULL;
+         ctx->sub->dsa = NULL;
+         ctx->sub->stencil_state_dirty = true;
+         ctx->sub->shader_dirty = true;
+         vrend_hw_emit_dsa(ctx);
+      }
+
       return;
    }
 
@@ -6230,11 +6272,13 @@ void vrend_object_bind_dsa(struct vrend_context *ctx,
       ctx->sub->stencil_state_dirty = true;
       ctx->sub->shader_dirty = true;
    }
-   ctx->sub->dsa_state = *state;
-   ctx->sub->dsa = state;
 
-   if (ctx->sub->sysvalue_data.alpha_ref_val != state->alpha.ref_value) {
-      ctx->sub->sysvalue_data.alpha_ref_val = state->alpha.ref_value;
+   ctx->sub->dsa_state = state->base;
+   ctx->sub->dsa = state;
+   state->owning_sub = ctx->sub;
+
+   if (ctx->sub->sysvalue_data.alpha_ref_val != state->base.alpha.ref_value) {
+      ctx->sub->sysvalue_data.alpha_ref_val = state->base.alpha.ref_value;
       ctx->sub->sysvalue_data_cookie++;
    }
 
@@ -6255,23 +6299,23 @@ static void vrend_update_frontface_state(struct vrend_sub_context *sub_ctx)
 
 void vrend_update_stencil_state(struct vrend_sub_context *sub_ctx)
 {
-   struct pipe_depth_stencil_alpha_state *state = sub_ctx->dsa;
+   struct vrend_depth_stencil_alpha_state *state = sub_ctx->dsa;
    int i;
    if (!state)
       return;
 
-   if (!state->stencil[1].enabled) {
-      if (state->stencil[0].enabled) {
+   if (!state->base.stencil[1].enabled) {
+      if (state->base.stencil[0].enabled) {
          vrend_stencil_test_enable(sub_ctx, true);
 
-         glStencilOp(translate_stencil_op(state->stencil[0].fail_op),
-                     translate_stencil_op(state->stencil[0].zfail_op),
-                     translate_stencil_op(state->stencil[0].zpass_op));
+         glStencilOp(translate_stencil_op(state->base.stencil[0].fail_op),
+                     translate_stencil_op(state->base.stencil[0].zfail_op),
+                     translate_stencil_op(state->base.stencil[0].zpass_op));
 
-         glStencilFunc(GL_NEVER + state->stencil[0].func,
+         glStencilFunc(GL_NEVER + state->base.stencil[0].func,
                        sub_ctx->stencil_refs[0],
-                       state->stencil[0].valuemask);
-         glStencilMask(state->stencil[0].writemask);
+                       state->base.stencil[0].valuemask);
+         glStencilMask(state->base.stencil[0].writemask);
       } else
          vrend_stencil_test_enable(sub_ctx, false);
    } else {
@@ -6280,14 +6324,14 @@ void vrend_update_stencil_state(struct vrend_sub_context *sub_ctx)
       for (i = 0; i < 2; i++) {
          GLenum face = (i == 1) ? GL_BACK : GL_FRONT;
          glStencilOpSeparate(face,
-                             translate_stencil_op(state->stencil[i].fail_op),
-                             translate_stencil_op(state->stencil[i].zfail_op),
-                             translate_stencil_op(state->stencil[i].zpass_op));
+                             translate_stencil_op(state->base.stencil[i].fail_op),
+                             translate_stencil_op(state->base.stencil[i].zfail_op),
+                             translate_stencil_op(state->base.stencil[i].zpass_op));
 
-         glStencilFuncSeparate(face, GL_NEVER + state->stencil[i].func,
+         glStencilFuncSeparate(face, GL_NEVER + state->base.stencil[i].func,
                                sub_ctx->stencil_refs[i],
-                               state->stencil[i].valuemask);
-         glStencilMaskSeparate(face, state->stencil[i].writemask);
+                               state->base.stencil[i].valuemask);
+         glStencilMaskSeparate(face, state->base.stencil[i].writemask);
       }
    }
    sub_ctx->stencil_state_dirty = false;
@@ -7223,6 +7267,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    vrend_object_set_destroy_callback(VIRGL_OBJECT_STREAMOUT_TARGET, vrend_destroy_so_target_object);
    vrend_object_set_destroy_callback(VIRGL_OBJECT_SAMPLER_STATE, vrend_destroy_sampler_state_object);
    vrend_object_set_destroy_callback(VIRGL_OBJECT_VERTEX_ELEMENTS, vrend_destroy_vertex_elements_object);
+   vrend_object_set_destroy_callback(VIRGL_OBJECT_DSA, vrend_destroy_dsa_object);
 
    /* disable for format testing, spews a lot of errors */
    if (has_feature(feat_debug_cb)) {
