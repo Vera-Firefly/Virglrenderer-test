@@ -320,6 +320,21 @@ msm_renderer_probe(int fd, struct virgl_renderer_capset_drm *capset)
 }
 
 static void
+msm_renderer_unmap_blob(struct msm_context *mctx)
+{
+   if (!mctx->shmem)
+      return;
+
+   uint32_t blob_size = mctx->rsp_mem_sz + mctx->shmem->rsp_mem_offset;
+
+   munmap(mctx->shmem, blob_size);
+
+   mctx->shmem = NULL;
+   mctx->rsp_mem = NULL;
+   mctx->rsp_mem_sz = 0;
+}
+
+static void
 resource_delete_fxn(struct hash_entry *entry)
 {
    free((void *)entry->data);
@@ -335,8 +350,7 @@ msm_renderer_destroy(struct virgl_context *vctx)
 
    close(mctx->eventfd);
 
-   if (mctx->shmem)
-      munmap(mctx->shmem, sizeof(*mctx->shmem));
+   msm_renderer_unmap_blob(mctx);
 
    _mesa_hash_table_destroy(mctx->resource_table, resource_delete_fxn);
    _mesa_hash_table_destroy(mctx->blob_table, resource_delete_fxn);
@@ -408,11 +422,7 @@ msm_renderer_detach_resource(struct virgl_context *vctx, struct virgl_resource *
       return;
 
    if (res->fd_type == VIRGL_RESOURCE_FD_SHM) {
-      munmap(mctx->shmem, sizeof(*mctx->shmem));
-
-      mctx->shmem = NULL;
-      mctx->rsp_mem = NULL;
-      mctx->rsp_mem_sz = 0;
+      msm_renderer_unmap_blob(mctx);
 
       /* shmem resources don't have an backing host GEM bo:, so bail now: */
       return;
