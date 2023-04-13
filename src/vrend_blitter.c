@@ -94,11 +94,11 @@ struct blit_prog_key {
    bool manual_srgb_decode: 1;
    bool manual_srgb_encode: 1;
    uint8_t num_samples;
-   int pipe_tex_target;
+   enum pipe_texture_target pipe_tex_target;
    struct {
       bool has_swizzle;
       enum virgl_formats src_format;
-      uint8_t swizzle[4];
+      enum pipe_swizzle swizzle[4];
    } texcol;
 };
 
@@ -140,13 +140,13 @@ static bool blit_shader_link_and_check(GLuint prog_id)
    return true;
 }
 
-static void create_dest_swizzle_snippet(const uint8_t swizzle[4],
+static void create_dest_swizzle_snippet(const enum pipe_swizzle swizzle[4],
                                         char snippet[DEST_SWIZZLE_SNIPPET_SIZE])
 {
    static const uint8_t invalid_swizzle = 0xff;
    ssize_t si = 0;
-   uint8_t inverse[4] = {invalid_swizzle, invalid_swizzle,
-                         invalid_swizzle, invalid_swizzle};
+   enum pipe_swizzle inverse[4] = {invalid_swizzle, invalid_swizzle,
+                                   invalid_swizzle, invalid_swizzle};
 
    for (int i = 0; i < 4; ++i) {
       if (swizzle[i] > 3)
@@ -189,7 +189,7 @@ static enum tgsi_return_type tgsi_ret_for_format(enum virgl_formats format)
    return TGSI_RETURN_TYPE_UNORM;
 }
 
-static void blit_get_swizzle(int tgsi_tex_target, unsigned flags,
+static void blit_get_swizzle(enum tgsi_texture_type tgsi_tex_target, unsigned flags,
                              struct blit_swizzle_and_type *retval)
 {
    retval->swizzle = "";
@@ -252,9 +252,9 @@ static void blit_get_swizzle(int tgsi_tex_target, unsigned flags,
 }
 
 static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
-                                      int tgsi_tex_target,
+                                      enum tgsi_texture_type tgsi_tex_target,
                                       enum tgsi_return_type tgsi_ret,
-                                      const uint8_t swizzle[4],
+                                      const enum pipe_swizzle swizzle[4],
                                       int nr_samples,
                                       uint32_t flags)
 {
@@ -320,7 +320,7 @@ static GLuint blit_build_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
 
-static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi_tex_target, bool msaa)
+static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, enum tgsi_texture_type tgsi_tex_target, bool msaa)
 {
    char shader_buf[4096];
    struct blit_swizzle_and_type swizzle_and_type;
@@ -346,7 +346,7 @@ static GLuint blit_build_frag_depth(struct vrend_blitter_ctx *blit_ctx, int tgsi
    return blit_shader_build_and_check(GL_FRAGMENT_SHADER, shader_buf);
 }
 
-static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, int pipe_tex_target, unsigned nr_samples)
+static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, enum pipe_texture_target pipe_tex_target, unsigned nr_samples)
 {
    struct blit_prog_key key = {
          .is_color = false,
@@ -362,7 +362,7 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, i
       } else {
          prog_id = glCreateProgram();
          glAttachShader(prog_id, blit_ctx->vs);
-         unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex_target, key.num_samples);
+         enum tgsi_texture_type tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex_target, key.num_samples);
          GLuint fs_id = blit_build_frag_depth(blit_ctx, tgsi_tex, key.is_msaa);
          glAttachShader(prog_id, fs_id);
          if(!blit_shader_link_and_check(prog_id))
@@ -375,10 +375,10 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, i
 }
 
 static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
-                                       int pipe_tex_target,
+                                       enum pipe_texture_target pipe_tex_target,
                                        unsigned nr_samples,
                                        const struct vrend_format_table *src_entry,
-                                       const uint8_t swizzle[static 4],
+                                       const enum pipe_swizzle swizzle[static 4],
                                        uint32_t flags)
 {
    bool needs_swizzle = false;
@@ -411,7 +411,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    } else {
       prog_id = glCreateProgram();
       glAttachShader(prog_id, blit_ctx->vs);
-      unsigned tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex_target, key.num_samples);
+      enum tgsi_texture_type tgsi_tex = util_pipe_tex_to_tgsi_tex(pipe_tex_target, key.num_samples);
       enum tgsi_return_type tgsi_ret = tgsi_ret_for_format(src_entry->format);
       int msaa_samples = nr_samples > 1 ? (tgsi_ret == TGSI_RETURN_TYPE_UNORM ? nr_samples : 1) : 0;
 
@@ -623,7 +623,7 @@ static void set_dsa_write_depth_keep_stencil(void)
    glDepthMask(GL_TRUE);
 }
 
-static inline GLenum to_gl_swizzle(int swizzle)
+static inline GLenum to_gl_swizzle(enum pipe_swizzle swizzle)
 {
    switch (swizzle) {
    case PIPE_SWIZZLE_RED: return GL_RED;

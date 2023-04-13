@@ -474,7 +474,7 @@ struct vrend_blit_info {
    const struct pipe_blit_info b;
    GLuint src_view;
    GLuint dst_view;
-   uint8_t swizzle[4];
+   enum pipe_swizzle swizzle[4];
    int src_y1, src_y2, dst_y1, dst_y2;
    GLenum gl_filter;
    bool needs_swizzle;
