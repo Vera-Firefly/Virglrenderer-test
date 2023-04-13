@@ -27,10 +27,11 @@
 
 #include <stdio.h>
 
+#include "util/hash_table.h"
 #include "util/macros.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
-#include "util/u_hash_table.h"
+#include "util/u_pointer.h"
 #include "util/u_texture.h"
 
 #include "vrend_shader.h"
@@ -64,7 +65,7 @@ struct vrend_blitter_ctx {
 
    GLuint vaoid;
 
-   struct util_hash_table *blit_programs;
+   struct hash_table_u64 *blit_programs;
 
    GLuint vs;
    GLuint fb_id;
@@ -107,6 +108,20 @@ struct PACKED blit_prog_key {
    } texcol;
 };
 #pragma pack(pop)
+
+static_assert(sizeof(struct blit_prog_key) <= sizeof(uint64_t),
+              "struct blit_prog_key needs to fit into a hashtable64 key");
+
+static inline uint64_t
+prog_key_to_uint64( struct blit_prog_key prog_key )
+{
+   union {
+      struct blit_prog_key prog_key;
+      uint64_t u;
+   } pu;
+   pu.prog_key = prog_key;
+   return pu.u;
+}
 
 static GLint blit_shader_build_and_check(GLenum shader_type, const char *buf)
 {
@@ -361,7 +376,7 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, e
          .pipe_tex_target = pipe_tex_target,
       };
 
-      void *shader = util_hash_table_get(blit_ctx->blit_programs, &key);
+      void *shader = _mesa_hash_table_u64_search(blit_ctx->blit_programs, prog_key_to_uint64(key));
       GLuint prog_id;
       if (shader) {
          prog_id = (GLuint)((size_t)(shader) & 0xffffffff);
@@ -375,7 +390,7 @@ static GLuint blit_get_frag_tex_writedepth(struct vrend_blitter_ctx *blit_ctx, e
             return 0;
 
          glDeleteShader(fs_id);
-         util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(uintptr_t)prog_id);
+         _mesa_hash_table_u64_insert(blit_ctx->blit_programs, prog_key_to_uint64(key), (void *)(uintptr_t)prog_id);
       }
       return prog_id;
 }
@@ -414,7 +429,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
    }
 
    GLuint prog_id = 0;
-   void *shader = util_hash_table_get(blit_ctx->blit_programs, &key);
+   void *shader = _mesa_hash_table_u64_search(blit_ctx->blit_programs, prog_key_to_uint64(key));
 
    if (shader) {
       prog_id = (GLuint)((size_t)(shader) & 0xffffffff);
@@ -432,33 +447,11 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
          return 0;
 
       glDeleteShader(fs_id);
-      util_hash_table_set(blit_ctx->blit_programs, &key, (void *)(uintptr_t)prog_id);
+      _mesa_hash_table_u64_insert(blit_ctx->blit_programs, prog_key_to_uint64(key), (void *)(uintptr_t)prog_id);
    }
 
    return prog_id;
 }
-
-static uint32_t program_hash_func(const void *key)
-{
-   return XXH32(key, sizeof(struct blit_prog_key), 0);
-}
-
-static bool program_equal_func(const void *key1, const void *key2)
-{
-   return memcmp(key1, key2, sizeof(struct blit_prog_key)) == 0;
-}
-
-static void program_destroy_func(void *shader_id)
-{
-   GLuint id;
-#if __SIZEOF_POINTER__  == 8
-   id = ((uint64_t)(shader_id)) & 0xffffffff;
-#else
-   id = (GLuint)(shader_id);
-#endif
-   glDeleteProgram(id);
-}
-
 
 static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
 {
@@ -469,9 +462,7 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
       return;
    }
 
-   vrend_blit_ctx.blit_programs = util_hash_table_create(program_hash_func,
-                                                         program_equal_func,
-                                                         program_destroy_func);
+   vrend_blit_ctx.blit_programs = _mesa_hash_table_u64_create(NULL);
 
    blit_ctx->use_gles = epoxy_is_desktop_gl() == 0;
    ctx_params.shared = true;
@@ -918,7 +909,13 @@ void vrend_blitter_fini(void)
 {
    vrend_blit_ctx.initialised = false;
    vrend_clicbs->destroy_gl_context(vrend_blit_ctx.gl_context);
-   if (vrend_blit_ctx.blit_programs)
-      util_hash_table_destroy(vrend_blit_ctx.blit_programs);
+   if (vrend_blit_ctx.blit_programs) {
+      hash_table_foreach(vrend_blit_ctx.blit_programs->table, entry) {
+         glDeleteProgram((GLuint)pointer_to_uintptr(entry->data));
+      }
+
+      _mesa_hash_table_u64_destroy(vrend_blit_ctx.blit_programs);
+   }
    memset(&vrend_blit_ctx, 0, sizeof(vrend_blit_ctx));
 }
+
