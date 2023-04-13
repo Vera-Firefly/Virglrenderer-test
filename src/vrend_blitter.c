@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 
+#include "util/macros.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_hash_table.h"
@@ -88,19 +89,24 @@ struct blit_swizzle_and_type {
   bool is_array;
 };
 
-struct blit_prog_key {
+#pragma pack(push,1)
+struct PACKED blit_prog_key {
    bool is_color: 1;
    bool is_msaa: 1;
    bool manual_srgb_decode: 1;
    bool manual_srgb_encode: 1;
+   enum pipe_texture_target pipe_tex_target: 4;
    uint8_t num_samples;
-   enum pipe_texture_target pipe_tex_target;
    struct {
-      bool has_swizzle;
-      enum virgl_formats src_format;
-      enum pipe_swizzle swizzle[4];
+      bool has_swizzle: 1;
+      enum virgl_formats src_format: 9;
+      enum pipe_swizzle swizzle1: 3;
+      enum pipe_swizzle swizzle2: 3;
+      enum pipe_swizzle swizzle3: 3;
+      enum pipe_swizzle swizzle4: 3;
    } texcol;
 };
+#pragma pack(pop)
 
 static GLint blit_shader_build_and_check(GLenum shader_type, const char *buf)
 {
@@ -400,8 +406,12 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
 
    key.texcol.src_format = src_entry->format;
    key.texcol.has_swizzle = needs_swizzle;
-   if (key.texcol.has_swizzle)
-      memcpy(key.texcol.swizzle, swizzle, 4);
+   if (key.texcol.has_swizzle) {
+      key.texcol.swizzle1 = swizzle[0];
+      key.texcol.swizzle2 = swizzle[1];
+      key.texcol.swizzle3 = swizzle[2];
+      key.texcol.swizzle4 = swizzle[3];
+   }
 
    GLuint prog_id = 0;
    void *shader = util_hash_table_get(blit_ctx->blit_programs, &key);
