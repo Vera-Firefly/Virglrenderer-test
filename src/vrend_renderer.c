@@ -1335,7 +1335,7 @@ vrend_insert_format(struct vrend_format_table *entry, uint32_t bindings, uint32_
 
 void
 vrend_insert_format_swizzle(int override_format, struct vrend_format_table *entry,
-                            uint32_t bindings, uint8_t swizzle[4], uint32_t flags)
+                            uint32_t bindings, enum pipe_swizzle swizzle[4], uint32_t flags)
 {
    int i;
    tex_conv_table[override_format] = *entry;
@@ -2597,7 +2597,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    struct vrend_sampler_view *view;
    struct vrend_resource *res;
    int ret_handle;
-   uint8_t swizzle[4];
+   enum pipe_swizzle swizzle[4];
 
    res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
    if (!res) {

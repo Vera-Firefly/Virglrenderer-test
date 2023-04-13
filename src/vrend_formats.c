@@ -440,7 +440,7 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
      */
     if (status != GL_NO_ERROR) {
       struct vrend_format_table *entry = NULL;
-      uint8_t swizzle[4];
+      enum pipe_swizzle swizzle[4];
       binding = VIRGL_BIND_SAMPLER_VIEW | VIRGL_BIND_RENDER_TARGET;
 
       switch (table[i].format) {
