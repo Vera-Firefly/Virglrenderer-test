@@ -301,6 +301,9 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
    const char *extensions;
    struct virgl_egl *egl;
 
+   const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
+   bool has_egl_base = virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base");
+
    egl = calloc(1, sizeof(struct virgl_egl));
    if (!egl)
       return NULL;
@@ -311,20 +314,19 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
    if (surfaceless)
       conf_att[1] = EGL_PBUFFER_BIT;
 #ifdef ENABLE_GBM
-   else if (!gbm)
+   if (!gbm && (!surfaceless || !has_egl_base))
       goto fail;
    egl->gbm = gbm;
 #endif
 
    egl->different_gpu = false;
-   const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
    if (virgl_egl_get_display(egl)) {
      /* Make -Wdangling-else happy. */
    } else /* Fallback to surfaceless. */
 #endif
-   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
+   if (has_egl_base) {
       PFNEGLGETPLATFORMDISPLAYEXTPROC get_platform_display =
          (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplayEXT");
 
