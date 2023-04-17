@@ -60,7 +60,7 @@ RET=0
 RESULTS_DIR=$(pwd)/results/${TEST_SUITE:-build}
 rm -rf _build
 
-meson _build --native-file=native.file \
+meson setup _build --native-file=native.file \
     --wrap-mode=nofallback \
     ${CROSS+--cross "$CROSS_FILE"} \
     -D prefix=$(pwd)/install \
@@ -77,20 +77,21 @@ meson _build --native-file=native.file \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
 pushd _build && \
-meson configure && \
-ninja -j ${FDO_CI_CONCURRENT:-4} install || {
+meson compile -j ${FDO_CI_CONCURRENT:-4} || {
     RET=$?
     mkdir -p ${RESULTS_DIR}
     mv -f meson-logs/* ${RESULTS_DIR}/
     popd
     exit ${RET}
 }
+meson install
 
 if [ -n "${TEST_SUITE}" ]; then
-    VRENDTEST_USE_EGL_SURFACELESS=1 ninja -j ${FDO_CI_CONCURRENT:-4} test || RET=$?
+    VRENDTEST_USE_EGL_SURFACELESS=1 meson test --num-processes ${FDO_CI_CONCURRENT:-4} || RET=$?
     mkdir -p ${RESULTS_DIR}
     mv -f meson-logs/testlog.txt ${RESULTS_DIR}/
 fi
 
 popd
 exit ${RET}
+

@@ -114,7 +114,7 @@ debian/mingw32-x86_64:
     EXTRA_OPTION: >
       --cross-file=.gitlab-ci/x86_64-w64-mingw32 -Dplatforms= -Dtests=false -Drender-server=false -Dvenus-experimental=false
   script:
-    - git clone https://github.com/anholt/libepoxy.git && pushd libepoxy && meson _build --cross-file=../.gitlab-ci/x86_64-w64-mingw32 -Dprefix=/usr/x86_64-w64-mingw32 && pushd _build && ninja install && popd && popd
+    - git clone --depth 1 https://github.com/anholt/libepoxy.git && pushd libepoxy && meson setup _build --cross-file=../.gitlab-ci/x86_64-w64-mingw32 -Dprefix=/usr/x86_64-w64-mingw32 && meson install -C _build && popd
     - .gitlab-ci/meson/build.sh
   artifacts:
     name: "virgl_${CI_JOB_NAME}"
