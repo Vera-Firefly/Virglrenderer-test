@@ -11985,6 +11985,17 @@ void vrend_renderer_get_rect(struct pipe_resource *pres,
                                 VIRGL_TRANSFER_FROM_HOST);
 }
 
+static struct vrend_untyped_resource *
+vrend_renderer_find_untyped_resource(struct vrend_context *ctx, uint32_t res_id)
+{
+   struct vrend_untyped_resource *iter;
+   LIST_FOR_EACH_ENTRY(iter, &ctx->untyped_resources, head) {
+      if (iter->resource->res_id == res_id)
+         return iter;
+   }
+   return NULL;
+}
+
 void vrend_renderer_attach_res_ctx(struct vrend_context *ctx,
                                    struct virgl_resource *res)
 {
@@ -12018,13 +12029,11 @@ void vrend_renderer_detach_res_ctx(struct vrend_context *ctx,
       if (ctx->untyped_resource_cache == res) {
          ctx->untyped_resource_cache = NULL;
       } else {
-         struct vrend_untyped_resource *iter;
-         LIST_FOR_EACH_ENTRY(iter, &ctx->untyped_resources, head) {
-            if (iter->resource == res) {
-               list_del(&iter->head);
-               free(iter);
-               break;
-            }
+         struct vrend_untyped_resource *untyped =
+            vrend_renderer_find_untyped_resource(ctx, res->res_id);
+         if (untyped) {
+            list_del(&untyped->head);
+            free(untyped);
          }
       }
 
@@ -12295,14 +12304,12 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
       ctx->untyped_resource_cache = NULL;
    } else {
       /* cache miss */
-      struct vrend_untyped_resource *iter;
-      LIST_FOR_EACH_ENTRY(iter, &ctx->untyped_resources, head) {
-         if (iter->resource->res_id == res_id) {
-            res = iter->resource;
-            list_del(&iter->head);
-            free(iter);
-            break;
-         }
+      struct vrend_untyped_resource *untyped =
+         vrend_renderer_find_untyped_resource(ctx, res_id);
+      if (untyped) {
+         res = untyped->resource;
+         list_del(&untyped->head);
+         free(untyped);
       }
    }
 
