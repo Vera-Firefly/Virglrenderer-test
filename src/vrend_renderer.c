@@ -12000,9 +12000,13 @@ void vrend_renderer_attach_res_ctx(struct vrend_context *ctx,
                                    struct virgl_resource *res)
 {
    if (!res->pipe_resource) {
+      struct virgl_resource *last = ctx->untyped_resource_cache;
+
+      if (last == res || vrend_renderer_find_untyped_resource(ctx, res->res_id))
+         return;
+
       /* move the last untyped resource from cache to list */
-      if (unlikely(ctx->untyped_resource_cache)) {
-         struct virgl_resource *last = ctx->untyped_resource_cache;
+      if (unlikely(last)) {
          struct vrend_untyped_resource *wrapper = malloc(sizeof(*wrapper));
          if (wrapper) {
             wrapper->resource = last;
