@@ -81,6 +81,19 @@ streq_nocase_uprcase(const char *str1,
    return *str1 == 0 && *str2 == 0;
 }
 
+static inline boolean skip_n_chars(const char **pcur,
+                                   int n)
+{
+   char* str = memchr(*pcur, '\0', n);
+   if (unlikely(str)) {
+      *pcur = str;
+      return FALSE;
+   } else {
+      *pcur += n;
+      return TRUE;
+   }
+}
+
 /* Return TRUE if both strings match.
  * The second string is terminated by zero.
  * The pointer to the first string is moved at end of the read word
@@ -246,7 +259,9 @@ static boolean parse_float( const char **pcur, float *val )
       union fi fi;
       fi.ui = strtoul(cur, NULL, 16);
       *val = fi.f;
-      cur += 10;
+      if (!skip_n_chars(&cur, 10))
+         return FALSE;
+
       goto out;
    }
 
@@ -298,9 +313,13 @@ static boolean parse_double( const char **pcur, uint32_t *val0, uint32_t *val1)
 
    if (*cur == '0' && *(cur + 1) == 'x') {
       *val0 = strtoul(cur, NULL, 16);
-      cur += 11;
+      if (!skip_n_chars(&cur, 11))
+         return FALSE;
+
       *val1 = strtoul(cur, NULL, 16);
-      cur += 11;
+      if (!skip_n_chars(&cur, 11))
+         return FALSE;
+
       *pcur = cur;
       return TRUE;
    }
