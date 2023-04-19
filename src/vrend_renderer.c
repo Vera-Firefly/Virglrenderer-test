@@ -3327,8 +3327,11 @@ void vrend_set_constants(struct vrend_context *ctx,
    if (consts->num_allocated_consts < num_constant) {
       free(consts->consts);
       consts->consts = malloc(num_constant * sizeof(float));
-      if (!consts->consts)
+      if (!consts->consts) {
+         consts->num_allocated_consts = 0;
          return;
+      }
+
       consts->num_allocated_consts = num_constant;
    }
 
