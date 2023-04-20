@@ -33,6 +33,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "util/macros.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_dual_blend.h"
@@ -1484,19 +1485,19 @@ static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
       if (last_buffer != so->output[i].output_buffer) {
 
          skip = so->stride[last_buffer] - buf_offset;
-         while (skip) {
+         while (skip && n_outputs < ARRAY_SIZE(varyings)) {
             start_skip = get_skip_str(&skip);
             if (start_skip)
                varyings[n_outputs++] = start_skip;
          }
-         for (j = last_buffer; j < so->output[i].output_buffer; j++)
+         for (j = last_buffer; j < so->output[i].output_buffer && n_outputs < ARRAY_SIZE(varyings); j++)
             varyings[n_outputs++] = strdup("gl_NextBuffer");
          last_buffer = so->output[i].output_buffer;
          buf_offset = 0;
       }
 
       skip = so->output[i].dst_offset - buf_offset;
-      while (skip) {
+      while (skip && n_outputs < ARRAY_SIZE(varyings)) {
          start_skip = get_skip_str(&skip);
          if (start_skip)
             varyings[n_outputs++] = start_skip;
@@ -1504,12 +1505,12 @@ static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
       buf_offset = so->output[i].dst_offset;
 
       buf_offset += so->output[i].num_components;
-      if (sinfo->so_names[i])
+      if (sinfo->so_names[i] && n_outputs < ARRAY_SIZE(varyings))
          varyings[n_outputs++] = strdup(sinfo->so_names[i]);
    }
 
    skip = so->stride[last_buffer] - buf_offset;
-   while (skip) {
+   while (skip && n_outputs < ARRAY_SIZE(varyings)) {
       start_skip = get_skip_str(&skip);
       if (start_skip)
          varyings[n_outputs++] = start_skip;
