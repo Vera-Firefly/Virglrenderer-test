@@ -1264,6 +1264,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       }
 
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       if (iter->processor.Processor == TGSI_PROCESSOR_VERTEX) {
          ctx->attrib_input_mask |= (1 << decl->Range.First);
          ctx->inputs[i].type = get_type(ctx->key->vs.attrib_signed_int_bitmask,
@@ -1572,6 +1577,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       }
 
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       ctx->outputs[i].name = decl->Semantic.Name;
       ctx->outputs[i].sid = decl->Semantic.Index;
       ctx->outputs[i].interpolate = decl->Interp.Interpolate;
@@ -1813,6 +1823,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
       break;
    case TGSI_FILE_TEMPORARY:
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       if (!allocate_temp_range(&ctx->temp_ranges, &ctx->num_temp_ranges, decl->Range.First, decl->Range.Last,
                                decl->Array.ArrayID))
          return false;
@@ -1821,6 +1836,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->samplers_used |= (1 << decl->Range.Last);
       break;
    case TGSI_FILE_SAMPLER_VIEW:
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       if (decl->Range.Last >= ARRAY_SIZE(ctx->samplers)) {
          vrend_printf( "Sampler view exceeded, max is %lu\n", ARRAY_SIZE(ctx->samplers));
          return false;
@@ -1829,6 +1849,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       break;
    case TGSI_FILE_IMAGE:
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       ctx->shader_req_bits |= SHADER_REQ_IMAGE_LOAD_STORE;
       if (decl->Range.Last >= ARRAY_SIZE(ctx->images)) {
          vrend_printf( "Image view exceeded, max is %lu\n", ARRAY_SIZE(ctx->images));
@@ -1946,6 +1971,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->has_file_memory = true;
       break;
    case TGSI_FILE_HW_ATOMIC:
+      if (unlikely(decl->Range.First > decl->Range.Last)) {
+         vrend_printf("Wrong range: First (%u) > Last (%u)\n", decl->Range.First, decl->Range.Last);
+         return false;
+      }
+
       if (ctx->num_abo >= ARRAY_SIZE(ctx->abo_idx)) {
          vrend_printf( "Number of atomic counter buffers exceeded, max is %lu\n", ARRAY_SIZE(ctx->abo_idx));
          return false;
