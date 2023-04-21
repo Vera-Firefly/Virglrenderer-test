@@ -771,7 +771,7 @@ static bool allocate_temp_range(struct vrend_temp_range **temp_ranges, uint32_t 
    if (array_id > 0) {
 
       *temp_ranges = realloc(*temp_ranges, sizeof(struct vrend_temp_range) * (idx + 1));
-      if (!*temp_ranges)
+      if (unlikely(!*temp_ranges))
          return false;
 
       (*temp_ranges)[idx].first = first;
@@ -782,6 +782,9 @@ static bool allocate_temp_range(struct vrend_temp_range **temp_ranges, uint32_t 
    } else {
       int ntemps = last - first + 1;
       *temp_ranges = realloc(*temp_ranges, sizeof(struct vrend_temp_range) * (idx + ntemps));
+      if (unlikely(!*temp_ranges))
+         return false;
+
       for (int i = 0; i < ntemps; ++i) {
          (*temp_ranges)[idx + i].first = first + i;
          (*temp_ranges)[idx + i].last = first + i;
