@@ -5070,10 +5070,9 @@ static bool rewrite_1d_image_coordinate(struct vrend_strbuf *src, const struct t
 
       /* duplicate src */
       size_t len = strbuf_get_len(src);
-      char *buf = malloc(len);
+      char *buf = strdup(src->buf);
       if (!buf)
          return false;
-      strncpy(buf, src->buf, len);
 
       if (inst->Memory.Texture == TGSI_TEXTURE_1D)
          strbuf_fmt(src, "vec2(vec4(%s).x, 0)", buf);
