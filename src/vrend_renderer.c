@@ -3734,12 +3734,13 @@ void vrend_set_single_ssbo(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
-      ssbo->res = res;
+
+      vrend_resource_reference(&ssbo->res, res);
       ssbo->buffer_offset = offset;
       ssbo->buffer_size = length;
       ctx->sub->ssbo_used_mask[shader_type] |= (1u << index);
    } else {
-      ssbo->res = 0;
+      vrend_resource_reference(&ssbo->res, NULL);
       ssbo->buffer_offset = 0;
       ssbo->buffer_size = 0;
       ctx->sub->ssbo_used_mask[shader_type] &= ~(1u << index);
@@ -3763,12 +3764,13 @@ void vrend_set_single_abo(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
-      abo->res = res;
+
+      vrend_resource_reference(&abo->res, res);
       abo->buffer_offset = offset;
       abo->buffer_size = length;
       ctx->sub->abo_used_mask |= (1u << index);
    } else {
-      abo->res = 0;
+      vrend_resource_reference(&abo->res, NULL);
       abo->buffer_offset = 0;
       abo->buffer_size = 0;
       ctx->sub->abo_used_mask &= ~(1u << index);
@@ -7390,6 +7392,32 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
    struct vrend_streamout_object *obj, *tmp;
 
    vrend_clicbs->make_current(sub->gl_context);
+
+   if (has_feature(feat_atomic_counters)) {
+      uint32_t mask = sub->abo_used_mask;
+      while (mask) {
+         uint32_t i = u_bit_scan(&mask);
+         struct vrend_abo *abo = &sub->abo[i];
+         abo->buffer_offset = 0;
+         abo->buffer_size = 0;
+         vrend_resource_reference(&abo->res, NULL);
+      }
+   }
+
+   if (has_feature(feat_ssbo)) {
+      for (int shader_type = PIPE_SHADER_VERTEX;
+           shader_type <= PIPE_SHADER_TYPES;
+           shader_type++) {
+         uint32_t mask = sub->ssbo_used_mask[shader_type];
+         while (mask) {
+            uint32_t i = u_bit_scan(&mask);
+            struct vrend_ssbo *ssbo = &sub->ssbo[shader_type][i];
+            ssbo->buffer_offset = 0;
+            ssbo->buffer_size = 0;
+            vrend_resource_reference(&ssbo->res, NULL);
+         }
+      }
+   }
 
    if (sub->fb_id)
       glDeleteFramebuffers(1, &sub->fb_id);
