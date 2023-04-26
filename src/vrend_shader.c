@@ -5069,7 +5069,6 @@ static bool rewrite_1d_image_coordinate(struct vrend_strbuf *src, const struct t
         inst->Memory.Texture == TGSI_TEXTURE_1D_ARRAY))  {
 
       /* duplicate src */
-      size_t len = strbuf_get_len(src);
       char *buf = strdup(src->buf);
       if (!buf)
          return false;
