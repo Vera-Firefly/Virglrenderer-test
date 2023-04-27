@@ -3702,7 +3702,7 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
-      iview->texture = res;
+      vrend_resource_reference(&iview->texture, res);
       iview->vformat = format;
       iview->format = tex_conv_table[format].internalformat;
       iview->access = access;
@@ -3710,7 +3710,7 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
       iview->u.buf.size = level_size;
       ctx->sub->images_used_mask[shader_type] |= (1u << index);
    } else {
-      iview->texture = NULL;
+      vrend_resource_reference(&iview->texture, NULL);
       iview->format = 0;
       ctx->sub->images_used_mask[shader_type] &= ~(1u << index);
    }
@@ -7392,6 +7392,19 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
    struct vrend_streamout_object *obj, *tmp;
 
    vrend_clicbs->make_current(sub->gl_context);
+
+   if (has_feature(feat_images)) {
+      for (int shader_type = PIPE_SHADER_VERTEX;
+           shader_type < PIPE_SHADER_TYPES;
+           shader_type++) {
+         uint32_t mask = sub->images_used_mask[shader_type];
+         while (mask) {
+            uint32_t i = u_bit_scan(&mask);
+            struct vrend_image_view *iview = &sub->image_views[shader_type][i];
+            vrend_resource_reference(&iview->texture, NULL);
+         }
+      }
+   }
 
    if (has_feature(feat_atomic_counters)) {
       uint32_t mask = sub->abo_used_mask;
