@@ -7406,7 +7406,7 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 
    if (has_feature(feat_ssbo)) {
       for (int shader_type = PIPE_SHADER_VERTEX;
-           shader_type <= PIPE_SHADER_TYPES;
+           shader_type < PIPE_SHADER_TYPES;
            shader_type++) {
          uint32_t mask = sub->ssbo_used_mask[shader_type];
          while (mask) {
