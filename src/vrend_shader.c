@@ -3095,7 +3095,6 @@ static void translate_tex(struct dump_ctx *ctx,
    bool is_shad;
 
    int sampler_index = 1;
-   const char *tex_ext;
 
    struct vrend_strbuf bias_buf;
    struct vrend_strbuf offset_buf;
@@ -3287,8 +3286,6 @@ static void translate_tex(struct dump_ctx *ctx,
       ;
    }
 
-   tex_ext = get_tex_inst_ext(inst);
-
    bool exchange_bias_offset = false;
    if (inst->Texture.NumOffsets == 1) {
       if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
@@ -3309,23 +3306,26 @@ static void translate_tex(struct dump_ctx *ctx,
 
    }
 
-   const char *bias = exchange_bias_offset ? offset_buf.buf : bias_buf.buf;
-   const char *offset = exchange_bias_offset ? bias_buf.buf : offset_buf.buf;
+   bool has_bias = strbuf_get_len (&bias_buf) != 0;
+   bool has_offset = strbuf_get_len (&offset_buf) != 0;
    // EXT_texture_shadow_lod defines a few more functions handling bias
-   if (bias &&
+   if (has_bias &&
        (inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY ||
         inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
         inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY))
       ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
 
    // EXT_texture_shadow_lod also adds the missing textureOffset for 2DArrayShadow in GLES
-   if ((bias || offset) && ctx->cfg->use_gles &&
+   if ((has_bias || has_offset) && ctx->cfg->use_gles &&
        (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
         inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY))
       ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
 
    char buf[255];
    const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
+   const char *tex_ext = get_tex_inst_ext(inst);
+   const char *bias = exchange_bias_offset ? offset_buf.buf : bias_buf.buf;
+   const char *offset = exchange_bias_offset ? bias_buf.buf : offset_buf.buf;
 
    /* We have to unnormalize the coordinate for all but the texel fetch instruction */
    if (inst->Instruction.Opcode != TGSI_OPCODE_TXF &&
