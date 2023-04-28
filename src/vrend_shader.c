@@ -3292,19 +3292,6 @@ static void translate_tex(struct dump_ctx *ctx,
    const char *bias = bias_buf.buf;
    const char *offset = offset_buf.buf;
 
-   // EXT_texture_shadow_lod defines a few more functions handling bias
-   if (bias &&
-       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY ||
-        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
-        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY))
-      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
-
-   // EXT_texture_shadow_lod also adds the missing textureOffset for 2DArrayShadow in GLES
-   if ((bias || offset) && ctx->cfg->use_gles &&
-       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
-        inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY))
-      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
-
    if (inst->Texture.NumOffsets == 1) {
       if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
          vrend_printf( "Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
@@ -3322,6 +3309,19 @@ static void translate_tex(struct dump_ctx *ctx,
          bias = offset_buf.buf;
       }
    }
+
+   // EXT_texture_shadow_lod defines a few more functions handling bias
+   if (bias &&
+       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOWCUBE_ARRAY))
+      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
+
+   // EXT_texture_shadow_lod also adds the missing textureOffset for 2DArrayShadow in GLES
+   if ((bias || offset) && ctx->cfg->use_gles &&
+       (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D_ARRAY ||
+        inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY))
+      ctx->shader_req_bits |= SHADER_REQ_TEXTURE_SHADOW_LOD;
 
    char buf[255];
    const char *new_srcs[4] = { buf, srcs[1], srcs[2], srcs[3] };
