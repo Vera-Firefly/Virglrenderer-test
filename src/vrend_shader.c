@@ -3289,9 +3289,7 @@ static void translate_tex(struct dump_ctx *ctx,
 
    tex_ext = get_tex_inst_ext(inst);
 
-   const char *bias = bias_buf.buf;
-   const char *offset = offset_buf.buf;
-
+   bool exchange_bias_offset = false;
    if (inst->Texture.NumOffsets == 1) {
       if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
          vrend_printf( "Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
@@ -3304,12 +3302,15 @@ static void translate_tex(struct dump_ctx *ctx,
          goto cleanup;
       }
 
-      if (inst->Instruction.Opcode == TGSI_OPCODE_TXL || inst->Instruction.Opcode == TGSI_OPCODE_TXL2 || inst->Instruction.Opcode == TGSI_OPCODE_TXD || (inst->Instruction.Opcode == TGSI_OPCODE_TG4 && is_shad)) {
-         offset = bias_buf.buf;
-         bias = offset_buf.buf;
-      }
+      exchange_bias_offset = inst->Instruction.Opcode == TGSI_OPCODE_TXL ||
+         inst->Instruction.Opcode == TGSI_OPCODE_TXL2 ||
+         inst->Instruction.Opcode == TGSI_OPCODE_TXD ||
+         (inst->Instruction.Opcode == TGSI_OPCODE_TG4 && is_shad);
+
    }
 
+   const char *bias = exchange_bias_offset ? offset_buf.buf : bias_buf.buf;
+   const char *offset = exchange_bias_offset ? bias_buf.buf : offset_buf.buf;
    // EXT_texture_shadow_lod defines a few more functions handling bias
    if (bias &&
        (inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D_ARRAY ||
