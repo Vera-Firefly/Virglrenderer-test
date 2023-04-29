@@ -1061,7 +1061,7 @@ int virgl_renderer_resource_map(uint32_t res_handle, void **out_map, uint64_t *o
 int virgl_renderer_resource_unmap(uint32_t res_handle)
 {
    TRACE_FUNC();
-   int ret;
+   int ret = 0;
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
    if (!res || !res->mapped)
       return -EINVAL;
