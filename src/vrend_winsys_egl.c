@@ -455,6 +455,95 @@ void virgl_egl_destroy(struct virgl_egl *egl)
    free(egl);
 }
 
+#ifdef WIN32
+static void
+debug_hresult(HRESULT hr)
+{
+   LPSTR msg = NULL;
+
+   if (SUCCEEDED(hr))
+      return;
+
+   FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                  FORMAT_MESSAGE_FROM_SYSTEM,
+                  NULL,
+                  hr,
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  (LPSTR)&msg,
+                  0,
+                  NULL);
+
+   VREND_DEBUG(dbg_d3d, NULL, "0x%08lX: %s", hr, msg);
+
+   LocalFree(msg);
+}
+
+static void debug_d3d_texture_desc(const D3D11_TEXTURE2D_DESC *desc)
+{
+   VREND_DEBUG(dbg_d3d, NULL,
+               "D3D11_TEXTURE2D_DESC:\n"
+               "  Width: %u\n"
+               "  Height: %u\n"
+               "  MipLevels: %u\n"
+               "  ArraySize: %u\n"
+               "  Format: %u\n"
+               "  SampleDesc.Count: %u\n"
+               "  SampleDesc.Quality: %u\n"
+               "  Usage: %u\n"
+               "  BindFlags: 0x%x (%u)\n"
+               "  CPUAccessFlags: 0x%x (%u)\n"
+               "  MiscFlags: 0x%x (%u)\n",
+               desc->Width,
+               desc->Height,
+               desc->MipLevels,
+               desc->ArraySize,
+               desc->Format,
+               desc->SampleDesc.Count,
+               desc->SampleDesc.Quality,
+               desc->Usage,
+               desc->BindFlags, desc->BindFlags,
+               desc->CPUAccessFlags, desc->CPUAccessFlags,
+               desc->MiscFlags, desc->MiscFlags);
+}
+
+bool virgl_egl_win32_create_d3d11_texture2d(struct virgl_egl *egl,
+                                            const D3D11_TEXTURE2D_DESC *desc, ID3D11Texture2D **tex)
+{
+   HRESULT hr;
+
+   if (!egl || !egl->d3d11_device)
+      return false;
+
+   debug_d3d_texture_desc(desc);
+   hr = egl->d3d11_device->lpVtbl->CreateTexture2D(egl->d3d11_device, desc, NULL, tex);
+   if (FAILED(hr)) {
+      debug_hresult(hr);
+      return false;
+   }
+
+   return true;
+}
+
+EGLImageKHR
+virgl_egl_win32_image_from_d3d11_texture2d(struct virgl_egl *egl, ID3D11Texture2D *tex)
+{
+   const EGLint attribs[] = {
+      EGL_NONE
+   };
+
+   if (!egl)
+      return NULL;
+
+#ifndef EGL_D3D11_TEXTURE_ANGLE
+#define EGL_D3D11_TEXTURE_ANGLE 0x3484
+#endif
+
+   return eglCreateImageKHR(egl->egl_display, EGL_NO_CONTEXT,
+                            EGL_D3D11_TEXTURE_ANGLE, (EGLClientBuffer)tex,
+                            attribs);
+}
+#endif
+
 static void
 virgl_egl_win32_init(UNUSED struct virgl_egl *egl)
 {
