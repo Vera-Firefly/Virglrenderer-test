@@ -219,12 +219,18 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                }
                /* MSAA samplers */
                if (src->Register.File == TGSI_FILE_SAMPLER) {
-                  assert(fullinst->Instruction.Texture);
-                  assert((unsigned)src->Register.Index < ARRAY_SIZE(info->is_msaa_sampler));
+                  if (!fullinst->Instruction.Texture) {
+                     debug_printf("TGSI: unspecified sampler instruction texture");
+                     return false;
+                  }
 
-                  if (fullinst->Instruction.Texture &&
-                      (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
-                       fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA)) {
+                  if (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
+                       fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA) {
+                     if ((unsigned)src->Register.Index >= ARRAY_SIZE(info->is_msaa_sampler)) {
+                        debug_printf("TGSI: sampler ID %d out of range", src->Register.Index);
+                        return false;
+                     }
+
                      info->is_msaa_sampler[src->Register.Index] = TRUE;
                   }
                }
@@ -310,6 +316,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                         MAX2(info->const_file_max[buffer], (int)reg);
                }
                else if (file == TGSI_FILE_INPUT) {
+                  if (reg >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI Error: number of input register %d is out of range", reg);
+                     return false;
+                  }
+
                   info->input_semantic_name[reg] = (ubyte) semName;
                   info->input_semantic_index[reg] = (ubyte) semIndex;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Interp.Interpolate;
