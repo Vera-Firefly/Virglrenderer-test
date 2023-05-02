@@ -321,6 +321,7 @@ struct virgl_renderer_resource_info_ext {
    bool has_dmabuf_export;
    int planes;
    uint64_t modifiers;
+   void *d3d_tex2d;
 };
 
 VIRGL_EXPORT int virgl_renderer_resource_get_info(int res_handle,

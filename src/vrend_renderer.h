@@ -39,6 +39,9 @@
 #endif
 #include "virgl_hw.h"
 #include <epoxy/gl.h>
+#ifdef WIN32
+#include <d3d11.h>
+#endif
 
 typedef void *virgl_gl_context;
 typedef void *virgl_gl_drawable;
@@ -92,6 +95,9 @@ struct vrend_resource {
    uint64_t mipmap_offsets[VR_MAX_TEXTURE_2D_LEVELS];
    void *gbm_bo, *egl_image;
    void *aux_plane_egl_image[VIRGL_GBM_MAX_PLANES];
+#ifdef WIN32
+   ID3D11Texture2D *d3d_tex2d;
+#endif
 
    uint64_t size;
    GLbitfield buffer_storage_flags;
@@ -566,5 +572,9 @@ void vrend_renderer_get_meminfo(struct vrend_context *ctx, uint32_t res_handle);
 void vrend_context_emit_string_marker(struct vrend_context *ctx, GLsizei length, const char * message);
 
 struct vrend_video_context *vrend_context_get_video_ctx(struct vrend_context *ctx);
+
+int
+vrend_renderer_resource_d3d11_texture2d(struct pipe_resource *res, void **handle);
+
 
 #endif

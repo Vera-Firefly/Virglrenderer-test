@@ -464,8 +464,11 @@ void virgl_renderer_ctx_detach_resource(int ctx_id, int res_handle)
 }
 
 static int virgl_renderer_resource_get_info_common(int res_handle,
-                                                   struct virgl_renderer_resource_info *info)
+                                                   struct virgl_renderer_resource_info *info,
+                                                   UNUSED void **d3d_tex2d)
 {
+   int ret = 0;
+
    TRACE_FUNC();
    struct virgl_resource *res = virgl_resource_lookup(res_handle);
 
@@ -478,7 +481,12 @@ static int virgl_renderer_resource_get_info_common(int res_handle,
                                     (struct vrend_renderer_resource_info *)info);
    info->handle = res_handle;
 
-   return 0;
+#ifdef WIN32
+   if (d3d_tex2d)
+      ret = vrend_renderer_resource_d3d11_texture2d(res->pipe_resource, d3d_tex2d);
+#endif
+
+   return ret;
 }
 
 int virgl_renderer_resource_get_info(int res_handle,
@@ -487,7 +495,7 @@ int virgl_renderer_resource_get_info(int res_handle,
    TRACE_FUNC();
    int ret;
 
-   if ((ret = virgl_renderer_resource_get_info_common(res_handle, info)) != 0)
+   if ((ret = virgl_renderer_resource_get_info_common(res_handle, info, NULL)) != 0)
        return ret;
 
    if (state.winsys_initialized) {
@@ -508,7 +516,9 @@ int virgl_renderer_resource_get_info_ext(int res_handle,
    TRACE_FUNC();
    int ret;
 
-   if ((ret = virgl_renderer_resource_get_info_common(res_handle, &info_ext->base)) != 0)
+   if ((ret = virgl_renderer_resource_get_info_common(res_handle,
+                                                      &info_ext->base,
+                                                      &info_ext->d3d_tex2d)) != 0)
       return ret;
 
    info_ext->version = VIRGL_RENDERER_RESOURCE_INFO_EXT_VERSION;

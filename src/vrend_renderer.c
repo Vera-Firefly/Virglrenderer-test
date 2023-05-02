@@ -8375,7 +8375,10 @@ void vrend_renderer_resource_destroy(struct vrend_resource *res)
    if (res->gbm_bo)
       gbm_bo_destroy(res->gbm_bo);
 #endif
-
+#ifdef WIN32
+   if (res->d3d_tex2d)
+      res->d3d_tex2d->lpVtbl->Release(res->d3d_tex2d);
+#endif
    free(res);
 }
 
@@ -12281,6 +12284,24 @@ void vrend_renderer_resource_get_info(struct pipe_resource *pres,
    info->format = res->base.format;
    info->flags = res->y_0_top ? VIRGL_RESOURCE_Y_0_TOP : 0;
    info->stride = util_format_get_nblocksx(res->base.format, u_minify(res->base.width0, 0)) * elsize;
+}
+
+int
+vrend_renderer_resource_d3d11_texture2d(struct pipe_resource *pres, void **d3d_tex2d)
+{
+#ifdef WIN32
+   struct vrend_resource *res = (struct vrend_resource *)pres;
+
+   if (!res->d3d_tex2d)
+      return EINVAL;
+
+   *d3d_tex2d = res->d3d_tex2d;
+   return 0;
+#else
+   (void)pres;
+   (void)d3d_tex2d;
+   return ENOTSUP;
+#endif
 }
 
 void vrend_renderer_get_cap_set(uint32_t cap_set, uint32_t *max_ver,
