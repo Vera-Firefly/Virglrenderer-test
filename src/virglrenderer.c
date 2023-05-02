@@ -870,6 +870,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          renderer_flags |= VREND_USE_EXTERNAL_BLOB;
       if (flags & VIRGL_RENDERER_USE_VIDEO)
          renderer_flags |= VREND_USE_VIDEO;
+      if (flags & VIRGL_RENDERER_D3D11_SHARE_TEXTURE)
+         renderer_flags |= VREND_D3D11_SHARE_TEXTURE;
 
       ret = vrend_renderer_init(&vrend_cbs, renderer_flags);
       if (ret)

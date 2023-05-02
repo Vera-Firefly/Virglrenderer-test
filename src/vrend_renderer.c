@@ -71,6 +71,10 @@
 #include <vrend_video.h>
 #endif
 
+#ifdef WIN32
+#include <dxgi1_2.h>
+#endif
+
 /*
  * VIRGL_RENDERER_CAPSET_VIRGL has version 0 and 1, but they are both
  * virgl_caps_v1 and are exactly the same.
@@ -387,6 +391,7 @@ struct global_renderer_state {
 #ifdef HAVE_EPOXY_EGL_H
    bool use_egl_fence : 1;
 #endif
+   bool d3d_share_texture : 1;
 };
 
 struct sysval_uniform_block {
@@ -7392,6 +7397,8 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    }
 #endif
 
+   vrend_state.d3d_share_texture = flags & VREND_D3D11_SHARE_TEXTURE;
+
    return 0;
 }
 
@@ -8039,6 +8046,158 @@ vrend_renderer_resource_copy_args(const struct vrend_renderer_resource_create_ar
    gr->base.array_size = args->array_size;
 }
 
+#ifdef WIN32
+struct dxgi_format_conversion {
+   uint32_t virgl_format;
+   DXGI_FORMAT dxgi_format;
+};
+
+static bool virgl_format_to_dxgi_format(uint32_t format, DXGI_FORMAT *dxgi)
+{
+   static const struct dxgi_format_conversion conversions[] = {
+      { VIRGL_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM },
+      { VIRGL_FORMAT_R8G8B8A8_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB },
+      { VIRGL_FORMAT_B8G8R8X8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM }, /*?*/
+      { VIRGL_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_R8G8B8A8_UNORM }, /*?*/
+      { VIRGL_FORMAT_B8G8R8A8_SRGB, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB },
+      { VIRGL_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_R8G8B8A8_TYPELESS },
+      { VIRGL_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_B8G8R8A8_TYPELESS },
+      { VIRGL_FORMAT_R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT },
+      { VIRGL_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT },
+      { VIRGL_FORMAT_R10G10B10A2_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM },
+      { VIRGL_FORMAT_R8_UNORM, DXGI_FORMAT_R8_UNORM },
+      { VIRGL_FORMAT_R16_UNORM, DXGI_FORMAT_R16_UNORM },
+      { VIRGL_FORMAT_R8G8_UNORM, DXGI_FORMAT_R8G8_UNORM },
+      { VIRGL_FORMAT_R16G16_UNORM, DXGI_FORMAT_R16G16_UNORM },
+      { VIRGL_FORMAT_NV12, DXGI_FORMAT_NV12 },
+      { VIRGL_FORMAT_P010, DXGI_FORMAT_P010 },
+      { VIRGL_FORMAT_P016, DXGI_FORMAT_P016 },
+   };
+
+    for (uint32_t i = 0; i < ARRAY_SIZE(conversions); i++) {
+       if (conversions[i].virgl_format == format) {
+          *dxgi = conversions[i].dxgi_format;
+          return true;
+       }
+    }
+
+   return false;
+}
+
+static UINT virgl_bind_to_d3d_bind_flags(uint32_t flags)
+{
+   UINT ret = 0;
+
+   if (flags & PIPE_BIND_VERTEX_BUFFER)
+      ret |= D3D11_BIND_VERTEX_BUFFER;
+   if (flags & PIPE_BIND_INDEX_BUFFER)
+      ret |= D3D11_BIND_INDEX_BUFFER;
+   if (flags & PIPE_BIND_CONSTANT_BUFFER)
+      ret |= D3D11_BIND_CONSTANT_BUFFER;
+   if (flags & PIPE_BIND_SHADER_RESOURCE)
+      ret |= D3D11_BIND_SHADER_RESOURCE;
+   if (flags & PIPE_BIND_STREAM_OUTPUT)
+      ret |= D3D11_BIND_STREAM_OUTPUT;
+   if (flags & PIPE_BIND_RENDER_TARGET)
+      ret |= D3D11_BIND_RENDER_TARGET;
+   if (flags & PIPE_BIND_DEPTH_STENCIL)
+      ret |= D3D11_BIND_DEPTH_STENCIL;
+
+   return ret;
+}
+
+static UINT virgl_usage_to_d3d_usage(uint32_t usage)
+{
+   switch (usage) {
+   case PIPE_USAGE_DEFAULT:
+      return D3D11_USAGE_DEFAULT;
+   case PIPE_USAGE_IMMUTABLE:
+      return D3D11_USAGE_IMMUTABLE;
+   case PIPE_USAGE_DYNAMIC:
+      return D3D11_USAGE_DYNAMIC;
+   case PIPE_USAGE_STAGING:
+      return D3D11_USAGE_STAGING;
+   case PIPE_USAGE_STREAM:
+      return D3D11_USAGE_DEFAULT;
+   }
+
+   return D3D11_USAGE_DEFAULT;
+}
+
+static bool vrend_resource_d3d_acquire(ID3D11Texture2D* d3d_tex2d)
+{
+   IDXGIKeyedMutex* dxgiMutex = NULL;
+   HRESULT hr;
+
+   hr = d3d_tex2d->lpVtbl->QueryInterface(d3d_tex2d,
+                                          &IID_IDXGIKeyedMutex, (void**)&dxgiMutex);
+   if (FAILED(hr))
+      return false;
+
+   hr = dxgiMutex->lpVtbl->AcquireSync(dxgiMutex, 0, INFINITE);
+
+   dxgiMutex->lpVtbl->Release(dxgiMutex);
+
+   return SUCCEEDED(hr);
+}
+#endif
+
+/*
+ * When using ANGLE/D3D, this function creates a D3D Texture and
+ * EGL image given certain flags.
+ */
+static void vrend_resource_d3d_init(UNUSED struct vrend_resource *gr, UNUSED uint32_t format)
+{
+#if defined(WIN32) && defined(HAVE_EPOXY_EGL_H)
+   D3D11_TEXTURE2D_DESC desc = {
+      .Width = gr->base.width0,
+      .Height = gr->base.height0,
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .SampleDesc = { .Count = 1 },
+   };
+   ID3D11Texture2D* d3d_tex2d = NULL;
+
+   if (!vrend_state.d3d_share_texture)
+      return;
+
+   if ((gr->base.bind & VIRGL_RES_BIND_SCANOUT) == 0)
+      return;
+
+   if (gr->base.depth0 != 1 || gr->base.last_level != 0 || gr->base.nr_samples > 1)
+      return;
+
+   if (!virgl_format_to_dxgi_format(format, &desc.Format))
+      return;
+
+   desc.BindFlags = virgl_bind_to_d3d_bind_flags(gr->base.bind);
+   desc.BindFlags |= D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+   desc.Usage = virgl_usage_to_d3d_usage(gr->base.usage);
+   desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+
+   if (!virgl_egl_win32_create_d3d11_texture2d(egl, &desc, &d3d_tex2d))
+      goto fail;
+
+   if (!vrend_resource_d3d_acquire(d3d_tex2d))
+      goto fail;
+
+   gr->egl_image = virgl_egl_win32_image_from_d3d11_texture2d(egl, d3d_tex2d);
+   if (!gr->egl_image)
+      goto fail;
+
+   gr->d3d_tex2d = d3d_tex2d;
+
+   gr->storage_bits |= VREND_STORAGE_D3D_TEXTURE;
+   gr->storage_bits |= VREND_STORAGE_EGL_IMAGE;
+   return;
+
+fail:
+   if (d3d_tex2d)
+      d3d_tex2d->lpVtbl->Release(gr->d3d_tex2d);
+   gr->d3d_tex2d = NULL;
+#endif
+}
+
 /*
  * When GBM allocation is enabled, this function creates a GBM buffer and
  * EGL image given certain flags.
@@ -8112,6 +8271,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       gr->storage_bits |= VREND_STORAGE_GL_IMMUTABLE;
 
    if (!image_oes) {
+      vrend_resource_d3d_init(gr, format);
       vrend_resource_gbm_init(gr, format);
       if (gr->gbm_bo && !has_bit(gr->storage_bits, VREND_STORAGE_EGL_IMAGE))
          return 0;

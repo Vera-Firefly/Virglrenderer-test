@@ -159,6 +159,9 @@ struct virgl_renderer_callbacks {
 
 #endif /* VIRGL_RENDERER_UNSTABLE_APIS */
 
+
+#define VIRGL_RENDERER_D3D11_SHARE_TEXTURE (1 << 12)
+
 VIRGL_EXPORT int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks *cb);
 VIRGL_EXPORT void virgl_renderer_poll(void); /* force fences */
 
