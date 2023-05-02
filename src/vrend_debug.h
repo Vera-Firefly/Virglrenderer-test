@@ -52,6 +52,7 @@ enum virgl_debug_flags {
    dbg_allow_guest_override = 1 << 16,
    dbg_feature_use = 1 << 17,
    dbg_khr = 1 << 18,
+   dbg_d3d = 1 << 19,
 };
 
 const char *vrend_get_comand_name(enum virgl_context_cmd cmd);

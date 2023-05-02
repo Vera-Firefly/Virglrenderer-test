@@ -163,6 +163,7 @@ static const struct debug_named_value vrend_debug_options[] = {
    {"all", dbg_all, "Enable all debugging output"},
    {"guestallow", dbg_allow_guest_override, "Allow the guest to override the debug flags"},
    {"khr", dbg_khr, "Enable debug via KHR_debug extension"},
+   {"d3d", dbg_d3d, "Enable D3D-related debug"},
    DEBUG_NAMED_VALUE_END
 };
 
