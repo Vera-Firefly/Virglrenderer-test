@@ -4457,7 +4457,8 @@ error:
 }
 
 void vrend_bind_shader(struct vrend_context *ctx,
-                       uint32_t handle, enum pipe_shader_type type)
+                       uint32_t handle,
+                       enum pipe_shader_type type)
 {
    struct vrend_shader_selector *sel;
 
