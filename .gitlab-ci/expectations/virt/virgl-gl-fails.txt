@@ -218,7 +218,7 @@ spec@arb_transform_feedback_overflow_query@arb_transform_feedback_overflow_query
 spec@arb_transform_feedback_overflow_query@arb_transform_feedback_overflow_query-basic,Fail
 spec@egl 1.4@eglterminate then unbind context,Fail
 spec@egl_ext_device_base@conformance@configless_tests,Fail
-spec@egl_ext_device_base@conformance,Fail
+spec@egl_ext_device_base@conformance,Crash
 spec@egl_ext_device_base@conformance@pbuffer_tests,Fail
 spec@egl_ext_device_base@conformance@surfaceless_tests,Fail
 spec@egl_ext_protected_content@conformance,Fail
