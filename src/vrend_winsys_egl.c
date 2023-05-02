@@ -63,6 +63,9 @@
 #define EGL_EXT_IMAGE_DMA_BUF_IMPORT           BIT(6)
 #define EGL_EXT_IMAGE_DMA_BUF_IMPORT_MODIFIERS BIT(7)
 #define EGL_KHR_FENCE_SYNC_ANDROID             BIT(8)
+#define EGL_EXT_PLATFORM_BASE                  BIT(9)
+#define EGL_EXT_DEVICE_ENUMERATION             BIT(10)
+#define EGL_EXT_DEVICE_QUERY                   BIT(11)
 
 static const struct {
    uint32_t bit;
@@ -75,7 +78,16 @@ static const struct {
    { EGL_KHR_GL_COLORSPACE, "EGL_KHR_gl_colorspace" },
    { EGL_EXT_IMAGE_DMA_BUF_IMPORT, "EGL_EXT_image_dma_buf_import" },
    { EGL_EXT_IMAGE_DMA_BUF_IMPORT_MODIFIERS, "EGL_EXT_image_dma_buf_import_modifiers" },
-   { EGL_KHR_FENCE_SYNC_ANDROID, "EGL_ANDROID_native_fence_sync"}
+   { EGL_KHR_FENCE_SYNC_ANDROID, "EGL_ANDROID_native_fence_sync"},
+   { EGL_EXT_PLATFORM_BASE, "EGL_EXT_platform_base" },
+   { EGL_EXT_DEVICE_ENUMERATION, "EGL_EXT_device_enumeration" },
+   { EGL_EXT_DEVICE_QUERY, "EGL_EXT_device_query" },
+};
+
+struct egl_funcs {
+   PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplay;
+   PFNEGLQUERYDEVICESEXTPROC eglQueryDevices;
+   PFNEGLQUERYDEVICESTRINGEXTPROC eglQueryDeviceString;
 };
 
 struct virgl_egl {
@@ -88,6 +100,7 @@ struct virgl_egl {
    uint32_t extension_bits;
    EGLSyncKHR signaled_fence;
    bool different_gpu;
+   struct egl_funcs funcs;
 };
 
 static bool virgl_egl_has_extension_in_string(const char *haystack, const char *needle)
@@ -122,62 +135,53 @@ static bool virgl_egl_has_extension_in_string(const char *haystack, const char *
    return false;
 }
 
-static int virgl_egl_init_extensions(struct virgl_egl *egl, const char *extensions)
+static bool virgl_egl_get_funcs(struct virgl_egl *egl)
+{
+   assert(egl);
+
+   if (has_bit(egl->extension_bits, EGL_EXT_PLATFORM_BASE)) {
+      egl->funcs.eglGetPlatformDisplay =
+         (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress("eglGetPlatformDisplayEXT");
+      if (!egl->funcs.eglGetPlatformDisplay)
+         return false;
+   }
+
+   if (has_bit(egl->extension_bits, EGL_EXT_DEVICE_QUERY)) {
+      egl->funcs.eglQueryDeviceString = (PFNEGLQUERYDEVICESTRINGEXTPROC)eglGetProcAddress("eglQueryDeviceStringEXT");
+      if (!egl->funcs.eglQueryDeviceString)
+         return false;
+   }
+
+   if (has_bit(egl->extension_bits, EGL_EXT_DEVICE_ENUMERATION)) {
+      egl->funcs.eglQueryDevices = (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress ("eglQueryDevicesEXT");
+      if (!egl->funcs.eglQueryDevices)
+         return false;
+   }
+
+   return true;
+}
+
+static bool virgl_egl_add_extensions(struct virgl_egl *egl, const char *extensions)
 {
    for (uint32_t i = 0; i < ARRAY_SIZE(extensions_list); i++) {
       if (virgl_egl_has_extension_in_string(extensions, extensions_list[i].string))
          egl->extension_bits |= extensions_list[i].bit;
    }
 
+   return virgl_egl_get_funcs(egl);
+}
+
+static bool virgl_egl_check_extensions(struct virgl_egl *egl)
+{
    if (!has_bits(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT | EGL_KHR_CREATE_CONTEXT)) {
       vrend_printf( "Missing EGL_KHR_surfaceless_context or EGL_KHR_create_context\n");
-      return -1;
+      return false;
    }
 
-   return 0;
+   return true;
 }
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
-
-struct egl_funcs {
-   PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplay;
-   PFNEGLQUERYDEVICESEXTPROC eglQueryDevices;
-   PFNEGLQUERYDEVICESTRINGEXTPROC eglQueryDeviceString;
-};
-
-static bool virgl_egl_get_interface(struct egl_funcs *funcs)
-{
-   const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
-
-   assert(funcs);
-
-   if (virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base")) {
-      funcs->eglGetPlatformDisplay =
-         (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplayEXT");
-   }
-
-   if (!funcs->eglGetPlatformDisplay)
-      return false;
-
-   if (!virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_device"))
-      return false;
-
-   if (!virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_device_enumeration"))
-      return false;
-
-   funcs->eglQueryDevices = (PFNEGLQUERYDEVICESEXTPROC)eglGetProcAddress ("eglQueryDevicesEXT");
-   if (!funcs->eglQueryDevices)
-      return false;
-
-   if (!virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_device_query"))
-      return false;
-
-   funcs->eglQueryDeviceString = (PFNEGLQUERYDEVICESTRINGEXTPROC)eglGetProcAddress("eglQueryDeviceStringEXT");
-   if (!funcs->eglQueryDeviceString)
-      return false;
-
-  return true;
-}
 
 static EGLint virgl_egl_find_3d_device(struct gbm_device_info *dev_infos, EGLint num_devices, uint32_t flags)
 {
@@ -216,7 +220,7 @@ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs
    if (gbm_detect_device_info(0, gbm_device_get_fd(egl->gbm->device), &gbm_dev_info) < 0)
       return EGL_NO_DEVICE_EXT;
 
-   if (!funcs->eglQueryDevices(max_devices, devices, &num_devices))
+   if (!egl->funcs.eglQueryDevices(max_devices, devices, &num_devices))
       return EGL_NO_DEVICE_EXT;
 
    /* We query EGL_DRM_DEVICE_FILE_EXT without checking EGL_EXT_device_drm extension,
@@ -224,7 +228,7 @@ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs
     * after initializing display for every device.
     */
    for (d = 0; d < num_devices; d++) {
-       const char *dev_node = funcs->eglQueryDeviceString(devices[d], EGL_DRM_DEVICE_FILE_EXT);
+       const char *dev_node = egl->funcs.eglQueryDeviceString(devices[d], EGL_DRM_DEVICE_FILE_EXT);
        memset(&dev_infos[d], 0, sizeof(dev_infos[d]));
        if (dev_node) {
           if (gbm_detect_device_info_path(0, dev_node, dev_infos+d) < 0)
@@ -257,21 +261,24 @@ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs
 
 static bool virgl_egl_get_display(struct virgl_egl *egl)
 {
-   struct egl_funcs funcs = { 0 };
    EGLDeviceEXT device;
 
    if (!egl->gbm)
       return false;
 
-   if (!virgl_egl_get_interface(&funcs))
+   if (!has_bits(egl->extension_bits,
+                 EGL_EXT_PLATFORM_BASE |
+                 EGL_EXT_PLATFORM_DEVICE |
+                 EGL_EXT_DEVICE_ENUMERATION |
+                 EGL_EXT_DEVICE_QUERY))
       return false;
 
-   device = virgl_egl_get_device(egl, &funcs);
+   device = virgl_egl_get_device(egl);
 
    if (device == EGL_NO_DEVICE_EXT)
       return false;
 
-   egl->egl_display = funcs.eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, NULL);
+   egl->egl_display = egl->funcs.eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, NULL);
    return true;
 }
 #endif /* ENABLE_MINIGBM_ALLOCATION */
@@ -320,6 +327,9 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
 #endif
 
    egl->different_gpu = false;
+   extensions = eglQueryString(NULL, EGL_EXTENSIONS);
+   if (!virgl_egl_add_extensions(egl, extensions))
+      goto fail;
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
    if (virgl_egl_get_display(egl)) {
@@ -327,20 +337,16 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
    } else /* Fallback to surfaceless. */
 #endif
    if (has_egl_base) {
-      PFNEGLGETPLATFORMDISPLAYEXTPROC get_platform_display =
-         (PFNEGLGETPLATFORMDISPLAYEXTPROC) eglGetProcAddress ("eglGetPlatformDisplayEXT");
-
-      if (!get_platform_display)
-        goto fail;
-
+      if (!has_bit(egl->extension_bits, EGL_EXT_PLATFORM_BASE))
+         goto fail;
       if (surfaceless) {
-         egl->egl_display = get_platform_display (EGL_PLATFORM_SURFACELESS_MESA,
-                                                  EGL_DEFAULT_DISPLAY, NULL);
+         egl->egl_display = egl->funcs.eglGetPlatformDisplay(EGL_PLATFORM_SURFACELESS_MESA,
+                                                             EGL_DEFAULT_DISPLAY, NULL);
       }
 #ifdef ENABLE_GBM
       else
-         egl->egl_display = get_platform_display (EGL_PLATFORM_GBM_KHR,
-                                                 (EGLNativeDisplayType)egl->gbm->device, NULL);
+         egl->egl_display = egl->funcs.eglGetPlatformDisplay(EGL_PLATFORM_GBM_KHR,
+                                                             (EGLNativeDisplayType)egl->gbm->device, NULL);
 #endif
    } else {
 #ifdef ENABLE_GBM
@@ -379,7 +385,10 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
    vrend_printf( "EGL extensions: %s\n", extensions);
 #endif
 
-   if (virgl_egl_init_extensions(egl, extensions))
+   if (!virgl_egl_add_extensions(egl, extensions))
+      goto fail;
+
+   if (!virgl_egl_check_extensions(egl))
       goto fail;
 
    if (gles)
@@ -442,6 +451,10 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
 
    egl->egl_display = egl_display;
 
+   extensions = eglQueryString(NULL, EGL_EXTENSIONS);
+   if (!virgl_egl_add_extensions(egl, extensions))
+      goto fail;
+
    extensions = eglQueryString(egl->egl_display, EGL_EXTENSIONS);
 #ifdef VIRGL_EGL_DEBUG
    vrend_printf( "EGL version: %s\n",
@@ -450,11 +463,11 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
            eglQueryString(egl->egl_display, EGL_VENDOR));
    vrend_printf( "EGL extensions: %s\n", extensions);
 #endif
+   if (!virgl_egl_add_extensions(egl, extensions))
+      goto fail;
 
-   if (virgl_egl_init_extensions(egl, extensions)) {
-      free(egl);
-      return NULL;
-   }
+   if (!virgl_egl_check_extensions(egl))
+      goto fail;
 
 #ifdef ENABLE_GBM
    gbm = virgl_gbm_init(-1);
@@ -462,6 +475,9 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
 #endif
 
    return egl;
+fail:
+   free(egl);
+   return NULL;
 }
 
 virgl_renderer_gl_context virgl_egl_create_context(struct virgl_egl *egl, struct virgl_gl_ctx_param *vparams)
