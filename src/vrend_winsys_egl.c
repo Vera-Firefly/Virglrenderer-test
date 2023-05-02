@@ -33,7 +33,9 @@
 #define EGL_EGLEXT_PROTOTYPES
 #include <errno.h>
 #include <fcntl.h>
-#ifndef _WIN32
+#ifdef WIN32
+#include <d3d11.h>
+#else
 #include <poll.h>
 #endif
 #include <stdbool.h>
@@ -66,6 +68,7 @@
 #define EGL_EXT_PLATFORM_BASE                  BIT(9)
 #define EGL_EXT_DEVICE_ENUMERATION             BIT(10)
 #define EGL_EXT_DEVICE_QUERY                   BIT(11)
+#define EGL_EXT_PLATFORM_DEVICE                BIT(12)
 
 static const struct {
    uint32_t bit;
@@ -82,12 +85,15 @@ static const struct {
    { EGL_EXT_PLATFORM_BASE, "EGL_EXT_platform_base" },
    { EGL_EXT_DEVICE_ENUMERATION, "EGL_EXT_device_enumeration" },
    { EGL_EXT_DEVICE_QUERY, "EGL_EXT_device_query" },
+   { EGL_EXT_PLATFORM_DEVICE, "EGL_EXT_platform_device" },
 };
 
 struct egl_funcs {
    PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplay;
    PFNEGLQUERYDEVICESEXTPROC eglQueryDevices;
    PFNEGLQUERYDEVICESTRINGEXTPROC eglQueryDeviceString;
+   PFNEGLQUERYDISPLAYATTRIBEXTPROC eglQueryDisplayAttrib;
+   PFNEGLQUERYDEVICEATTRIBEXTPROC eglQueryDeviceAttrib;
 };
 
 struct virgl_egl {
@@ -101,6 +107,9 @@ struct virgl_egl {
    EGLSyncKHR signaled_fence;
    bool different_gpu;
    struct egl_funcs funcs;
+#ifdef WIN32
+   ID3D11Device *d3d11_device;
+#endif
 };
 
 static bool virgl_egl_has_extension_in_string(const char *haystack, const char *needle)
@@ -147,8 +156,14 @@ static bool virgl_egl_get_funcs(struct virgl_egl *egl)
    }
 
    if (has_bit(egl->extension_bits, EGL_EXT_DEVICE_QUERY)) {
+      egl->funcs.eglQueryDeviceAttrib = (PFNEGLQUERYDEVICEATTRIBEXTPROC)eglGetProcAddress("eglQueryDeviceAttribEXT");
+      if (!egl->funcs.eglQueryDeviceAttrib)
+         return false;
       egl->funcs.eglQueryDeviceString = (PFNEGLQUERYDEVICESTRINGEXTPROC)eglGetProcAddress("eglQueryDeviceStringEXT");
       if (!egl->funcs.eglQueryDeviceString)
+         return false;
+      egl->funcs.eglQueryDisplayAttrib = (PFNEGLQUERYDISPLAYATTRIBEXTPROC)eglGetProcAddress("eglQueryDisplayAttribEXT");
+      if (!egl->funcs.eglQueryDisplayAttrib)
          return false;
    }
 
@@ -440,6 +455,34 @@ void virgl_egl_destroy(struct virgl_egl *egl)
    free(egl);
 }
 
+static void
+virgl_egl_win32_init(UNUSED struct virgl_egl *egl)
+{
+#ifdef WIN32
+   EGLDeviceEXT device;
+   const char* device_ext = NULL;
+   ID3D11Device* d3d11_device;
+
+   if (!has_bits(egl->extension_bits, EGL_EXT_DEVICE_QUERY))
+      return;
+
+   if (!egl->funcs.eglQueryDisplayAttrib(egl->egl_display, EGL_DEVICE_EXT, (EGLAttrib*)&device))
+      return;
+
+   device_ext = egl->funcs.eglQueryDeviceString(device, EGL_EXTENSIONS);
+   if (!device_ext)
+      return;
+
+   if (!virgl_egl_has_extension_in_string(device_ext, "EGL_ANGLE_device_d3d"))
+      return;
+
+   if (!egl->funcs.eglQueryDeviceAttrib(device, EGL_D3D11_DEVICE_ANGLE, (EGLAttrib*)&d3d11_device))
+      return;
+
+   egl->d3d11_device = d3d11_device;
+#endif
+}
+
 struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
 {
    const char *extensions;
@@ -474,6 +517,7 @@ struct virgl_egl *virgl_egl_init_external(EGLDisplay egl_display)
    egl->gbm = gbm;
 #endif
 
+   virgl_egl_win32_init(egl);
    return egl;
 fail:
    free(egl);
