@@ -7927,7 +7927,9 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.generic_ios.match.outputs_expected_mask = key->out_generic_expected_mask;
    ctx.texcoord_ios.match.outputs_expected_mask = key->out_texcoord_expected_mask;
 
-   tgsi_scan_shader(tokens, &ctx.info);
+   if (!tgsi_scan_shader(tokens, &ctx.info))
+      goto fail;
+
    /* if we are in core profile mode we should use GLSL 1.40 */
    if (cfg->use_core_profile && cfg->glsl_version >= 140)
       ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);

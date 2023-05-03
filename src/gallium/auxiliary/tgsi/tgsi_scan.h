@@ -135,7 +135,7 @@ struct tgsi_shader_info
    unsigned max_depth;
 };
 
-extern void
+extern bool
 tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info);
 

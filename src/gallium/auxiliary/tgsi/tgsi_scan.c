@@ -50,7 +50,7 @@
  * registers used, special instructions used, etc.
  * \return info  the result of the scan
  */
-void
+bool
 tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info)
 {
@@ -70,7 +70,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
     **/
    if (tgsi_parse_init( &parse, tokens ) != TGSI_PARSE_OK) {
       debug_printf("tgsi_parse_init() failed in tgsi_scan_shader()!\n");
-      return;
+      return false;
    }
    procType = parse.FullHeader.Processor.Processor;
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
@@ -122,10 +122,19 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                const struct tgsi_full_src_register *src0 = &fullinst->Src[0];
                unsigned input;
 
-               if (src0->Register.Indirect && src0->Indirect.ArrayID)
+               if (src0->Register.Indirect && src0->Indirect.ArrayID) {
+                  if (src0->Indirect.ArrayID >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI Error: src0->Indirect.ArrayID >= PIPE_MAX_SHADER_INPUTS!");
+                     return false;
+                  }
                   input = info->input_array_first[src0->Indirect.ArrayID];
-               else
+               } else
                   input = src0->Register.Index;
+
+               if (input >= PIPE_MAX_SHADER_INPUTS) {
+                  debug_printf("TGSI Error: input %d out of range!", input);
+                  return false;
+               }
 
                /* For the INTERP opcodes, the interpolation is always
                 * PERSPECTIVE unless LINEAR is specified.
@@ -181,8 +190,10 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                         info->input_usage_mask[ind] |= usage_mask;
                      }
                   } else {
-                     assert(ind >= 0);
-                     assert(ind < PIPE_MAX_SHADER_INPUTS);
+                     if (ind < 0 || ind >= PIPE_MAX_SHADER_INPUTS) {
+                        debug_printf("TGSI Error: input %d out of range.", ind);
+                        return false;
+                     }
                      info->input_usage_mask[ind] |= usage_mask;
                   }
 
@@ -241,17 +252,30 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             const uint file = fulldecl->Declaration.File;
             uint reg;
 
+            if (file >= TGSI_FILE_COUNT) {
+               debug_printf("TGSI: unknown file %d", file);
+               return false;
+            }
+
+
             if (fulldecl->Declaration.Array) {
                unsigned array_id = fulldecl->Array.ArrayID;
 
                switch (file) {
                case TGSI_FILE_INPUT:
-                  assert(array_id < ARRAY_SIZE(info->input_array_first));
+                  if (array_id >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI: input array ID %d out of range", array_id);
+                     return false;
+                  }
+
                   info->input_array_first[array_id] = fulldecl->Range.First;
                   info->input_array_last[array_id] = fulldecl->Range.Last;
                   break;
                case TGSI_FILE_OUTPUT:
-                  assert(array_id < ARRAY_SIZE(info->output_array_first));
+                  if (array_id >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI: output array ID %d out of range", array_id);
+                     return false;
+                  }
                   info->output_array_first[array_id] = fulldecl->Range.First;
                   info->output_array_last[array_id] = fulldecl->Range.Last;
                   break;
@@ -272,10 +296,15 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
                if (file == TGSI_FILE_CONSTANT) {
-                  int buffer = 0;
+                  unsigned buffer = 0;
 
                   if (fulldecl->Declaration.Dimension)
                      buffer = fulldecl->Dim.Index2D;
+
+                  if (buffer >= PIPE_MAX_CONSTANT_BUFFERS) {
+                     debug_printf("TGSI Error: constant buffer id %d out of range", buffer);
+                     return false;
+                  }
 
                   info->const_file_max[buffer] =
                         MAX2(info->const_file_max[buffer], (int)reg);
@@ -287,6 +316,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_interpolate_loc[reg] = (ubyte)fulldecl->Interp.Location;
                   info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Interp.CylindricalWrap;
                   info->num_inputs++;
+
+                  if (info->num_inputs >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI: mnumber of inputs exeeds limit");
+                     return false;
+                  }
 
                   /* Only interpolated varyings. Don't include POSITION.
                    * Don't include integer varyings, because they are not
@@ -343,6 +377,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                else if (file == TGSI_FILE_SYSTEM_VALUE) {
                   unsigned index = fulldecl->Range.First;
 
+                  if (index >= PIPE_MAX_SHADER_INPUTS) {
+                     debug_printf("TGSI Error: system values exeeds limit");
+                     return false;
+                  }
+
                   info->system_value_semantic_name[index] = semName;
                   info->num_system_values = MAX2(info->num_system_values,
                                                  index + 1);
@@ -366,9 +405,20 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
                }
                else if (file == TGSI_FILE_OUTPUT) {
+
+                  if (reg >= PIPE_MAX_SHADER_OUTPUTS) {
+                     debug_printf("TGSI Error: output out of range");
+                     return false;
+                  }
+
                   info->output_semantic_name[reg] = (ubyte) semName;
                   info->output_semantic_index[reg] = (ubyte) semIndex;
                   info->num_outputs++;
+
+                  if (info->num_outputs >= PIPE_MAX_SHADER_OUTPUTS) {
+                     debug_printf("TGSI Error: number of outputs exeeds limit");
+                     return false;
+                  }
 
                   if (semName == TGSI_SEMANTIC_COLOR)
                      info->colors_written |= 1 << semIndex;
@@ -430,7 +480,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             unsigned name = fullprop->Property.PropertyName;
             unsigned value = fullprop->u[0].Data;
 
-            assert(name < ARRAY_SIZE(info->properties));
+            if (name >= ARRAY_SIZE(info->properties)) {
+               debug_printf("TGSI: Unknown property %d\n", name);
+               return false;
+            }
+
             info->properties[name] = value;
 
             switch (name) {
@@ -447,7 +501,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          break;
 
       default:
-         assert( 0 );
+         debug_printf("TGSI: Unknown token type %d\n", parse.FullToken.Token.Type);
+         return false;
       }
    }
 
@@ -471,6 +526,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
    }
 
    tgsi_parse_free (&parse);
+
+   return true;
 }
 
 
