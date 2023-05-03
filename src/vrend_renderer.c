@@ -3419,12 +3419,13 @@ void vrend_set_uniform_buffer(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
          return;
       }
-      cbs->buffer = (struct pipe_resource *)res;
+
+      vrend_resource_reference((struct vrend_resource **)&cbs->buffer, res);
       cbs->buffer_offset = offset;
       cbs->buffer_size = length;
       ctx->sub->const_bufs_used_mask[shader] |= mask;
    } else {
-      cbs->buffer = NULL;
+      vrend_resource_reference((struct vrend_resource **)&cbs->buffer, NULL);
       cbs->buffer_offset = 0;
       cbs->buffer_size = 0;
       ctx->sub->const_bufs_used_mask[shader] &= ~mask;
@@ -7477,6 +7478,10 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
    for (enum pipe_shader_type type = 0; type < PIPE_SHADER_TYPES; type++) {
       free(sub->consts[type].consts);
       sub->consts[type].consts = NULL;
+      while (sub->const_bufs_used_mask[type]) {
+         uint32_t i = u_bit_scan(&sub->const_bufs_used_mask[type]);
+         vrend_resource_reference((struct vrend_resource **)&sub->cbs[type][i].buffer, NULL);
+      }
 
       for (unsigned i = 0; i < PIPE_MAX_SHADER_SAMPLER_VIEWS; i++) {
          vrend_sampler_view_reference(&sub->views[type].views[i], NULL);
