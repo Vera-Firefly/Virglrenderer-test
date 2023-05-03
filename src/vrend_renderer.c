@@ -2404,16 +2404,16 @@ static void vrend_destroy_sampler_state_object(void *obj_ptr)
       for (enum pipe_shader_type shader_type = PIPE_SHADER_VERTEX;
            shader_type < PIPE_SHADER_TYPES;
            shader_type++) {
-         uint32_t num_sampler_states = sub_ctx->num_sampler_states[shader_type];
-         bool found = false;
-         for (uint32_t sampler = 0; sampler < num_sampler_states; sampler++) {
+         int deleted_samplers = 0;
+         for (uint32_t sampler = 0; sampler < PIPE_MAX_SAMPLERS; sampler++) {
             if (sub_ctx->sampler_state[shader_type][sampler] == state) {
                sub_ctx->sampler_state[shader_type][sampler] = NULL;
                sub_ctx->num_sampler_states[shader_type]--;
                sub_ctx->sampler_views_dirty[shader_type] |= (1u << sampler);
-               found = true;
-            } else if (found) {
-               sub_ctx->sampler_state[shader_type][sampler-1] = sub_ctx->sampler_state[shader_type][sampler];
+               deleted_samplers++;
+            } else if (deleted_samplers) {
+               sub_ctx->sampler_state[shader_type][sampler-deleted_samplers] = sub_ctx->sampler_state[shader_type][sampler];
+               sub_ctx->sampler_state[shader_type][sampler] = NULL;
                sub_ctx->sampler_views_dirty[shader_type] |= (1u << sampler);
             }
          }
