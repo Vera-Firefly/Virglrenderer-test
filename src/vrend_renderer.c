@@ -3697,6 +3697,11 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
       if (!has_feature(feat_images))
          return;
 
+      if (unlikely(format >= ARRAY_SIZE(tex_conv_table))) {
+         vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, format);
+         return;
+      }
+
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
       if (!res) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
