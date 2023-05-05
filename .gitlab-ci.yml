@@ -14,7 +14,7 @@ variables:
   MESA_PIPELINE_ID: 870826
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
-  CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
+  CI_REGISTRY_IMAGE: "harbor.freedesktop.org/${MESA_PROJECT_PATH}"
   # per-pipeline artifact storage on MinIO
   PIPELINE_ARTIFACTS_BASE: ${STORAGE_HOST}/artifacts/${CI_PROJECT_PATH}/${CI_PIPELINE_ID}
   # per-job artifact storage on MinIO
