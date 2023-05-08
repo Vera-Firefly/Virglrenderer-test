@@ -187,7 +187,7 @@ u_vertices_per_prim(int primitive)
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_QUAD_STRIP:
    default:
-      debug_printf("Unrecognized geometry shader primitive");
+      debug_printf("Unrecognized geometry shader primitive\n");
       return 3;
    }
 }

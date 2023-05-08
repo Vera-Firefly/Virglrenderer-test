@@ -124,7 +124,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                if (src0->Register.Indirect && src0->Indirect.ArrayID) {
                   if (src0->Indirect.ArrayID >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI Error: src0->Indirect.ArrayID >= PIPE_MAX_SHADER_INPUTS!");
+                     debug_printf("TGSI Error: Indirect ArrayID %d exeeds supported limit\n",
+                                  src0->Indirect.ArrayID);
                      return false;
                   }
                   input = info->input_array_first[src0->Indirect.ArrayID];
@@ -132,7 +133,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   input = src0->Register.Index;
 
                if (input >= PIPE_MAX_SHADER_INPUTS) {
-                  debug_printf("TGSI Error: input %d out of range!", input);
+                  debug_printf("TGSI Error: input %d exeeds supported limit\n", input);
                   return false;
                }
 
@@ -191,7 +192,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      }
                   } else {
                      if (ind < 0 || ind >= PIPE_MAX_SHADER_INPUTS) {
-                        debug_printf("TGSI Error: input %d out of range.", ind);
+                        debug_printf("TGSI Error: input %d exeeds supported limit\n", ind);
                         return false;
                      }
                      info->input_usage_mask[ind] |= usage_mask;
@@ -220,14 +221,14 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                /* MSAA samplers */
                if (src->Register.File == TGSI_FILE_SAMPLER) {
                   if (!fullinst->Instruction.Texture) {
-                     debug_printf("TGSI: unspecified sampler instruction texture");
+                     debug_printf("TGSI Error: unspecified sampler instruction texture\n");
                      return false;
                   }
 
                   if (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
                        fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA) {
                      if ((unsigned)src->Register.Index >= ARRAY_SIZE(info->is_msaa_sampler)) {
-                        debug_printf("TGSI: sampler ID %d out of range", src->Register.Index);
+                        debug_printf("TGSI Error: sampler ID %d out of range\n", src->Register.Index);
                         return false;
                      }
 
@@ -259,7 +260,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             uint reg;
 
             if (file >= TGSI_FILE_COUNT) {
-               debug_printf("TGSI: unknown file %d", file);
+               debug_printf("TGSI Error: unknown file %d\n", file);
                return false;
             }
 
@@ -270,7 +271,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                switch (file) {
                case TGSI_FILE_INPUT:
                   if (array_id >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI: input array ID %d out of range", array_id);
+                     debug_printf("TGSI Error: input array ID %d exeeds supported limit\n", array_id);
                      return false;
                   }
 
@@ -278,8 +279,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_array_last[array_id] = fulldecl->Range.Last;
                   break;
                case TGSI_FILE_OUTPUT:
-                  if (array_id >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI: output array ID %d out of range", array_id);
+                  if (array_id >= PIPE_MAX_SHADER_OUTPUTS) {
+                     debug_printf("TGSI Error: output array ID %d exeeds supported limit\n", array_id);
                      return false;
                   }
                   info->output_array_first[array_id] = fulldecl->Range.First;
@@ -308,7 +309,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      buffer = fulldecl->Dim.Index2D;
 
                   if (buffer >= PIPE_MAX_CONSTANT_BUFFERS) {
-                     debug_printf("TGSI Error: constant buffer id %d out of range", buffer);
+                     debug_printf("TGSI Error: constant buffer id %d exeeds supported limit\n", buffer);
                      return false;
                   }
 
@@ -317,7 +318,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                }
                else if (file == TGSI_FILE_INPUT) {
                   if (reg >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI Error: number of input register %d is out of range", reg);
+                     debug_printf("TGSI Error: input register %d exeeds supported limit\n", reg);
                      return false;
                   }
 
@@ -329,7 +330,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->num_inputs++;
 
                   if (info->num_inputs >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI: mnumber of inputs exeeds limit");
+                     debug_printf("TGSI Error: mumber of inputs %d exeeds supported limit\n",
+                                  info->num_inputs);
                      return false;
                   }
 
@@ -389,7 +391,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   unsigned index = fulldecl->Range.First;
 
                   if (index >= PIPE_MAX_SHADER_INPUTS) {
-                     debug_printf("TGSI Error: system values exeeds limit");
+                     debug_printf("TGSI Error: system value %d exeeds supported limit\n", index);
                      return false;
                   }
 
@@ -418,7 +420,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                else if (file == TGSI_FILE_OUTPUT) {
 
                   if (reg >= PIPE_MAX_SHADER_OUTPUTS) {
-                     debug_printf("TGSI Error: output out of range");
+                     debug_printf("TGSI Error: output %d exeeds supported limit\n", reg);
                      return false;
                   }
 
@@ -427,7 +429,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->num_outputs++;
 
                   if (info->num_outputs >= PIPE_MAX_SHADER_OUTPUTS) {
-                     debug_printf("TGSI Error: number of outputs exeeds limit");
+                     debug_printf("TGSI Error: number of outputs %d exeeds supported  limit\n",
+                                  info->num_outputs);
                      return false;
                   }
 
@@ -492,7 +495,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             unsigned value = fullprop->u[0].Data;
 
             if (name >= ARRAY_SIZE(info->properties)) {
-               debug_printf("TGSI: Unknown property %d\n", name);
+               debug_printf("TGSI Error: Unknown property %d\n", name);
                return false;
             }
 
@@ -512,7 +515,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          break;
 
       default:
-         debug_printf("TGSI: Unknown token type %d\n", parse.FullToken.Token.Type);
+         debug_printf("TGSI Error: Unknown token type %d\n", parse.FullToken.Token.Type);
          return false;
       }
    }
