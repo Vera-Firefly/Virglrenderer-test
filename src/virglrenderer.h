@@ -45,11 +45,7 @@ struct virgl_renderer_gl_ctx_param {
    int minor_ver;
 };
 
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 #define VIRGL_RENDERER_CALLBACKS_VERSION 4
-#else
-#define VIRGL_RENDERER_CALLBACKS_VERSION 3
-#endif
 
 struct virgl_renderer_callbacks {
    int version;
@@ -100,13 +96,11 @@ struct virgl_renderer_callbacks {
     */
    int (*get_server_fd)(void *cookie, uint32_t version);
 
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
    /*
-    * Get the EGLDisplay from caller. It requires create_gl_context,
+    * v4: Get the EGLDisplay from caller. It requires create_gl_context,
     * destroy_gl_context, make_current to be implemented by caller.
     */
    void *(*get_egl_display)(void *cookie);
-#endif
 };
 
 /* virtio-gpu compatible interface */
