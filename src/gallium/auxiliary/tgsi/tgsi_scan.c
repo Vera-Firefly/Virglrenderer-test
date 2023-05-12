@@ -225,13 +225,13 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      return false;
                   }
 
+                  if ((unsigned)src->Register.Index >= PIPE_MAX_SAMPLERS) {
+                     debug_printf("TGSI Error: sampler ID %d out of range\n", src->Register.Index);
+                     return false;
+                  }
+
                   if (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
                        fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA) {
-                     if ((unsigned)src->Register.Index >= ARRAY_SIZE(info->is_msaa_sampler)) {
-                        debug_printf("TGSI Error: sampler ID %d out of range\n", src->Register.Index);
-                        return false;
-                     }
-
                      info->is_msaa_sampler[src->Register.Index] = TRUE;
                   }
                }
