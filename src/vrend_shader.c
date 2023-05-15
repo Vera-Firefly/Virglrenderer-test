@@ -2687,14 +2687,13 @@ static void handle_fragment_proc_exit(const struct dump_ctx *ctx,
 }
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
-static void set_texture_reqs(struct dump_ctx *ctx,
+static bool set_texture_reqs(struct dump_ctx *ctx,
                              const struct tgsi_full_instruction *inst,
                              uint32_t sreg_index)
 {
    if (sreg_index >= ARRAY_SIZE(ctx->samplers)) {
       vrend_printf( "Sampler view exceeded, max is %lu\n", ARRAY_SIZE(ctx->samplers));
-      set_buf_error(&ctx->glsl_strbufs);
-      return;
+      return false;
    }
    ctx->samplers[sreg_index].tgsi_sampler_type = inst->Texture.Texture;
 
@@ -2704,6 +2703,7 @@ static void set_texture_reqs(struct dump_ctx *ctx,
       if (ctx->shader_req_bits & (SHADER_REQ_SAMPLER_RECT |
                                   SHADER_REQ_SAMPLER_BUF))
          ctx->glsl_ver_required = require_glsl_ver(ctx, 140);
+   return true;
 }
 
 // TODO Consider exposing non-const ctx-> members as args to make *ctx const
@@ -3102,7 +3102,11 @@ static void translate_tex(struct dump_ctx *ctx,
    strbuf_alloc(&bias_buf, 128);
    strbuf_alloc(&offset_buf, 128);
 
-   set_texture_reqs(ctx, inst, sinfo->sreg_index);
+   if (!set_texture_reqs(ctx, inst, sinfo->sreg_index)) {
+      set_buf_error(&ctx->glsl_strbufs);
+      goto cleanup;
+   }
+
    is_shad = samplertype_is_shadow(inst->Texture.Texture);
 
    switch (ctx->samplers[sinfo->sreg_index].tgsi_sampler_return) {
