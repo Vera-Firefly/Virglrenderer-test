@@ -61,7 +61,7 @@ struct virgl_renderer_callbacks {
    virgl_renderer_gl_context (*create_gl_context)(void *cookie, int scanout_idx, struct virgl_renderer_gl_ctx_param *param);
    /* destroy a GL/GLES context */
    void (*destroy_gl_context)(void *cookie, virgl_renderer_gl_context ctx);
-   /* make a context current */
+   /* make a context current, returns 0 on success and negative errno on failure */
    int (*make_current)(void *cookie, int scanout_idx, virgl_renderer_gl_context ctx);
 
    /*

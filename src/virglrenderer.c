@@ -557,10 +557,19 @@ static void destroy_gl_context(virgl_renderer_gl_context ctx)
 
 static int make_current(virgl_renderer_gl_context ctx)
 {
+   int ret;
+
    if (state.winsys_initialized)
       return vrend_winsys_make_context_current(ctx);
 
-   return state.cbs->make_current(state.cookie, 0, ctx);
+   ret = state.cbs->make_current(state.cookie, 0, ctx);
+   if (ret && state.cbs->version >= 4) {
+      vrend_printf("%s: Error switching context: %d\n", __func__, ret);
+      assert(!ret && "Failed to switch GL context");
+      return -1;
+   }
+
+   return 0;
 }
 
 static int get_drm_fd(void)
