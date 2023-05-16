@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "virgl_context.h"
+#include "virgl_fence.h"
 #include "virgl_util.h"
 
 #include "util/os_file.h"
@@ -151,6 +152,8 @@ drm_timeline_submit_fence(struct drm_timeline *timeline, uint32_t flags,
       return -ENOMEM;
 
    drm_dbg("fence: %p (%" PRIu64 ")", fence, fence->fence_id);
+
+   virgl_fence_set_fd(fence_id, fence->fd);
 
    mtx_lock(&timeline->fence_mutex);
    list_addtail(&fence->node, &timeline->pending_fences);
