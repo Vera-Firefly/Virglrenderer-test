@@ -50,6 +50,7 @@
 #include "virglrenderer_hw.h"
 
 #include "virgl_context.h"
+#include "virgl_fence.h"
 #include "virgl_resource.h"
 #include "virgl_util.h"
 
@@ -66,6 +67,7 @@ struct global_state {
    bool proxy_initialized;
    bool external_winsys_initialized;
    bool drm_initialized;
+   bool fence_initialized;
 };
 
 static struct global_state state;
@@ -761,6 +763,9 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
    if (state.vrend_initialized)
       vrend_renderer_fini();
 
+   if (state.fence_initialized)
+      virgl_fence_table_cleanup();
+
    if (state.winsys_initialized || state.external_winsys_initialized)
       vrend_winsys_cleanup();
 
@@ -908,6 +913,13 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       if (ret)
          goto fail;
       state.drm_initialized = true;
+   }
+
+   if (!state.fence_initialized) {
+      ret = virgl_fence_table_init();
+      if (ret)
+         goto fail;
+      state.fence_initialized = true;
    }
 
    return 0;
