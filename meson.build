@@ -270,6 +270,14 @@ if with_venus
    conf_data.set('ENABLE_RENDER_SERVER', 1)
    conf_data.set('RENDER_SERVER_EXEC_PATH',
                  '"' + render_server_install_dir / 'virgl_render_server' + '"')
+   if meson.version().version_compare('>= 0.58')
+      devenv = environment()
+      devenv.append('RENDER_SERVER_EXEC_PATH',
+                    meson.current_build_dir() / 'server/virgl_render_server')
+      meson.add_devenv(devenv)
+   else
+      warning('set RENDER_SERVER_EXEC_PATH env if not install')
+   endif
 
    if with_render_server_worker == 'process'
       conf_data.set('ENABLE_RENDER_SERVER_WORKER_PROCESS', 1)
