@@ -1527,7 +1527,7 @@ vn_decode_VkPipelineColorBlendStateCreateInfo_self_temp(struct vn_cs_decoder *de
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipelineColorBlendAttachmentState_temp(dec, &((VkPipelineColorBlendAttachmentState *)val->pAttachments)[i]);
     } else {
-        vn_decode_array_size(dec, val->attachmentCount);
+        vn_decode_array_size_unchecked(dec);
         val->pAttachments = NULL;
     }
     {

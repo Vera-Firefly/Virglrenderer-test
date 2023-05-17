@@ -707,6 +707,18 @@ vn_decode_VkShaderStageFlagBits(struct vn_cs_decoder *dec, VkShaderStageFlagBits
     vn_decode_int32_t(dec, (int32_t *)val);
 }
 
+static inline void
+vn_encode_VkShaderStageFlagBits_array(struct vn_cs_encoder *enc, const VkShaderStageFlagBits *val, uint32_t count)
+{
+    vn_encode_int32_t_array(enc, (const int32_t *)val, count);
+}
+
+static inline void
+vn_decode_VkShaderStageFlagBits_array(struct vn_cs_decoder *dec, VkShaderStageFlagBits *val, uint32_t count)
+{
+    vn_decode_int32_t_array(dec, (int32_t *)val, count);
+}
+
 /* enum VkImageUsageFlagBits */
 
 static inline void
@@ -1939,6 +1951,18 @@ static inline void
 vn_decode_VkObjectType(struct vn_cs_decoder *dec, VkObjectType *val)
 {
     vn_decode_int32_t(dec, (int32_t *)val);
+}
+
+static inline void
+vn_encode_VkObjectType_array(struct vn_cs_encoder *enc, const VkObjectType *val, uint32_t count)
+{
+    vn_encode_int32_t_array(enc, (const int32_t *)val, count);
+}
+
+static inline void
+vn_decode_VkObjectType_array(struct vn_cs_decoder *dec, VkObjectType *val, uint32_t count)
+{
+    vn_decode_int32_t_array(dec, (int32_t *)val, count);
 }
 
 /* enum VkDescriptorUpdateTemplateType */
