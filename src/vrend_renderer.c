@@ -178,6 +178,7 @@ enum features_id
    feat_polygon_offset_clamp,
    feat_occlusion_query,
    feat_occlusion_query_boolean,
+   feat_pipeline_statistics_query,
    feat_qbo,
    feat_robust_buffer_access,
    feat_sample_mask,
@@ -282,6 +283,7 @@ static const  struct {
    FEAT(nv_prim_restart, UNAVAIL, UNAVAIL,  "GL_NV_primitive_restart" ),
    FEAT(shader_noperspective_interpolation, 31, UNAVAIL, "GL_NV_shader_noperspective_interpolation", "GL_EXT_gpu_shader4"),
    FEAT(nvx_gpu_memory_info, UNAVAIL, UNAVAIL, "GL_NVX_gpu_memory_info" ),
+   FEAT(pipeline_statistics_query, 46, UNAVAIL, "GL_ARB_pipeline_statistics_query"),
    FEAT(polygon_offset_clamp, 46, UNAVAIL,  "GL_ARB_polygon_offset_clamp", "GL_EXT_polygon_offset_clamp"),
    FEAT(occlusion_query, 15, UNAVAIL, "GL_ARB_occlusion_query"),
    FEAT(occlusion_query_boolean, 33, 30, "GL_EXT_occlusion_query_boolean", "GL_ARB_occlusion_query2"),
@@ -10825,6 +10827,20 @@ uint32_t vrend_renderer_object_insert(struct vrend_context *ctx, void *data,
    return vrend_object_insert(ctx->sub->object_hash, data, handle, type);
 }
 
+static uint32_t query_stats_index_to_gl_map[] = {
+   [VIRGL_STAT_QUERY_IA_VERTICES] = GL_VERTICES_SUBMITTED_ARB,
+   [VIRGL_STAT_QUERY_IA_PRIMITIVES] = GL_PRIMITIVES_SUBMITTED_ARB,
+   [VIRGL_STAT_QUERY_VS_INVOCATIONS] = GL_VERTEX_SHADER_INVOCATIONS_ARB,
+   [VIRGL_STAT_QUERY_GS_INVOCATIONS] = GL_GEOMETRY_SHADER_INVOCATIONS,
+   [VIRGL_STAT_QUERY_GS_PRIMITIVES] = GL_GEOMETRY_SHADER_PRIMITIVES_EMITTED_ARB,
+   [VIRGL_STAT_QUERY_C_INVOCATIONS] = GL_CLIPPING_INPUT_PRIMITIVES_ARB,
+   [VIRGL_STAT_QUERY_C_PRIMITIVES] = GL_CLIPPING_OUTPUT_PRIMITIVES_ARB,
+   [VIRGL_STAT_QUERY_PS_INVOCATIONS] = GL_FRAGMENT_SHADER_INVOCATIONS_ARB,
+   [VIRGL_STAT_QUERY_HS_INVOCATIONS] = GL_TESS_CONTROL_SHADER_PATCHES_ARB,
+   [VIRGL_STAT_QUERY_DS_INVOCATIONS] = GL_TESS_EVALUATION_SHADER_INVOCATIONS_ARB,
+   [VIRGL_STAT_QUERY_CS_INVOCATIONS] = GL_COMPUTE_SHADER_INVOCATIONS_ARB,
+};
+
 int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
                        uint32_t query_type, uint32_t query_index,
                        uint32_t res_handle, UNUSED uint32_t offset)
@@ -10906,6 +10922,20 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
       if (has_feature(feat_transform_feedback_overflow_query))
          q->gltype = GL_TRANSFORM_FEEDBACK_OVERFLOW_ARB;
       else
+         err = EINVAL;
+      break;
+   case PIPE_QUERY_PIPELINE_STATISTICS:
+      if (has_feature(feat_pipeline_statistics_query)) {
+         /* The guest sends the GL pipeline statistics query type in the index */
+         if (q->index >= ARRAY_SIZE(query_stats_index_to_gl_map)) {
+            err = EINVAL;
+            break;
+         }
+         q->gltype = query_stats_index_to_gl_map[q->index];
+         /* Reset index to avoid calling the indexed versions of the query calls
+          * which refer to true indices and not to pipeline stats */
+         q->index = 0;
+      } else
          err = EINVAL;
       break;
    default:
@@ -11945,6 +11975,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_vs_viewport_index))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_VS_VIEWPORT_INDEX;
+
+   if (has_feature(feat_pipeline_statistics_query))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_PIPELINE_STATISTICS_QUERY;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
