@@ -80,8 +80,7 @@ thread_sync(void *arg)
 
       if (ret == 1) {
          drm_dbg("fence signaled: %p (%" PRIu64 ")", fence, fence->fence_id);
-         timeline->vctx->fence_retire(timeline->vctx, timeline->ring_idx,
-                                      fence->fence_id);
+         timeline->fence_retire(timeline->vctx, timeline->ring_idx, fence->fence_id);
          write_eventfd(timeline->eventfd, 1);
          drm_fence_destroy(fence);
       } else if (ret != 0) {
@@ -95,12 +94,14 @@ thread_sync(void *arg)
 
 void
 drm_timeline_init(struct drm_timeline *timeline, struct virgl_context *vctx,
-                  const char *name, int eventfd, int ring_idx)
+                  const char *name, int eventfd, int ring_idx,
+                  virgl_context_fence_retire fence_retire)
 {
    timeline->vctx = vctx;
    timeline->name = name;
    timeline->eventfd = eventfd;
    timeline->ring_idx = ring_idx;
+   timeline->fence_retire = fence_retire;
 
    timeline->last_fence_fd = -1;
 

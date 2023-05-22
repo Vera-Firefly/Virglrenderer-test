@@ -1226,6 +1226,14 @@ msm_renderer_retire_fences(UNUSED struct virgl_context *vctx)
    /* No-op as VIRGL_RENDERER_ASYNC_FENCE_CB is required */
 }
 
+static void
+msm_renderer_fence_retire(struct virgl_context *vctx,
+                          uint32_t ring_idx,
+                          uint64_t fence_id)
+{
+   vctx->fence_retire(vctx, ring_idx, fence_id);
+}
+
 static int
 msm_renderer_submit_fence(struct virgl_context *vctx, uint32_t flags, uint32_t ring_idx,
                           uint64_t fence_id)
@@ -1278,7 +1286,7 @@ msm_renderer_create(int fd)
    for (unsigned i = 0; i < nr_timelines; i++) {
       unsigned ring_idx = i + 1; /* ring_idx 0 is host CPU */
       drm_timeline_init(&mctx->timelines[i], &mctx->base, "msm-sync", mctx->eventfd,
-                        ring_idx);
+                        ring_idx, msm_renderer_fence_retire);
    }
 
    mctx->base.destroy = msm_renderer_destroy;
