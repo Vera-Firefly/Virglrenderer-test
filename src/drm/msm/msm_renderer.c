@@ -1231,6 +1231,10 @@ msm_renderer_fence_retire(struct virgl_context *vctx,
                           uint32_t ring_idx,
                           uint64_t fence_id)
 {
+   struct msm_context *mctx = to_msm_context(vctx);
+
+   get_param32(mctx->fd, MSM_PARAM_FAULTS, &mctx->shmem->global_faults);
+
    vctx->fence_retire(vctx, ring_idx, fence_id);
 }
 

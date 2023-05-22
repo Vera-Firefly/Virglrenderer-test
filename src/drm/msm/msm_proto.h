@@ -55,6 +55,11 @@ struct msm_shmem {
     * lost.
     */
    uint32_t async_error;
+
+   /**
+    * Counter that is incremented on global fault (see MSM_PARAM_FAULTS)
+    */
+   uint32_t global_faults;
 };
 
 #define DEFINE_CAST(parent, child)                                             \
