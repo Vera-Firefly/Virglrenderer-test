@@ -150,9 +150,9 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 1, 2, 0, 0, 0, 0, COMP, "FSLT", TGSI_OPCODE_FSLT },
    { 1, 2, 0, 0, 0, 0, COMP, "FSNE", TGSI_OPCODE_FSNE },
    { 0, 1, 0, 0, 0, 0, OTHR, "MEMBAR", TGSI_OPCODE_MEMBAR },
-   { 0, 1, 0, 0, 0, 0, NONE, "", 113 },     /* removed */
-   { 0, 1, 0, 0, 0, 0, NONE, "", 114 },     /* removed */
-   { 0, 1, 0, 0, 0, 0, NONE, "", 115 },     /* removed */
+   { 1, 1, 0, 0, 0, 0, COMP, "VOTE_ANY", TGSI_OPCODE_VOTE_ANY},
+   { 1, 1, 0, 0, 0, 0, COMP, "VOTE_ALL", TGSI_OPCODE_VOTE_ALL},
+   { 1, 1, 0, 0, 0, 0, COMP, "VOTE_EQ", TGSI_OPCODE_VOTE_EQ},
    { 0, 1, 0, 0, 0, 0, NONE, "KILL_IF", TGSI_OPCODE_KILL_IF },
    { 0, 0, 0, 0, 0, 0, NONE, "END", TGSI_OPCODE_END },
    { 1, 3, 0, 0, 0, 0, COMP, "DFMA", TGSI_OPCODE_DFMA },

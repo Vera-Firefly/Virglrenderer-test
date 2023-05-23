@@ -370,6 +370,7 @@ struct tgsi_property_data {
  * OR REMOVE OPCODES - FILL in and REWRITE tgsi_info
  * accordingly.
  */
+
 enum tgsi_opcode {
    TGSI_OPCODE_ARL                = 0,
    TGSI_OPCODE_MOV                = 1,
@@ -482,7 +483,11 @@ enum tgsi_opcode {
    TGSI_OPCODE_FSNE               = 111,
 
    TGSI_OPCODE_MEMBAR             = 112,
-                                /* gap */
+
+   TGSI_OPCODE_VOTE_ANY           = 113,
+   TGSI_OPCODE_VOTE_ALL           = 114,
+   TGSI_OPCODE_VOTE_EQ            = 115,
+
    TGSI_OPCODE_KILL_IF            = 116  /* conditional kill */,
    TGSI_OPCODE_END                = 117  /* aka HALT */,
    TGSI_OPCODE_DFMA               = 118,
