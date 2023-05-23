@@ -1236,6 +1236,29 @@ map_overlapping_io_array(struct vrend_shader_io io[static 64],
    }
 }
 
+struct syvalue_prop_map {
+   const char *glsl_name;
+   uint64_t required_ext;
+   bool override_no_wm;
+} sysvalue_map[TGSI_SEMANTIC_COUNT] = {
+   [TGSI_SEMANTIC_INSTANCEID] = {"gl_InstanceID", SHADER_REQ_INSTANCE_ID | SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_VERTEXID] = {"gl_VertexID", SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_HELPER_INVOCATION] = {"gl_HelperInvocation", SHADER_REQ_ES31_COMPAT, true},
+   [TGSI_SEMANTIC_SAMPLEID] = {"gl_SampleID", SHADER_REQ_SAMPLE_SHADING | SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_SAMPLEPOS] = { "gl_SamplePosition", SHADER_REQ_SAMPLE_SHADING, true},
+   [TGSI_SEMANTIC_INVOCATIONID] = { "gl_InvocationID", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
+   [TGSI_SEMANTIC_SAMPLEMASK] = {"gl_SampleMaskIn[0]", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
+   [TGSI_SEMANTIC_PRIMID] = {"gl_PrimitiveID", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
+   [TGSI_SEMANTIC_TESSCOORD] = {"gl_TessCoord", SHADER_REQ_NONE, false},
+   [TGSI_SEMANTIC_VERTICESIN] = { "gl_PatchVerticesIn", SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_TESSOUTER] = {"gl_TessLevelOuter", SHADER_REQ_NONE,  true},
+   [TGSI_SEMANTIC_TESSINNER] = {"gl_TessLevelInner", SHADER_REQ_NONE,  true},
+   [TGSI_SEMANTIC_THREAD_ID] = {"gl_LocalInvocationID", SHADER_REQ_NONE, false},
+   [TGSI_SEMANTIC_BLOCK_ID] = {"gl_WorkGroupID", SHADER_REQ_NONE, false},
+   [TGSI_SEMANTIC_GRID_SIZE]= {"gl_NumWorkGroups", SHADER_REQ_NONE, false},
+};
+
+
 static boolean
 iter_declaration(struct tgsi_iterate_context *iter,
                  struct tgsi_full_declaration *decl)
@@ -1916,57 +1939,23 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->system_values[i].sid = decl->Semantic.Index;
       ctx->system_values[i].glsl_predefined_no_emit = true;
       ctx->system_values[i].glsl_no_index = true;
-      ctx->system_values[i].override_no_wm = true;
       ctx->system_values[i].first = decl->Range.First;
-      if (decl->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
-         name_prefix = "gl_InstanceID";
-         ctx->shader_req_bits |= SHADER_REQ_INSTANCE_ID | SHADER_REQ_INTS;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_VERTEXID) {
-         name_prefix = "gl_VertexID";
-         ctx->shader_req_bits |= SHADER_REQ_INTS;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_HELPER_INVOCATION) {
-         name_prefix = "gl_HelperInvocation";
-         ctx->shader_req_bits |= SHADER_REQ_ES31_COMPAT;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_SAMPLEID) {
-         name_prefix = "gl_SampleID";
-         ctx->shader_req_bits |= (SHADER_REQ_SAMPLE_SHADING | SHADER_REQ_INTS);
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_SAMPLEPOS) {
-         name_prefix = "gl_SamplePosition";
-         ctx->shader_req_bits |= SHADER_REQ_SAMPLE_SHADING;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_INVOCATIONID) {
-         name_prefix = "gl_InvocationID";
-         ctx->shader_req_bits |= (SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5);
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_SAMPLEMASK) {
-         name_prefix = "gl_SampleMaskIn[0]";
-         ctx->shader_req_bits |= (SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5);
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_PRIMID) {
-         name_prefix = "gl_PrimitiveID";
-         ctx->shader_req_bits |= (SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5);
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_TESSCOORD) {
-         name_prefix = "gl_TessCoord";
-         ctx->system_values[i].override_no_wm = false;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_VERTICESIN) {
-         ctx->shader_req_bits |= SHADER_REQ_INTS;
-         name_prefix = "gl_PatchVerticesIn";
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_TESSOUTER) {
-         name_prefix = "gl_TessLevelOuter";
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_TESSINNER) {
-         name_prefix = "gl_TessLevelInner";
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_THREAD_ID) {
-         name_prefix = "gl_LocalInvocationID";
-         ctx->system_values[i].override_no_wm = false;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_BLOCK_ID) {
-         name_prefix = "gl_WorkGroupID";
-         ctx->system_values[i].override_no_wm = false;
-      } else if (decl->Semantic.Name == TGSI_SEMANTIC_GRID_SIZE) {
-         name_prefix = "gl_NumWorkGroups";
-         ctx->system_values[i].override_no_wm = false;
+
+      if (decl->Semantic.Name < TGSI_SEMANTIC_COUNT) {
+         struct syvalue_prop_map *svmap = &sysvalue_map[decl->Semantic.Name];
+         name_prefix = svmap->glsl_name;
+         if (!name_prefix) {
+            vrend_printf("Error: unsupported system value %d\n", decl->Semantic.Name);
+            return false;
+         }
+         ctx->shader_req_bits |= svmap->required_ext;
+         ctx->system_values[i].override_no_wm = svmap->override_no_wm;
+         snprintf(ctx->system_values[i].glsl_name, 64, "%s", name_prefix);
+         break;
       } else {
-         vrend_printf( "unsupported system value %d\n", decl->Semantic.Name);
-         name_prefix = "unknown";
+         vrend_printf("Error: system value %d out of range\n", decl->Semantic.Name);
+         return false;
       }
-      snprintf(ctx->system_values[i].glsl_name, 64, "%s", name_prefix);
-      break;
    case TGSI_FILE_MEMORY:
       ctx->has_file_memory = true;
       break;
