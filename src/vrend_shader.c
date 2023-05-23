@@ -81,6 +81,7 @@
 #define SHADER_REQ_AMD_VS_LAYER (1ULL << 37)
 #define SHADER_REQ_AMD_VIEWPORT_IDX (1ULL << 38)
 #define SHADER_REQ_SHADER_DRAW_PARAMETERS (1ULL << 39)
+#define SHADER_REQ_SHADER_GROUP_VOTE      (1ULL << 40)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -354,6 +355,7 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_AMD_VS_LAYER, "AMD_vertex_shader_layer"},
     { SHADER_REQ_AMD_VIEWPORT_IDX, "AMD_vertex_shader_viewport_index"},
     { SHADER_REQ_SHADER_DRAW_PARAMETERS, "ARB_shader_draw_parameters"},
+    { SHADER_REQ_SHADER_GROUP_VOTE, "ARB_shader_group_vote"},
 };
 
 enum vrend_type_qualifier {
@@ -5580,6 +5582,21 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_SSG:
    case TGSI_OPCODE_DSSG:
       emit_op1("sign");
+      break;
+   case TGSI_OPCODE_VOTE_ALL:
+      emit_buff(&ctx->glsl_strbufs, "%s = %s(allInvocationsARB(bool(%s.x)));\n", dsts[0], get_string(dinfo.dstconv), srcs[0]);
+      ctx->shader_req_bits |= SHADER_REQ_SHADER_GROUP_VOTE;
+      ctx->glsl_ver_required = require_glsl_ver(ctx, 430);
+      break;
+   case TGSI_OPCODE_VOTE_ANY:
+      emit_buff(&ctx->glsl_strbufs, "%s = %s(anyInvocationARB(bool(%s.x)));\n", dsts[0], get_string(dinfo.dstconv), srcs[0]);
+      ctx->shader_req_bits |= SHADER_REQ_SHADER_GROUP_VOTE;
+      ctx->glsl_ver_required = require_glsl_ver(ctx, 430);
+      break;
+   case TGSI_OPCODE_VOTE_EQ:
+      emit_buff(&ctx->glsl_strbufs, "%s = %s(allInvocationsEqualARB(bool(%s.x)));\n", dsts[0], get_string(dinfo.dstconv), srcs[0]);
+      ctx->shader_req_bits |= SHADER_REQ_SHADER_GROUP_VOTE;
+      ctx->glsl_ver_required = require_glsl_ver(ctx, 430);
       break;
    case TGSI_OPCODE_RSQ:
    case TGSI_OPCODE_DRSQ:

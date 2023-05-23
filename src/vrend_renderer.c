@@ -160,6 +160,7 @@ enum features_id
    feat_gles31_compatibility,
    feat_gles31_vertex_attrib_binding,
    feat_gpu_shader5,
+   feat_group_vote,
    feat_images,
    feat_indep_blend,
    feat_indep_blend_func,
@@ -269,6 +270,7 @@ static const  struct {
    FEAT(gles31_compatibility, 45, 31, "ARB_ES3_1_compatibility" ),
    FEAT(gles31_vertex_attrib_binding, 43, 31,  "GL_ARB_vertex_attrib_binding" ),
    FEAT(gpu_shader5, 40, 32, "GL_ARB_gpu_shader5", "GL_EXT_gpu_shader5", "GL_OES_gpu_shader5" ),
+   FEAT(group_vote, 46, UNAVAIL, "GL_ARB_shader_group_vote"),
    FEAT(images, 42, 31,  "GL_ARB_shader_image_load_store" ),
    FEAT(indep_blend, 30, 32,  "GL_EXT_draw_buffers2", "GL_OES_draw_buffers_indexed" ),
    FEAT(indep_blend_func, 40, 32,  "GL_ARB_draw_buffers_blend", "GL_OES_draw_buffers_indexed"),
@@ -11996,6 +11998,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_draw_parameters))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DRAW_PARAMETERS;
+
+   if (has_feature(feat_group_vote))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_GROUP_VOTE;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
