@@ -80,6 +80,7 @@
 #define SHADER_REQ_TEXTURE_SHADOW_LOD (1ULL << 36)
 #define SHADER_REQ_AMD_VS_LAYER (1ULL << 37)
 #define SHADER_REQ_AMD_VIEWPORT_IDX (1ULL << 38)
+#define SHADER_REQ_SHADER_DRAW_PARAMETERS (1ULL << 39)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -91,6 +92,7 @@ enum vrend_sysval_uniform {
    UNIFORM_CLIP_PLANE,
    UNIFORM_ALPHA_REF_VAL,
    UNIFORM_PSTIPPLE_SAMPLER,
+   UNIFORM_DRAWID_BASE
 };
 
 enum vec_type {
@@ -351,7 +353,7 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_TEXTURE_SHADOW_LOD, "EXT_texture_shadow_lod"},
     { SHADER_REQ_AMD_VS_LAYER, "AMD_vertex_shader_layer"},
     { SHADER_REQ_AMD_VIEWPORT_IDX, "AMD_vertex_shader_viewport_index"},
-
+    { SHADER_REQ_SHADER_DRAW_PARAMETERS, "ARB_shader_draw_parameters"},
 };
 
 enum vrend_type_qualifier {
@@ -1256,6 +1258,9 @@ struct syvalue_prop_map {
    [TGSI_SEMANTIC_THREAD_ID] = {"gl_LocalInvocationID", SHADER_REQ_NONE, false},
    [TGSI_SEMANTIC_BLOCK_ID] = {"gl_WorkGroupID", SHADER_REQ_NONE, false},
    [TGSI_SEMANTIC_GRID_SIZE]= {"gl_NumWorkGroups", SHADER_REQ_NONE, false},
+   [TGSI_SEMANTIC_BASEVERTEX]= {"gl_BaseVertexARB", SHADER_REQ_SHADER_DRAW_PARAMETERS | SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_BASEINSTANCE]= {"gl_BaseInstanceARB", SHADER_REQ_SHADER_DRAW_PARAMETERS | SHADER_REQ_INTS, true},
+   [TGSI_SEMANTIC_DRAWID]= {"gl_DrawIDARB + drawid_base", SHADER_REQ_SHADER_DRAW_PARAMETERS | SHADER_REQ_INTS, true},
 };
 
 
@@ -1951,6 +1956,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
          ctx->shader_req_bits |= svmap->required_ext;
          ctx->system_values[i].override_no_wm = svmap->override_no_wm;
          snprintf(ctx->system_values[i].glsl_name, 64, "%s", name_prefix);
+         if (decl->Semantic.Name == TGSI_SEMANTIC_DRAWID)
+            ctx->glsl_strbufs.required_sysval_uniform_decls |= BIT(UNIFORM_DRAWID_BASE);
          break;
       } else {
          vrend_printf("Error: system value %d out of range\n", decl->Semantic.Name);
@@ -7661,6 +7668,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->tes_point_mode = ctx->tes_point_mode;
    sinfo->fs_blend_equation_advanced = ctx->fs_blend_equation_advanced;
    sinfo->separable_program = ctx->separable_program;
+   sinfo->reads_drawid = !!(ctx->glsl_strbufs.required_sysval_uniform_decls & BIT(UNIFORM_DRAWID_BASE));
 
    if (sinfo->so_names || ctx->so_names) {
       if (sinfo->so_names) {
@@ -7759,6 +7767,7 @@ static void emit_required_sysval_uniforms(struct vrend_strbuf *block, uint32_t m
    strbuf_append(block, "\tfloat winsys_adjust_y;\n");
    strbuf_append(block, "\tfloat alpha_ref_val;\n");
    strbuf_append(block, "\tbool clip_plane_enabled;\n");
+   strbuf_append(block, "\tint drawid_base;\n");
    strbuf_append(block, "};\n");
 
 }

@@ -470,6 +470,7 @@ enum virgl_formats {
 #define VIRGL_CAP_V2_VS_VERTEX_LAYER      (1 << 11)
 #define VIRGL_CAP_V2_VS_VIEWPORT_INDEX    (1 << 12)
 #define VIRGL_CAP_V2_PIPELINE_STATISTICS_QUERY (1 << 13)
+#define VIRGL_CAP_V2_DRAW_PARAMETERS      (1 << 14)
 
 /* virgl bind flags - these are compatible with mesa 10.5 gallium.
  * but are fixed, no other should be passed to virgl either.

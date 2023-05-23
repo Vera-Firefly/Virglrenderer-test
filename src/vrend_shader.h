@@ -160,6 +160,7 @@ struct vrend_shader_info {
    uint8_t has_input_arrays : 1;
    uint8_t has_output_arrays : 1;
    uint8_t use_pervertex_in : 1;
+   uint8_t reads_drawid : 1;
 };
 
 struct vrend_variable_shader_info {

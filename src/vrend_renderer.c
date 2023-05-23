@@ -145,6 +145,7 @@ enum features_id
    feat_debug_cb,
    feat_depth_clamp,
    feat_draw_instance,
+   feat_draw_parameters,
    feat_dual_src_blend,
    feat_egl_image,
    feat_egl_image_storage,
@@ -252,6 +253,7 @@ static const  struct {
    FEAT(cull_distance, 45, UNAVAIL, "GL_ARB_cull_distance", "GL_EXT_clip_cull_distance" ),
    FEAT(debug_cb, UNAVAIL, UNAVAIL, NULL), /* special case */
    FEAT(draw_instance, 31, 30,  "GL_ARB_draw_instanced" ),
+   FEAT(draw_parameters, 46, 0, "ARB_shader_draw_parameters"),
    FEAT(dual_src_blend, 33, UNAVAIL,  "GL_ARB_blend_func_extended", "GL_EXT_blend_func_extended" ),
    FEAT(depth_clamp, 32, UNAVAIL, "GL_ARB_depth_clamp", "GL_EXT_depth_clamp", "GL_NV_depth_clamp"),
    FEAT(enhanced_layouts, 44, UNAVAIL, "GL_ARB_enhanced_layouts"),
@@ -389,6 +391,7 @@ struct sysval_uniform_block {
    GLfloat winsys_adjust_y;
    GLfloat alpha_ref_val;
    GLfloat clip_plane_enabled;
+   GLint drawid_base;
 };
 
 static struct global_renderer_state vrend_state;
@@ -459,6 +462,8 @@ struct vrend_linked_shader_program {
    struct vrend_sub_context *ref_context;
 
    uint32_t gles_use_query_texturelevel_mask;
+
+   bool reads_drawid;
 };
 
 struct vrend_shader {
@@ -2084,6 +2089,9 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
       bind_const_locs(sprog, shader_type);
       bind_image_locs(sprog, shader_type);
       bind_ssbo_locs(sprog, shader_type);
+
+      if (sprog->ss[shader_type]->sel->sinfo.reads_drawid)
+         sprog->reads_drawid = true;
    }
    rebind_ubo_and_sampler_locs(sprog, last_shader);
 
@@ -5652,6 +5660,13 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    vrend_use_program(sub_ctx, sub_ctx->prog);
+
+   if (has_feature(feat_draw_parameters) &&
+       sub_ctx->prog->reads_drawid &&
+       sub_ctx->sysvalue_data.drawid_base != (int)info->drawid) {
+         sub_ctx->sysvalue_data.drawid_base = info->drawid;
+         sub_ctx->sysvalue_data_cookie++;
+   }
 
    if (vrend_state.use_gles) {
       /* PIPE_SHADER and TGSI_SHADER have different ordering, so use two
@@ -11978,6 +11993,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
 
    if (has_feature(feat_pipeline_statistics_query))
       caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_PIPELINE_STATISTICS_QUERY;
+
+   if (has_feature(feat_draw_parameters))
+      caps->v2.capability_bits_v2 |= VIRGL_CAP_V2_DRAW_PARAMETERS;
 
 #ifdef ENABLE_VIDEO
    vrend_video_fill_caps(caps);
