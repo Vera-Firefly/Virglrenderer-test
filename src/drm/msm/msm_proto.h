@@ -103,10 +103,17 @@ struct msm_ccmd_rsp {
    uint32_t len;
 };
 
+#ifdef __cplusplus
+#define MSM_CCMD(_cmd, _len) {                      \
+       .cmd = MSM_CCMD_##_cmd,                      \
+       .len = (_len),                               \
+   }
+#else
 #define MSM_CCMD(_cmd, _len) (struct msm_ccmd_req){ \
        .cmd = MSM_CCMD_##_cmd,                      \
        .len = (_len),                               \
    }
+#endif
 
 /*
  * MSM_CCMD_NOP
