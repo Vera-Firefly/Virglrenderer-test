@@ -156,3 +156,4 @@ spec@!opengl 2.0@vertex-program-two-side front back@vs- gs and fs
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic
+spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get

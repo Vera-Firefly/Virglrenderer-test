@@ -40,12 +40,6 @@ dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_src_x,Fail
 KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x2_vs,Crash
 KHR-GL30.transform_feedback.api_errors_test,Fail
 KHR-GL31.transform_feedback.capture_special_interleaved_test,Crash
-KHR-GL32.transform_feedback_overflow_query_ARB.advanced-single-stream-interleaved-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.advanced-single-stream-separate-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.basic-single-stream-interleaved-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.basic-single-stream-separate-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.multiple-streams-multiple-buffers-per-stream,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.multiple-streams-one-buffer-per-stream,Fail
 
 
 fast_color_clear@fcc-front-buffer-distraction,Fail
@@ -532,5 +526,5 @@ spec@!opengl 2.0@vertex-program-two-side front back front2@gs-out and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side front back@gs-out and fs,Fail
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs,Fail
 spec@!opengl 3.2@layered-rendering@clear-color-mismatched-layer-count,Fail
-spec@!opengl es 3.0@gles-3.0-transform-feedback-uniform-buffer-object,Fail
 spec@!opengl 1.1@line-smooth-stipple,Fail
+spec@arb_pipeline_statistics_query@arb_pipeline_statistics_query-frag,Fail
