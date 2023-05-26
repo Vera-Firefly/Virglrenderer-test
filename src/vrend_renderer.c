@@ -2079,6 +2079,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
 
    sprog->virgl_block_bind = -1;
    sprog->ubo_sysval_buffer_id = -1;
+   sprog->sysvalue_data_cookie = UINT32_MAX;
 
    vrend_use_program(sub_ctx, sprog);
 
@@ -12337,7 +12338,6 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
    sub->object_hash = vrend_object_init_ctx_table();
 
    sub->sysvalue_data.winsys_adjust_y = 1.f;
-   sub->sysvalue_data_cookie = 1;
 
    ctx->sub = sub;
    list_add(&sub->head, &ctx->sub_ctxs);
