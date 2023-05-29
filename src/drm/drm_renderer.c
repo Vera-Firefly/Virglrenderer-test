@@ -108,9 +108,6 @@ drm_renderer_capset(void *_c)
    struct virgl_renderer_capset_drm *c = _c;
    drm_log("c=%p", c);
 
-   if (!capset.context_type)
-      return 0;
-
    if (c)
       *c = capset;
 
