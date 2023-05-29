@@ -65,6 +65,7 @@ struct global_state {
    bool vrend_initialized;
    bool proxy_initialized;
    bool external_winsys_initialized;
+   bool drm_initialized;
 };
 
 static struct global_state state;
@@ -234,6 +235,8 @@ int virgl_renderer_context_create_with_flags(uint32_t ctx_id,
       ctx = proxy_context_create(ctx_id, ctx_flags, nlen, name);
       break;
    case VIRGL_RENDERER_CAPSET_DRM:
+      if (!state.drm_initialized)
+         return EINVAL;
       ctx = drm_renderer_create(nlen, name);
       break;
    default:
@@ -841,6 +844,7 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          drm_fd = cbs->get_drm_fd(cookie);
 
       drm_renderer_init(drm_fd);
+      state.drm_initialized = true;
    }
 
    return 0;
