@@ -610,7 +610,8 @@ virgl_context_foreach_retire_fences(struct virgl_context *ctx,
 {
    /* vrend contexts are polled explicitly by the caller */
    if (ctx->capset_id != VIRGL_RENDERER_CAPSET_VIRGL &&
-       ctx->capset_id != VIRGL_RENDERER_CAPSET_VIRGL2)
+       ctx->capset_id != VIRGL_RENDERER_CAPSET_VIRGL2 &&
+       !(state.flags & VIRGL_RENDERER_ASYNC_FENCE_CB))
    {
       assert(ctx->retire_fences);
       ctx->retire_fences(ctx);
