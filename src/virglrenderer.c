@@ -843,7 +843,9 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
       if (cbs->version >= 2 && cbs->get_drm_fd)
          drm_fd = cbs->get_drm_fd(cookie);
 
-      drm_renderer_init(drm_fd);
+      ret = drm_renderer_init(drm_fd);
+      if (ret)
+         goto fail;
       state.drm_initialized = true;
    }
 
