@@ -146,11 +146,12 @@ struct virgl_renderer_callbacks {
  */
 #define VIRGL_RENDERER_RENDER_SERVER (1 << 9)
 
-#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 /*
  * Enable drm renderer.
  */
 #define VIRGL_RENDERER_DRM           (1 << 10)
+
+#ifdef VIRGL_RENDERER_UNSTABLE_APIS
 
 /* Video encode/decode */
 #define VIRGL_RENDERER_USE_VIDEO     (1 << 11)
