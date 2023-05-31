@@ -104,6 +104,75 @@ debian/x86_64_build:
       when: on_success
     - when: never
 
+debian/x86_64_build_msm:
+  stage: build
+  extends:
+    - .set-image-base-tag
+  variables:
+    MESA_IMAGE_PATH: ${DEBIAN_X86_64_BUILD_IMAGE_PATH}
+    MESA_IMAGE_TAG: ${DEBIAN_BUILD_TAG}
+    MINIO_ARTIFACT_NAME: virgl-amd64
+    EXTRA_OPTION: >
+      -D drm=enabled -D drm-msm-experimental=true
+  script:
+    - .gitlab-ci/meson/build.sh
+  artifacts:
+    name: "virgl_${CI_JOB_NAME}"
+    when: always
+    paths:
+      - install/
+      - results/
+  rules:
+    - changes:
+      - src/drm/**/*
+      when: on_success
+    - if: *is-scheduled-pipeline
+      when: on_success
+    - if: *is-post-merge
+      when: never
+    - if: *is-forked-branch-or-pre-merge-not-for-marge
+      when: manual
+    - if: *is-pre-merge-for-marge
+      when: on_success
+    - when: never
+
+debian/x86_64_build_tracing:
+  stage: build
+  extends:
+    - .set-image-base-tag
+  variables:
+    MESA_IMAGE_PATH: ${DEBIAN_X86_64_BUILD_IMAGE_PATH}
+    MESA_IMAGE_TAG: ${DEBIAN_BUILD_TAG}
+    MINIO_ARTIFACT_NAME: virgl-amd64
+    WRAP_DEBUG: default
+    DEBIAN_FRONTEND: noninteractive
+  script:
+    - apt-get update && apt-get install -y libsysprof-4-dev
+    - TRACING_BACKEND=percetto .gitlab-ci/meson/build.sh
+    - TRACING_BACKEND=perfetto .gitlab-ci/meson/build.sh
+    - TRACING_BACKEND=sysprof .gitlab-ci/meson/build.sh
+    - TRACING_BACKEND=stderr .gitlab-ci/meson/build.sh
+  artifacts:
+    name: "virgl_${CI_JOB_NAME}"
+    when: always
+    paths:
+      - install/
+      - results/
+  rules:
+    - changes:
+      - src/virgl_util.h
+      - src/virgl_util.c
+      when: on_success
+    - if: *is-scheduled-pipeline
+      when: on_success
+    - if: *is-post-merge
+      when: never
+    - if: *is-forked-branch-or-pre-merge-not-for-marge
+      when: manual
+    - if: *is-pre-merge-for-marge
+      when: on_success
+    - when: never
+
 # FIXME: Mesa's `debian/x86_build-mingw` job is turned off until gets
 #  fixed on Debian 12. Disable here as a side effect.
 .debian/mingw32-x86_64:
