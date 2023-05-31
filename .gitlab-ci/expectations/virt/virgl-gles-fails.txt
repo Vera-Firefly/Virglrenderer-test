@@ -2345,7 +2345,6 @@ spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb,ExpectedFail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp,ExpectedFail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb-fp@sRGB decode full precision,ExpectedFail
 spec@khr_texture_compression_astc@sliced-3d-miptree-gl srgb@sRGB decode,ExpectedFail
-spec@khr_texture_compression_astc@void-extent-dl-bug,Fail
 spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x223344ff,Fail
 spec@nv_copy_depth_to_color@nv_copy_depth_to_color 0 0x76356278,Fail
 spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x223344ff,Fail
@@ -3191,7 +3190,6 @@ spec@!opengl 1.2@texwrap 3d proj bordercolor@GL_RGBA8- projected- border color o
 spec@!opengl 1.4@gl-1.4-tex1d-2dborder,Fail
 spec@!opengl 1.4@tex-miplevel-selection-lod-bias,Fail
 spec@!opengl 1.5@depth-tex-compare,Fail
-spec@!opengl 1.5@draw-elements-user,Fail
 spec@!opengl 1.5@draw-vertices,Fail
 spec@!opengl 1.5@draw-vertices-user,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
@@ -3213,3 +3211,22 @@ spec@!opengl 3.3@minmax,Fail
 spec@!opengl 1.1@line-smooth-stipple,Fail
 spec@arb_vertex_attrib_64bit@execution@unused-sub-dvec4-01,Fail
 spec@arb_vertex_attrib_64bit@execution@unused-sub-dvec4-02,Fail
+
+spec@arb_shader_draw_parameters@basevertex-baseinstance,Fail
+spec@arb_shader_draw_parameters@basevertex-baseinstance-indirect,Fail
+spec@arb_shader_draw_parameters@drawid-indirect,Fail
+spec@arb_shader_draw_parameters@drawid-vertexid,Fail
+spec@arb_shader_draw_parameters@vertexid-zerobased-indirect,Fail
+spec@arb_shader_draw_parameters@drawid,Fail
+spec@arb_shader_draw_parameters@drawid-indirect-baseinstance,Fail
+spec@arb_shader_draw_parameters@drawid-single-draw,Fail
+spec@arb_shader_draw_parameters@drawid-single-draw-primitive-restart,Fail
+spec@khr_texture_compression_astc@void-extent-dl-bug,Crash
+spec@arb_gl_spirv@execution@ssbo@unsized-array,Fail
+spec@arb_shader_draw_parameters@baseinstance,Fail
+spec@arb_shader_draw_parameters@baseinstance-indirect,Fail
+spec@arb_shader_draw_parameters@basevertex,Fail
+spec@arb_shader_draw_parameters@basevertex-indirect,Fail
+spec@arb_shader_draw_parameters@drawid-indirect-basevertex,Fail
+spec@arb_shader_draw_parameters@vertexid-zerobased,Fail
+spec@arb_viewport_array@display-list,Fail

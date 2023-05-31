@@ -518,7 +518,6 @@ spec@!opengl 1.2@texwrap 3d bordercolor@GL_RGBA8- border color only,Fail
 spec@!opengl 1.2@texwrap 3d proj bordercolor,Fail
 spec@!opengl 1.2@texwrap 3d proj bordercolor@GL_RGBA8- projected- border color only,Fail
 spec@!opengl 1.5@depth-tex-compare,Fail
-spec@!opengl 1.5@draw-elements-user,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag,Fail
 spec@!opengl 2.0@gl-2.0-edgeflag-immediate,Fail
 spec@!opengl 2.0@vertex-program-two-side front back back2@gs-out and fs,Fail
@@ -528,3 +527,17 @@ spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs,Fail
 spec@!opengl 3.2@layered-rendering@clear-color-mismatched-layer-count,Fail
 spec@!opengl 1.1@line-smooth-stipple,Fail
 spec@arb_pipeline_statistics_query@arb_pipeline_statistics_query-frag,Fail
+
+spec@arb_gl_spirv@execution@ubo@aoa,Crash
+spec@arb_gl_spirv@execution@ubo@array,Crash
+spec@arb_gl_spirv@execution@ubo@array-complex,Crash
+spec@arb_gl_spirv@execution@ubo@array-indirect,Crash
+spec@arb_gl_spirv@execution@xfb@vs_two_block,Timeout
+spec@arb_gl_spirv@execution@xfb@vs_two_sets_ifc,Fail
+spec@arb_gl_spirv@execution@xfb@vs_two_sets_struct,Timeout
+spec@arb_gpu_shader5@arb_gpu_shader5-xfb-streams-without-invocations spirv,Fail
+spec@arb_gl_spirv@execution@ssbo@unsized-array,Fail
+spec@arb_gl_spirv@execution@ubo@aoa-2,Crash
+spec@arb_gl_spirv@execution@xfb@vs_block_array,Timeout
+spec@arb_gl_spirv@execution@xfb@vs_two_sets,Timeout
+spec@arb_viewport_array@display-list,Fail
