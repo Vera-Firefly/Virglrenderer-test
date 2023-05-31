@@ -113,7 +113,7 @@ void trace_end(const char **scope);
 #define TRACE_SCOPE_SLOW(SCOPE) TRACE_SCOPE(SCOPE)
 
 #define TRACE_SCOPE_BEGIN(SCOPE) trace_begin(SCOPE);
-#define TRACE_SCOPE_END(SCOPE)  trace_end(&SCOPE);
+#define TRACE_SCOPE_END(SCOPE)  trace_end(NULL);
 
 #endif /* ENABLE_TRACING == TRACE_WITH_PERCETTO */
 
