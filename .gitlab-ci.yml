@@ -157,7 +157,8 @@ make check clang-fuzzer:
   extends: .make_check_base
   variables:
     TEST_SUITE: make-check-clang-fuzzer
-    CC: clang
+    LLVM_VERSION: 15
+    CC: clang-${LLVM_VERSION}
     EXTRA_OPTION: "-D fuzzer=true"
 
 make check trace-stderr:
