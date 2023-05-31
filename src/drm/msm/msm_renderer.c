@@ -567,7 +567,12 @@ msm_renderer_get_blob(struct virgl_context *vctx, uint32_t res_id, uint64_t blob
       return -EINVAL;
    }
 
-   if (obj->size != blob_size) {
+   /* The size we get from guest userspace is not necessarily rounded up to the
+    * nearest page size, but the actual GEM buffer allocation is, as is the
+    * guest GEM buffer (and therefore the blob_size value we get from the guest
+    * kernel).
+    */
+   if (ALIGN_POT(obj->size, getpagesize()) != blob_size) {
       drm_log("Invalid blob size");
       return -EINVAL;
    }
