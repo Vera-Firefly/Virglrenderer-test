@@ -104,7 +104,9 @@ debian/x86_build:
       when: on_success
     - when: never
 
-debian/mingw32-x86_64:
+# FIXME: Mesa's `debian/x86_build-mingw` job is turned off until gets
+#  fixed on Debian 12. Disable here as a side effect.
+.debian/mingw32-x86_64:
   stage: build
   extends:
     - .set-image-base-tag
