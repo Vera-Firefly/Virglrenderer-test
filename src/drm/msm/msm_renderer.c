@@ -131,7 +131,7 @@ struct msm_object {
    bool exported   : 1;
    bool exportable : 1;
    struct virgl_resource *res;
-   void *map;
+   uint8_t *map;
 };
 
 static struct msm_object *
