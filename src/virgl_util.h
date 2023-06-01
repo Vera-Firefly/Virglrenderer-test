@@ -112,8 +112,8 @@ void trace_end(const char **scope);
 
 #define TRACE_SCOPE_SLOW(SCOPE) TRACE_SCOPE(SCOPE)
 
-#define TRACE_SCOPE_BEGIN(SCOPE) trace_begin(SCOPE);
-#define TRACE_SCOPE_END(SCOPE)  trace_end(NULL);
+#define TRACE_SCOPE_BEGIN(SCOPE) trace_begin(SCOPE)
+#define TRACE_SCOPE_END(SCOPE_OBJ)  trace_end(&SCOPE_OBJ)
 
 #endif /* ENABLE_TRACING == TRACE_WITH_PERCETTO */
 
@@ -122,8 +122,8 @@ void trace_end(const char **scope);
 #define TRACE_FUNC()
 #define TRACE_SCOPE(SCOPE)
 #define TRACE_SCOPE_SLOW(SCOPE)
-#define TRACE_SCOPE_BEGIN(SCOPE)
-#define TRACE_SCOPE_END(VAR)
+#define TRACE_SCOPE_BEGIN(SCOPE) NULL
+#define TRACE_SCOPE_END(SCOPE_OBJ) (void)SCOPE_OBJ
 #endif /* ENABLE_TRACING */
 
 #endif /* VIRGL_UTIL_H */
