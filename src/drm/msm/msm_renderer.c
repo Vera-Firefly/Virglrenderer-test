@@ -953,7 +953,7 @@ out:
 static int
 map_object(struct msm_context *mctx, struct msm_object *obj)
 {
-   uint64_t offset;
+   uint64_t offset = 0;
    int ret;
 
    if (obj->map)
