@@ -7804,6 +7804,10 @@ void vrend_destroy_context(struct vrend_context *ctx)
 
 struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *debug_name)
 {
+   int glsl_version = get_glsl_version();
+   if (glsl_version < 0)
+      return NULL;
+
    struct vrend_context *grctx = CALLOC_STRUCT(vrend_context);
 
    if (!grctx)
@@ -7830,6 +7834,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->res_hash = vrend_ctx_resource_init_table();
    list_inithead(&grctx->untyped_resources);
 
+   grctx->shader_cfg.glsl_version = glsl_version;
    grctx->shader_cfg.max_shader_patch_varyings = vrend_state.max_shader_patch_varyings;
    grctx->shader_cfg.use_gles = vrend_state.use_gles;
    grctx->shader_cfg.use_core_profile = vrend_state.use_core_profile;
@@ -7850,8 +7855,6 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
-
-   grctx->shader_cfg.glsl_version = get_glsl_version();
 
    if (!grctx->ctx_id)
       grctx->fence_retire = vrend_clicbs->ctx0_fence_retire;
@@ -11740,17 +11743,26 @@ static int get_glsl_version(void)
 {
    int major_local = 0, minor_local = 0;
    const GLubyte *version_str;
-   ASSERTED int c;
+   int count;
 
    version_str = glGetString(GL_SHADING_LANGUAGE_VERSION);
-   if (vrend_state.use_gles) {
-      c = sscanf((const char *)version_str, "%*s %*s %*s %*s %i.%i",
-                  &major_local, &minor_local);
-   } else {
-      c = sscanf((const char *)version_str, "%i.%i",
-                  &major_local, &minor_local);
+   if (!version_str) {
+      virgl_error("GL_SHADING_LANGUAGE_VERSION query failed with empty output.");
+      return -1;
    }
-   assert(c == 2);
+
+   if (vrend_state.use_gles) {
+      count = sscanf((const char *)version_str, "%*s %*s %*s %*s %i.%i",
+                          &major_local, &minor_local);
+   } else {
+      count = sscanf((const char *)version_str, "%i.%i",
+                          &major_local, &minor_local);
+   }
+
+   if (count != 2) {
+      virgl_error("GL_SHADING_LANGUAGE_VERSION query failed with unexpected version format.");
+      return -1;
+   }
 
    return (major_local * 100) + minor_local;
 }
