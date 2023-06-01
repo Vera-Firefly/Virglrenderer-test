@@ -164,8 +164,7 @@ static void cleanup_environment()
 }
 #endif
 
-int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
-{
+static uint32_t fuzz_mode_init(void) {
    uint32_t ctx_id = initialize_environment();
    int ret;
 
@@ -174,7 +173,6 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
    // resources that comes with repeated dlopen()/dlclose()ing the mesa
    // driver with each eglInitialize()/eglTerminate() if CLEANUP_EACH_INPUT
    // is set.
-
    ret = virgl_renderer_init(&cookie, 0, &fuzzer_cbs);
    assert(!ret);
 
@@ -182,8 +180,11 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
    ret = virgl_renderer_context_create(ctx_id, strlen(name), name);
    assert(!ret);
 
-   virgl_renderer_submit_cmd((void *) data, ctx_id, size / sizeof(uint32_t));
+   return ctx_id;
+}
 
+
+static void fuzz_mode_fini(uint32_t ctx_id) {
    virgl_renderer_context_destroy(ctx_id);
 
    virgl_renderer_cleanup(&cookie);
@@ -192,6 +193,57 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
    // The following cleans up between each input which is a lot slower.
    cleanup_environment();
 #endif
+}
+
+static void FuzzMode0(const uint8_t* data, size_t size)
+{
+   uint32_t ctx_id = fuzz_mode_init();
+
+   virgl_renderer_submit_cmd((void *)data, ctx_id, size / sizeof(uint32_t));
+
+   fuzz_mode_fini(ctx_id);
+}
+
+static void FuzzMode1(const uint8_t* data, size_t size)
+{
+   uint32_t ctx_id = fuzz_mode_init();
+
+   struct virgl_renderer_resource_create_args args;
+   args.handle = 10;
+   args.target = 3;
+   args.format = 10;
+   args.bind = 10;
+   args.width = 200;
+   args.height = 200;
+   args.depth = 1;
+   args.array_size = 0;
+   args.last_level = 0;
+   args.nr_samples = 0;
+   args.flags = 0;
+
+   virgl_renderer_resource_create(&args, NULL, 0);
+   virgl_renderer_ctx_attach_resource(ctx_id, args.handle);
+
+   virgl_renderer_submit_cmd((void *)data, ctx_id, size / sizeof(uint32_t));
+
+   fuzz_mode_fini(ctx_id);
+}
+
+static void (UNUSED *fuzzer_modes[])(const uint8_t *, size_t) = {
+   FuzzMode0,
+   FuzzMode1
+};
+
+int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
+{
+   if (size == 0)
+      return -1;
+
+   // Hardcode to test with the fuzzmode1 for now.
+   uint8_t mode = 1;
+   
+   assert(size > 0);
+   fuzzer_modes[mode](data, size);
 
    return 0;
 }
