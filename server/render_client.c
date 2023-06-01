@@ -108,12 +108,15 @@ render_client_create_context(struct render_client *client,
    struct render_server *srv = client->server;
 
    struct render_context_record *rec = calloc(1, sizeof(*rec));
-   if (!rec)
+   if (!rec) {
+      *out_remote_fd = -1;
       return false;
+   }
 
    int socket_fds[2];
    if (!render_socket_pair(socket_fds)) {
       free(rec);
+      *out_remote_fd = -1;
       return false;
    }
    int ctx_fd = socket_fds[0];
@@ -135,6 +138,7 @@ render_client_create_context(struct render_client *client,
       close(ctx_fd);
       close(remote_fd);
       free(rec);
+      *out_remote_fd = -1;
       return false;
    }
 
