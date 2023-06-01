@@ -1134,7 +1134,7 @@ submit_cmd_dispatch(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    drm_dbg("%s: hdr={cmd=%u, len=%u, seqno=%u, rsp_off=0x%x)", ccmd->name, hdr->cmd,
            hdr->len, hdr->seqno, hdr->rsp_off);
 
-   const char *trace_scope = TRACE_SCOPE_BEGIN(ccmd->name);
+   void *scope = TRACE_SCOPE_BEGIN(ccmd->name);
 
    /* If the request length from the guest is smaller than the expected
     * size, ie. newer host and older guest, we need to make a copy of

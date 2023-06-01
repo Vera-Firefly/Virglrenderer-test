@@ -103,11 +103,11 @@ PERCETTO_CATEGORY_DECLARE(VIRGL_PERCETTO_CATEGORIES)
 
 #else
 
-const char *trace_begin(const char *scope);
-void trace_end(const char **scope);
+void *trace_begin(const char *scope);
+void trace_end(void **scope);
 
 #define TRACE_SCOPE(SCOPE) \
-   const char *trace_dummy __attribute__((cleanup (trace_end), unused)) = \
+   void *trace_dummy __attribute__((cleanup (trace_end), unused)) = \
    trace_begin(SCOPE)
 
 #define TRACE_SCOPE_SLOW(SCOPE) TRACE_SCOPE(SCOPE)

@@ -198,13 +198,13 @@ void trace_init(void)
    vperfetto_min_startTracing(&config);
 }
 
-const char *trace_begin(const char *scope)
+void *trace_begin(const char *scope)
 {
    vperfetto_min_beginTrackEvent_VMM(scope);
-   return scope;
+   return NULL;
 }
 
-void trace_end(const char **dummy)
+void trace_end(void **dummy)
 {
    (void)dummy;
    vperfetto_min_endTrackEvent_VMM();
@@ -217,7 +217,7 @@ void trace_init(void)
 {
 }
 
-const char *trace_begin(const char *scope)
+void *trace_begin(const char *scope)
 {
    for (int i = 0; i < nesting_depth; ++i)
       fprintf(stderr, "  ");
@@ -225,14 +225,14 @@ const char *trace_begin(const char *scope)
    fprintf(stderr, "ENTER:%s\n", scope);
    nesting_depth++;
 
-   return scope;
+   return (void *)scope;
 }
 
-void trace_end(const char **func_name)
+void trace_end(void **func_name)
 {
    --nesting_depth;
    for (int i = 0; i < nesting_depth; ++i)
       fprintf(stderr, "  ");
-   fprintf(stderr, "LEAVE %s\n", *func_name);
+   fprintf(stderr, "LEAVE %s\n", (const char *) *func_name);
 }
 #endif

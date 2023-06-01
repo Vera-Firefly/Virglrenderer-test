@@ -12772,12 +12772,12 @@ void vrend_context_emit_string_marker(struct vrend_context *ctx, GLsizei length,
     if (length > 6 && !strncmp(message, "BEGIN:", 6)) {
        snprintf(buf, 256, "%.*s", length - 6, &message[6]);
        char *scope_name = ralloc_strndup(ctx->active_markers, buf, 256);
-       const char *scope = TRACE_SCOPE_BEGIN(scope_name);
+       void *scope = TRACE_SCOPE_BEGIN(scope_name);
        _mesa_hash_table_insert(ctx->active_markers, scope_name, (void *)scope);
     } else if (length > 4 && !strncmp(message, "END:", 4)) {
        snprintf(buf, 256, "%.*s", length - 4, &message[4]);
        struct hash_entry *entry = _mesa_hash_table_search(ctx->active_markers, buf);
-       const char *orig_scope = (const char *) entry->data;
+       void *orig_scope = entry->data;
        TRACE_SCOPE_END(orig_scope);
        ralloc_free((void *)entry->key);
       _mesa_hash_table_remove(ctx->active_markers, entry);
