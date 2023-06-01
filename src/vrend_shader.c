@@ -3718,6 +3718,26 @@ static void emit_store_mem(struct vrend_glsl_strbufs *glsl_strbufs, const char *
    }
 }
 
+static void make_ssbo_varstring(const struct dump_ctx *ctx, char result[128],
+                                unsigned register_index, bool indirect, int indirect_register)
+{
+   const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
+   bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << register_index);
+   const char *atomic_str = atomic_ssbo ? "atomic" : "";
+   uint base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
+
+   if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
+      if (indirect && !ctx->cfg->use_gles)
+         snprintf(result, 128, "%sssboarr%s[addr%d + %d].%sssbocontents%d", cname, atomic_str,
+                  indirect_register, register_index - base, cname, base);
+      else
+         snprintf(result, 128, "%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str,
+                  register_index - base, cname, base);
+   } else {
+      snprintf(result, 128, "%sssbocontents%d", cname, register_index);
+   }
+}
+
 static void
 translate_store(const struct dump_ctx *ctx,
                 struct vrend_glsl_strbufs *glsl_strbufs,
@@ -3795,20 +3815,19 @@ translate_store(const struct dump_ctx *ctx,
          emit_store_mem(glsl_strbufs, dst, dst_reg->Register.WriteMask, srcs,
                         conversion);
       } else {
-         const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << dst_reg->Register.Index);
          int base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
          uint32_t mask = ctx->ssbo_used_mask;
          int start, array_count;
          u_bit_scan_consecutive_range(&mask, &start, &array_count);
-         int basearrayidx = lookup_image_array(ctx, dst_reg->Register.Index);
+
          emit_buff(glsl_strbufs, "switch (addr%d + %d) {\n", dst_reg->Indirect.Index,
                    dst_reg->Register.Index - base);
 
          for (int i = 0; i < array_count; ++i)  {
             char dst_tmp[128];
             emit_buff(glsl_strbufs, "case %d:\n", i);
-            snprintf(dst_tmp, 128, "%simg%d[%d]", cname, basearrayidx, i);
+            make_ssbo_varstring(ctx, dst_tmp, i + start, false, 0);
             emit_store_mem(glsl_strbufs, dst_tmp, dst_reg->Register.WriteMask, srcs,
                            conversion);
             emit_buff(glsl_strbufs, "break;\n");
@@ -3941,9 +3960,8 @@ translate_load(const struct dump_ctx *ctx,
          emit_load_mem(glsl_strbufs, mydst, inst->Dst[0].Register.WriteMask, get_string(dtypeprefix), atomic_op, srcs[0], atomic_src);
       } else {
          char src[128] = "";
-         const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
+
          bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << inst->Src[0].Register.Index);
-         const char *atomic_str = atomic_ssbo ? "atomic" : "";
          uint base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
          int start, array_count;
          uint32_t mask = ctx->ssbo_used_mask;
@@ -3952,7 +3970,7 @@ translate_load(const struct dump_ctx *ctx,
          emit_buff(glsl_strbufs, "switch (addr%d + %d) {\n", inst->Src[0].Indirect.Index, inst->Src[0].Register.Index - base);
          for (int i = 0; i < array_count; ++i) {
             emit_buff(glsl_strbufs, "case %d:\n", i);
-            snprintf(src, 128,"%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str, i, cname, base);
+            make_ssbo_varstring(ctx, src, i + start, false, 0);
             emit_load_mem(glsl_strbufs, mydst, inst->Dst[0].Register.WriteMask, get_string(dtypeprefix), atomic_op, src, atomic_src);
             emit_buff(glsl_strbufs, "  break;\n");
          }
@@ -4425,17 +4443,9 @@ get_destination_info(struct dump_ctx *ctx,
             strbuf_fmt(&dst_bufs[i], "%simg%d", cname, dst_reg->Register.Index);
          dinfo->dest_index = dst_reg->Register.Index;
       } else if (dst_reg->Register.File == TGSI_FILE_BUFFER) {
-         const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
-         if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
-            bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << dst_reg->Register.Index);
-            const char *atomic_str = atomic_ssbo ? "atomic" : "";
-            int base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
-            if (dst_reg->Register.Indirect) {
-               strbuf_fmt(&dst_bufs[i], "%sssboarr%s[addr%d+%d].%sssbocontents%d", cname, atomic_str, dst_reg->Indirect.Index, dst_reg->Register.Index - base, cname, base);
-            } else
-               strbuf_fmt(&dst_bufs[i], "%sssboarr%s[%d].%sssbocontents%d", cname, atomic_str, dst_reg->Register.Index - base, cname, base);
-         } else
-            strbuf_fmt(&dst_bufs[i], "%sssbocontents%d", cname, dst_reg->Register.Index);
+         char dst[128];
+         make_ssbo_varstring(ctx, dst, dst_reg->Register.Index, dst_reg->Register.Indirect, dst_reg->Indirect.Index);
+         strbuf_fmt(&dst_bufs[i], "%s", dst);
          dinfo->dest_index = dst_reg->Register.Index;
       } else if (dst_reg->Register.File == TGSI_FILE_MEMORY) {
          strbuf_fmt(&dst_bufs[i], "values");
@@ -4846,19 +4856,9 @@ get_source_info(struct dump_ctx *ctx,
             strbuf_fmt(src_buf, "%simg%d%s", cname, src->Register.Index, swizzle);
          sinfo->sreg_index = src->Register.Index;
       } else if (src->Register.File == TGSI_FILE_BUFFER) {
-         const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
-         if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
-            bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << src->Register.Index);
-            const char *atomic_str = atomic_ssbo ? "atomic" : "";
-            int base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
-            if (src->Register.Indirect) {
-               strbuf_fmt(src_buf, "%sssboarr%s[addr%d+%d].%sssbocontents%d%s", cname, atomic_str, src->Indirect.Index, src->Register.Index - base, cname, base, swizzle);
-            } else {
-               strbuf_fmt(src_buf, "%sssboarr%s[%d].%sssbocontents%d%s", cname, atomic_str, src->Register.Index - base, cname, base, swizzle);
-            }
-         } else {
-            strbuf_fmt(src_buf, "%sssbocontents%d%s", cname, src->Register.Index, swizzle);
-         }
+         char src_str[128];
+         make_ssbo_varstring(ctx, src_str, src->Register.Index, src->Register.Indirect, src->Indirect.Index);
+         strbuf_fmt(src_buf, "%s", src_str);
          sinfo->sreg_index = src->Register.Index;
       } else if (src->Register.File == TGSI_FILE_MEMORY) {
          strbuf_fmt(src_buf, "values");

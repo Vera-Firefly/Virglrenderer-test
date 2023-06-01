@@ -270,7 +270,6 @@ spec@arb_shader_image_load_store@restrict,Fail
 spec@arb_shader_image_load_store@restrict@no qualifier image aliasing test,Fail
 spec@arb_shader_image_load_store@semantics,Fail
 spec@arb_shader_image_load_store@semantics@imageStore/Vertex shader/rgba32f/image1D test,Fail
-spec@arb_shader_storage_buffer_object@execution@indirect,Fail
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,ExpectedFail
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
