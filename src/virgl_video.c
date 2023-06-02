@@ -668,7 +668,9 @@ int virgl_video_fill_caps(union virgl_caps *caps)
             profiles[i] != VAProfileVC1Main &&
             profiles[i] != VAProfileVC1Advanced&&
             profiles[i] != VAProfileVP9Profile0 &&
-            profiles[i] != VAProfileVP9Profile2)
+            profiles[i] != VAProfileVP9Profile2 &&
+            profiles[i] != VAProfileAV1Profile0 &&
+            profiles[i] != VAProfileAV1Profile1)
             continue;
 
         vaQueryConfigEntrypoints(va_dpy, profiles[i],
