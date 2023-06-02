@@ -19,6 +19,7 @@
 
 #include "util/anon_file.h"
 #include "util/hash_table.h"
+#include "util/libsync.h"
 #include "util/macros.h"
 #include "util/os_file.h"
 #include "util/u_atomic.h"
@@ -917,15 +918,24 @@ msm_ccmd_gem_submit(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
    for (uint32_t i = 0; i < req->nr_bos; i++)
       bos[i].handle = handle_from_res_id(mctx, bos[i].handle);
 
+   uint32_t fence_flags = MSM_SUBMIT_FENCE_FD_OUT | MSM_SUBMIT_FENCE_SN_IN;
+
+   int in_fence_fd = virgl_context_take_in_fence_fd(&mctx->base);
+   if (in_fence_fd >= 0)
+         fence_flags |= MSM_SUBMIT_FENCE_FD_IN;
+
    struct drm_msm_gem_submit args = {
-      .flags = req->flags | MSM_SUBMIT_FENCE_FD_OUT | MSM_SUBMIT_FENCE_SN_IN,
+      .flags = req->flags | fence_flags,
       .fence = req->fence,
+      .fence_fd = in_fence_fd,
       .nr_bos = req->nr_bos,
       .nr_cmds = req->nr_cmds,
       .bos = VOID2U64(bos),
       .cmds = VOID2U64(&req->payload[req->nr_bos * sizeof(struct drm_msm_gem_submit_bo)]),
       .queueid = req->queue_id,
    };
+
+   close(in_fence_fd);
 
    int ret = drmCommandWriteRead(mctx->fd, DRM_MSM_GEM_SUBMIT, &args, sizeof(args));
    drm_dbg("fence=%u, ret=%d", args.fence, ret);
@@ -1322,6 +1332,7 @@ msm_renderer_create(int fd)
    mctx->base.get_fencing_fd = msm_renderer_get_fencing_fd;
    mctx->base.retire_fences = msm_renderer_retire_fences;
    mctx->base.submit_fence = msm_renderer_submit_fence;
+   mctx->base.supports_fence_sharing = true;
 
    return &mctx->base;
 }
