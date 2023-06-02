@@ -28,7 +28,7 @@ fi
 #     )
 #
 # where t is the name of the test, and the '' is the string to search when
-# not cross-compiling (which is empty, because for amd64 everything is
+# not cross-compiling (which is empty, because for x86_64 everything is
 # expected to pass).
 if [ -n "$CROSS" ]; then
     CROSS_XFAIL=.gitlab-ci/cross-xfail-"$CROSS"
