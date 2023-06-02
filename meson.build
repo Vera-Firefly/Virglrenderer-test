@@ -55,6 +55,7 @@ warnings = [
    '-Werror=int-to-pointer-cast',
    '-Werror=switch',
    '-Wno-overlength-strings',
+   '-Wno-missing-field-initializers',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warnings), language : 'c')
