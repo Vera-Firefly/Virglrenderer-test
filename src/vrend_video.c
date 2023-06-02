@@ -675,6 +675,24 @@ static void modify_vp9_picture_desc(struct vrend_video_codec *cdc,
     }
 }
 
+static void modify_av1_picture_desc(struct vrend_video_codec *cdc,
+                                    struct vrend_video_buffer *tgt,
+                                    struct virgl_av1_picture_desc *desc)
+{
+    unsigned i;
+    struct vrend_video_buffer *vbuf;
+
+    (void)tgt;
+
+    for (i = 0; i < ARRAY_SIZE(desc->ref); i++) {
+        vbuf = get_video_buffer(cdc->ctx, desc->ref[i]);
+        desc->ref[i] = virgl_video_buffer_id(vbuf ? vbuf->buffer : NULL);
+    }
+
+    vbuf = get_video_buffer(cdc->ctx, desc->film_grain_target);
+    desc->film_grain_target = virgl_video_buffer_id(vbuf ? vbuf->buffer : NULL);
+}
+
 static void modify_picture_desc(struct vrend_video_codec *cdc,
                                 struct vrend_video_buffer *tgt,
                                 union virgl_picture_desc *desc)
@@ -712,6 +730,9 @@ static void modify_picture_desc(struct vrend_video_codec *cdc,
     case PIPE_VIDEO_PROFILE_VP9_PROFILE0:
     case PIPE_VIDEO_PROFILE_VP9_PROFILE2:
         modify_vp9_picture_desc(cdc, tgt, &desc->vp9);
+        break;
+    case PIPE_VIDEO_PROFILE_AV1_MAIN:
+        modify_av1_picture_desc(cdc, tgt, &desc->av1);
         break;
     default:
         break;

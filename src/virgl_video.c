@@ -2748,6 +2748,297 @@ err:
     return err;
 }
 
+/*
+ * Refer to vlVaHandlePictureParameterBufferAV1() in mesa,
+ * and comment out some unused parameters.
+ */
+static void av1_fill_picture_param(struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *target,
+                            const struct virgl_av1_picture_desc *desc,
+                            VADecPictureParameterBufferAV1 *param)
+{
+    unsigned i, j;
+
+    (void)codec;
+    (void)target;
+
+    ITEM_SET(param, &desc->picture_parameter, profile);
+    ITEM_SET(param, &desc->picture_parameter, order_hint_bits_minus_1);
+    ITEM_SET(param, &desc->picture_parameter, bit_depth_idx);
+    ITEM_SET(param, &desc->picture_parameter, matrix_coefficients);
+
+    //still_picture;
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, use_128x128_superblock);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_filter_intra);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_intra_edge_filter);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_interintra_compound);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_masked_compound);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_dual_filter);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_order_hint);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_jnt_comp);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, enable_cdef);
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, mono_chrome);
+    //color_range
+    //subsampling_x
+    //subsampling_y
+    //chroma_sample_positio
+    ITEM_SET(&param->seq_info_fields.fields, &desc->picture_parameter.seq_info_fields, film_grain_params_present);
+
+    param->current_frame = desc->picture_parameter.current_frame_id;
+    param->current_display_picture = desc->picture_parameter.current_frame_id;
+
+    //anchor_frames_num
+    //anchor_frames_list
+
+    param->frame_width_minus1 = desc->picture_parameter.frame_width - 1;
+    param->frame_height_minus1 = desc->picture_parameter.frame_height - 1;
+
+    //output_frame_width_in_tiles_minus_1
+    //output_frame_height_in_tiles_minus_1
+
+    for (i = 0; i < ARRAY_SIZE(param->ref_frame_map); i++)
+        param->ref_frame_map[i] = desc->ref[i];
+    for (i = 0; i < ARRAY_SIZE(param->ref_frame_idx); i++)
+        param->ref_frame_idx[i] = desc->picture_parameter.ref_frame_idx[i];
+
+    ITEM_SET(param, &desc->picture_parameter, primary_ref_frame);
+    ITEM_SET(param, &desc->picture_parameter, order_hint);
+
+    /* Segmentation Params */
+    ITEM_SET(&param->seg_info.segment_info_fields.bits, &desc->picture_parameter.seg_info.segment_info_fields, enabled);
+    ITEM_SET(&param->seg_info.segment_info_fields.bits, &desc->picture_parameter.seg_info.segment_info_fields, update_map);
+    ITEM_SET(&param->seg_info.segment_info_fields.bits, &desc->picture_parameter.seg_info.segment_info_fields, update_data);
+    ITEM_SET(&param->seg_info.segment_info_fields.bits, &desc->picture_parameter.seg_info.segment_info_fields, temporal_update);
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++)
+            param->seg_info.feature_data[i][j] = desc->picture_parameter.seg_info.feature_data[i][j];
+        param->seg_info.feature_mask[i] = desc->picture_parameter.seg_info.feature_mask[i];
+    }
+
+    /* Film Grain Params */
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, apply_grain);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, chroma_scaling_from_luma);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, grain_scaling_minus_8);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, ar_coeff_lag);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, ar_coeff_shift_minus_6);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, grain_scale_shift);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, overlap_flag);
+    ITEM_SET(&param->film_grain_info.film_grain_info_fields.bits, &desc->picture_parameter.film_grain_info.film_grain_info_fields, clip_to_restricted_range);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, grain_seed);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, num_y_points);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, num_cb_points);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, num_cr_points);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_y_value); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_y_value[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_y_scaling); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_y_scaling[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_cb_value); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_cb_value[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_cb_scaling); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_cb_scaling[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_cr_value); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_cr_value[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.point_cr_scaling); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, point_cr_scaling[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.ar_coeffs_y); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, ar_coeffs_y[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.ar_coeffs_cb); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, ar_coeffs_cb[i]);
+    for (i = 0; i < ARRAY_SIZE(param->film_grain_info.ar_coeffs_cr); i++)
+        ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, ar_coeffs_cr[i]);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cb_mult);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cb_luma_mult);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cb_offset);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cr_mult);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cr_luma_mult);
+    ITEM_SET(&param->film_grain_info, &desc->picture_parameter.film_grain_info, cr_offset);
+
+    ITEM_SET(param, &desc->picture_parameter, tile_cols);
+    ITEM_SET(param, &desc->picture_parameter, tile_rows);
+
+    if (!desc->picture_parameter.pic_info_fields.uniform_tile_spacing_flag) {
+        for (i = 0; i < ARRAY_SIZE(param->width_in_sbs_minus_1); i++)
+            if (desc->picture_parameter.width_in_sbs[i] > 0)
+                param->width_in_sbs_minus_1[i] = desc->picture_parameter.width_in_sbs[i] - 1;
+        for (i = 0; i < ARRAY_SIZE(param->height_in_sbs_minus_1); i++)
+            if (desc->picture_parameter.height_in_sbs[i] > 0)
+                param->height_in_sbs_minus_1[i] = desc->picture_parameter.height_in_sbs[i] - 1;
+    }
+
+    //tile_count_minus_1
+
+    ITEM_SET(param, &desc->picture_parameter, context_update_tile_id);
+
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, frame_type);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, show_frame);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, showable_frame);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, error_resilient_mode);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, disable_cdf_update);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, allow_screen_content_tools);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, force_integer_mv);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, allow_intrabc);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, use_superres);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, allow_high_precision_mv);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, is_motion_mode_switchable);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, use_ref_frame_mvs);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, disable_frame_end_update_cdf);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, uniform_tile_spacing_flag);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, allow_warped_motion);
+    ITEM_SET(&param->pic_info_fields.bits, &desc->picture_parameter.pic_info_fields, large_scale_tile);
+
+    ITEM_SET(param, &desc->picture_parameter, superres_scale_denominator);
+    ITEM_SET(param, &desc->picture_parameter, interp_filter);
+    for (i = 0; i < ARRAY_SIZE(param->filter_level); i++)
+        ITEM_SET(param, &desc->picture_parameter, filter_level[i]);
+    ITEM_SET(param, &desc->picture_parameter, filter_level_u);
+    ITEM_SET(param, &desc->picture_parameter, filter_level_v);
+
+    ITEM_SET(&param->loop_filter_info_fields.bits, &desc->picture_parameter.loop_filter_info_fields, sharpness_level);
+    ITEM_SET(&param->loop_filter_info_fields.bits, &desc->picture_parameter.loop_filter_info_fields, mode_ref_delta_enabled);
+    ITEM_SET(&param->loop_filter_info_fields.bits, &desc->picture_parameter.loop_filter_info_fields, mode_ref_delta_update);
+
+    for (i = 0; i < ARRAY_SIZE(param->ref_deltas); i++)
+        ITEM_SET(param, &desc->picture_parameter, ref_deltas[i]);
+    for (i = 0; i < ARRAY_SIZE(param->mode_deltas); i++)
+        ITEM_SET(param, &desc->picture_parameter, mode_deltas[i]);
+
+    /* Quantization Params */
+    ITEM_SET(param, &desc->picture_parameter, base_qindex);
+    ITEM_SET(param, &desc->picture_parameter, y_dc_delta_q);
+    ITEM_SET(param, &desc->picture_parameter, u_dc_delta_q);
+    ITEM_SET(param, &desc->picture_parameter, u_ac_delta_q);
+    ITEM_SET(param, &desc->picture_parameter, v_dc_delta_q);
+    ITEM_SET(param, &desc->picture_parameter, v_ac_delta_q);
+    ITEM_SET(&param->qmatrix_fields.bits, &desc->picture_parameter.qmatrix_fields, using_qmatrix);
+    if (desc->picture_parameter.qmatrix_fields.using_qmatrix) {
+        ITEM_SET(&param->qmatrix_fields.bits, &desc->picture_parameter.qmatrix_fields, qm_y);
+        ITEM_SET(&param->qmatrix_fields.bits, &desc->picture_parameter.qmatrix_fields, qm_u);
+        ITEM_SET(&param->qmatrix_fields.bits, &desc->picture_parameter.qmatrix_fields, qm_v);
+    }
+
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, delta_q_present_flag);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, log2_delta_q_res);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, delta_lf_present_flag);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, log2_delta_lf_res);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, delta_lf_multi);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, tx_mode);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, reference_select);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, reduced_tx_set_used);
+    ITEM_SET(&param->mode_control_fields.bits, &desc->picture_parameter.mode_control_fields, skip_mode_present);
+
+    ITEM_SET(param, &desc->picture_parameter, cdef_damping_minus_3);
+    ITEM_SET(param, &desc->picture_parameter, cdef_bits);
+    for (i = 0; i < ARRAY_SIZE(param->cdef_y_strengths); i++)
+        ITEM_SET(param, &desc->picture_parameter, cdef_y_strengths[i]);
+    for (i = 0; i < ARRAY_SIZE(param->cdef_uv_strengths); i++)
+        ITEM_SET(param, &desc->picture_parameter, cdef_uv_strengths[i]);
+
+    ITEM_SET(&param->loop_restoration_fields.bits, &desc->picture_parameter.loop_restoration_fields, yframe_restoration_type);
+    ITEM_SET(&param->loop_restoration_fields.bits, &desc->picture_parameter.loop_restoration_fields, cbframe_restoration_type);
+    ITEM_SET(&param->loop_restoration_fields.bits, &desc->picture_parameter.loop_restoration_fields, crframe_restoration_type);
+    ITEM_SET(&param->loop_restoration_fields.bits, &desc->picture_parameter.loop_restoration_fields, lr_unit_shift);
+    ITEM_SET(&param->loop_restoration_fields.bits, &desc->picture_parameter.loop_restoration_fields, lr_uv_shift);
+
+    /* Global Motion Params */
+    for (i = 0; i < ARRAY_SIZE(param->wm); i++) {
+        param->wm[i].wmtype  = desc->picture_parameter.wm[i].wmtype;
+        param->wm[i].invalid = desc->picture_parameter.wm[i].invalid;
+        for (j = 0; j < ARRAY_SIZE(param->wm[i].wmmat); j++)
+            param->wm[i].wmmat[j] = desc->picture_parameter.wm[i].wmmat[j];
+    }
+}
+
+/*
+ * Refer to vlVaHandleSliceParameterBufferAV1() in mesa
+ */
+static void av1_fill_slice_param(struct virgl_video_codec *codec,
+                            struct virgl_video_buffer *target,
+                            const struct virgl_av1_picture_desc *desc,
+                            unsigned num_param,
+                            VASliceParameterBufferAV1 *param)
+{
+    (void)codec;
+    (void)target;
+
+    for (unsigned i = 0; i < num_param; i++) {
+        param[i].slice_data_size = desc->slice_parameter.slice_data_size[i];
+        param[i].slice_data_offset = desc->slice_parameter.slice_data_offset[i];
+        param[i].tile_row = desc->slice_parameter.slice_data_row[i];
+        param[i].tile_column = desc->slice_parameter.slice_data_col[i];
+        param[i].anchor_frame_idx = desc->slice_parameter.slice_data_anchor_frame_idx[i];
+    }
+}
+
+static int av1_decode_bitstream(struct virgl_video_codec *codec,
+                                struct virgl_video_buffer *target,
+                                const struct virgl_av1_picture_desc *desc,
+                                unsigned num_buffers,
+                                const void * const *buffers,
+                                const unsigned *sizes)
+{
+    unsigned i;
+    int err = 0;
+    VAStatus va_stat;
+    VABufferID *slice_data_buf, pic_param_buf, slice_param_buf;
+    VADecPictureParameterBufferAV1 pic_param;
+    VASliceParameterBufferAV1 *slice_param;
+    unsigned slice_count = desc->slice_parameter.slice_count;
+
+    /* Picture parameters */
+    memset(&pic_param, 0, sizeof(pic_param));
+    av1_fill_picture_param(codec, target, desc, &pic_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VAPictureParameterBufferType,
+                   sizeof(pic_param), 1, &pic_param, &pic_param_buf);
+
+    /* Slice parameters */
+    slice_param = calloc(slice_count, sizeof(VASliceParameterBufferAV1));
+    av1_fill_slice_param(codec, target, desc, slice_count, slice_param);
+    vaCreateBuffer(va_dpy, codec->va_ctx, VASliceParameterBufferType,
+                   sizeof(VASliceParameterBufferAV1), slice_count,
+                   slice_param, &slice_param_buf);
+
+    /* Slice data */
+    slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
+    for (i = 0; i < num_buffers; i++) {
+        vaCreateBuffer(va_dpy, codec->va_ctx, VASliceDataBufferType,
+                      sizes[i], 1, (void *)(buffers[i]), &slice_data_buf[i]);
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
+    if (VA_STATUS_SUCCESS != va_stat) {
+        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        err = -1;
+        goto err;
+    }
+
+    for (i = 0; i < num_buffers; i++) {
+        va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
+
+        if (VA_STATUS_SUCCESS != va_stat) {
+            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            err = -1;
+        }
+    }
+
+err:
+    vaDestroyBuffer(va_dpy, pic_param_buf);
+    vaDestroyBuffer(va_dpy, slice_param_buf);
+    for (i = 0; i < num_buffers; i++)
+        vaDestroyBuffer(va_dpy, slice_data_buf[i]);
+    free(slice_param);
+    free(slice_data_buf);
+
+    return err;
+}
+
+
 int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  struct virgl_video_buffer *target,
                                  const union virgl_picture_desc *desc,
@@ -2800,6 +3091,9 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     case PIPE_VIDEO_PROFILE_VP9_PROFILE2:
         return vp9_decode_bitstream(codec, target, &desc->vp9,
                                       num_buffers, buffers, sizes);
+    case PIPE_VIDEO_PROFILE_AV1_MAIN:
+        return av1_decode_bitstream(codec, target, &desc->av1,
+                                    num_buffers, buffers, sizes);
     default:
         break;
     }
