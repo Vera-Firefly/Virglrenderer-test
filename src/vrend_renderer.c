@@ -3933,6 +3933,7 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
          memcpy(key->force_invariant_inputs, prev->sinfo.invariant_outputs, 4 * sizeof(uint32_t));
       }
       key->ssbo_binding_offset = prev->sinfo.ssbo_last_binding + 1;
+      key->image_binding_offset = prev->sinfo.image_last_binding + 1;
 
       key->num_in_clip = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_clip;
       key->num_in_cull = sub_ctx->shaders[prev_type]->current->var_sinfo.num_out_cull;
@@ -5185,8 +5186,10 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
    mask = sub_ctx->images_used_mask[shader_type];
    while (mask) {
       unsigned i = u_bit_scan(&mask);
+      int image_unit = i + sub_ctx->prog->ss[shader_type]->sel->sinfo.image_binding_offset;
+      int binding = sub_ctx->prog->img_locs[shader_type][i];
 
-      if (!(sub_ctx->prog->images_used_mask[shader_type] & (1 << i)))
+      if (binding == -1 || !(sub_ctx->prog->images_used_mask[shader_type] & (1 << i)))
           continue;
       iview = &sub_ctx->image_views[shader_type][i];
       tex_id = iview->texture->id;
@@ -5252,7 +5255,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
       }
 
       if (!vrend_state.use_gles)
-         glUniform1i(sub_ctx->prog->img_locs[shader_type][i], i);
+         glUniform1i(image_unit, binding);
 
       switch (iview->access) {
       case PIPE_IMAGE_ACCESS_READ:
@@ -5269,7 +5272,8 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
          return;
       }
 
-      glBindImageTexture(i, tex_id, level, layered, first_layer, access, iview->format);
+      glBindImageTexture(vrend_state.use_gles ? image_unit : binding,
+                         tex_id, level, layered, first_layer, access, iview->format);
    }
 }
 

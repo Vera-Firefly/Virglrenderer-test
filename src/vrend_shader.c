@@ -82,6 +82,7 @@
 #define SHADER_REQ_AMD_VIEWPORT_IDX (1ULL << 38)
 #define SHADER_REQ_SHADER_DRAW_PARAMETERS (1ULL << 39)
 #define SHADER_REQ_SHADER_GROUP_VOTE      (1ULL << 40)
+#define SHADER_REQ_EXPLICIT_UNIFORM_LOCATION (1ULL << 41)
 
 #define FRONT_COLOR_EMITTED (1 << 0)
 #define BACK_COLOR_EMITTED  (1 << 1);
@@ -242,6 +243,7 @@ struct dump_ctx {
 
    struct vrend_shader_image images[32];
    uint32_t images_used_mask;
+   int32_t image_last_binding;
 
    struct vrend_array *image_arrays;
    uint32_t num_image_arrays;
@@ -357,6 +359,7 @@ static const struct vrend_shader_table shader_req_table[] = {
     { SHADER_REQ_AMD_VIEWPORT_IDX, "AMD_vertex_shader_viewport_index"},
     { SHADER_REQ_SHADER_DRAW_PARAMETERS, "ARB_shader_draw_parameters"},
     { SHADER_REQ_SHADER_GROUP_VOTE, "ARB_shader_group_vote"},
+    { SHADER_REQ_EXPLICIT_UNIFORM_LOCATION, "ARB_explicit_uniform_location"},
 };
 
 enum vrend_type_qualifier {
@@ -909,6 +912,8 @@ static bool add_images(struct dump_ctx *ctx, int first, int last,
       ctx->image_arrays[ctx->num_image_arrays - 1].first = first;
       ctx->image_arrays[ctx->num_image_arrays - 1].array_size = last - first + 1;
    }
+   if ((int)ctx->image_last_binding < last)
+      ctx->image_last_binding = last;
    return true;
 }
 
@@ -1888,6 +1893,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
 
       ctx->shader_req_bits |= SHADER_REQ_IMAGE_LOAD_STORE;
+      ctx->shader_req_bits |= SHADER_REQ_EXPLICIT_UNIFORM_LOCATION;
+      ctx->shader_req_bits |= SHADER_REQ_EXPLICIT_ATTRIB_LOCATION;
       if (decl->Range.Last >= ARRAY_SIZE(ctx->images)) {
          vrend_printf( "Image view exceeded, max is %lu\n", ARRAY_SIZE(ctx->images));
          return false;
@@ -6474,13 +6481,14 @@ static void emit_image_decl(const struct dump_ctx *ctx,
       require_format_specifer = formatstr[0] != '\0';
    }
 
-   if (ctx->cfg->use_gles) { /* TODO: enable on OpenGL 4.2 and up also */
-      emit_hdrf(glsl_strbufs, "layout(binding=%d%s%s) ",
-               i, formatstr[0] != '\0' ? ", " : ", rgba32f", formatstr);
-   } else if (require_format_specifer) {
-      emit_hdrf(glsl_strbufs, "layout(%s) ",
-                formatstr[0] != '\0' ? formatstr : "rgba32f");
-   }
+   const char *loc_bind = ctx->cfg->use_gles ? "binding" : "location";
+
+   if (require_format_specifer) {
+         emit_hdrf(glsl_strbufs, "layout(%s=%d, %s) ", loc_bind,
+                   i + ctx->key->image_binding_offset, formatstr[0] != '\0' ? formatstr : "rgba32f");
+   } else
+      emit_hdrf(glsl_strbufs, "layout(%s=%d%s%s) ", loc_bind,
+               i + ctx->key->image_binding_offset, formatstr[0] != '\0' ? ", ": ", rgba32f", formatstr);
 
    if (range)
       emit_hdrf(glsl_strbufs, "%s%s%suniform %s%cimage%s %simg%d[%d];\n",
@@ -7664,6 +7672,8 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->use_pervertex_in = ctx->has_pervertex;
    sinfo->samplers_used_mask = ctx->samplers_used;
    sinfo->images_used_mask = ctx->images_used_mask;
+   sinfo->image_binding_offset = ctx->key->image_binding_offset;
+   sinfo->image_last_binding = ctx->key->image_binding_offset + ctx->image_last_binding;
    sinfo->num_consts = ctx->num_consts;
    sinfo->ubo_used_mask = ctx->ubo_used_mask;
    sinfo->fog_input_mask = ctx->fog_input_mask;
@@ -7947,8 +7957,13 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.sampler_arrays = NULL;
    ctx.ssbo_array_base = 0xffffffff;
    ctx.ssbo_atomic_array_base = 0xffffffff;
+
+   /* If we don't have a SSBO (or an image) the offset in the next shader will
+    * be "last_binding + 1" which nicely becomes 0, so we don't have to do extra
+    * checks to seem whether there were any SSBOs (images) declared in the shader */
    ctx.ssbo_last_binding = -1;
    ctx.image_last_binding = -1;
+
    ctx.has_sample_input = false;
    ctx.req_local_mem = req_local_mem;
    ctx.guest_sent_io_arrays = false;

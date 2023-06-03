@@ -135,6 +135,8 @@ struct vrend_shader_info {
 
    uint32_t samplers_used_mask;
    uint32_t images_used_mask;
+   uint32_t image_binding_offset;
+   int32_t image_last_binding;
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
    uint32_t ssbo_binding_offset;
@@ -220,6 +222,7 @@ struct vrend_shader_key {
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
    uint8_t ssbo_binding_offset;
+   uint8_t image_binding_offset;
    uint8_t alpha_test;
    uint8_t num_in_cull : 4;
    uint8_t num_in_clip : 4;
