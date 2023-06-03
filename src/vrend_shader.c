@@ -231,13 +231,14 @@ struct dump_ctx {
    struct vrend_shader_sampler samplers[32];
    uint32_t samplers_used;
 
+   uint32_t ssbo_first_binding;
    uint32_t ssbo_used_mask;
-   uint32_t ssbo_binding_offset;
    uint32_t ssbo_atomic_mask;
    uint32_t ssbo_array_base;
    uint32_t ssbo_atomic_array_base;
    uint32_t ssbo_integer_mask;
    uint8_t ssbo_memory_qualifier[32];
+   int32_t ssbo_last_binding;
 
    struct vrend_shader_image images[32];
    uint32_t images_used_mask;
@@ -1164,7 +1165,9 @@ iter_decls(struct tgsi_iterate_context *iter,
          ctx->fog_output_mask |= (1 << decl->Semantic.Index);
       }
       break;
-
+   case TGSI_FILE_BUFFER:
+      if (ctx->ssbo_first_binding > decl->Range.First)
+         ctx->ssbo_first_binding = decl->Range.First;
    default:
       break;
    }
@@ -1893,13 +1896,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
          return false;
       break;
    case TGSI_FILE_BUFFER:
-      if (decl->Range.First >= VREND_MAX_COMBINED_SSBO_BINDING_POINTS) {
+      if (decl->Range.First + ctx->key->ssbo_binding_offset >= VREND_MAX_COMBINED_SSBO_BINDING_POINTS) {
          vrend_printf( "Buffer view exceeded, max is %d\n", VREND_MAX_COMBINED_SSBO_BINDING_POINTS);
          return false;
       }
       ctx->ssbo_used_mask |= (1 << decl->Range.First);
-      if (ctx->ssbo_binding_offset > decl->Range.First)
-         ctx->ssbo_binding_offset = decl->Range.First;
 
       if (decl->Declaration.Atomic) {
          if (decl->Range.First < ctx->ssbo_atomic_array_base)
@@ -1909,6 +1910,8 @@ iter_declaration(struct tgsi_iterate_context *iter,
          if (decl->Range.First < ctx->ssbo_array_base)
             ctx->ssbo_array_base = decl->Range.First;
       }
+      if (ctx->ssbo_last_binding < decl->Range.Last)
+         ctx->ssbo_last_binding = decl->Range.Last;
       break;
    case TGSI_FILE_CONSTANT:
       if (decl->Declaration.Dimension && decl->Dim.Index2D != 0) {
@@ -6600,16 +6603,18 @@ static int emit_ios_common(const struct dump_ctx *ctx,
       while (mask) {
          int start, count;
          u_bit_scan_consecutive_range(&mask, &start, &count);
+         int binding = start + ctx->key->ssbo_binding_offset - ctx->ssbo_first_binding;
          const char *atomic = (ctx->ssbo_atomic_mask & (1 << start)) ? "atomic" : "";
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, std430) buffer %sssbo%d { uint %sssbocontents%d[]; } %sssboarr%s[%d];\n", start, sname, start, sname, start, sname, atomic, count);
+         emit_hdrf(glsl_strbufs, "layout (binding = %d, std430) buffer %sssbo%d { uint %sssbocontents%d[]; } %sssboarr%s[%d];\n", binding, sname, start, sname, start, sname, atomic, count);
       }
    } else {
       uint32_t mask = ctx->ssbo_used_mask;
       while (mask) {
          uint32_t id = u_bit_scan(&mask);
+         int binding = id + ctx->key->ssbo_binding_offset - ctx->ssbo_first_binding;
          enum vrend_type_qualifier type = (ctx->ssbo_integer_mask & (1 << id)) ? INT : UINT;
          char *coherent = ctx->ssbo_memory_qualifier[id] == TGSI_MEMORY_COHERENT ? "coherent" : "";
-         emit_hdrf(glsl_strbufs, "layout (binding = %d, std430) %s buffer %sssbo%d { %s %sssbocontents%d[]; };\n", id, coherent, sname, id,
+         emit_hdrf(glsl_strbufs, "layout (binding = %d, std430) %s buffer %sssbo%d { %s %sssbocontents%d[]; };\n", binding, coherent, sname, id,
                   get_string(type), sname, id);
       }
    }
@@ -7664,9 +7669,11 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->fog_input_mask = ctx->fog_input_mask;
    sinfo->fog_output_mask = ctx->fog_output_mask;
 
-   sinfo->ssbo_used_mask = ctx->ssbo_used_mask;
-   sinfo->ssbo_binding_offset  = ctx->ssbo_binding_offset != 0xffffffff ? ctx->ssbo_binding_offset : 0;
+   sinfo->ssbo_used_mask = ctx->ssbo_used_mask >> ctx->ssbo_first_binding;
+   sinfo->ssbo_binding_offset  = ctx->key->ssbo_binding_offset;
 
+   sinfo->ssbo_last_binding = ctx->key->ssbo_binding_offset + ctx->ssbo_last_binding -
+                              (ctx->ssbo_first_binding != UINT32_MAX ? ctx->ssbo_first_binding : 0);
 
    sinfo->ubo_indirect = !!(ctx->info.dimension_indirect_files & (1 << TGSI_FILE_CONSTANT));
 
@@ -7914,6 +7921,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    /* First pass to deal with edge cases. */
    ctx.iter.iterate_declaration = iter_decls;
    ctx.iter.iterate_instruction = analyze_instruction;
+   ctx.ssbo_first_binding = UINT32_MAX;
    bret = tgsi_iterate_shader(tokens, &ctx.iter);
    if (bret == false)
       return false;
@@ -7933,13 +7941,14 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    ctx.key = key;
    ctx.cfg = cfg;
    ctx.prog_type = -1;
-   ctx.ssbo_binding_offset = 0xffffffff;
    ctx.num_image_arrays = 0;
    ctx.image_arrays = NULL;
    ctx.num_sampler_arrays = 0;
    ctx.sampler_arrays = NULL;
    ctx.ssbo_array_base = 0xffffffff;
    ctx.ssbo_atomic_array_base = 0xffffffff;
+   ctx.ssbo_last_binding = -1;
+   ctx.image_last_binding = -1;
    ctx.has_sample_input = false;
    ctx.req_local_mem = req_local_mem;
    ctx.guest_sent_io_arrays = false;

@@ -138,6 +138,7 @@ struct vrend_shader_info {
    uint32_t ubo_used_mask;
    uint32_t ssbo_used_mask;
    uint32_t ssbo_binding_offset;
+   int32_t ssbo_last_binding;
    uint32_t shadow_samp_mask;
    uint32_t attrib_input_mask;
    uint32_t fs_blend_equation_advanced;
@@ -218,6 +219,7 @@ struct vrend_shader_key {
    uint64_t sampler_views_emulated_rect_mask[VREND_SHADER_SAMPLER_VIEWS_MASK_LENGTH];
    uint16_t tex_swizzle[PIPE_MAX_SHADER_SAMPLER_VIEWS];
 
+   uint8_t ssbo_binding_offset;
    uint8_t alpha_test;
    uint8_t num_in_cull : 4;
    uint8_t num_in_clip : 4;

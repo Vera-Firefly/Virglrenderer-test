@@ -273,7 +273,6 @@ spec@arb_shader_image_load_store@semantics@imageStore/Vertex shader/rgba32f/imag
 spec@arb_shader_storage_buffer_object@execution@memory-layouts-struct-deref,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,ExpectedFail
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
-spec@arb_shader_storage_buffer_object@maxblocks,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgradcube,ExpectedFail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,ExpectedFail
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *gradarb 1d,Fail
