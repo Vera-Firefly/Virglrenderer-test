@@ -48,6 +48,7 @@ if cc.get_id() == 'gcc' and cc.version().version_compare('< 4.1')
 endif
 
 warnings = [
+   '-Werror=enum-int-mismatch',
    '-Werror=implicit-function-declaration',
    '-Werror=missing-prototypes',
    '-Wmissing-prototypes',

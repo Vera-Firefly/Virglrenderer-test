@@ -156,13 +156,13 @@ int vrend_create_shader(struct vrend_context *ctx,
                         const struct pipe_stream_output_info *stream_output,
                         uint32_t req_local_mem,
                         const char *shd_text, uint32_t offlen, uint32_t num_tokens,
-                        uint32_t type, uint32_t pkt_length);
+                        enum pipe_shader_type type, uint32_t pkt_length);
 
 void vrend_link_program_hook(struct vrend_context *ctx, uint32_t *handles);
 
 void vrend_bind_shader(struct vrend_context *ctx,
-                       uint32_t type,
-                       uint32_t handle);
+                       uint32_t handle,
+                       enum pipe_shader_type type);
 
 void vrend_bind_vs_so(struct vrend_context *ctx,
                       uint32_t handle);
@@ -297,7 +297,7 @@ void vrend_object_bind_rasterizer(struct vrend_context *ctx,
                                   uint32_t handle);
 
 void vrend_bind_sampler_states(struct vrend_context *ctx,
-                               uint32_t shader_type,
+                               enum pipe_shader_type shader_type,
                                uint32_t start_slot,
                                uint32_t num_states,
                                const uint32_t *handles);
