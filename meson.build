@@ -51,6 +51,7 @@ warnings = [
    '-Werror=enum-int-mismatch',
    '-Werror=implicit-function-declaration',
    '-Werror=missing-prototypes',
+   '-Werror=pedantic',
    '-Wmissing-prototypes',
    '-Werror=incompatible-pointer-types',
    '-Werror=int-to-pointer-cast',

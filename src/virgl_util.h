@@ -95,28 +95,32 @@ void trace_init(void);
 
 PERCETTO_CATEGORY_DECLARE(VIRGL_PERCETTO_CATEGORIES)
 
-#define TRACE_SCOPE(SCOPE) TRACE_EVENT(virgl, SCOPE)
-/* Trace high frequency events (tracing may impact performance). */
-#define TRACE_SCOPE_SLOW(SCOPE) TRACE_EVENT(virgls, SCOPE)
+static inline void *
+trace_begin(const char *scope)
+{
+   TRACE_EVENT_BEGIN(virgl, scope);
+   return NULL;
+}
 
-#define TRACE_SCOPE_BEGIN(SCOPE) ({TRACE_EVENT_BEGIN(virgl, SCOPE); NULL;})
-#define TRACE_SCOPE_END(SCOPE) do { TRACE_EVENT_END(virgl); (void)SCOPE; } while (0)
+static inline void
+trace_end(UNUSED void **scope)
+{
+   TRACE_EVENT_END(virgl);
+}
 
 #else
 
 void *trace_begin(const char *scope);
 void trace_end(void **scope);
 
+#endif /* ENABLE_TRACING == TRACE_WITH_PERCETTO */
+
 #define TRACE_SCOPE(SCOPE) \
    void *trace_dummy __attribute__((cleanup (trace_end), unused)) = \
    trace_begin(SCOPE)
-
 #define TRACE_SCOPE_SLOW(SCOPE) TRACE_SCOPE(SCOPE)
-
 #define TRACE_SCOPE_BEGIN(SCOPE) trace_begin(SCOPE)
 #define TRACE_SCOPE_END(SCOPE_OBJ)  trace_end(&SCOPE_OBJ)
-
-#endif /* ENABLE_TRACING == TRACE_WITH_PERCETTO */
 
 #else
 #define TRACE_INIT()
