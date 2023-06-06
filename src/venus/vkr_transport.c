@@ -78,7 +78,8 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
       }
 
-      if (stream->offset + stream->size > res->size) {
+      if (unlikely(stream->size > res->size ||
+                   stream->offset > res->size - stream->size)) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
          vkr_context_set_fatal(ctx);

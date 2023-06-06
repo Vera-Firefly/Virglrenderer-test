@@ -20,7 +20,7 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
       return;
    }
 
-   if (unlikely(size + offset > res->size)) {
+   if (unlikely(size > res->size || offset > res->size - size)) {
       vkr_log(
          "failed to set the reply stream: offset(%zu) + size(%zu) exceeds res size(%zu)",
          offset, size, res->size);
