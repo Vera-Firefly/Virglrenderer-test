@@ -28,7 +28,7 @@ vn_decode_VkDescriptorSetLayoutBinding_temp(struct vn_cs_decoder *dec, VkDescrip
     vn_decode_VkFlags(dec, &val->stageFlags);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorCount);
-        val->pImmutableSamplers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImmutableSamplers) * iter_count);
+        val->pImmutableSamplers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pImmutableSamplers), iter_count);
         if (!val->pImmutableSamplers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSampler_lookup(dec, &((VkSampler *)val->pImmutableSamplers)[i]);
@@ -69,7 +69,7 @@ vn_decode_VkDescriptorSetLayoutBindingFlagsCreateInfo_self_temp(struct vn_cs_dec
     vn_decode_uint32_t(dec, &val->bindingCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->bindingCount);
-        val->pBindingFlags = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBindingFlags) * iter_count);
+        val->pBindingFlags = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pBindingFlags), iter_count);
         if (!val->pBindingFlags) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFlags(dec, &((VkDescriptorBindingFlags *)val->pBindingFlags)[i]);
@@ -166,7 +166,7 @@ vn_decode_VkDescriptorSetLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, V
     vn_decode_uint32_t(dec, &val->bindingCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->bindingCount);
-        val->pBindings = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBindings) * iter_count);
+        val->pBindings = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pBindings), iter_count);
         if (!val->pBindings) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSetLayoutBinding_temp(dec, &((VkDescriptorSetLayoutBinding *)val->pBindings)[i]);

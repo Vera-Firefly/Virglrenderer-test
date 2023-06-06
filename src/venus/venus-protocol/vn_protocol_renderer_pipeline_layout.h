@@ -54,7 +54,7 @@ vn_decode_VkPipelineLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, VkPipe
     vn_decode_uint32_t(dec, &val->setLayoutCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->setLayoutCount);
-        val->pSetLayouts = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSetLayouts) * iter_count);
+        val->pSetLayouts = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSetLayouts), iter_count);
         if (!val->pSetLayouts) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSetLayout_lookup(dec, &((VkDescriptorSetLayout *)val->pSetLayouts)[i]);
@@ -65,7 +65,7 @@ vn_decode_VkPipelineLayoutCreateInfo_self_temp(struct vn_cs_decoder *dec, VkPipe
     vn_decode_uint32_t(dec, &val->pushConstantRangeCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->pushConstantRangeCount);
-        val->pPushConstantRanges = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPushConstantRanges) * iter_count);
+        val->pPushConstantRanges = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pPushConstantRanges), iter_count);
         if (!val->pPushConstantRanges) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPushConstantRange_temp(dec, &((VkPushConstantRange *)val->pPushConstantRanges)[i]);

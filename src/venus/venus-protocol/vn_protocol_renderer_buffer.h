@@ -181,7 +181,7 @@ vn_decode_VkBufferCreateInfo_self_temp(struct vn_cs_decoder *dec, VkBufferCreate
     vn_decode_uint32_t(dec, &val->queueFamilyIndexCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->queueFamilyIndexCount);
-        val->pQueueFamilyIndices = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pQueueFamilyIndices) * array_size);
+        val->pQueueFamilyIndices = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pQueueFamilyIndices), array_size);
         if (!val->pQueueFamilyIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pQueueFamilyIndices, array_size);
     } else {
@@ -258,7 +258,7 @@ vn_decode_VkBindBufferMemoryDeviceGroupInfo_self_temp(struct vn_cs_decoder *dec,
     vn_decode_uint32_t(dec, &val->deviceIndexCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->deviceIndexCount);
-        val->pDeviceIndices = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDeviceIndices) * array_size);
+        val->pDeviceIndices = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDeviceIndices), array_size);
         if (!val->pDeviceIndices) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pDeviceIndices, array_size);
     } else {
@@ -708,7 +708,7 @@ static inline void vn_decode_vkBindBufferMemory2_args_temp(struct vn_cs_decoder 
     vn_decode_uint32_t(dec, &args->bindInfoCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bindInfoCount);
-        args->pBindInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBindInfos) * iter_count);
+        args->pBindInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBindInfos), iter_count);
         if (!args->pBindInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBindBufferMemoryInfo_temp(dec, &((VkBindBufferMemoryInfo *)args->pBindInfos)[i]);

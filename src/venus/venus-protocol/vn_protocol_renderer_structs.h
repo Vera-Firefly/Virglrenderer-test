@@ -262,7 +262,7 @@ vn_decode_VkImageFormatListCreateInfo_self_temp(struct vn_cs_decoder *dec, VkIma
     vn_decode_uint32_t(dec, &val->viewFormatCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->viewFormatCount);
-        val->pViewFormats = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pViewFormats) * array_size);
+        val->pViewFormats = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pViewFormats), array_size);
         if (!val->pViewFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pViewFormats, array_size);
     } else {
@@ -504,7 +504,7 @@ vn_decode_VkShaderModuleCreateInfo_self_temp(struct vn_cs_decoder *dec, VkShader
     vn_decode_size_t(dec, &val->codeSize);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->codeSize / 4);
-        val->pCode = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pCode) * array_size);
+        val->pCode = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pCode), array_size);
         if (!val->pCode) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pCode, array_size);
     } else {
@@ -708,7 +708,7 @@ vn_decode_VkMutableDescriptorTypeListEXT_temp(struct vn_cs_decoder *dec, VkMutab
     vn_decode_uint32_t(dec, &val->descriptorTypeCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->descriptorTypeCount);
-        val->pDescriptorTypes = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDescriptorTypes) * array_size);
+        val->pDescriptorTypes = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDescriptorTypes), array_size);
         if (!val->pDescriptorTypes) return;
         vn_decode_VkDescriptorType_array(dec, (VkDescriptorType *)val->pDescriptorTypes, array_size);
     } else {
@@ -742,7 +742,7 @@ vn_decode_VkMutableDescriptorTypeCreateInfoEXT_self_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &val->mutableDescriptorTypeListCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->mutableDescriptorTypeListCount);
-        val->pMutableDescriptorTypeLists = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pMutableDescriptorTypeLists) * iter_count);
+        val->pMutableDescriptorTypeLists = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pMutableDescriptorTypeLists), iter_count);
         if (!val->pMutableDescriptorTypeLists) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMutableDescriptorTypeListEXT_temp(dec, &((VkMutableDescriptorTypeListEXT *)val->pMutableDescriptorTypeLists)[i]);
@@ -940,7 +940,7 @@ vn_decode_VkWriteDescriptorSet_self_temp(struct vn_cs_decoder *dec, VkWriteDescr
     vn_decode_VkDescriptorType(dec, &val->descriptorType);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorCount);
-        val->pImageInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageInfo) * iter_count);
+        val->pImageInfo = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pImageInfo), iter_count);
         if (!val->pImageInfo) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorImageInfo_temp(dec, &((VkDescriptorImageInfo *)val->pImageInfo)[i]);
@@ -950,7 +950,7 @@ vn_decode_VkWriteDescriptorSet_self_temp(struct vn_cs_decoder *dec, VkWriteDescr
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorCount);
-        val->pBufferInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBufferInfo) * iter_count);
+        val->pBufferInfo = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pBufferInfo), iter_count);
         if (!val->pBufferInfo) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorBufferInfo_temp(dec, &((VkDescriptorBufferInfo *)val->pBufferInfo)[i]);
@@ -960,7 +960,7 @@ vn_decode_VkWriteDescriptorSet_self_temp(struct vn_cs_decoder *dec, VkWriteDescr
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorCount);
-        val->pTexelBufferView = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pTexelBufferView) * iter_count);
+        val->pTexelBufferView = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pTexelBufferView), iter_count);
         if (!val->pTexelBufferView) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferView_lookup(dec, &((VkBufferView *)val->pTexelBufferView)[i]);

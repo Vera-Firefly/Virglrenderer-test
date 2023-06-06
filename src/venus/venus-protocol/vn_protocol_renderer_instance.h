@@ -40,7 +40,7 @@ vn_decode_VkApplicationInfo_self_temp(struct vn_cs_decoder *dec, VkApplicationIn
     /* skip val->{sType,pNext} */
     if (vn_peek_array_size(dec)) {
         const size_t string_size = vn_decode_array_size_unchecked(dec);
-        val->pApplicationName = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pApplicationName) * string_size);
+        val->pApplicationName = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pApplicationName), string_size);
         if (!val->pApplicationName) return;
         vn_decode_char_array(dec, (char *)val->pApplicationName, string_size);
     } else {
@@ -50,7 +50,7 @@ vn_decode_VkApplicationInfo_self_temp(struct vn_cs_decoder *dec, VkApplicationIn
     vn_decode_uint32_t(dec, &val->applicationVersion);
     if (vn_peek_array_size(dec)) {
         const size_t string_size = vn_decode_array_size_unchecked(dec);
-        val->pEngineName = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pEngineName) * string_size);
+        val->pEngineName = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pEngineName), string_size);
         if (!val->pEngineName) return;
         vn_decode_char_array(dec, (char *)val->pEngineName, string_size);
     } else {
@@ -130,11 +130,11 @@ vn_decode_VkInstanceCreateInfo_self_temp(struct vn_cs_decoder *dec, VkInstanceCr
     vn_decode_uint32_t(dec, &val->enabledLayerCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->enabledLayerCount);
-        val->ppEnabledLayerNames = vn_cs_decoder_alloc_temp(dec, sizeof(*val->ppEnabledLayerNames) * iter_count);
+        val->ppEnabledLayerNames = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->ppEnabledLayerNames), iter_count);
         if (!val->ppEnabledLayerNames) return;
         for (uint32_t i = 0; i < iter_count; i++) {
             const size_t string_size = vn_decode_array_size_unchecked(dec);
-            ((char **)val->ppEnabledLayerNames)[i] = vn_cs_decoder_alloc_temp(dec, sizeof(*val->ppEnabledLayerNames[i]) * string_size);
+            ((char **)val->ppEnabledLayerNames)[i] = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->ppEnabledLayerNames[i]), string_size);
             if (!val->ppEnabledLayerNames[i]) return;
             vn_decode_char_array(dec, ((char **)val->ppEnabledLayerNames)[i], string_size);
         }
@@ -145,11 +145,11 @@ vn_decode_VkInstanceCreateInfo_self_temp(struct vn_cs_decoder *dec, VkInstanceCr
     vn_decode_uint32_t(dec, &val->enabledExtensionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->enabledExtensionCount);
-        val->ppEnabledExtensionNames = vn_cs_decoder_alloc_temp(dec, sizeof(*val->ppEnabledExtensionNames) * iter_count);
+        val->ppEnabledExtensionNames = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->ppEnabledExtensionNames), iter_count);
         if (!val->ppEnabledExtensionNames) return;
         for (uint32_t i = 0; i < iter_count; i++) {
             const size_t string_size = vn_decode_array_size_unchecked(dec);
-            ((char **)val->ppEnabledExtensionNames)[i] = vn_cs_decoder_alloc_temp(dec, sizeof(*val->ppEnabledExtensionNames[i]) * string_size);
+            ((char **)val->ppEnabledExtensionNames)[i] = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->ppEnabledExtensionNames[i]), string_size);
             if (!val->ppEnabledExtensionNames[i]) return;
             vn_decode_char_array(dec, ((char **)val->ppEnabledExtensionNames)[i], string_size);
         }
@@ -309,7 +309,7 @@ static inline void vn_decode_vkEnumerateInstanceLayerProperties_args_temp(struct
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pPropertyCount ? *args->pPropertyCount : 0));
-        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * iter_count);
+        args->pProperties = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pProperties), iter_count);
         if (!args->pProperties) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkLayerProperties_partial_temp(dec, &args->pProperties[i]);
@@ -345,7 +345,7 @@ static inline void vn_decode_vkEnumerateInstanceExtensionProperties_args_temp(st
 {
     if (vn_peek_array_size(dec)) {
         const size_t string_size = vn_decode_array_size_unchecked(dec);
-        args->pLayerName = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pLayerName) * string_size);
+        args->pLayerName = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pLayerName), string_size);
         if (!args->pLayerName) return;
         vn_decode_char_array(dec, (char *)args->pLayerName, string_size);
     } else {
@@ -362,7 +362,7 @@ static inline void vn_decode_vkEnumerateInstanceExtensionProperties_args_temp(st
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pPropertyCount ? *args->pPropertyCount : 0));
-        args->pProperties = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pProperties) * iter_count);
+        args->pProperties = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pProperties), iter_count);
         if (!args->pProperties) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkExtensionProperties_partial_temp(dec, &args->pProperties[i]);

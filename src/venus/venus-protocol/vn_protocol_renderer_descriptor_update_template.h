@@ -60,7 +60,7 @@ vn_decode_VkDescriptorUpdateTemplateCreateInfo_self_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &val->descriptorUpdateEntryCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorUpdateEntryCount);
-        val->pDescriptorUpdateEntries = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDescriptorUpdateEntries) * iter_count);
+        val->pDescriptorUpdateEntries = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDescriptorUpdateEntries), iter_count);
         if (!val->pDescriptorUpdateEntries) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorUpdateTemplateEntry_temp(dec, &((VkDescriptorUpdateTemplateEntry *)val->pDescriptorUpdateEntries)[i]);

@@ -40,7 +40,7 @@ vn_decode_VkFramebufferAttachmentImageInfo_self_temp(struct vn_cs_decoder *dec, 
     vn_decode_uint32_t(dec, &val->viewFormatCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->viewFormatCount);
-        val->pViewFormats = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pViewFormats) * array_size);
+        val->pViewFormats = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pViewFormats), array_size);
         if (!val->pViewFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pViewFormats, array_size);
     } else {
@@ -112,7 +112,7 @@ vn_decode_VkFramebufferAttachmentsCreateInfo_self_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &val->attachmentImageInfoCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentImageInfoCount);
-        val->pAttachmentImageInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachmentImageInfos) * iter_count);
+        val->pAttachmentImageInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pAttachmentImageInfos), iter_count);
         if (!val->pAttachmentImageInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkFramebufferAttachmentImageInfo_temp(dec, &((VkFramebufferAttachmentImageInfo *)val->pAttachmentImageInfos)[i]);
@@ -205,7 +205,7 @@ vn_decode_VkFramebufferCreateInfo_self_temp(struct vn_cs_decoder *dec, VkFramebu
     vn_decode_uint32_t(dec, &val->attachmentCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentCount);
-        val->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachments) * iter_count);
+        val->pAttachments = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pAttachments), iter_count);
         if (!val->pAttachments) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageView_lookup(dec, &((VkImageView *)val->pAttachments)[i]);

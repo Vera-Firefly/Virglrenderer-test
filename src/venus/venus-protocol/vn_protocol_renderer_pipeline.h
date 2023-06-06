@@ -43,7 +43,7 @@ vn_decode_VkSpecializationInfo_temp(struct vn_cs_decoder *dec, VkSpecializationI
     vn_decode_uint32_t(dec, &val->mapEntryCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->mapEntryCount);
-        val->pMapEntries = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pMapEntries) * iter_count);
+        val->pMapEntries = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pMapEntries), iter_count);
         if (!val->pMapEntries) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSpecializationMapEntry_temp(dec, &((VkSpecializationMapEntry *)val->pMapEntries)[i]);
@@ -180,7 +180,7 @@ vn_decode_VkPipelineShaderStageCreateInfo_self_temp(struct vn_cs_decoder *dec, V
     vn_decode_VkShaderModule_lookup(dec, &val->module);
     if (vn_peek_array_size(dec)) {
         const size_t string_size = vn_decode_array_size_unchecked(dec);
-        val->pName = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pName) * string_size);
+        val->pName = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pName), string_size);
         if (!val->pName) return;
         vn_decode_char_array(dec, (char *)val->pName, string_size);
     } else {
@@ -318,7 +318,7 @@ vn_decode_VkPipelineVertexInputDivisorStateCreateInfoEXT_self_temp(struct vn_cs_
     vn_decode_uint32_t(dec, &val->vertexBindingDivisorCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->vertexBindingDivisorCount);
-        val->pVertexBindingDivisors = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pVertexBindingDivisors) * iter_count);
+        val->pVertexBindingDivisors = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pVertexBindingDivisors), iter_count);
         if (!val->pVertexBindingDivisors) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkVertexInputBindingDivisorDescriptionEXT_temp(dec, &((VkVertexInputBindingDivisorDescriptionEXT *)val->pVertexBindingDivisors)[i]);
@@ -410,7 +410,7 @@ vn_decode_VkPipelineVertexInputStateCreateInfo_self_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &val->vertexBindingDescriptionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->vertexBindingDescriptionCount);
-        val->pVertexBindingDescriptions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pVertexBindingDescriptions) * iter_count);
+        val->pVertexBindingDescriptions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pVertexBindingDescriptions), iter_count);
         if (!val->pVertexBindingDescriptions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkVertexInputBindingDescription_temp(dec, &((VkVertexInputBindingDescription *)val->pVertexBindingDescriptions)[i]);
@@ -421,7 +421,7 @@ vn_decode_VkPipelineVertexInputStateCreateInfo_self_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &val->vertexAttributeDescriptionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->vertexAttributeDescriptionCount);
-        val->pVertexAttributeDescriptions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pVertexAttributeDescriptions) * iter_count);
+        val->pVertexAttributeDescriptions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pVertexAttributeDescriptions), iter_count);
         if (!val->pVertexAttributeDescriptions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkVertexInputAttributeDescription_temp(dec, &((VkVertexInputAttributeDescription *)val->pVertexAttributeDescriptions)[i]);
@@ -779,7 +779,7 @@ vn_decode_VkPipelineViewportStateCreateInfo_self_temp(struct vn_cs_decoder *dec,
     vn_decode_uint32_t(dec, &val->viewportCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->viewportCount);
-        val->pViewports = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pViewports) * iter_count);
+        val->pViewports = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pViewports), iter_count);
         if (!val->pViewports) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkViewport_temp(dec, &((VkViewport *)val->pViewports)[i]);
@@ -790,7 +790,7 @@ vn_decode_VkPipelineViewportStateCreateInfo_self_temp(struct vn_cs_decoder *dec,
     vn_decode_uint32_t(dec, &val->scissorCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->scissorCount);
-        val->pScissors = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pScissors) * iter_count);
+        val->pScissors = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pScissors), iter_count);
         if (!val->pScissors) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)val->pScissors)[i]);
@@ -1316,7 +1316,7 @@ vn_decode_VkPipelineMultisampleStateCreateInfo_self_temp(struct vn_cs_decoder *d
     vn_decode_float(dec, &val->minSampleShading);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, (val->rasterizationSamples + 31) / 32);
-        val->pSampleMask = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSampleMask) * array_size);
+        val->pSampleMask = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSampleMask), array_size);
         if (!val->pSampleMask) return;
         vn_decode_VkSampleMask_array(dec, (VkSampleMask *)val->pSampleMask, array_size);
     } else {
@@ -1522,7 +1522,7 @@ vn_decode_VkPipelineColorBlendStateCreateInfo_self_temp(struct vn_cs_decoder *de
     vn_decode_uint32_t(dec, &val->attachmentCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentCount);
-        val->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachments) * iter_count);
+        val->pAttachments = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pAttachments), iter_count);
         if (!val->pAttachments) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipelineColorBlendAttachmentState_temp(dec, &((VkPipelineColorBlendAttachmentState *)val->pAttachments)[i]);
@@ -1602,7 +1602,7 @@ vn_decode_VkPipelineDynamicStateCreateInfo_self_temp(struct vn_cs_decoder *dec, 
     vn_decode_uint32_t(dec, &val->dynamicStateCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->dynamicStateCount);
-        val->pDynamicStates = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDynamicStates) * array_size);
+        val->pDynamicStates = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDynamicStates), array_size);
         if (!val->pDynamicStates) return;
         vn_decode_VkDynamicState_array(dec, (VkDynamicState *)val->pDynamicStates, array_size);
     } else {
@@ -1694,7 +1694,7 @@ vn_decode_VkPipelineCreationFeedbackCreateInfo_self_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &val->pipelineStageCreationFeedbackCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->pipelineStageCreationFeedbackCount);
-        val->pPipelineStageCreationFeedbacks = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pPipelineStageCreationFeedbacks) * iter_count);
+        val->pPipelineStageCreationFeedbacks = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pPipelineStageCreationFeedbacks), iter_count);
         if (!val->pPipelineStageCreationFeedbacks) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipelineCreationFeedback_temp(dec, &val->pPipelineStageCreationFeedbacks[i]);
@@ -1768,7 +1768,7 @@ vn_decode_VkPipelineRenderingCreateInfo_self_temp(struct vn_cs_decoder *dec, VkP
     vn_decode_uint32_t(dec, &val->colorAttachmentCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->colorAttachmentCount);
-        val->pColorAttachmentFormats = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pColorAttachmentFormats) * array_size);
+        val->pColorAttachmentFormats = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pColorAttachmentFormats), array_size);
         if (!val->pColorAttachmentFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pColorAttachmentFormats, array_size);
     } else {
@@ -1869,7 +1869,7 @@ vn_decode_VkGraphicsPipelineCreateInfo_self_temp(struct vn_cs_decoder *dec, VkGr
     vn_decode_uint32_t(dec, &val->stageCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->stageCount);
-        val->pStages = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pStages) * iter_count);
+        val->pStages = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pStages), iter_count);
         if (!val->pStages) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipelineShaderStageCreateInfo_temp(dec, &((VkPipelineShaderStageCreateInfo *)val->pStages)[i]);
@@ -2115,7 +2115,7 @@ static inline void vn_decode_vkCreateGraphicsPipelines_args_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &args->createInfoCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->createInfoCount);
-        args->pCreateInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCreateInfos) * iter_count);
+        args->pCreateInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCreateInfos), iter_count);
         if (!args->pCreateInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkGraphicsPipelineCreateInfo_temp(dec, &((VkGraphicsPipelineCreateInfo *)args->pCreateInfos)[i]);
@@ -2130,7 +2130,7 @@ static inline void vn_decode_vkCreateGraphicsPipelines_args_temp(struct vn_cs_de
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->createInfoCount);
-        args->pPipelines = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pPipelines) * iter_count);
+        args->pPipelines = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pPipelines), iter_count);
         if (!args->pPipelines) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipeline(dec, &args->pPipelines[i]);
@@ -2179,7 +2179,7 @@ static inline void vn_decode_vkCreateComputePipelines_args_temp(struct vn_cs_dec
     vn_decode_uint32_t(dec, &args->createInfoCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->createInfoCount);
-        args->pCreateInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCreateInfos) * iter_count);
+        args->pCreateInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCreateInfos), iter_count);
         if (!args->pCreateInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkComputePipelineCreateInfo_temp(dec, &((VkComputePipelineCreateInfo *)args->pCreateInfos)[i]);
@@ -2194,7 +2194,7 @@ static inline void vn_decode_vkCreateComputePipelines_args_temp(struct vn_cs_dec
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->createInfoCount);
-        args->pPipelines = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pPipelines) * iter_count);
+        args->pPipelines = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pPipelines), iter_count);
         if (!args->pPipelines) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkPipeline(dec, &args->pPipelines[i]);

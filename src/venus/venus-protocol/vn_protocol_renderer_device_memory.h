@@ -805,7 +805,7 @@ static inline void vn_decode_vkFlushMappedMemoryRanges_args_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &args->memoryRangeCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->memoryRangeCount);
-        args->pMemoryRanges = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryRanges) * iter_count);
+        args->pMemoryRanges = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pMemoryRanges), iter_count);
         if (!args->pMemoryRanges) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMappedMemoryRange_temp(dec, &((VkMappedMemoryRange *)args->pMemoryRanges)[i]);
@@ -841,7 +841,7 @@ static inline void vn_decode_vkInvalidateMappedMemoryRanges_args_temp(struct vn_
     vn_decode_uint32_t(dec, &args->memoryRangeCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->memoryRangeCount);
-        args->pMemoryRanges = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryRanges) * iter_count);
+        args->pMemoryRanges = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pMemoryRanges), iter_count);
         if (!args->pMemoryRanges) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMappedMemoryRange_temp(dec, &((VkMappedMemoryRange *)args->pMemoryRanges)[i]);

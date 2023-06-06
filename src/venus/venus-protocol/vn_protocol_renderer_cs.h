@@ -83,6 +83,13 @@ vn_cs_decoder_alloc_temp(struct vn_cs_decoder *dec, size_t size)
    return vkr_cs_decoder_alloc_temp(d, size);
 }
 
+static inline void *
+vn_cs_decoder_alloc_temp_array(struct vn_cs_decoder *dec, size_t size, size_t count)
+{
+   struct vkr_cs_decoder *d = (struct vkr_cs_decoder *)dec;
+   return vkr_cs_decoder_alloc_temp_array(d, size, count);
+}
+
 static inline void
 vn_cs_decoder_read(struct vn_cs_decoder *dec, size_t size, void *val, size_t val_size)
 {

@@ -191,7 +191,7 @@ vn_decode_VkSemaphoreWaitInfo_self_temp(struct vn_cs_decoder *dec, VkSemaphoreWa
     vn_decode_uint32_t(dec, &val->semaphoreCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->semaphoreCount);
-        val->pSemaphores = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSemaphores) * iter_count);
+        val->pSemaphores = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSemaphores), iter_count);
         if (!val->pSemaphores) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkSemaphore_lookup(dec, &((VkSemaphore *)val->pSemaphores)[i]);
@@ -201,7 +201,7 @@ vn_decode_VkSemaphoreWaitInfo_self_temp(struct vn_cs_decoder *dec, VkSemaphoreWa
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->semaphoreCount);
-        val->pValues = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pValues) * array_size);
+        val->pValues = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pValues), array_size);
         if (!val->pValues) return;
         vn_decode_uint64_t_array(dec, (uint64_t *)val->pValues, array_size);
     } else {

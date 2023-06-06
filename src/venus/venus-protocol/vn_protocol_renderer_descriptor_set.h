@@ -41,7 +41,7 @@ vn_decode_VkDescriptorSetVariableDescriptorCountAllocateInfo_self_temp(struct vn
     vn_decode_uint32_t(dec, &val->descriptorSetCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->descriptorSetCount);
-        val->pDescriptorCounts = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDescriptorCounts) * array_size);
+        val->pDescriptorCounts = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDescriptorCounts), array_size);
         if (!val->pDescriptorCounts) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)val->pDescriptorCounts, array_size);
     } else {
@@ -129,7 +129,7 @@ vn_decode_VkDescriptorSetAllocateInfo_self_temp(struct vn_cs_decoder *dec, VkDes
     vn_decode_uint32_t(dec, &val->descriptorSetCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->descriptorSetCount);
-        val->pSetLayouts = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pSetLayouts) * iter_count);
+        val->pSetLayouts = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pSetLayouts), iter_count);
         if (!val->pSetLayouts) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSetLayout_lookup(dec, &((VkDescriptorSetLayout *)val->pSetLayouts)[i]);
@@ -268,7 +268,7 @@ static inline void vn_decode_vkAllocateDescriptorSets_args_temp(struct vn_cs_dec
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pAllocateInfo ? args->pAllocateInfo->descriptorSetCount : 0));
-        args->pDescriptorSets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorSets) * iter_count);
+        args->pDescriptorSets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorSets), iter_count);
         if (!args->pDescriptorSets) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSet(dec, &args->pDescriptorSets[i]);
@@ -309,7 +309,7 @@ static inline void vn_decode_vkFreeDescriptorSets_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->descriptorSetCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorSetCount);
-        args->pDescriptorSets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorSets) * iter_count);
+        args->pDescriptorSets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorSets), iter_count);
         if (!args->pDescriptorSets) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSet_lookup(dec, &((VkDescriptorSet *)args->pDescriptorSets)[i]);
@@ -347,7 +347,7 @@ static inline void vn_decode_vkUpdateDescriptorSets_args_temp(struct vn_cs_decod
     vn_decode_uint32_t(dec, &args->descriptorWriteCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorWriteCount);
-        args->pDescriptorWrites = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorWrites) * iter_count);
+        args->pDescriptorWrites = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorWrites), iter_count);
         if (!args->pDescriptorWrites) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkWriteDescriptorSet_temp(dec, &((VkWriteDescriptorSet *)args->pDescriptorWrites)[i]);
@@ -358,7 +358,7 @@ static inline void vn_decode_vkUpdateDescriptorSets_args_temp(struct vn_cs_decod
     vn_decode_uint32_t(dec, &args->descriptorCopyCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorCopyCount);
-        args->pDescriptorCopies = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorCopies) * iter_count);
+        args->pDescriptorCopies = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorCopies), iter_count);
         if (!args->pDescriptorCopies) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCopyDescriptorSet_temp(dec, &((VkCopyDescriptorSet *)args->pDescriptorCopies)[i]);

@@ -161,7 +161,7 @@ vn_decode_VkCommandBufferInheritanceRenderingInfo_self_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &val->colorAttachmentCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, val->colorAttachmentCount);
-        val->pColorAttachmentFormats = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pColorAttachmentFormats) * array_size);
+        val->pColorAttachmentFormats = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pColorAttachmentFormats), array_size);
         if (!val->pColorAttachmentFormats) return;
         vn_decode_VkFormat_array(dec, (VkFormat *)val->pColorAttachmentFormats, array_size);
     } else {
@@ -986,7 +986,7 @@ vn_decode_VkDeviceGroupRenderPassBeginInfo_self_temp(struct vn_cs_decoder *dec, 
     vn_decode_uint32_t(dec, &val->deviceRenderAreaCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->deviceRenderAreaCount);
-        val->pDeviceRenderAreas = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pDeviceRenderAreas) * iter_count);
+        val->pDeviceRenderAreas = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pDeviceRenderAreas), iter_count);
         if (!val->pDeviceRenderAreas) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)val->pDeviceRenderAreas)[i]);
@@ -1058,7 +1058,7 @@ vn_decode_VkRenderPassAttachmentBeginInfo_self_temp(struct vn_cs_decoder *dec, V
     vn_decode_uint32_t(dec, &val->attachmentCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->attachmentCount);
-        val->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pAttachments) * iter_count);
+        val->pAttachments = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pAttachments), iter_count);
         if (!val->pAttachments) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageView_lookup(dec, &((VkImageView *)val->pAttachments)[i]);
@@ -1160,7 +1160,7 @@ vn_decode_VkRenderPassBeginInfo_self_temp(struct vn_cs_decoder *dec, VkRenderPas
     vn_decode_uint32_t(dec, &val->clearValueCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->clearValueCount);
-        val->pClearValues = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pClearValues) * iter_count);
+        val->pClearValues = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pClearValues), iter_count);
         if (!val->pClearValues) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearValue_temp(dec, &((VkClearValue *)val->pClearValues)[i]);
@@ -1412,7 +1412,7 @@ vn_decode_VkCopyBufferInfo2_self_temp(struct vn_cs_decoder *dec, VkCopyBufferInf
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferCopy2_temp(dec, &((VkBufferCopy2 *)val->pRegions)[i]);
@@ -1554,7 +1554,7 @@ vn_decode_VkCopyImageInfo2_self_temp(struct vn_cs_decoder *dec, VkCopyImageInfo2
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageCopy2_temp(dec, &((VkImageCopy2 *)val->pRegions)[i]);
@@ -1706,7 +1706,7 @@ vn_decode_VkBlitImageInfo2_self_temp(struct vn_cs_decoder *dec, VkBlitImageInfo2
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageBlit2_temp(dec, &((VkImageBlit2 *)val->pRegions)[i]);
@@ -1853,7 +1853,7 @@ vn_decode_VkCopyBufferToImageInfo2_self_temp(struct vn_cs_decoder *dec, VkCopyBu
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy2_temp(dec, &((VkBufferImageCopy2 *)val->pRegions)[i]);
@@ -1930,7 +1930,7 @@ vn_decode_VkCopyImageToBufferInfo2_self_temp(struct vn_cs_decoder *dec, VkCopyIm
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy2_temp(dec, &((VkBufferImageCopy2 *)val->pRegions)[i]);
@@ -2073,7 +2073,7 @@ vn_decode_VkResolveImageInfo2_self_temp(struct vn_cs_decoder *dec, VkResolveImag
     vn_decode_uint32_t(dec, &val->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->regionCount);
-        val->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pRegions) * iter_count);
+        val->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pRegions), iter_count);
         if (!val->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageResolve2_temp(dec, &((VkImageResolve2 *)val->pRegions)[i]);
@@ -2297,7 +2297,7 @@ vn_decode_VkDependencyInfo_self_temp(struct vn_cs_decoder *dec, VkDependencyInfo
     vn_decode_uint32_t(dec, &val->memoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->memoryBarrierCount);
-        val->pMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pMemoryBarriers) * iter_count);
+        val->pMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pMemoryBarriers), iter_count);
         if (!val->pMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMemoryBarrier2_temp(dec, &((VkMemoryBarrier2 *)val->pMemoryBarriers)[i]);
@@ -2308,7 +2308,7 @@ vn_decode_VkDependencyInfo_self_temp(struct vn_cs_decoder *dec, VkDependencyInfo
     vn_decode_uint32_t(dec, &val->bufferMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->bufferMemoryBarrierCount);
-        val->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pBufferMemoryBarriers) * iter_count);
+        val->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pBufferMemoryBarriers), iter_count);
         if (!val->pBufferMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferMemoryBarrier2_temp(dec, &((VkBufferMemoryBarrier2 *)val->pBufferMemoryBarriers)[i]);
@@ -2319,7 +2319,7 @@ vn_decode_VkDependencyInfo_self_temp(struct vn_cs_decoder *dec, VkDependencyInfo
     vn_decode_uint32_t(dec, &val->imageMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->imageMemoryBarrierCount);
-        val->pImageMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pImageMemoryBarriers) * iter_count);
+        val->pImageMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pImageMemoryBarriers), iter_count);
         if (!val->pImageMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageMemoryBarrier2_temp(dec, &((VkImageMemoryBarrier2 *)val->pImageMemoryBarriers)[i]);
@@ -2496,7 +2496,7 @@ vn_decode_VkRenderingInfo_self_temp(struct vn_cs_decoder *dec, VkRenderingInfo *
     vn_decode_uint32_t(dec, &val->colorAttachmentCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, val->colorAttachmentCount);
-        val->pColorAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*val->pColorAttachments) * iter_count);
+        val->pColorAttachments = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pColorAttachments), iter_count);
         if (!val->pColorAttachments) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRenderingAttachmentInfo_temp(dec, &((VkRenderingAttachmentInfo *)val->pColorAttachments)[i]);
@@ -2587,7 +2587,7 @@ static inline void vn_decode_vkAllocateCommandBuffers_args_temp(struct vn_cs_dec
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, (args->pAllocateInfo ? args->pAllocateInfo->commandBufferCount : 0));
-        args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * iter_count);
+        args->pCommandBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCommandBuffers), iter_count);
         if (!args->pCommandBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_temp(dec, &args->pCommandBuffers[i]);
@@ -2628,7 +2628,7 @@ static inline void vn_decode_vkFreeCommandBuffers_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->commandBufferCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->commandBufferCount);
-        args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * iter_count);
+        args->pCommandBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCommandBuffers), iter_count);
         if (!args->pCommandBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)args->pCommandBuffers)[i]);
@@ -2757,7 +2757,7 @@ static inline void vn_decode_vkCmdSetViewport_args_temp(struct vn_cs_decoder *de
     vn_decode_uint32_t(dec, &args->viewportCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->viewportCount);
-        args->pViewports = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pViewports) * iter_count);
+        args->pViewports = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pViewports), iter_count);
         if (!args->pViewports) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkViewport_temp(dec, &((VkViewport *)args->pViewports)[i]);
@@ -2795,7 +2795,7 @@ static inline void vn_decode_vkCmdSetScissor_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->scissorCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->scissorCount);
-        args->pScissors = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pScissors) * iter_count);
+        args->pScissors = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pScissors), iter_count);
         if (!args->pScissors) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)args->pScissors)[i]);
@@ -2996,7 +2996,7 @@ static inline void vn_decode_vkCmdBindDescriptorSets_args_temp(struct vn_cs_deco
     vn_decode_uint32_t(dec, &args->descriptorSetCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorSetCount);
-        args->pDescriptorSets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorSets) * iter_count);
+        args->pDescriptorSets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorSets), iter_count);
         if (!args->pDescriptorSets) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDescriptorSet_lookup(dec, &((VkDescriptorSet *)args->pDescriptorSets)[i]);
@@ -3007,7 +3007,7 @@ static inline void vn_decode_vkCmdBindDescriptorSets_args_temp(struct vn_cs_deco
     vn_decode_uint32_t(dec, &args->dynamicOffsetCount);
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->dynamicOffsetCount);
-        args->pDynamicOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDynamicOffsets) * array_size);
+        args->pDynamicOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDynamicOffsets), array_size);
         if (!args->pDynamicOffsets) return;
         vn_decode_uint32_t_array(dec, (uint32_t *)args->pDynamicOffsets, array_size);
     } else {
@@ -3078,7 +3078,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers_args_temp(struct vn_cs_decod
     vn_decode_uint32_t(dec, &args->bindingCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bindingCount);
-        args->pBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBuffers) * iter_count);
+        args->pBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBuffers), iter_count);
         if (!args->pBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pBuffers)[i]);
@@ -3088,7 +3088,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers_args_temp(struct vn_cs_decod
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pOffsets) * array_size);
+        args->pOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pOffsets), array_size);
         if (!args->pOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pOffsets, array_size);
     } else {
@@ -3187,7 +3187,7 @@ static inline void vn_decode_vkCmdDrawMultiEXT_args_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &args->drawCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->drawCount);
-        args->pVertexInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pVertexInfo) * iter_count);
+        args->pVertexInfo = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pVertexInfo), iter_count);
         if (!args->pVertexInfo) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMultiDrawInfoEXT_temp(dec, &((VkMultiDrawInfoEXT *)args->pVertexInfo)[i]);
@@ -3231,7 +3231,7 @@ static inline void vn_decode_vkCmdDrawMultiIndexedEXT_args_temp(struct vn_cs_dec
     vn_decode_uint32_t(dec, &args->drawCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->drawCount);
-        args->pIndexInfo = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pIndexInfo) * iter_count);
+        args->pIndexInfo = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pIndexInfo), iter_count);
         if (!args->pIndexInfo) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMultiDrawIndexedInfoEXT_temp(dec, &((VkMultiDrawIndexedInfoEXT *)args->pIndexInfo)[i]);
@@ -3393,7 +3393,7 @@ static inline void vn_decode_vkCmdCopyBuffer_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferCopy_temp(dec, &((VkBufferCopy *)args->pRegions)[i]);
@@ -3436,7 +3436,7 @@ static inline void vn_decode_vkCmdCopyImage_args_temp(struct vn_cs_decoder *dec,
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageCopy_temp(dec, &((VkImageCopy *)args->pRegions)[i]);
@@ -3483,7 +3483,7 @@ static inline void vn_decode_vkCmdBlitImage_args_temp(struct vn_cs_decoder *dec,
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageBlit_temp(dec, &((VkImageBlit *)args->pRegions)[i]);
@@ -3532,7 +3532,7 @@ static inline void vn_decode_vkCmdCopyBufferToImage_args_temp(struct vn_cs_decod
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy_temp(dec, &((VkBufferImageCopy *)args->pRegions)[i]);
@@ -3576,7 +3576,7 @@ static inline void vn_decode_vkCmdCopyImageToBuffer_args_temp(struct vn_cs_decod
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferImageCopy_temp(dec, &((VkBufferImageCopy *)args->pRegions)[i]);
@@ -3692,7 +3692,7 @@ static inline void vn_decode_vkCmdClearColorImage_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->rangeCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->rangeCount);
-        args->pRanges = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRanges) * iter_count);
+        args->pRanges = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRanges), iter_count);
         if (!args->pRanges) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageSubresourceRange_temp(dec, &((VkImageSubresourceRange *)args->pRanges)[i]);
@@ -3743,7 +3743,7 @@ static inline void vn_decode_vkCmdClearDepthStencilImage_args_temp(struct vn_cs_
     vn_decode_uint32_t(dec, &args->rangeCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->rangeCount);
-        args->pRanges = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRanges) * iter_count);
+        args->pRanges = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRanges), iter_count);
         if (!args->pRanges) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageSubresourceRange_temp(dec, &((VkImageSubresourceRange *)args->pRanges)[i]);
@@ -3785,7 +3785,7 @@ static inline void vn_decode_vkCmdClearAttachments_args_temp(struct vn_cs_decode
     vn_decode_uint32_t(dec, &args->attachmentCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->attachmentCount);
-        args->pAttachments = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pAttachments) * iter_count);
+        args->pAttachments = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pAttachments), iter_count);
         if (!args->pAttachments) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearAttachment_temp(dec, &((VkClearAttachment *)args->pAttachments)[i]);
@@ -3796,7 +3796,7 @@ static inline void vn_decode_vkCmdClearAttachments_args_temp(struct vn_cs_decode
     vn_decode_uint32_t(dec, &args->rectCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->rectCount);
-        args->pRects = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRects) * iter_count);
+        args->pRects = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRects), iter_count);
         if (!args->pRects) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkClearRect_temp(dec, &((VkClearRect *)args->pRects)[i]);
@@ -3842,7 +3842,7 @@ static inline void vn_decode_vkCmdResolveImage_args_temp(struct vn_cs_decoder *d
     vn_decode_uint32_t(dec, &args->regionCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->regionCount);
-        args->pRegions = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pRegions) * iter_count);
+        args->pRegions = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pRegions), iter_count);
         if (!args->pRegions) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageResolve_temp(dec, &((VkImageResolve *)args->pRegions)[i]);
@@ -3931,7 +3931,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->eventCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->eventCount);
-        args->pEvents = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pEvents) * iter_count);
+        args->pEvents = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pEvents), iter_count);
         if (!args->pEvents) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkEvent_lookup(dec, &((VkEvent *)args->pEvents)[i]);
@@ -3944,7 +3944,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->memoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->memoryBarrierCount);
-        args->pMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryBarriers) * iter_count);
+        args->pMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pMemoryBarriers), iter_count);
         if (!args->pMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMemoryBarrier_temp(dec, &((VkMemoryBarrier *)args->pMemoryBarriers)[i]);
@@ -3955,7 +3955,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->bufferMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bufferMemoryBarrierCount);
-        args->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBufferMemoryBarriers) * iter_count);
+        args->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBufferMemoryBarriers), iter_count);
         if (!args->pBufferMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferMemoryBarrier_temp(dec, &((VkBufferMemoryBarrier *)args->pBufferMemoryBarriers)[i]);
@@ -3966,7 +3966,7 @@ static inline void vn_decode_vkCmdWaitEvents_args_temp(struct vn_cs_decoder *dec
     vn_decode_uint32_t(dec, &args->imageMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->imageMemoryBarrierCount);
-        args->pImageMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pImageMemoryBarriers) * iter_count);
+        args->pImageMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pImageMemoryBarriers), iter_count);
         if (!args->pImageMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageMemoryBarrier_temp(dec, &((VkImageMemoryBarrier *)args->pImageMemoryBarriers)[i]);
@@ -4029,7 +4029,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->memoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->memoryBarrierCount);
-        args->pMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pMemoryBarriers) * iter_count);
+        args->pMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pMemoryBarriers), iter_count);
         if (!args->pMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkMemoryBarrier_temp(dec, &((VkMemoryBarrier *)args->pMemoryBarriers)[i]);
@@ -4040,7 +4040,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->bufferMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bufferMemoryBarrierCount);
-        args->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBufferMemoryBarriers) * iter_count);
+        args->pBufferMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBufferMemoryBarriers), iter_count);
         if (!args->pBufferMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBufferMemoryBarrier_temp(dec, &((VkBufferMemoryBarrier *)args->pBufferMemoryBarriers)[i]);
@@ -4051,7 +4051,7 @@ static inline void vn_decode_vkCmdPipelineBarrier_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->imageMemoryBarrierCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->imageMemoryBarrierCount);
-        args->pImageMemoryBarriers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pImageMemoryBarriers) * iter_count);
+        args->pImageMemoryBarriers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pImageMemoryBarriers), iter_count);
         if (!args->pImageMemoryBarriers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkImageMemoryBarrier_temp(dec, &((VkImageMemoryBarrier *)args->pImageMemoryBarriers)[i]);
@@ -4398,7 +4398,7 @@ static inline void vn_decode_vkCmdExecuteCommands_args_temp(struct vn_cs_decoder
     vn_decode_uint32_t(dec, &args->commandBufferCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->commandBufferCount);
-        args->pCommandBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCommandBuffers) * iter_count);
+        args->pCommandBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCommandBuffers), iter_count);
         if (!args->pCommandBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkCommandBuffer_lookup(dec, &((VkCommandBuffer *)args->pCommandBuffers)[i]);
@@ -4436,7 +4436,7 @@ static inline void vn_decode_vkCmdPushDescriptorSetKHR_args_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &args->descriptorWriteCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->descriptorWriteCount);
-        args->pDescriptorWrites = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDescriptorWrites) * iter_count);
+        args->pDescriptorWrites = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDescriptorWrites), iter_count);
         if (!args->pDescriptorWrites) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkWriteDescriptorSet_temp(dec, &((VkWriteDescriptorSet *)args->pDescriptorWrites)[i]);
@@ -4709,7 +4709,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
     vn_decode_uint32_t(dec, &args->bindingCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bindingCount);
-        args->pBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBuffers) * iter_count);
+        args->pBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBuffers), iter_count);
         if (!args->pBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pBuffers)[i]);
@@ -4719,7 +4719,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pOffsets) * array_size);
+        args->pOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pOffsets), array_size);
         if (!args->pOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pOffsets, array_size);
     } else {
@@ -4728,7 +4728,7 @@ static inline void vn_decode_vkCmdBindTransformFeedbackBuffersEXT_args_temp(stru
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pSizes = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSizes) * array_size);
+        args->pSizes = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pSizes), array_size);
         if (!args->pSizes) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pSizes, array_size);
     } else {
@@ -4769,7 +4769,7 @@ static inline void vn_decode_vkCmdBeginTransformFeedbackEXT_args_temp(struct vn_
     vn_decode_uint32_t(dec, &args->counterBufferCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->counterBufferCount);
-        args->pCounterBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCounterBuffers) * iter_count);
+        args->pCounterBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCounterBuffers), iter_count);
         if (!args->pCounterBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pCounterBuffers)[i]);
@@ -4779,7 +4779,7 @@ static inline void vn_decode_vkCmdBeginTransformFeedbackEXT_args_temp(struct vn_
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->counterBufferCount);
-        args->pCounterBufferOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCounterBufferOffsets) * array_size);
+        args->pCounterBufferOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCounterBufferOffsets), array_size);
         if (!args->pCounterBufferOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pCounterBufferOffsets, array_size);
     } else {
@@ -4818,7 +4818,7 @@ static inline void vn_decode_vkCmdEndTransformFeedbackEXT_args_temp(struct vn_cs
     vn_decode_uint32_t(dec, &args->counterBufferCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->counterBufferCount);
-        args->pCounterBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCounterBuffers) * iter_count);
+        args->pCounterBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCounterBuffers), iter_count);
         if (!args->pCounterBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pCounterBuffers)[i]);
@@ -4828,7 +4828,7 @@ static inline void vn_decode_vkCmdEndTransformFeedbackEXT_args_temp(struct vn_cs
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->counterBufferCount);
-        args->pCounterBufferOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pCounterBufferOffsets) * array_size);
+        args->pCounterBufferOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pCounterBufferOffsets), array_size);
         if (!args->pCounterBufferOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pCounterBufferOffsets, array_size);
     } else {
@@ -5039,7 +5039,7 @@ static inline void vn_decode_vkCmdSetViewportWithCount_args_temp(struct vn_cs_de
     vn_decode_uint32_t(dec, &args->viewportCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->viewportCount);
-        args->pViewports = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pViewports) * iter_count);
+        args->pViewports = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pViewports), iter_count);
         if (!args->pViewports) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkViewport_temp(dec, &((VkViewport *)args->pViewports)[i]);
@@ -5074,7 +5074,7 @@ static inline void vn_decode_vkCmdSetScissorWithCount_args_temp(struct vn_cs_dec
     vn_decode_uint32_t(dec, &args->scissorCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->scissorCount);
-        args->pScissors = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pScissors) * iter_count);
+        args->pScissors = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pScissors), iter_count);
         if (!args->pScissors) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkRect2D_temp(dec, &((VkRect2D *)args->pScissors)[i]);
@@ -5110,7 +5110,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers2_args_temp(struct vn_cs_deco
     vn_decode_uint32_t(dec, &args->bindingCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->bindingCount);
-        args->pBuffers = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pBuffers) * iter_count);
+        args->pBuffers = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pBuffers), iter_count);
         if (!args->pBuffers) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkBuffer_lookup(dec, &((VkBuffer *)args->pBuffers)[i]);
@@ -5120,7 +5120,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers2_args_temp(struct vn_cs_deco
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pOffsets = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pOffsets) * array_size);
+        args->pOffsets = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pOffsets), array_size);
         if (!args->pOffsets) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pOffsets, array_size);
     } else {
@@ -5129,7 +5129,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers2_args_temp(struct vn_cs_deco
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pSizes = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pSizes) * array_size);
+        args->pSizes = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pSizes), array_size);
         if (!args->pSizes) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pSizes, array_size);
     } else {
@@ -5138,7 +5138,7 @@ static inline void vn_decode_vkCmdBindVertexBuffers2_args_temp(struct vn_cs_deco
     }
     if (vn_peek_array_size(dec)) {
         const size_t array_size = vn_decode_array_size(dec, args->bindingCount);
-        args->pStrides = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pStrides) * array_size);
+        args->pStrides = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pStrides), array_size);
         if (!args->pStrides) return;
         vn_decode_VkDeviceSize_array(dec, (VkDeviceSize *)args->pStrides, array_size);
     } else {
@@ -5634,7 +5634,7 @@ static inline void vn_decode_vkCmdWaitEvents2_args_temp(struct vn_cs_decoder *de
     vn_decode_uint32_t(dec, &args->eventCount);
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->eventCount);
-        args->pEvents = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pEvents) * iter_count);
+        args->pEvents = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pEvents), iter_count);
         if (!args->pEvents) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkEvent_lookup(dec, &((VkEvent *)args->pEvents)[i]);
@@ -5644,7 +5644,7 @@ static inline void vn_decode_vkCmdWaitEvents2_args_temp(struct vn_cs_decoder *de
     }
     if (vn_peek_array_size(dec)) {
         const uint32_t iter_count = vn_decode_array_size(dec, args->eventCount);
-        args->pDependencyInfos = vn_cs_decoder_alloc_temp(dec, sizeof(*args->pDependencyInfos) * iter_count);
+        args->pDependencyInfos = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pDependencyInfos), iter_count);
         if (!args->pDependencyInfos) return;
         for (uint32_t i = 0; i < iter_count; i++)
             vn_decode_VkDependencyInfo_temp(dec, &((VkDependencyInfo *)args->pDependencyInfos)[i]);
