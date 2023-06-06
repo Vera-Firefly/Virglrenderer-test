@@ -315,6 +315,12 @@ vkr_dispatch_vkWaitVirtqueueSeqnoMESA(struct vn_dispatch_context *dispatch,
    /* this is for -Wgnu-statement-expression-from-macro-expansion */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
+   if (unlikely(ctx == container_of(dispatch, struct vkr_context, dispatch))) {
+      vkr_log("vkWaitVirtqueueSeqnoMESA must be called on ring dispatch");
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = container_of(dispatch, struct vkr_ring, dispatch);
 #pragma GCC diagnostic pop
    if (!vkr_ring_wait_virtqueue_seqno(ring, args->seqno))
