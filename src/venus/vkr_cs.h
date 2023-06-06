@@ -273,6 +273,19 @@ vkr_cs_decoder_alloc_temp(struct vkr_cs_decoder *dec, size_t size)
    return ptr;
 }
 
+static inline void *
+vkr_cs_decoder_alloc_temp_array(struct vkr_cs_decoder *dec, size_t size, size_t count)
+{
+   size_t alloc_size;
+   if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
+      vkr_log("overflow in array allocation of %zu * %zu bytes", size, count);
+      vkr_cs_decoder_set_fatal(dec);
+      return NULL;
+   }
+
+   return vkr_cs_decoder_alloc_temp(dec, alloc_size);
+}
+
 static inline bool
 vkr_cs_handle_indirect_id(VkObjectType type)
 {
