@@ -173,7 +173,7 @@ END_TEST
 
 START_TEST(strbuf_test_appendf_str)
 {
-   struct vrend_strbuf sb;
+   struct vrend_strbuf sb = { 0, };
    bool ret;
    ret = strbuf_alloc(&sb, 1024);
    ck_assert_int_eq(ret, true);
