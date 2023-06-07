@@ -114,6 +114,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_memory_budget = true,
    .EXT_multi_draw = true,
    .EXT_mutable_descriptor_type = true,
+   .EXT_non_seamless_cube_map = true,
    .EXT_pci_bus_info = true,
    .EXT_primitive_topology_list_restart = true,
    .EXT_primitives_generated_query = true,
