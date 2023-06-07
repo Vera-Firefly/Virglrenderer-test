@@ -127,6 +127,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_rasterization_order_attachment_access = true,
    .EXT_robustness2 = true,
    .EXT_shader_stencil_export = true,
+   .EXT_shader_subgroup_ballot = true,
    .EXT_transform_feedback = true,
    .EXT_vertex_attribute_divisor = true,
    /* vendor extensions */
