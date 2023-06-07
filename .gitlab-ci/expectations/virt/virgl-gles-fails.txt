@@ -3219,7 +3219,6 @@ spec@arb_shader_draw_parameters@drawid,Fail
 spec@arb_shader_draw_parameters@drawid-indirect-baseinstance,Fail
 spec@arb_shader_draw_parameters@drawid-single-draw,Fail
 spec@arb_shader_draw_parameters@drawid-single-draw-primitive-restart,Fail
-spec@khr_texture_compression_astc@void-extent-dl-bug,Crash
 spec@arb_gl_spirv@execution@ssbo@unsized-array,Fail
 spec@arb_shader_draw_parameters@baseinstance,Fail
 spec@arb_shader_draw_parameters@baseinstance-indirect,Fail
@@ -3228,3 +3227,5 @@ spec@arb_shader_draw_parameters@basevertex-indirect,Fail
 spec@arb_shader_draw_parameters@drawid-indirect-basevertex,Fail
 spec@arb_shader_draw_parameters@vertexid-zerobased,Fail
 spec@arb_viewport_array@display-list,Fail
+
+spec@khr_texture_compression_astc@void-extent-dl-bug,Crash

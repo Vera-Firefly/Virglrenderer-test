@@ -8,7 +8,11 @@ mkdir -p ${MESA_CI_PROJECT_DIR}
 cd ${MESA_CI_PROJECT_DIR}
 
 # Deploy Mesa CI artifacts
-MESA_CI_ARTIFACTS_URL="https://${STORAGE_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/mesa-amd64.tar.zst"
+MESA_ARCHITECTURE="x86_64"
+MESA_CONFIGURATION="default"
+MESA_BUILDTYPE="debugoptimized"
+MESA_TARBALL="mesa-${MESA_ARCHITECTURE}-${MESA_CONFIGURATION}-${MESA_BUILDTYPE}.tar.zst"
+MESA_CI_ARTIFACTS_URL="https://${STORAGE_HOST}/artifacts/${MESA_PROJECT_PATH}/${MESA_PIPELINE_ID}/${MESA_TARBALL}"
 if curl -s -I ${MESA_CI_ARTIFACTS_URL}; then
     curl ${MESA_CI_ARTIFACTS_URL} -o - | tar -xv --zstd
 else

@@ -11,7 +11,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 899161
+  MESA_PIPELINE_ID: 906183
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
   CI_REGISTRY_IMAGE: "harbor.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -37,7 +37,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: 6d013d1f13a0040b65ef9a76234e80865d966b2a
+    ref: 926e97d5df203fe19a2498e6a84335dedbab382e
     file:
       - '/.gitlab-ci/image-tags.yml'
 
@@ -84,7 +84,7 @@ debian/x86_64_build:
   variables:
     MESA_IMAGE_PATH: ${DEBIAN_X86_64_BUILD_IMAGE_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_BUILD_TAG}
-    MINIO_ARTIFACT_NAME: virgl-x86_64
+    S3_ARTIFACT_NAME: virgl-x86_64
   script:
     - .gitlab-ci/meson/build.sh
   artifacts:

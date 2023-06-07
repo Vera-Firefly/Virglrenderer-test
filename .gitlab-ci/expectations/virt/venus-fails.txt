@@ -10,10 +10,3 @@ dEQP-VK.pipeline.extended_dynamic_state.before_draw.enable_raster,Fail
 dEQP-VK.pipeline.extended_dynamic_state.between_pipelines.enable_raster,Fail
 dEQP-VK.pipeline.extended_dynamic_state.cmd_buffer_start.enable_raster,Fail
 dEQP-VK.pipeline.extended_dynamic_state.two_draws_dynamic.enable_raster,Fail
-
-dEQP-VK.subgroups.shuffle.compute.subgroupshuffleup_double_constant,Crash
-dEQP-VK.subgroups.shuffle.compute.subgroupshuffleup_dvec4_constant_requiredsubgroupsize,Crash
-dEQP-VK.subgroups.shuffle.compute.subgroupshuffleup_i64vec2_constant_requiredsubgroupsize,Crash
-dEQP-VK.subgroups.shuffle.compute.subgroupshuffleup_i64vec4_constant_requiredsubgroupsize,Crash
-dEQP-VK.subgroups.shuffle.compute.subgroupshuffleup_u64vec4_constant_requiredsubgroupsize,Crash
-dEQP-VK.subgroups.shuffle.graphics.subgroupshuffleup_i64vec4_constant,Crash
