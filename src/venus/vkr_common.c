@@ -101,6 +101,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    /* EXT extensions */
    .EXT_border_color_swizzle = true,
    .EXT_calibrated_timestamps = true,
+   .EXT_color_write_enable = true,
    .EXT_conservative_rasterization = true,
    .EXT_conditional_rendering = true,
    .EXT_custom_border_color = true,

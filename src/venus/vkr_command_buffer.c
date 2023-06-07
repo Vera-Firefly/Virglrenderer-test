@@ -858,6 +858,15 @@ vkr_dispatch_vkCmdPushDescriptorSetKHR(UNUSED struct vn_dispatch_context *dispat
                 args->set, args->descriptorWriteCount, args->pDescriptorWrites);
 }
 
+static void
+vkr_dispatch_vkCmdSetColorWriteEnableEXT(
+   UNUSED struct vn_dispatch_context *dispatch,
+   struct vn_command_vkCmdSetColorWriteEnableEXT *args)
+{
+   VKR_CMD_CALL(CmdSetColorWriteEnableEXT, args, args->attachmentCount,
+                args->pColorWriteEnables);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -1002,4 +1011,8 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    /* VK_KHR_push_descriptor */
    dispatch->dispatch_vkCmdPushDescriptorSetKHR = vkr_dispatch_vkCmdPushDescriptorSetKHR;
    dispatch->dispatch_vkCmdPushDescriptorSetWithTemplateKHR = NULL;
+
+   /* VK_EXT_color_write_enable */
+   dispatch->dispatch_vkCmdSetColorWriteEnableEXT =
+      vkr_dispatch_vkCmdSetColorWriteEnableEXT;
 }
