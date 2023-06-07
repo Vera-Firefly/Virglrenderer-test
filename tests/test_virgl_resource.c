@@ -299,7 +299,7 @@ START_TEST(private_ptr)
   void *init_priv = (void*)0xabab;
   virgl_renderer_resource_set_priv(1, init_priv);
   void *priv = virgl_renderer_resource_get_priv(1);
-  ck_assert_int_eq((unsigned long)priv, 0xabab);
+  ck_assert_int_eq((uintptr_t)priv, 0xabab);
   testvirgl_fini_single_ctx();
 }
 END_TEST
