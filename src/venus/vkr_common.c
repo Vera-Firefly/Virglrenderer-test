@@ -108,6 +108,7 @@ static const struct vn_info_extension_table vkr_extension_table = {
    .EXT_depth_clip_enable = true,
    .EXT_dynamic_rendering_unused_attachments = true,
    .EXT_external_memory_dma_buf = true,
+   .EXT_fragment_shader_interlock = true,
    .EXT_image_2d_view_of_3d = true,
    .EXT_image_drm_format_modifier = true,
    .EXT_image_view_min_lod = true,
