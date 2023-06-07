@@ -4,7 +4,6 @@
 inc_mesa = include_directories('.', 'compat', 'pipe', 'util')
 
 files_mesa = files(
-  'util/anon_file.c',
   'util/bitscan.c',
   'util/hash_table.c',
   'util/os_file.c',
@@ -14,6 +13,10 @@ files_mesa = files(
   'util/u_debug.c',
   'util/u_math.c',
 )
+
+if host_machine.system() != 'windows'
+   files_mesa += files('util/anon_file.c')
+endif
 
 deps_mesa = [
   m_dep,
