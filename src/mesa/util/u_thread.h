@@ -240,7 +240,7 @@ util_set_current_thread_affinity(const uint32_t *mask,
 
 /* Return the time of a thread's CPU time clock. */
 static inline int64_t
-util_thread_get_time_nano(thrd_t thread)
+util_thread_get_time_nano(UNUSED thrd_t thread)
 {
 #if defined(HAVE_PTHREAD) && !defined(__APPLE__) && !defined(__HAIKU__)
    struct timespec ts;
@@ -270,7 +270,7 @@ util_current_thread_get_time_nano(void)
 #endif
 }
 
-static inline bool u_thread_is_self(thrd_t thread)
+static inline bool u_thread_is_self(UNUSED thrd_t thread)
 {
 #if defined(HAVE_PTHREAD)
    return pthread_equal(pthread_self(), thread);

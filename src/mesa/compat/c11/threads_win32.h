@@ -34,6 +34,8 @@
 #include <process.h>  // MSVCRT
 #include <stdlib.h>
 
+#include "util/macros.h"
+
 /*
 Configuration macro:
 
@@ -224,7 +226,7 @@ cnd_broadcast(cnd_t *cond)
 
 // 7.25.3.2
 static inline void
-cnd_destroy(cnd_t *cond)
+cnd_destroy(UNUSED cnd_t *cond)
 {
     assert(cond != NULL);
     // do nothing
@@ -250,7 +252,7 @@ cnd_signal(cnd_t *cond)
 
 // 7.25.3.5
 static inline int
-cnd_timedwait(cnd_t *cond, mtx_t *mtx, const struct timespec *abs_time)
+cnd_timedwait(UNUSED cnd_t *cond, UNUSED mtx_t *mtx, UNUSED const struct timespec *abs_time)
 {
     assert(cond != NULL);
     assert(mtx != NULL);
@@ -310,7 +312,7 @@ mtx_lock(mtx_t *mtx)
 
 // 7.25.4.4
 static inline int
-mtx_timedlock(mtx_t *mtx, const struct timespec *ts)
+mtx_timedlock(UNUSED mtx_t *mtx, UNUSED const struct timespec *ts)
 {
     assert(mtx != NULL);
     assert(ts != NULL);
@@ -452,7 +454,7 @@ thrd_join(thrd_t thr, int *res)
 
 // 7.25.5.7
 static inline void
-thrd_sleep(const struct timespec *time_point, struct timespec *remaining)
+thrd_sleep(const struct timespec *time_point, UNUSED struct timespec *remaining)
 {
     assert(time_point);
     assert(!remaining); /* not implemented */

@@ -275,7 +275,7 @@ os_get_total_physical_memory(uint64_t *size)
 }
 
 bool
-os_get_available_system_memory(uint64_t *size)
+os_get_available_system_memory(UNUSED uint64_t *size)
 {
 #if DETECT_OS_LINUX
    char *meminfo = os_read_file("/proc/meminfo", NULL);
