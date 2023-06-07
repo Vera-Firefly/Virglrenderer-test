@@ -12,10 +12,12 @@
 
 struct vn_info_extension_table {
    union {
-      bool enabled[103];
+      bool enabled[110];
       struct {
          bool EXT_4444_formats;
+         bool EXT_border_color_swizzle;
          bool EXT_calibrated_timestamps;
+         bool EXT_color_write_enable;
          bool EXT_command_serialization;
          bool EXT_conditional_rendering;
          bool EXT_conservative_rasterization;
@@ -23,9 +25,11 @@ struct vn_info_extension_table {
          bool EXT_depth_clip_control;
          bool EXT_depth_clip_enable;
          bool EXT_descriptor_indexing;
+         bool EXT_dynamic_rendering_unused_attachments;
          bool EXT_extended_dynamic_state;
          bool EXT_extended_dynamic_state2;
          bool EXT_external_memory_dma_buf;
+         bool EXT_fragment_shader_interlock;
          bool EXT_host_query_reset;
          bool EXT_image_2d_view_of_3d;
          bool EXT_image_drm_format_modifier;
@@ -38,6 +42,7 @@ struct vn_info_extension_table {
          bool EXT_memory_budget;
          bool EXT_multi_draw;
          bool EXT_mutable_descriptor_type;
+         bool EXT_non_seamless_cube_map;
          bool EXT_pci_bus_info;
          bool EXT_pipeline_creation_cache_control;
          bool EXT_pipeline_creation_feedback;
@@ -53,6 +58,7 @@ struct vn_info_extension_table {
          bool EXT_separate_stencil_usage;
          bool EXT_shader_demote_to_helper_invocation;
          bool EXT_shader_stencil_export;
+         bool EXT_shader_subgroup_ballot;
          bool EXT_shader_viewport_index_layer;
          bool EXT_subgroup_size_control;
          bool EXT_texel_buffer_alignment;
@@ -100,6 +106,7 @@ struct vn_info_extension_table {
          bool KHR_sampler_ycbcr_conversion;
          bool KHR_separate_depth_stencil_layouts;
          bool KHR_shader_atomic_int64;
+         bool KHR_shader_clock;
          bool KHR_shader_draw_parameters;
          bool KHR_shader_float16_int8;
          bool KHR_shader_float_controls;
@@ -121,7 +128,7 @@ struct vn_info_extension_table {
    };
 };
 
-#define VN_INFO_EXTENSION_MAX_NUMBER (495)
+#define VN_INFO_EXTENSION_MAX_NUMBER (500)
 
 struct vn_info_extension {
    const char *name;
@@ -130,10 +137,12 @@ struct vn_info_extension {
 };
 
 /* sorted by extension names for bsearch */
-static const uint32_t _vn_info_extension_count = 103;
-static const struct vn_info_extension _vn_info_extensions[103] = {
+static const uint32_t _vn_info_extension_count = 110;
+static const struct vn_info_extension _vn_info_extensions[110] = {
    { "VK_EXT_4444_formats", 341, 1 },
+   { "VK_EXT_border_color_swizzle", 412, 1 },
    { "VK_EXT_calibrated_timestamps", 185, 2 },
+   { "VK_EXT_color_write_enable", 382, 1 },
    { "VK_EXT_command_serialization", 384, 1 },
    { "VK_EXT_conditional_rendering", 82, 2 },
    { "VK_EXT_conservative_rasterization", 102, 1 },
@@ -141,9 +150,11 @@ static const struct vn_info_extension _vn_info_extensions[103] = {
    { "VK_EXT_depth_clip_control", 356, 1 },
    { "VK_EXT_depth_clip_enable", 103, 1 },
    { "VK_EXT_descriptor_indexing", 162, 2 },
+   { "VK_EXT_dynamic_rendering_unused_attachments", 500, 1 },
    { "VK_EXT_extended_dynamic_state", 268, 1 },
    { "VK_EXT_extended_dynamic_state2", 378, 1 },
    { "VK_EXT_external_memory_dma_buf", 126, 1 },
+   { "VK_EXT_fragment_shader_interlock", 252, 1 },
    { "VK_EXT_host_query_reset", 262, 1 },
    { "VK_EXT_image_2d_view_of_3d", 394, 1 },
    { "VK_EXT_image_drm_format_modifier", 159, 2 },
@@ -156,6 +167,7 @@ static const struct vn_info_extension _vn_info_extensions[103] = {
    { "VK_EXT_memory_budget", 238, 1 },
    { "VK_EXT_multi_draw", 393, 1 },
    { "VK_EXT_mutable_descriptor_type", 495, 1 },
+   { "VK_EXT_non_seamless_cube_map", 423, 1 },
    { "VK_EXT_pci_bus_info", 213, 2 },
    { "VK_EXT_pipeline_creation_cache_control", 298, 3 },
    { "VK_EXT_pipeline_creation_feedback", 193, 1 },
@@ -171,6 +183,7 @@ static const struct vn_info_extension _vn_info_extensions[103] = {
    { "VK_EXT_separate_stencil_usage", 247, 1 },
    { "VK_EXT_shader_demote_to_helper_invocation", 277, 1 },
    { "VK_EXT_shader_stencil_export", 141, 1 },
+   { "VK_EXT_shader_subgroup_ballot", 65, 1 },
    { "VK_EXT_shader_viewport_index_layer", 163, 1 },
    { "VK_EXT_subgroup_size_control", 226, 2 },
    { "VK_EXT_texel_buffer_alignment", 282, 1 },
@@ -218,6 +231,7 @@ static const struct vn_info_extension _vn_info_extensions[103] = {
    { "VK_KHR_sampler_ycbcr_conversion", 157, 14 },
    { "VK_KHR_separate_depth_stencil_layouts", 242, 1 },
    { "VK_KHR_shader_atomic_int64", 181, 1 },
+   { "VK_KHR_shader_clock", 182, 1 },
    { "VK_KHR_shader_draw_parameters", 64, 1 },
    { "VK_KHR_shader_float16_int8", 83, 1 },
    { "VK_KHR_shader_float_controls", 198, 4 },

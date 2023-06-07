@@ -5574,6 +5574,37 @@ static inline void vn_encode_vkCmdResolveImage2_reply(struct vn_cs_encoder *enc,
     /* skip args->pResolveImageInfo */
 }
 
+static inline void vn_decode_vkCmdSetColorWriteEnableEXT_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdSetColorWriteEnableEXT *args)
+{
+    vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
+    vn_decode_uint32_t(dec, &args->attachmentCount);
+    if (vn_peek_array_size(dec)) {
+        const size_t array_size = vn_decode_array_size(dec, args->attachmentCount);
+        args->pColorWriteEnables = vn_cs_decoder_alloc_temp_array(dec, sizeof(*args->pColorWriteEnables), array_size);
+        if (!args->pColorWriteEnables) return;
+        vn_decode_VkBool32_array(dec, (VkBool32 *)args->pColorWriteEnables, array_size);
+    } else {
+        vn_decode_array_size(dec, args->attachmentCount);
+        args->pColorWriteEnables = NULL;
+    }
+}
+
+static inline void vn_replace_vkCmdSetColorWriteEnableEXT_args_handle(struct vn_command_vkCmdSetColorWriteEnableEXT *args)
+{
+    vn_replace_VkCommandBuffer_handle(&args->commandBuffer);
+    /* skip args->attachmentCount */
+    /* skip args->pColorWriteEnables */
+}
+
+static inline void vn_encode_vkCmdSetColorWriteEnableEXT_reply(struct vn_cs_encoder *enc, const struct vn_command_vkCmdSetColorWriteEnableEXT *args)
+{
+    vn_encode_VkCommandTypeEXT(enc, &(VkCommandTypeEXT){VK_COMMAND_TYPE_vkCmdSetColorWriteEnableEXT_EXT});
+
+    /* skip args->commandBuffer */
+    /* skip args->attachmentCount */
+    /* skip args->pColorWriteEnables */
+}
+
 static inline void vn_decode_vkCmdSetEvent2_args_temp(struct vn_cs_decoder *dec, struct vn_command_vkCmdSetEvent2 *args)
 {
     vn_decode_VkCommandBuffer_lookup(dec, &args->commandBuffer);
@@ -7977,6 +8008,30 @@ static inline void vn_dispatch_vkCmdResolveImage2(struct vn_dispatch_context *ct
 
     if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
         vn_encode_vkCmdResolveImage2_reply(ctx->encoder, &args);
+
+    vn_cs_decoder_reset_temp_pool(ctx->decoder);
+}
+
+static inline void vn_dispatch_vkCmdSetColorWriteEnableEXT(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags)
+{
+    struct vn_command_vkCmdSetColorWriteEnableEXT args;
+
+    if (!ctx->dispatch_vkCmdSetColorWriteEnableEXT) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    vn_decode_vkCmdSetColorWriteEnableEXT_args_temp(ctx->decoder, &args);
+    if (!args.commandBuffer) {
+        vn_cs_decoder_set_fatal(ctx->decoder);
+        return;
+    }
+
+    if (!vn_cs_decoder_get_fatal(ctx->decoder))
+        ctx->dispatch_vkCmdSetColorWriteEnableEXT(ctx, &args);
+
+    if ((flags & VK_COMMAND_GENERATE_REPLY_BIT_EXT) && !vn_cs_decoder_get_fatal(ctx->decoder))
+        vn_encode_vkCmdSetColorWriteEnableEXT_reply(ctx->encoder, &args);
 
     vn_cs_decoder_reset_temp_pool(ctx->decoder);
 }

@@ -86,6 +86,7 @@ struct vn_device_proc_table {
    PFN_vkCmdResolveImage CmdResolveImage;
    PFN_vkCmdResolveImage2 CmdResolveImage2;
    PFN_vkCmdSetBlendConstants CmdSetBlendConstants;
+   PFN_vkCmdSetColorWriteEnableEXT CmdSetColorWriteEnableEXT;
    PFN_vkCmdSetCullMode CmdSetCullMode;
    PFN_vkCmdSetDepthBias CmdSetDepthBias;
    PFN_vkCmdSetDepthBiasEnable CmdSetDepthBiasEnable;
@@ -398,6 +399,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->KHR_copy_commands2 ? VN_GDPA(dev, vkCmdResolveImage2KHR) :
       NULL;
    proc_table->CmdSetBlendConstants = VN_GDPA(dev, vkCmdSetBlendConstants);
+   proc_table->CmdSetColorWriteEnableEXT =
+      ext_table->EXT_color_write_enable ? VN_GDPA(dev, vkCmdSetColorWriteEnableEXT) :
+      NULL;
    proc_table->CmdSetCullMode =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetCullMode) :
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetCullModeEXT) :

@@ -1501,15 +1501,102 @@ vn_replace_VkPipelineColorBlendAttachmentState_handle(VkPipelineColorBlendAttach
     /* skip val->colorWriteMask */
 }
 
-/* struct VkPipelineColorBlendStateCreateInfo chain */
+/* struct VkPipelineColorWriteCreateInfoEXT chain */
 
 static inline void *
-vn_decode_VkPipelineColorBlendStateCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
+vn_decode_VkPipelineColorWriteCreateInfoEXT_pnext_temp(struct vn_cs_decoder *dec)
 {
     /* no known/supported struct */
     if (vn_decode_simple_pointer(dec))
         vn_cs_decoder_set_fatal(dec);
     return NULL;
+}
+
+static inline void
+vn_decode_VkPipelineColorWriteCreateInfoEXT_self_temp(struct vn_cs_decoder *dec, VkPipelineColorWriteCreateInfoEXT *val)
+{
+    /* skip val->{sType,pNext} */
+    vn_decode_uint32_t(dec, &val->attachmentCount);
+    if (vn_peek_array_size(dec)) {
+        const size_t array_size = vn_decode_array_size(dec, val->attachmentCount);
+        val->pColorWriteEnables = vn_cs_decoder_alloc_temp_array(dec, sizeof(*val->pColorWriteEnables), array_size);
+        if (!val->pColorWriteEnables) return;
+        vn_decode_VkBool32_array(dec, (VkBool32 *)val->pColorWriteEnables, array_size);
+    } else {
+        vn_decode_array_size(dec, val->attachmentCount);
+        val->pColorWriteEnables = NULL;
+    }
+}
+
+static inline void
+vn_decode_VkPipelineColorWriteCreateInfoEXT_temp(struct vn_cs_decoder *dec, VkPipelineColorWriteCreateInfoEXT *val)
+{
+    VkStructureType stype;
+    vn_decode_VkStructureType(dec, &stype);
+    if (stype != VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT)
+        vn_cs_decoder_set_fatal(dec);
+
+    val->sType = stype;
+    val->pNext = vn_decode_VkPipelineColorWriteCreateInfoEXT_pnext_temp(dec);
+    vn_decode_VkPipelineColorWriteCreateInfoEXT_self_temp(dec, val);
+}
+
+static inline void
+vn_replace_VkPipelineColorWriteCreateInfoEXT_handle_self(VkPipelineColorWriteCreateInfoEXT *val)
+{
+    /* skip val->sType */
+    /* skip val->pNext */
+    /* skip val->attachmentCount */
+    /* skip val->pColorWriteEnables */
+}
+
+static inline void
+vn_replace_VkPipelineColorWriteCreateInfoEXT_handle(VkPipelineColorWriteCreateInfoEXT *val)
+{
+    struct VkBaseOutStructure *pnext = (struct VkBaseOutStructure *)val;
+
+    do {
+        switch ((int32_t)pnext->sType) {
+        case VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT:
+            vn_replace_VkPipelineColorWriteCreateInfoEXT_handle_self((VkPipelineColorWriteCreateInfoEXT *)pnext);
+            break;
+        default:
+            /* ignore unknown/unsupported struct */
+            break;
+        }
+        pnext = pnext->pNext;
+    } while (pnext);
+}
+
+/* struct VkPipelineColorBlendStateCreateInfo chain */
+
+static inline void *
+vn_decode_VkPipelineColorBlendStateCreateInfo_pnext_temp(struct vn_cs_decoder *dec)
+{
+    VkBaseOutStructure *pnext;
+    VkStructureType stype;
+
+    if (!vn_decode_simple_pointer(dec))
+        return NULL;
+
+    vn_decode_VkStructureType(dec, &stype);
+    switch ((int32_t)stype) {
+    case VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT:
+        pnext = vn_cs_decoder_alloc_temp(dec, sizeof(VkPipelineColorWriteCreateInfoEXT));
+        if (pnext) {
+            pnext->sType = stype;
+            pnext->pNext = vn_decode_VkPipelineColorBlendStateCreateInfo_pnext_temp(dec);
+            vn_decode_VkPipelineColorWriteCreateInfoEXT_self_temp(dec, (VkPipelineColorWriteCreateInfoEXT *)pnext);
+        }
+        break;
+    default:
+        /* unexpected struct */
+        pnext = NULL;
+        vn_cs_decoder_set_fatal(dec);
+        break;
+    }
+
+    return pnext;
 }
 
 static inline void
@@ -1574,6 +1661,9 @@ vn_replace_VkPipelineColorBlendStateCreateInfo_handle(VkPipelineColorBlendStateC
         switch ((int32_t)pnext->sType) {
         case VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO:
             vn_replace_VkPipelineColorBlendStateCreateInfo_handle_self((VkPipelineColorBlendStateCreateInfo *)pnext);
+            break;
+        case VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT:
+            vn_replace_VkPipelineColorWriteCreateInfoEXT_handle_self((VkPipelineColorWriteCreateInfoEXT *)pnext);
             break;
         default:
             /* ignore unknown/unsupported struct */
