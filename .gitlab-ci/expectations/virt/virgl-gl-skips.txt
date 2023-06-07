@@ -43,7 +43,6 @@ spec@arb_shader_image_load_store@invalid
 spec@arb_shader_image_load_store@layer
 spec@arb_shader_image_load_store@level
 spec@arb_shader_image_load_store@max-size
-spec@arb_shader_image_load_store@semantics
 spec@arb_shader_image_size@builtin
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-isampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-sampler1darray

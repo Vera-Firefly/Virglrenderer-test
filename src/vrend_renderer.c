@@ -5197,12 +5197,33 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
          if (!iview->texture->tbo_tex_id)
             glGenTextures(1, &iview->texture->tbo_tex_id);
 
-         /* glTexBuffer doesn't accept GL_RGBA8_SNORM, find an appropriate replacement. */
-         uint32_t format = (iview->format == GL_RGBA8_SNORM) ? GL_RGBA8UI : iview->format;
+         /* We don't really care about the format we use for binding the buffer to a texture
+          * we only care about the per block bitsize, the real format is then passed to the
+          * call to glBindImageTexture, and  there it is only important whether the formats
+          * are compatible (See OpenGL 4.6 Core Profile, May 14, 2018 , Sect 8.26. p 293) */
 
-         if (format == GL_NONE ||
-             (vrend_state.use_gles && format == GL_ALPHA8)) {
-            format = vrend_get_arb_format(iview->vformat);
+         GLenum format;
+         switch (util_format_get_blocksizebits(iview->vformat)) {
+         case 128:
+            format = GL_RGBA32UI;
+            break;
+         case 64:
+            format = GL_RG32UI;
+            break;
+         case 32:
+            format = GL_R32UI;
+            break;
+         case 16:
+            format = GL_R16UI;
+            break;
+         case 8:
+            format = GL_R8UI;
+            break;
+         default:
+            /* This should not be possible, warn and set a default format. */
+            vrend_printf("%s: Unsupported format block bit size %d\n", __func__,
+                         util_format_get_blocksizebits(iview->vformat));
+            format = GL_R8UI;
          }
 
          glBindBufferARB(GL_TEXTURE_BUFFER, iview->texture->id);
