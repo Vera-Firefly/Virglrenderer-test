@@ -6902,11 +6902,23 @@ emit_ios_generic_outputs(const struct dump_ctx *ctx,
                                                       &ctx->key->fs_info, ctx->key->flatshade);
 
          if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR) {
+            if (ctx->outputs[i].sid >= 64) {
+               vrend_printf("Number of output id exceeded, max is 64\n");
+               set_buf_error(glsl_strbufs);
+               return;
+            }
+
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= FRONT_COLOR_EMITTED;
             fc_emitted |= 1ull << ctx->outputs[i].sid;
          }
 
          if (ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR) {
+            if (ctx->outputs[i].sid >= 64) {
+               vrend_printf("Number of output id exceeded, max is 64\n");
+               set_buf_error(glsl_strbufs);
+               return;
+            }
+
             front_back_color_emitted_flags[ctx->outputs[i].sid] |= BACK_COLOR_EMITTED;
             bc_emitted |= 1ull << ctx->outputs[i].sid;
          }
@@ -6987,6 +6999,8 @@ static void emit_ios_vs(const struct dump_ctx *ctx,
    emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
                             front_back_color_emitted_flags, force_color_two_side,
                             can_emit_generic_default);
+   if (strbuf_get_error(&glsl_strbufs->glsl_main))
+      return;
 
    if (ctx->key->color_two_side || ctx->force_color_two_side) {
       bool fcolor_emitted, bcolor_emitted;
@@ -7340,6 +7354,8 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
    emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
                             front_back_color_emitted_flags, force_color_two_side,
                             can_emit_generic_geom);
+   if (strbuf_get_error(&glsl_strbufs->glsl_main))
+      return;
 
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
 
@@ -7463,6 +7479,8 @@ static void emit_ios_tes(const struct dump_ctx *ctx,
    emit_ios_generic_outputs(ctx, glsl_strbufs, generic_ios, texcoord_ios,
                             front_back_color_emitted_flags, force_color_two_side,
                             can_emit_generic_default);
+   if (strbuf_get_error(&glsl_strbufs->glsl_main))
+      return;
 
    emit_ios_per_vertex_in(ctx, glsl_strbufs, has_pervertex);
    emit_ios_per_vertex_out(ctx, glsl_strbufs, "");
@@ -7574,6 +7592,9 @@ static int emit_ios(const struct dump_ctx *ctx,
       set_hdr_error(glsl_strbufs);
       return glsl_ver_required;
    }
+
+   if (strbuf_get_error(&glsl_strbufs->glsl_main))
+      return glsl_ver_required;
 
    const struct sematic_info generic = {TGSI_SEMANTIC_GENERIC, 'g'};
    const struct sematic_info texcoord = {TGSI_SEMANTIC_TEXCOORD, 't'};
