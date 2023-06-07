@@ -40,9 +40,6 @@ spec@ext_framebuffer_multisample@clip-and-scissor-blit.*
 # Skip because they crash crosvm/virglrenderer
 spec@arb_pixel_buffer_object@texsubimage array pbo
 spec@arb_shader_image_load_store@invalid
-spec@arb_shader_image_load_store@layer
-spec@arb_shader_image_load_store@level
-spec@arb_shader_image_load_store@max-size
 spec@arb_shader_image_size@builtin
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-isampler1darray
 spec@ext_gpu_shader4@execution@texelfetch@fs-texelfetch-sampler1darray

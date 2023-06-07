@@ -31,9 +31,6 @@ spec@arb_vertex_attrib_64bit.*
 spec@intel_shader_integer_functions2@execution@built-in-functions*
 spec@arb_vertex_program.*
 
-# Crashes when lowering GLSL to TGSI, but this is going away with the GLSL-NIR-TGSI lowering coming soon
-spec@glsl-4.00@execution@inout.*
-
 # Skip because they pass with the Intel driver
 spec@arb_shader_texture_image_samples@texturesamples@.*
 spec@nv_primitive_restart@primitive-restart-draw-mode-polygon
