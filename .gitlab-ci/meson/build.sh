@@ -61,7 +61,7 @@ RESULTS_DIR=$(pwd)/results/${TEST_SUITE:-build}
 rm -rf _build
 
 meson setup _build --native-file=native.file \
-    --wrap-mode=nofallback \
+    --wrap-mode=${WRAP_DEBUG:-nofallback} \
     ${CROSS+--cross "$CROSS_FILE"} \
     -D prefix=$(pwd)/install \
     -D libdir=lib \
@@ -74,6 +74,7 @@ meson setup _build --native-file=native.file \
     -D render-server=true \
     -D render-server-worker=process \
     -D venus=true \
+    -Dtracing=${TRACING_BACKEND:-none} \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
 pushd _build && \
