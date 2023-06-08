@@ -25,7 +25,7 @@ project(
    'virglrenderer', 'c',
    version: '0.10.4',
    license : 'MIT',
-   meson_version : '>= 0.53',
+   meson_version : '>= 0.55',
    default_options : ['buildtype=release', 'b_ndebug=if-release',
                       'warning_level=3', 'c_std=gnu11']
 )
