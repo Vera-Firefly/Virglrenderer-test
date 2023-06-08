@@ -115,7 +115,7 @@ util_fpstate_set_denorms_to_zero(unsigned current_mxcsr)
  * On platforms without support for it's a noop.
  */
 void
-util_fpstate_set(unsigned mxcsr)
+util_fpstate_set(UNUSED unsigned mxcsr)
 {
 #if defined(PIPE_ARCH_SSE)
    if (util_get_cpu_caps()->has_sse) {
