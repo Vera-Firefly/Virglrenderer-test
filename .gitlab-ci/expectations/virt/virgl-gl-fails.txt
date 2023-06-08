@@ -73,7 +73,6 @@ spec@arb_depth_texture@texwrap formats bordercolor-swizzled,Fail
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT16- swizzled- border color only,Fail
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT24- swizzled- border color only,Fail
 spec@arb_depth_texture@texwrap formats bordercolor-swizzled@GL_DEPTH_COMPONENT32- swizzled- border color only,Fail
-spec@arb_direct_state_access@gettextureimage-targets,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor@GL_RGB565- border color only,Fail
 spec@arb_es2_compatibility@texwrap formats bordercolor-swizzled,Fail
@@ -262,7 +261,6 @@ spec@ext_packed_float@texwrap formats bordercolor-swizzled,Fail
 spec@ext_packed_float@texwrap formats bordercolor-swizzled@GL_R11F_G11F_B10F- swizzled- border color only,Fail
 spec@ext_texture_array@fbo-generatemipmap-array s3tc_dxt1,Fail
 spec@ext_texture_array@gen-mipmap,Fail
-spec@ext_texture_array@getteximage-targets 1d_array,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor@GL_COMPRESSED_RED_RGTC1- border color only,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor@GL_COMPRESSED_RG_RGTC2- border color only,Fail
@@ -368,16 +366,6 @@ spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SR
 spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SRGB_S3TC_DXT1_EXT- swizzled- border color only,Fail
 spec@ext_texture_srgb@texwrap formats-s3tc bordercolor-swizzled@GL_COMPRESSED_SRGB- swizzled- border color only,Fail
 spec@glsl-1.10@execution@samplers@glsl-fs-shadow2d-clamp-z,Fail
-spec@glsl-1.30@execution@texelfetch@fs-texelfetch-isampler1darray,Fail
-spec@glsl-1.30@execution@texelfetch@fs-texelfetch-sampler1darray,Fail
-spec@glsl-1.30@execution@texelfetch@fs-texelfetch-usampler1darray,Fail
-spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-isampler1darray,Fail
-spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-sampler1darray,Fail
-spec@glsl-1.30@execution@texelfetchoffset@fs-texelfetch-usampler1darray,Fail
-spec@glsl-1.30@execution@texelfetchoffset@vs-texelfetch-isampler1darray,Fail
-spec@glsl-1.30@execution@texelfetchoffset@vs-texelfetch-usampler1darray,Fail
-spec@glsl-1.30@execution@texelfetch@vs-texelfetch-isampler1darray,Fail
-spec@glsl-1.30@execution@texelfetch@vs-texelfetch-usampler1darray,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quads,Fail
 spec@glsl-1.50@execution@primitive-id-no-gs-quad-strip,Fail
 spec@glsl-1.50@execution@variable-indexing@gs-input-array-float-index-rd,Fail

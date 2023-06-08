@@ -8891,6 +8891,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       send_size = util_format_get_nblocks(res->base.format, info->box->width,
                                           info->box->height) * elsize;
       if (res->target == GL_TEXTURE_3D ||
+          res->target == GL_TEXTURE_1D_ARRAY ||
           res->target == GL_TEXTURE_2D_ARRAY ||
           res->target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY ||
           res->target == GL_TEXTURE_CUBE_MAP_ARRAY)
