@@ -1588,7 +1588,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_PATCH)
             snprintf(ctx->inputs[i].glsl_name, 128, "%s%d", name_prefix, ctx->inputs[i].sid);
          else if (ctx->inputs[i].name == TGSI_SEMANTIC_TEXCOORD)
-            snprintf(ctx->inputs[i].glsl_name, 64, "%s_t%d", name_prefix, ctx->inputs[i].sid);
+            snprintf(ctx->inputs[i].glsl_name, 128, "%s_t%d", name_prefix, ctx->inputs[i].sid);
          else
             snprintf(ctx->inputs[i].glsl_name, 128, "%s_%d", name_prefix, ctx->inputs[i].first);
       }
