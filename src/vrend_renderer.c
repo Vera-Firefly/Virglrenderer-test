@@ -12795,7 +12795,6 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
 
    /* resource is still untyped */
    if (!res->pipe_resource) {
-#ifdef ENABLE_GBM
       const struct vrend_renderer_resource_create_args create_args = {
          .target = PIPE_TEXTURE_2D,
          .format = args->format,
@@ -12808,61 +12807,100 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          .nr_samples = 0,
          .flags = 0,
       };
-      int plane_fds[VIRGL_GBM_MAX_PLANES];
       struct vrend_resource *gr;
-      uint32_t virgl_format;
-      uint32_t drm_format;
-      int ret;
 
       if (res->fd_type != VIRGL_RESOURCE_FD_DMABUF)
          return EINVAL;
-
-      for (uint32_t i = 0; i < args->plane_count; i++)
-         plane_fds[i] = res->fd;
 
       gr = vrend_resource_create(&create_args);
       if (!gr)
          return ENOMEM;
 
-      virgl_format = gr->base.format;
-      drm_format = 0;
-      if (virgl_gbm_convert_format(&virgl_format, &drm_format)) {
-         vrend_printf("%s: unsupported format %d\n", __func__, virgl_format);
-         FREE(gr);
-         return EINVAL;
-      }
+      if (egl) {
+#ifdef ENABLE_GBM
+         int plane_fds[VIRGL_GBM_MAX_PLANES];
+         uint32_t virgl_format;
+         uint32_t drm_format;
+         int ret;
 
-      gr->egl_image = virgl_egl_image_from_dmabuf(egl,
-                                                  args->width,
-                                                  args->height,
-                                                  drm_format,
-                                                  args->modifier,
-                                                  args->plane_count,
-                                                  plane_fds,
-                                                  args->plane_strides,
-                                                  args->plane_offsets);
-      if (!gr->egl_image) {
-         vrend_printf("%s: failed to create egl image\n", __func__);
-         FREE(gr);
-         return EINVAL;
-      }
+         for (uint32_t i = 0; i < args->plane_count; i++)
+            plane_fds[i] = res->fd;
 
-      gr->storage_bits |= VREND_STORAGE_EGL_IMAGE;
+         virgl_format = gr->base.format;
+         drm_format = 0;
+         if (virgl_gbm_convert_format(&virgl_format, &drm_format)) {
+            vrend_printf("%s: unsupported format %d\n", __func__, virgl_format);
+            FREE(gr);
+            return EINVAL;
+         }
 
-      ret = vrend_resource_alloc_texture(gr, virgl_format, gr->egl_image);
-      if (ret) {
-         virgl_egl_image_destroy(egl, gr->egl_image);
-         FREE(gr);
-         return ret;
-      }
+         gr->egl_image = virgl_egl_image_from_dmabuf(egl,
+                                                     args->width,
+                                                     args->height,
+                                                     drm_format,
+                                                     args->modifier,
+                                                     args->plane_count,
+                                                     plane_fds,
+                                                     args->plane_strides,
+                                                     args->plane_offsets);
+         if (!gr->egl_image) {
+            vrend_printf("%s: failed to create egl image\n", __func__);
+            FREE(gr);
+            return EINVAL;
+         }
 
-      /* "promote" the fd to pipe_resource */
-      res->pipe_resource = &gr->base;
+         gr->storage_bits |= VREND_STORAGE_EGL_IMAGE;
+
+         ret = vrend_resource_alloc_texture(gr, virgl_format, gr->egl_image);
+         if (ret) {
+            virgl_egl_image_destroy(egl, gr->egl_image);
+            FREE(gr);
+            return ret;
+         }
+
 #else /* HAVE_EPOXY_EGL_H */
-      (void)args;
-      vrend_printf("%s: no EGL/GBM support \n", __func__);
-      return EINVAL;
+         FREE(gr);
+         vrend_printf("%s: no EGL/GBM support \n", __func__);
+         return EINVAL;
+
 #endif /* HAVE_EPOXY_EGL_H */
+      } else {
+         int fd = -1;
+         GLenum internalformat = tex_conv_table[gr->base.format].internalformat;
+
+	 if (!has_feature(feat_memory_object_fd) || !has_feature(feat_memory_object)) {
+            FREE(gr);
+            return EINVAL;
+	 }
+
+	 enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(res, &fd);
+         if (fd_type == VIRGL_RESOURCE_FD_INVALID) {
+            FREE(gr);
+            return EINVAL;
+	 }
+
+         /* Create a GL memory object importing memory from a FD */
+         GLuint mem_object;
+         glCreateMemoryObjectsEXT(1, &mem_object);
+         GLint params = GL_TRUE;
+         glMemoryObjectParameterivEXT(mem_object, GL_DEDICATED_MEMORY_OBJECT_EXT, &params);
+         glImportMemoryFdEXT(mem_object, res->map_size, GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd);
+
+         struct pipe_resource *pr = &gr->base;
+         gr->target = tgsitargettogltarget(pr->target, pr->nr_samples);
+         gr->memobj = mem_object;
+         gr->storage_bits |= VREND_STORAGE_GL_TEXTURE | VREND_STORAGE_GL_MEMOBJ;
+
+         /* Create a GL texture which uses that memory as storage */
+         glGenTextures(1, &gr->id);
+         glBindTexture(gr->target, gr->id);
+         GLsizei width = (GLsizei)args->width;
+         GLsizei height = (GLsizei)args->height;
+         glTexParameteri(gr->target, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
+         glTexStorageMem2DEXT(gr->target, 1, internalformat, width, height, mem_object, 0);
+         glBindTexture(gr->target, 0);
+      }
+      res->pipe_resource = &gr->base;
    }
 
    vrend_ctx_resource_insert(ctx->res_hash,
