@@ -900,6 +900,8 @@ static bool add_images(struct dump_ctx *ctx, int first, int last,
              !memcmp(&ctx->images[last_array->first].decl, &ctx->images[first].decl, sizeof(ctx->images[first].decl)) &&
              ctx->images[last_array->first].image_return == ctx->images[first].image_return) {
             last_array->array_size += last - first + 1;
+            if (ctx->image_last_binding < last)
+               ctx->image_last_binding = last;
             return true;
          }
       }
@@ -912,7 +914,8 @@ static bool add_images(struct dump_ctx *ctx, int first, int last,
       ctx->image_arrays[ctx->num_image_arrays - 1].first = first;
       ctx->image_arrays[ctx->num_image_arrays - 1].array_size = last - first + 1;
    }
-   if ((int)ctx->image_last_binding < last)
+
+   if (ctx->image_last_binding < last)
       ctx->image_last_binding = last;
    return true;
 }

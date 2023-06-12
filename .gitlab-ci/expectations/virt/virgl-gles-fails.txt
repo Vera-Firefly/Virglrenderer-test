@@ -289,8 +289,6 @@ spec@arb_shader_image_load_store@early-z,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,ExpectedFail
 spec@arb_shader_image_load_store@early-z@occlusion query test/late-z pass,Fail
 spec@arb_shader_image_load_store@execution@disable_early_z,Fail
-spec@arb_shader_image_load_store@max-images@Combined max image uniforms test,Fail
-spec@arb_shader_image_load_store@max-images,Fail
 spec@arb_shader_image_load_store@max-size,Crash
 spec@arb_shader_image_load_store@max-size@image1D max size test/16384x1x1x1,Fail
 spec@arb_shader_image_load_store@restrict,Fail

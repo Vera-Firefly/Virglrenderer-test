@@ -99,8 +99,6 @@ spec@arb_shader_image_load_store@layer@image2DMSArray/layered binding test,Fail
 spec@arb_shader_image_load_store@layer@image2DMSArray/non-layered binding test,Fail
 spec@arb_shader_image_load_store@layer@image2DMS/layered binding test,Fail
 spec@arb_shader_image_load_store@layer@image2DMS/non-layered binding test,Fail
-spec@arb_shader_image_load_store@max-images@Combined max image uniforms test,Fail
-spec@arb_shader_image_load_store@max-images,Fail
 spec@arb_shader_image_load_store@max-size,Fail
 spec@arb_shader_image_load_store@max-size@image2DMSArray max size test/4x8x8x2048,Fail
 spec@arb_shader_image_load_store@max-size@image2DMS max size test/4x16384x8x1,Fail
