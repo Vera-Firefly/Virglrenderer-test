@@ -10778,8 +10778,8 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
 #endif
    {
       fence->glsyncobj = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+      glFlush();
    }
-   glFlush();
 
    if (fence->glsyncobj == NULL)
       goto fail;
