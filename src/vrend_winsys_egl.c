@@ -223,7 +223,7 @@ static EGLint virgl_egl_find_matching_device(struct gbm_device_info *dev_infos, 
    return -1;
 }
 
-static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs *funcs) {
+static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl) {
    EGLint num_devices = 0;
    EGLint max_devices = 64;
    EGLDeviceEXT devices[64];
