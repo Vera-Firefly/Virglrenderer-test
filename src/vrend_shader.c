@@ -4128,6 +4128,9 @@ translate_atomic(struct dump_ctx *ctx,
          snprintf(ms_str, 32, ", int(%s.w)", srcs[1]);
       }
 
+      set_image_qualifier(ctx->images, ctx->images_used_mask, inst,
+                          inst->Src[0].Register.Index, inst->Src[0].Register.Indirect);
+
       if (!ctx->cfg->use_gles || !inst->Src[0].Register.Indirect) {
          emit_buff(&ctx->glsl_strbufs, "%s = %s(imageAtomic%s(%s, %s(%s(%s))%s, %s(%s(%s))%s));\n",
                    dst, get_string(dtypeprefix), opname, srcs[0],
