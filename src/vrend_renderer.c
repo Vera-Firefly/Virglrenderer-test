@@ -8256,6 +8256,8 @@ static void vrend_resource_gbm_init(struct vrend_resource *gr, uint32_t format)
       return;
 
    gr->gbm_bo = bo;
+   gr->storage_bits |= VREND_STORAGE_GBM_BUFFER;
+
    /* This is true so far, but maybe gbm_bo_get_caching_type is needed in the future. */
    if (!strcmp(gbm_device_get_backend_name(gbm->device), "i915"))
       gr->map_info = VIRGL_RENDERER_MAP_CACHE_CACHED;
@@ -8272,7 +8274,6 @@ static void vrend_resource_gbm_init(struct vrend_resource *gr, uint32_t format)
       return;
    }
 
-   gr->storage_bits |= VREND_STORAGE_GBM_BUFFER;
    gr->storage_bits |= VREND_STORAGE_EGL_IMAGE;
 
 #else
