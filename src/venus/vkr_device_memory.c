@@ -115,6 +115,11 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       !(export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
    struct vkr_device_memory *mem = NULL;
    const uint32_t mem_type_index = args->pAllocateInfo->memoryTypeIndex;
+   if (mem_type_index >= physical_dev->memory_properties.memoryTypeCount) {
+      args->ret = VK_ERROR_UNKNOWN;
+      return;
+   }
+
    const uint32_t property_flags =
       physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
    uint32_t valid_fd_types = 0;
