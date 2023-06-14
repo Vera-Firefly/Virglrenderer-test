@@ -85,6 +85,8 @@ debian/x86_64_build:
     MESA_IMAGE_PATH: ${DEBIAN_X86_64_BUILD_IMAGE_PATH}
     MESA_IMAGE_TAG: ${DEBIAN_BUILD_TAG}
     S3_ARTIFACT_NAME: virgl-x86_64
+    EXTRA_OPTION: >
+      -D werror=true
   script:
     - .gitlab-ci/meson/build.sh
   artifacts:
