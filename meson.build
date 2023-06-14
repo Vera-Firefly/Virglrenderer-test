@@ -48,7 +48,14 @@ if cc.get_id() == 'gcc' and cc.version().version_compare('< 4.1')
 endif
 
 warnings = [
-   '-Werror=all',
+   '-Werror=enum-int-mismatch',
+   '-Werror=implicit-function-declaration',
+   '-Werror=missing-prototypes',
+   '-Werror=pedantic',
+   '-Wmissing-prototypes',
+   '-Werror=incompatible-pointer-types',
+   '-Werror=int-to-pointer-cast',
+   '-Werror=switch',
    '-Wno-overlength-strings',
    '-Wno-missing-field-initializers',
 ]
