@@ -136,6 +136,40 @@ debian/x86_64_build_msm:
       when: on_success
     - when: never
 
+debian/x86_64_build_minigbm:
+  stage: build
+  extends:
+    - .set-image-base-tag
+  variables:
+    MESA_IMAGE_PATH: ${DEBIAN_X86_64_BUILD_IMAGE_PATH}
+    MESA_IMAGE_TAG: ${DEBIAN_BUILD_TAG}
+    MINIO_ARTIFACT_NAME: virgl-amd64
+    EXTRA_OPTION: >
+      -D minigbm_allocation=true
+  script:
+    - .gitlab-ci/meson/build.sh
+  artifacts:
+    name: "virgl_${CI_JOB_NAME}"
+    when: always
+    paths:
+      - install/
+      - results/
+  rules:
+    - changes:
+      - src/vrend_winsys_gbm.*
+      - src/vrend_winsys_egl.c
+      - src/vrend_renderer.c
+      when: on_success
+    - if: *is-scheduled-pipeline
+      when: on_success
+    - if: *is-post-merge
+      when: never
+    - if: *is-forked-branch-or-pre-merge-not-for-marge
+      when: manual
+    - if: *is-pre-merge-for-marge
+      when: on_success
+    - when: never
+
 debian/x86_64_build_tracing:
   stage: build
   extends:
