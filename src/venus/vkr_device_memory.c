@@ -105,29 +105,19 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vkr_physical_device *physical_dev = dev->physical_device;
-   VkBaseInStructure *prev_of_res_info = NULL;
-   VkImportMemoryResourceInfoMESA *res_info = NULL;
-   VkImportMemoryFdInfoKHR local_import_info = { .fd = -1 };
-   VkExportMemoryAllocateInfo *export_info = vkr_find_struct(
-      args->pAllocateInfo->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
-   const bool no_dma_buf_export =
-      !export_info ||
-      !(export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
-   struct vkr_device_memory *mem = NULL;
-   const uint32_t mem_type_index = args->pAllocateInfo->memoryTypeIndex;
-   if (mem_type_index >= physical_dev->memory_properties.memoryTypeCount) {
+
+   VkMemoryAllocateInfo *alloc_info = (VkMemoryAllocateInfo *)args->pAllocateInfo;
+   const uint32_t mem_type_index = alloc_info->memoryTypeIndex;
+   if (unlikely(mem_type_index >= physical_dev->memory_properties.memoryTypeCount)) {
       args->ret = VK_ERROR_UNKNOWN;
       return;
    }
 
-   const uint32_t property_flags =
-      physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
-   uint32_t valid_fd_types = 0;
-   struct gbm_bo *gbm_bo = NULL;
-
    /* translate VkImportMemoryResourceInfoMESA into VkImportMemoryFdInfoKHR in place */
-   prev_of_res_info = vkr_find_prev_struct(
-      args->pAllocateInfo, VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA);
+   VkImportMemoryFdInfoKHR local_import_info = { .fd = -1 };
+   VkImportMemoryResourceInfoMESA *res_info = NULL;
+   VkBaseInStructure *prev_of_res_info = vkr_find_prev_struct(
+      alloc_info, VK_STRUCTURE_TYPE_IMPORT_MEMORY_RESOURCE_INFO_MESA);
    if (prev_of_res_info) {
       res_info = (VkImportMemoryResourceInfoMESA *)prev_of_res_info->pNext;
       if (!vkr_get_fd_info_from_resource_info(ctx, res_info, &local_import_info)) {
@@ -149,17 +139,26 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
     * Skip forcing external if a valid VkImportMemoryResourceInfoMESA is provided, since
     * the mapping will be directly set up from the existing virgl resource.
     */
+   const uint32_t property_flags =
+      physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
+   uint32_t valid_fd_types = 0;
+   struct gbm_bo *gbm_bo = NULL;
    VkExportMemoryAllocateInfo local_export_info;
+   VkExportMemoryAllocateInfo *export_info =
+      vkr_find_struct(alloc_info->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
    if ((property_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) && !res_info) {
       /* An implementation can support dma_buf import along with opaque fd export/import.
        * If the client driver is using external memory and requesting dma_buf, without
        * dma_buf fd export support, we must use gbm bo import path instead of forcing
        * opaque fd export. e.g. the client driver uses external memory for wsi image.
        */
-      if (dev->physical_device->is_dma_buf_fd_export_supported ||
-          (dev->physical_device->is_opaque_fd_export_supported && no_dma_buf_export)) {
-         VkExternalMemoryHandleTypeFlagBits handle_type =
-            dev->physical_device->is_dma_buf_fd_export_supported
+      const bool no_dma_buf_export =
+         !export_info ||
+         !(export_info->handleTypes & VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
+      if (physical_dev->is_dma_buf_fd_export_supported ||
+          (physical_dev->is_opaque_fd_export_supported && no_dma_buf_export)) {
+         const VkExternalMemoryHandleTypeFlagBits handle_type =
+            physical_dev->is_dma_buf_fd_export_supported
                ? VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT
                : VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT;
          if (export_info) {
@@ -167,34 +166,29 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
          } else {
             local_export_info = (const VkExportMemoryAllocateInfo){
                .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
-               .pNext = args->pAllocateInfo->pNext,
+               .pNext = alloc_info->pNext,
                .handleTypes = handle_type,
             };
             export_info = &local_export_info;
-            ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_export_info;
+            alloc_info->pNext = &local_export_info;
          }
-      } else if (dev->physical_device->EXT_external_memory_dma_buf) {
+      } else if (physical_dev->EXT_external_memory_dma_buf) {
          /* Allocate gbm bo to force dma_buf fd import. */
-         VkResult result;
-
          if (export_info) {
             /* Strip export info since valid_fd_types can only be dma_buf here. */
             VkBaseInStructure *prev_of_export_info = vkr_find_prev_struct(
-               args->pAllocateInfo, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
+               alloc_info, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
 
             prev_of_export_info->pNext = export_info->pNext;
             export_info = NULL;
          }
 
-         result = vkr_get_fd_info_from_allocation_info(physical_dev, args->pAllocateInfo,
-                                                       &gbm_bo, &local_import_info);
-         if (result != VK_SUCCESS) {
-            args->ret = result;
+         args->ret = vkr_get_fd_info_from_allocation_info(physical_dev, alloc_info,
+                                                          &gbm_bo, &local_import_info);
+         if (args->ret != VK_SUCCESS)
             return;
-         }
 
-         ((VkMemoryAllocateInfo *)args->pAllocateInfo)->pNext = &local_import_info;
-
+         alloc_info->pNext = &local_import_info;
          valid_fd_types = 1 << VIRGL_RESOURCE_FD_DMABUF;
       }
    }
@@ -206,7 +200,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
          valid_fd_types |= 1 << VIRGL_RESOURCE_FD_DMABUF;
    }
 
-   mem = vkr_device_memory_create_and_add(ctx, args);
+   struct vkr_device_memory *mem = vkr_device_memory_create_and_add(ctx, args);
    if (!mem) {
       if (local_import_info.fd >= 0)
          close(local_import_info.fd);
@@ -219,7 +213,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    mem->property_flags = property_flags;
    mem->valid_fd_types = valid_fd_types;
    mem->gbm_bo = gbm_bo;
-   mem->allocation_size = args->pAllocateInfo->allocationSize;
+   mem->allocation_size = alloc_info->allocationSize;
    mem->memory_type_index = mem_type_index;
 }
 
