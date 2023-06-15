@@ -50,7 +50,10 @@
 #endif
 
 #if ENABLE_TRACING == TRACE_WITH_SYSPROF
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <sysprof-capture.h>
+#pragma GCC diagnostic pop
 #endif
 
 #if ENABLE_TRACING == TRACE_WITH_STDERR
