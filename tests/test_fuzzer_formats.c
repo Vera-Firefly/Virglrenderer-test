@@ -97,7 +97,7 @@ static int setenv(const char *name, const char *value, int overwrite)
 }
 #endif
 
-static void initialize_environment()
+static void initialize_environment(void)
 {
    setenv("LIBGL_ALWAYS_SOFTWARE", "true", 0);
    setenv("GALLIUM_DRIVER", "softpipe", 0);
@@ -111,7 +111,7 @@ static void initialize_environment()
    virgl_renderer_context_create(ctx_id, (unsigned)strlen(name), name);
 }
 
-static void test_format_wrong_size()
+static void test_format_wrong_size(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 10;
@@ -158,7 +158,7 @@ static void test_format_wrong_size()
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, VIRGL_CMD_BLIT_SIZE + 1);
 }
 
-static void test_format_fail_and_double_free()
+static void test_format_fail_and_double_free(void)
 {
    struct virgl_renderer_resource_create_args args;
 
@@ -182,7 +182,7 @@ static void test_format_fail_and_double_free()
 
 
 /* Issue #141 */
-static void test_blit_info_format_check()
+static void test_blit_info_format_check(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 10;
@@ -229,7 +229,7 @@ static void test_blit_info_format_check()
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, VIRGL_CMD_BLIT_SIZE + 1);
 }
 
-static void test_blit_info_format_check_null_format()
+static void test_blit_info_format_check_null_format(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 10;
@@ -277,7 +277,7 @@ static void test_blit_info_format_check_null_format()
 }
 
 /* #142 */
-static void  test_format_is_plain_nullptr_deref_trigger()
+static void  test_format_is_plain_nullptr_deref_trigger(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 10;
@@ -325,7 +325,7 @@ static void  test_format_is_plain_nullptr_deref_trigger()
 }
 
 /* Issue #143 */
-static void test_format_util_format_is_rgb_nullptr_deref_trigger_illegal_resource()
+static void test_format_util_format_is_rgb_nullptr_deref_trigger_illegal_resource(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 8;
@@ -357,7 +357,7 @@ static void test_format_util_format_is_rgb_nullptr_deref_trigger_illegal_resourc
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, VIRGL_OBJ_SAMPLER_VIEW_SIZE + 1);
 }
 
-static void test_format_util_format_is_rgb_nullptr_deref_trigger()
+static void test_format_util_format_is_rgb_nullptr_deref_trigger(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 8;
@@ -390,7 +390,7 @@ static void test_format_util_format_is_rgb_nullptr_deref_trigger()
 }
 
 /* Test as reported in #139 */
-static void test_double_free_in_vrend_renderer_blit_int_trigger_invalid_formats()
+static void test_double_free_in_vrend_renderer_blit_int_trigger_invalid_formats(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 1;
@@ -467,7 +467,7 @@ static void test_double_free_in_vrend_renderer_blit_int_trigger_invalid_formats(
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, VIRGL_CMD_BLIT_SIZE + 1);
 }
 
-static void test_double_free_in_vrend_renderer_blit_int_trigger()
+static void test_double_free_in_vrend_renderer_blit_int_trigger(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 1;
@@ -545,7 +545,7 @@ static void test_double_free_in_vrend_renderer_blit_int_trigger()
 }
 
 
-static void test_format_is_has_alpha_nullptr_deref_trigger_original()
+static void test_format_is_has_alpha_nullptr_deref_trigger_original(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 8;
@@ -577,7 +577,7 @@ static void test_format_is_has_alpha_nullptr_deref_trigger_original()
 }
 
 
-static void test_format_is_has_alpha_nullptr_deref_trigger_legal_resource()
+static void test_format_is_has_alpha_nullptr_deref_trigger_legal_resource(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 8;
@@ -608,7 +608,7 @@ static void test_format_is_has_alpha_nullptr_deref_trigger_legal_resource()
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, VIRGL_OBJ_SAMPLER_VIEW_SIZE + 1);
 }
 
-static void test_heap_overflow_vrend_renderer_transfer_write_iov()
+static void test_heap_overflow_vrend_renderer_transfer_write_iov(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 4;
@@ -648,7 +648,7 @@ static void test_heap_overflow_vrend_renderer_transfer_write_iov()
    virgl_renderer_submit_cmd((void *) cmd, ctx_id, 11 + 4 + 1);
 }
 
-static void test_heap_overflow_vrend_renderer_transfer_write_iov_compressed_tex()
+static void test_heap_overflow_vrend_renderer_transfer_write_iov_compressed_tex(void)
 {
    struct virgl_renderer_resource_create_args args;
    args.handle = 1;
@@ -689,7 +689,7 @@ static void test_heap_overflow_vrend_renderer_transfer_write_iov_compressed_tex(
 }
 
 
-static void test_cs_nullpointer_deference()
+static void test_cs_nullpointer_deference(void)
 {
 
    struct virgl_renderer_resource_create_args args;
@@ -723,7 +723,7 @@ static void test_cs_nullpointer_deference()
   virgl_renderer_submit_cmd((void *) cmd, ctx_id, 9);
 }
 
-static void test_vrend_set_signle_abo_heap_overflow() {
+static void test_vrend_set_signle_abo_heap_overflow(void) {
 
     struct virgl_renderer_resource_create_args args;
     args.handle = 0x4c474572;
@@ -970,7 +970,7 @@ static void test_vrend_set_signle_abo_heap_overflow() {
     virgl_renderer_submit_cmd((void *) cmd, ctx_id, 0xde);
 }
 
-static void test_vrend_set_shader_images_overflow()
+static void test_vrend_set_shader_images_overflow(void)
 {
     uint32_t num_shaders = PIPE_MAX_SHADER_IMAGES + 1;
     uint32_t size = num_shaders * VIRGL_SET_SHADER_IMAGE_ELEMENT_SIZE + 3;
@@ -986,7 +986,7 @@ static void test_vrend_set_shader_images_overflow()
 /* Test adapted from yaojun8558363@gmail.com:
  * https://gitlab.freedesktop.org/virgl/virglrenderer/-/issues/250
 */
-static void test_vrend_3d_resource_overflow() {
+static void test_vrend_3d_resource_overflow(void) {
 
     struct virgl_renderer_resource_create_args resource;
     resource.handle = 0x4c474572;
@@ -1025,7 +1025,7 @@ static void test_vrend_3d_resource_overflow() {
 }
 
 
-int main()
+int main(void)
 {
    initialize_environment();
 

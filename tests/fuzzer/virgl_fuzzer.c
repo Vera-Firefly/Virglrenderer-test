@@ -46,7 +46,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size);
 // with CLEANUP_EACH_INPUT), so suppress leak detection on everything
 // allocated by it.
 const char* __lsan_default_suppressions(void);
-const char* __lsan_default_suppressions() {
+const char* __lsan_default_suppressions(void) {
    return "leak:eglInitialize\n";
 }
 
@@ -108,7 +108,7 @@ static struct virgl_renderer_callbacks fuzzer_cbs = {
 
 static bool initialized = false;
 
-static int initialize_environment()
+static int initialize_environment(void)
 {
    if (!initialized) {
       EGLBoolean ok;
