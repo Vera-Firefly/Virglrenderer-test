@@ -88,7 +88,11 @@ vkr_instance_lookup_physical_device(struct vkr_instance *instance,
                                     VkPhysicalDevice handle)
 {
    for (uint32_t i = 0; i < instance->physical_device_count; i++) {
-      /* XXX this assumes VkPhysicalDevice handles are unique */
+      /* VkPhysicalDevice handles are fine to contain duplicates. Client side always
+       * returns unique handles upon the first enumeration call (either physical deivces
+       * or groups). The other enumeration call later can return duplicate handles based
+       * on this lookup, which is fine since still matching the Vulkan driver.
+       */
       if (instance->physical_device_handles[i] == handle)
          return instance->physical_devices[i];
    }
@@ -380,7 +384,7 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
    if (!orig_props)
       return;
 
-   /* XXX this assumes vkEnumeratePhysicalDevices is called first */
+   /* TODO avoid requiring venus driver to call vkEnumeratePhysicalDevices first */
    /* replace VkPhysicalDevice handles by object ids */
    for (uint32_t i = 0; i < *args->pPhysicalDeviceGroupCount; i++) {
       const VkPhysicalDeviceGroupProperties *props =
@@ -392,6 +396,14 @@ vkr_dispatch_vkEnumeratePhysicalDeviceGroups(
       for (uint32_t j = 0; j < props->physicalDeviceCount; j++) {
          const struct vkr_physical_device *physical_dev =
             vkr_instance_lookup_physical_device(instance, props->physicalDevices[j]);
+         if (!physical_dev) {
+            vkr_log("venus driver is required to call vkEnumeratePhysicalDevices first");
+            args->ret = VK_ERROR_INITIALIZATION_FAILED;
+            if (orig_props)
+               free(args->pPhysicalDeviceGroupProperties);
+            return;
+         }
+
          vkr_cs_handle_store_id((void **)&out->physicalDevices[j], physical_dev->base.id,
                                 VK_OBJECT_TYPE_PHYSICAL_DEVICE);
       }
