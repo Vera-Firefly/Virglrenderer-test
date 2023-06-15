@@ -666,7 +666,9 @@ int virgl_video_fill_caps(union virgl_caps *caps)
             profiles[i] != VAProfileJPEGBaseline &&
             profiles[i] != VAProfileVC1Simple &&
             profiles[i] != VAProfileVC1Main &&
-            profiles[i] != VAProfileVC1Advanced)
+            profiles[i] != VAProfileVC1Advanced&&
+            profiles[i] != VAProfileVP9Profile0 &&
+            profiles[i] != VAProfileVP9Profile2)
             continue;
 
         vaQueryConfigEntrypoints(va_dpy, profiles[i],
@@ -2615,6 +2617,8 @@ static void vp9_fill_picture_param(struct virgl_video_codec *codec,
                                    VADecPictureParameterBufferVP9 *vapp)
 {
     unsigned i;
+    (void)codec;
+    (void)target;
 
     for (i = 0; i < 8; i++)
         vapp->reference_frames[i] = desc->ref[i];
@@ -2752,8 +2756,9 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
                                  const unsigned *sizes)
 {
     if (!va_dpy || !codec || !target || !desc
-        || !num_buffers || !buffers || !sizes)
+        || !num_buffers || !buffers || !sizes){
         return -1;
+    }  
 
     if (desc->base.profile != codec->profile) {
         virgl_log("profiles not matched, picture: %d, codec: %d\n",
@@ -2791,6 +2796,10 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     case PIPE_VIDEO_PROFILE_VC1_ADVANCED:
         return vc1_decode_bitstream(codec, target, &desc->vc1,
                                        num_buffers, buffers, sizes);
+    case PIPE_VIDEO_PROFILE_VP9_PROFILE0:
+    case PIPE_VIDEO_PROFILE_VP9_PROFILE2:
+        return vp9_decode_bitstream(codec, target, &desc->vp9,
+                                      num_buffers, buffers, sizes);
     default:
         break;
     }
