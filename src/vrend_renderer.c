@@ -4045,6 +4045,8 @@ static bool vrend_get_swizzle(struct vrend_sampler_view *view,
    static const GLint RRR1[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
    static const GLint RRRG[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
    static const GLint RRRR[] = {GL_RED, GL_RED, GL_RED, GL_RED};
+   static const GLint RG01[] = {GL_RED, GL_GREEN, GL_ZERO, GL_ONE};
+   static const GLint R001[] = {GL_RED, GL_ZERO, GL_ZERO, GL_ONE};
 
    switch (view->format) {
    case VIRGL_FORMAT_A8_UNORM:
@@ -4095,6 +4097,39 @@ static bool vrend_get_swizzle(struct vrend_sampler_view *view,
    case VIRGL_FORMAT_I32_UINT:
       memcpy(swizzle, RRRR, 4 * sizeof(GLuint));
       return true;
+   case VIRGL_FORMAT_R32G32_FLOAT:
+   case VIRGL_FORMAT_R32G32_UINT:
+   case VIRGL_FORMAT_R32G32_SINT:
+   case VIRGL_FORMAT_R16G16_FLOAT:
+   case VIRGL_FORMAT_R16G16_UINT:
+   case VIRGL_FORMAT_R16G16_SINT:
+   case VIRGL_FORMAT_R16G16_SNORM:
+   case VIRGL_FORMAT_R16G16_UNORM:
+   case VIRGL_FORMAT_R8G8_UINT:
+   case VIRGL_FORMAT_R8G8_SINT:
+   case VIRGL_FORMAT_R8G8_SNORM:
+   case VIRGL_FORMAT_R8G8_UNORM:
+   case VIRGL_FORMAT_R8G8_SSCALED:
+   case VIRGL_FORMAT_R8G8_USCALED:
+      memcpy(swizzle, RG01, 4 * sizeof(GLuint));
+      return true;
+   case VIRGL_FORMAT_R32_FLOAT:
+   case VIRGL_FORMAT_R32_UINT:
+   case VIRGL_FORMAT_R32_SINT:
+   case VIRGL_FORMAT_R16_FLOAT:
+   case VIRGL_FORMAT_R16_UINT:
+   case VIRGL_FORMAT_R16_SINT:
+   case VIRGL_FORMAT_R16_SNORM:
+   case VIRGL_FORMAT_R16_UNORM:
+   case VIRGL_FORMAT_R8_UINT:
+   case VIRGL_FORMAT_R8_SINT:
+   case VIRGL_FORMAT_R8_SNORM:
+   case VIRGL_FORMAT_R8_UNORM:
+   case VIRGL_FORMAT_R8_SSCALED:
+   case VIRGL_FORMAT_R8_USCALED:
+      memcpy(swizzle, R001, 4 * sizeof(GLuint));
+      return true;
+
    default:
       if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
          swizzle[0] = tex_conv_table[view->format].swizzle[0];
