@@ -10,8 +10,6 @@
 
 #include "venus-protocol/vn_protocol_renderer_util.h"
 
-struct gbm_device;
-
 struct vkr_physical_device {
    struct vkr_object base;
 
@@ -33,7 +31,7 @@ struct vkr_physical_device {
    VkPhysicalDeviceIDProperties id_properties;
    bool is_dma_buf_fd_export_supported;
    bool is_opaque_fd_export_supported;
-   struct gbm_device *gbm_device;
+   void *gbm_device;
 
    struct list_head devices;
 };

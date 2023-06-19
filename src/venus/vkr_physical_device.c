@@ -6,35 +6,52 @@
 #include "vkr_physical_device.h"
 
 #include "venus-protocol/vn_protocol_renderer_device.h"
-#include "vrend_winsys_gbm.h"
 
 #include "vkr_context.h"
 #include "vkr_device.h"
 #include "vkr_instance.h"
 
-/* TODO open render node and create gbm_device per vkr_physical_device */
+#ifdef ENABLE_MINIGBM_ALLOCATION
+#include <gbm.h>
+#ifdef MINIGBM
+#include <minigbm/minigbm_helpers.h>
+#else
+#define minigbm_create_default_device(out_fd) NULL
+#endif /* MINIGBM */
+
+/* TODO remove minigbm allocation fallback after requiring exporting from raw mappable
+ * device memory via a new Vulkan extension
+ */
 static struct gbm_device *vkr_gbm_dev;
 
 static void
 vkr_gbm_device_init_once(void)
 {
-   struct virgl_gbm *vkr_gbm = virgl_gbm_init(-1);
-   if (!vkr_gbm) {
-      vkr_log("virgl_gbm_init failed");
+   UNUSED int gbm_fd;
+   vkr_gbm_dev = minigbm_create_default_device(&gbm_fd);
+   if (!vkr_gbm_dev) {
+      vkr_log("minigbm_create_default_device failed");
       exit(-1);
    }
-
-   vkr_gbm_dev = vkr_gbm->device;
 }
 
-static struct gbm_device *
-vkr_physical_device_get_gbm_device(UNUSED struct vkr_physical_device *physical_dev)
+static inline void *
+vkr_physical_device_get_gbm_device(void)
 {
    static once_flag gbm_once_flag = ONCE_FLAG_INIT;
    call_once(&gbm_once_flag, vkr_gbm_device_init_once);
-
-   return vkr_gbm_dev;
+   return (void *)vkr_gbm_dev;
 }
+
+#else
+
+static inline void *
+vkr_physical_device_get_gbm_device(void)
+{
+   return NULL;
+}
+
+#endif /* ENABLE_MINIGBM_ALLOCATION */
 
 void
 vkr_physical_device_destroy(struct vkr_context *ctx,
@@ -175,7 +192,7 @@ vkr_physical_device_init_memory_properties(struct vkr_physical_device *physical_
 
    if (!physical_dev->is_dma_buf_fd_export_supported &&
        !physical_dev->is_opaque_fd_export_supported)
-      physical_dev->gbm_device = vkr_physical_device_get_gbm_device(physical_dev);
+      physical_dev->gbm_device = vkr_physical_device_get_gbm_device();
 }
 
 static void

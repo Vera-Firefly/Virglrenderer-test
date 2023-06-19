@@ -5,8 +5,6 @@
 
 #include "vkr_device_memory.h"
 
-#include <gbm.h>
-
 #include "venus-protocol/vn_protocol_renderer_transport.h"
 
 #include "vkr_device_memory_gen.h"
@@ -49,19 +47,35 @@ vkr_get_fd_info_from_resource_info(struct vkr_context *ctx,
    return true;
 }
 
+#ifdef ENABLE_MINIGBM_ALLOCATION
+#include <gbm.h>
+
+#define GBM_BO_USE_SW_READ_RARELY (1 << 10)
+#define GBM_BO_USE_SW_WRITE_RARELY (1 << 12)
+
+static inline int
+vkr_gbm_bo_get_fd(void *gbm_bo)
+{
+   assert(gbm_bo);
+
+   /* gbm_bo_get_fd returns negative error code on failure */
+   return gbm_bo_get_fd(gbm_bo);
+}
+
+static inline void
+vkr_gbm_bo_destroy(void *gbm_bo)
+{
+   gbm_bo_destroy(gbm_bo);
+}
+
 static VkResult
 vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
                                      const VkMemoryAllocateInfo *alloc_info,
-                                     struct gbm_bo **out_gbm_bo,
+                                     void **out_gbm_bo,
                                      VkImportMemoryFdInfoKHR *out_fd_info)
 {
-#ifdef MINIGBM
    const uint32_t gbm_bo_use_flags =
       GBM_BO_USE_LINEAR | GBM_BO_USE_SW_READ_RARELY | GBM_BO_USE_SW_WRITE_RARELY;
-#else
-   const uint32_t gbm_bo_use_flags = GBM_BO_USE_LINEAR;
-#endif
-
    struct gbm_bo *gbm_bo;
    int fd = -1;
 
@@ -81,14 +95,13 @@ vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
    if (!gbm_bo)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
-   /* gbm_bo_get_fd returns negative error code on failure */
-   fd = gbm_bo_get_fd(gbm_bo);
+   fd = vkr_gbm_bo_get_fd(gbm_bo);
    if (fd < 0) {
-      gbm_bo_destroy(gbm_bo);
+      vkr_gbm_bo_destroy(gbm_bo);
       return fd == -EMFILE ? VK_ERROR_TOO_MANY_OBJECTS : VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
-   *out_gbm_bo = gbm_bo;
+   *out_gbm_bo = (void *)gbm_bo;
    *out_fd_info = (VkImportMemoryFdInfoKHR){
       .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR,
       .pNext = alloc_info->pNext,
@@ -97,6 +110,35 @@ vkr_get_fd_info_from_allocation_info(struct vkr_physical_device *physical_dev,
    };
    return VK_SUCCESS;
 }
+
+#else
+
+static inline int
+vkr_gbm_bo_get_fd(ASSERTED void *gbm_bo)
+{
+   vkr_log("minigbm_allocation is not enabled");
+   assert(!gbm_bo);
+   return -1;
+}
+
+static inline void
+vkr_gbm_bo_destroy(ASSERTED void *gbm_bo)
+{
+   vkr_log("minigbm_allocation is not enabled");
+   assert(!gbm_bo);
+}
+
+static inline VkResult
+vkr_get_fd_info_from_allocation_info(UNUSED struct vkr_physical_device *physical_dev,
+                                     UNUSED const VkMemoryAllocateInfo *alloc_info,
+                                     UNUSED void **out_gbm_bo,
+                                     UNUSED VkImportMemoryFdInfoKHR *out_fd_info)
+{
+   vkr_log("minigbm_allocation is not enabled");
+   return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+}
+
+#endif /* ENABLE_MINIGBM_ALLOCATION */
 
 static void
 vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
@@ -142,7 +184,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
    const uint32_t property_flags =
       physical_dev->memory_properties.memoryTypes[mem_type_index].propertyFlags;
    uint32_t valid_fd_types = 0;
-   struct gbm_bo *gbm_bo = NULL;
+   void *gbm_bo = NULL;
    VkExportMemoryAllocateInfo local_export_info;
    VkExportMemoryAllocateInfo *export_info =
       vkr_find_struct(alloc_info->pNext, VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO);
@@ -205,7 +247,7 @@ vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
       if (local_import_info.fd >= 0)
          close(local_import_info.fd);
       if (gbm_bo)
-         gbm_bo_destroy(gbm_bo);
+         vkr_gbm_bo_destroy(gbm_bo);
       return;
    }
 
@@ -321,7 +363,7 @@ void
 vkr_device_memory_release(struct vkr_device_memory *mem)
 {
    if (mem->gbm_bo)
-      gbm_bo_destroy(mem->gbm_bo);
+      vkr_gbm_bo_destroy(mem->gbm_bo);
 }
 
 bool
@@ -394,10 +436,9 @@ vkr_device_memory_export_blob(struct vkr_device_memory *mem,
       assert(handle_type == VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT);
       assert(can_export_dma_buf && !can_export_opaque);
 
-      /* gbm_bo_get_fd returns negative error code on failure */
-      fd = gbm_bo_get_fd(mem->gbm_bo);
+      fd = vkr_gbm_bo_get_fd(mem->gbm_bo);
       if (fd < 0) {
-         vkr_log("mem gbm_bo_get_fd failed (ret %d)", fd);
+         vkr_log("mem gbm bo export failed (ret %d)", fd);
          return false;
       }
    } else {
