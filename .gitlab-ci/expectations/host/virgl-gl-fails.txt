@@ -71,7 +71,6 @@ KHR-GL43.shader_storage_buffer_object.advanced-usage-sync,Fail
 KHR-GL43.shader_storage_buffer_object.basic-atomic-case1,Fail
 KHR-GL43.shader_storage_buffer_object.basic-atomic-case2,Fail
 KHR-GL43.shading_language_420pack.binding_images,Fail
-KHR-GL43.texture_view.view_sampling,Fail
 KHR-GL43.transform_feedback.capture_vertex_interleaved_test,Fail
 KHR-GL43.transform_feedback.capture_vertex_separate_test,Fail
 KHR-GL43.transform_feedback.discard_vertex_test,Fail

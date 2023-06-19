@@ -2727,14 +2727,18 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       else if (view->format != view->texture->base.format)
          needs_view = true;
 
+      unsigned base_layer = view->val0 & 0xffff;
+      int base_level = view->val1 & 0xff;
+
+      if (base_layer > 0 || base_level > 0)
+         needs_view = true;
+
       if (needs_view &&
           has_bit(view->texture->storage_bits, VREND_STORAGE_GL_IMMUTABLE) &&
           has_feature(feat_texture_view)) {
         glGenTextures(1, &view->id);
         GLenum internalformat = tex_conv_table[format].internalformat;
-        unsigned base_layer = view->val0 & 0xffff;
         unsigned max_layer = (view->val0 >> 16) & 0xffff;
-        int base_level = view->val1 & 0xff;
         int max_level = (view->val1 >> 8) & 0xff;
         view->levels = (max_level - base_level) + 1;
 
@@ -2777,8 +2781,6 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
            }
         }
 
-        glTexParameteri(view->target, GL_TEXTURE_BASE_LEVEL, base_level);
-        glTexParameteri(view->target, GL_TEXTURE_MAX_LEVEL, max_level);
         if (vrend_state.use_gles) {
            for (unsigned int i = 0; i < 4; ++i) {
               glTexParameteri(view->target, GL_TEXTURE_SWIZZLE_R + i, view->gl_swizzle[i]);
