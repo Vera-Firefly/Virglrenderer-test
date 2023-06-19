@@ -59,7 +59,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size);
 #if __has_feature(address_sanitizer)
 const char* __lsan_default_suppressions(void);
 
-const char* __lsan_default_suppressions() {
+const char* __lsan_default_suppressions(void) {
    return "leak:dri2_initialize_surfaceless\n";
 }
 #endif // __has_feature(address_sanitizer)
