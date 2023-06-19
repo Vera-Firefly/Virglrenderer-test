@@ -21,10 +21,10 @@
 
 #include "linux/overflow.h"
 
-#pragma GCC diagnostic pop
-
 void _drm_log(const char *fmt, ...);
 #define drm_log(fmt, ...) _drm_log("%s:%d: " fmt, __func__, __LINE__, ##__VA_ARGS__)
+
+#pragma GCC diagnostic pop
 
 #if 0
 #define drm_dbg drm_log
