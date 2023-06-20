@@ -14,7 +14,7 @@ files_mesa = files(
   'util/u_math.c',
 )
 
-if host_machine.system() != 'windows'
+if not with_host_windows
    files_mesa += files('util/anon_file.c')
 endif
 

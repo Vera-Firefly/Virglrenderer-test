@@ -128,7 +128,9 @@ if cc.has_header('dlfcn.h')
    conf_data.set('HAVE_DLFCN_H', 1)
 endif
 
-if thread_dep.found() and host_machine.system() != 'windows'
+with_host_windows = host_machine.system() == 'windows'
+
+if thread_dep.found() and not with_host_windows
   conf_data.set('HAVE_PTHREAD', 1)
   if host_machine.system() != 'netbsd' and cc.has_function(
       'pthread_setaffinity_np',
@@ -323,7 +325,7 @@ with_tests = get_option('tests')
 with_valgrind = get_option('valgrind')
 
 subdir('src')
-if host_machine.system() != 'windows'
+if not with_host_windows
    subdir('vtest')
 endif
 

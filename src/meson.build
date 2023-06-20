@@ -230,7 +230,7 @@ if with_video
   virgl_depends += [libva_dep, libvadrm_dep]
 endif
 
-if host_machine.system() == 'windows'
+if with_host_windows
   virgl_sources += ['mman_win32.c']
 endif
 
