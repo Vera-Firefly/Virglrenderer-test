@@ -43,6 +43,7 @@ struct virgl_renderer_gl_ctx_param {
    bool shared;
    int major_ver;
    int minor_ver;
+   int compat_ctx;
 };
 
 #define VIRGL_RENDERER_CALLBACKS_VERSION 4
@@ -161,6 +162,7 @@ struct virgl_renderer_callbacks {
 
 
 #define VIRGL_RENDERER_D3D11_SHARE_TEXTURE (1 << 12)
+#define VIRGL_RENDERER_COMPAT_PROFILE (1 << 13)
 
 VIRGL_EXPORT int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks *cb);
 VIRGL_EXPORT void virgl_renderer_poll(void); /* force fences */

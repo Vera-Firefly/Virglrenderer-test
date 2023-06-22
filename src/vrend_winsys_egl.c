@@ -619,11 +619,19 @@ fail:
 virgl_renderer_gl_context virgl_egl_create_context(struct virgl_egl *egl, struct virgl_gl_ctx_param *vparams)
 {
    EGLContext egl_ctx;
+
    EGLint ctx_att[] = {
       EGL_CONTEXT_CLIENT_VERSION, vparams->major_ver,
       EGL_CONTEXT_MINOR_VERSION_KHR, vparams->minor_ver,
+      EGL_NONE, EGL_NONE,
       EGL_NONE
    };
+
+   if (vparams->compat_ctx) {
+      ctx_att[4] = EGL_CONTEXT_OPENGL_PROFILE_MASK;
+      ctx_att[5] = EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT;
+   }
+
    egl_ctx = eglCreateContext(egl->egl_display,
                              egl->egl_conf,
                              vparams->shared ? eglGetCurrentContext() : EGL_NO_CONTEXT,

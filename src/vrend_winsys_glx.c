@@ -78,9 +78,12 @@ void virgl_glx_destroy(struct virgl_glx *d)
 
 virgl_renderer_gl_context virgl_glx_create_context(struct virgl_glx *d, struct virgl_gl_ctx_param *vparams)
 {
+   int compat = vparams->compat_ctx ? GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB : GLX_CONTEXT_CORE_PROFILE_BIT_ARB;
+
    int context_attribs[] = {
       GLX_CONTEXT_MAJOR_VERSION_ARB, vparams->major_ver,
       GLX_CONTEXT_MINOR_VERSION_ARB, vparams->minor_ver,
+      GLX_CONTEXT_PROFILE_MASK_ARB, compat,
       None
    };
 

@@ -595,8 +595,9 @@ static virgl_renderer_gl_context create_gl_context(int scanout_idx, struct virgl
    if (state.winsys_initialized)
       return vrend_winsys_create_context(param);
 
-   vparam.version = 1;
+   vparam.version = 2;
    vparam.shared = param->shared;
+   vparam.compat_ctx = param->compat_ctx;
    vparam.major_ver = param->major_ver;
    vparam.minor_ver = param->minor_ver;
    return state.cbs->create_gl_context(state.cookie, scanout_idx, &vparam);
@@ -636,10 +637,11 @@ static virgl_renderer_gl_context create_gl_context_surfaceless(int scanout_idx, 
    if (state.winsys_initialized || state.external_winsys_initialized)
       return vrend_winsys_create_context(param);
 
-   vparam.version = 1;
+   vparam.version = 2;
    vparam.shared = param->shared;
    vparam.major_ver = param->major_ver;
    vparam.minor_ver = param->minor_ver;
+   vparam.compat_ctx = param->compat_ctx;
    return state.cbs->create_gl_context(state.cookie, scanout_idx, &vparam);
 }
 
@@ -879,6 +881,8 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
          renderer_flags |= VREND_USE_VIDEO;
       if (flags & VIRGL_RENDERER_D3D11_SHARE_TEXTURE)
          renderer_flags |= VREND_D3D11_SHARE_TEXTURE;
+      if (flags & VIRGL_RENDERER_COMPAT_PROFILE)
+         renderer_flags |= VREND_USE_COMPAT_CONTEXT;
 
       ret = vrend_renderer_init(&vrend_cbs, renderer_flags);
       if (ret)

@@ -94,6 +94,7 @@ struct vtest_server
    bool venus;
 
    bool no_virgl;
+   bool use_compat_profile;
 
    int ctx_flags;
 
@@ -169,6 +170,7 @@ while (__AFL_LOOP(1000)) {
 #define OPT_RENDER_SERVER 'n'
 #define OPT_SOCKET_PATH 'p'
 #define OPT_NO_VIRGL 'g'
+#define OPT_COMPAT_PROFILE 'c'
 
 static void vtest_server_parse_args(int argc, char **argv)
 {
@@ -185,6 +187,7 @@ static void vtest_server_parse_args(int argc, char **argv)
       {"venus",               no_argument, NULL, OPT_VENUS},
       {"socket-path",         required_argument, NULL, OPT_SOCKET_PATH},
       {"no-virgl",            no_argument, NULL, OPT_NO_VIRGL},
+      {"compat",              no_argument, NULL, OPT_COMPAT_PROFILE},
       {0, 0, 0, 0}
    };
 
@@ -222,6 +225,9 @@ static void vtest_server_parse_args(int argc, char **argv)
          break;
       case OPT_NO_VIRGL:
          server.no_virgl = true;
+         break;
+      case OPT_COMPAT_PROFILE:
+         server.use_compat_profile = true;
          break;
 #ifdef ENABLE_VENUS
       case OPT_VENUS:
@@ -266,6 +272,14 @@ static void vtest_server_parse_args(int argc, char **argv)
          if (server.use_gles)
             server.ctx_flags |= VIRGL_RENDERER_USE_GLES;
       }
+
+      if (server.use_compat_profile) {
+         if (server.use_gles) {
+            fprintf(stderr, "Compatibility profile is not available with GLES.\n");
+            exit(EXIT_FAILURE);
+         }
+         server.ctx_flags |= VIRGL_RENDERER_COMPAT_PROFILE;
+      }
    } else {
       server.ctx_flags = VIRGL_RENDERER_NO_VIRGL;
    }
@@ -282,6 +296,7 @@ static void vtest_server_getenv(void)
    server.use_egl_surfaceless = getenv("VTEST_USE_EGL_SURFACELESS") != NULL;
    server.use_gles = getenv("VTEST_USE_GLES") != NULL;
    server.render_device = getenv("VTEST_RENDERNODE");
+   server.use_compat_profile = getenv("VTEST_USE_COMPATIBILITY_PROFILE");
 }
 
 static void handler(int sig, siginfo_t *si, void *unused)

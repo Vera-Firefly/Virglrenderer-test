@@ -50,6 +50,7 @@ struct virgl_gl_ctx_param {
    int major_ver;
    int minor_ver;
    bool shared;
+   bool compat_ctx;
 };
 
 struct virgl_context;
@@ -145,6 +146,7 @@ struct vrend_if_cbs {
 #define VREND_USE_ASYNC_FENCE_CB (1 << 2)
 #define VREND_USE_VIDEO          (1 << 3)
 #define VREND_D3D11_SHARE_TEXTURE (1 << 4)
+#define VREND_USE_COMPAT_CONTEXT (1 << 5)
 
 bool vrend_check_no_error(struct vrend_context *ctx);
 

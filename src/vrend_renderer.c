@@ -7188,7 +7188,7 @@ static int thread_sync(UNUSED void *arg)
 
 static void vrend_renderer_use_threaded_sync(void)
 {
-   struct virgl_gl_ctx_param ctx_params;
+   struct virgl_gl_ctx_param ctx_params = {0};
 
    ctx_params.shared = true;
    ctx_params.major_ver = vrend_state.gl_major_ver;
@@ -7349,7 +7349,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    bool gles;
    int gl_ver;
    virgl_gl_context gl_context;
-   struct virgl_gl_ctx_param ctx_params;
+   struct virgl_gl_ctx_param ctx_params = {0};
 
    vrend_clicbs = cbs;
 
@@ -7363,6 +7363,10 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    }
 
    ctx_params.shared = false;
+   if (flags & VREND_USE_COMPAT_CONTEXT) {
+      ctx_params.compat_ctx = true;
+   }
+
    for (uint32_t i = 0; i < ARRAY_SIZE(gl_versions); i++) {
       ctx_params.major_ver = gl_versions[i].major;
       ctx_params.minor_ver = gl_versions[i].minor;
@@ -12599,6 +12603,7 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
    ctx_params.shared = (ctx->ctx_id == 0 && sub_ctx_id == 0) ? false : true;
    ctx_params.major_ver = vrend_state.gl_major_ver;
    ctx_params.minor_ver = vrend_state.gl_minor_ver;
+   ctx_params.compat_ctx = !vrend_state.use_core_profile && !vrend_state.use_gles;
    sub->gl_context = vrend_clicbs->create_gl_context(0, &ctx_params);
    sub->parent = ctx;
    vrend_clicbs->make_current(sub->gl_context);

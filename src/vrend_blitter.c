@@ -466,6 +466,7 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
 
    blit_ctx->use_gles = epoxy_is_desktop_gl() == 0;
    ctx_params.shared = true;
+   ctx_params.compat_ctx = false;
    for (uint32_t i = 0; i < ARRAY_SIZE(gl_versions); i++) {
       ctx_params.major_ver = gl_versions[i].major;
       ctx_params.minor_ver = gl_versions[i].minor;
