@@ -1995,6 +1995,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->abo_sizes[ctx->num_abo] = decl->Range.Last - decl->Range.First + 1;
       ctx->abo_offsets[ctx->num_abo] = decl->Range.First;
       ctx->num_abo++;
+      ctx->glsl_ver_required = require_glsl_ver(ctx, 140);
       break;
    default:
       vrend_printf("unsupported file %d declaration\n", decl->Declaration.File);
