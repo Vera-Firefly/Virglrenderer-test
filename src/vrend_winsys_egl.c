@@ -434,6 +434,9 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
          vrend_printf("Failed to create signaled fence");
          goto fail;
       }
+
+      /* flush to ensure a native fence object is created prior to exporting. */
+      glFlush();
    }
 
    return egl;
