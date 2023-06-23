@@ -490,3 +490,6 @@ spec@arb_pipeline_statistics_query@arb_pipeline_statistics_query-frag,Fail
 
 spec@arb_gl_spirv@execution@ssbo@unsized-array,Fail
 spec@arb_viewport_array@display-list,Fail
+spec@arb_enhanced_layouts@matching_fp64_types_1,Crash
+spec@arb_enhanced_layouts@matching_fp64_types_2,Crash
+spec@arb_enhanced_layouts@matching_fp64_types_3,Crash
