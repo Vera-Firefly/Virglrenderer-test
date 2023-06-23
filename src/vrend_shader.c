@@ -1922,6 +1922,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
       if (ctx->ssbo_last_binding < decl->Range.Last)
          ctx->ssbo_last_binding = decl->Range.Last;
+      ctx->glsl_ver_required = require_glsl_ver(ctx, 140);
       break;
    case TGSI_FILE_CONSTANT:
       if (decl->Declaration.Dimension && decl->Dim.Index2D != 0) {
