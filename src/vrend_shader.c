@@ -8004,6 +8004,15 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    if (cfg->glsl_version >= 140)
       ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);
 
+   if (ctx.iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY ||
+       key->gs_present)
+      ctx.glsl_ver_required = require_glsl_ver(&ctx, 140);
+
+   if (ctx.iter.processor.Processor == TGSI_PROCESSOR_TESS_EVAL ||
+       ctx.iter.processor.Processor == TGSI_PROCESSOR_TESS_CTRL ||
+       key->tes_present || key->tcs_present)
+         ctx.glsl_ver_required = require_glsl_ver(&ctx, 150);
+
    if (sinfo->so_info.num_outputs) {
       ctx.so = &sinfo->so_info;
       ctx.so_names = calloc(sinfo->so_info.num_outputs, sizeof(char *));
