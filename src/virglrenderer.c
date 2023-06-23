@@ -180,7 +180,8 @@ void virgl_renderer_fill_caps(uint32_t set, uint32_t version,
          proxy_get_capset(set, caps);
       break;
    case VIRGL_RENDERER_CAPSET_DRM:
-      drm_renderer_capset(caps);
+      if (state.drm_initialized)
+         drm_renderer_capset(caps);
       break;
    default:
       break;
@@ -761,7 +762,8 @@ void virgl_renderer_cleanup(UNUSED void *cookie)
    if (state.winsys_initialized || state.external_winsys_initialized)
       vrend_winsys_cleanup();
 
-   drm_renderer_fini();
+   if (state.drm_initialized)
+      drm_renderer_fini();
 
    /* vkr_allocator_init is called on-demand upon the first map */
    vkr_allocator_fini();
@@ -945,7 +947,8 @@ void virgl_renderer_reset(void)
    if (state.vrend_initialized)
       vrend_renderer_reset();
 
-   drm_renderer_reset();
+   if (state.drm_initialized)
+      drm_renderer_reset();
 }
 
 int virgl_renderer_get_poll_fd(void)
