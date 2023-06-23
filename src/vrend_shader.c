@@ -1444,8 +1444,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->inputs[i].type = VEC_INT;
             ctx->inputs[i].override_no_wm = true;
             name_prefix = "gl_ViewportIndex";
-            if (ctx->glsl_ver_required >= 140)
-               ctx->shader_req_bits |= SHADER_REQ_LAYER;
+            ctx->shader_req_bits |= SHADER_REQ_LAYER;
             if (ctx->cfg->use_gles)
                ctx->shader_req_bits |= SHADER_REQ_VIEWPORT_IDX;
          }
@@ -1788,12 +1787,11 @@ iter_declaration(struct tgsi_iterate_context *iter,
             ctx->outputs[i].override_no_wm = true;
             ctx->outputs[i].is_int = true;
             name_prefix = "gl_ViewportIndex";
-            if (ctx->glsl_ver_required >= 140 || ctx->cfg->use_gles) {
-               if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY)
-                  ctx->shader_req_bits |= SHADER_REQ_VIEWPORT_IDX;
-               else {
-                  ctx->shader_req_bits |= SHADER_REQ_AMD_VIEWPORT_IDX;
-               }
+            if (iter->processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
+               ctx->shader_req_bits |= SHADER_REQ_VIEWPORT_IDX;
+               ctx->glsl_ver_required = require_glsl_ver(ctx, 140);
+            } else {
+               ctx->shader_req_bits |= SHADER_REQ_AMD_VIEWPORT_IDX;
             }
          }
          break;
