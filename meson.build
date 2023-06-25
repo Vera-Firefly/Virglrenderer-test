@@ -226,12 +226,16 @@ endif
 
 if with_egl
    if cc.has_header('epoxy/egl.h', dependencies: epoxy_dep) and epoxy_dep.get_variable(pkgconfig: 'epoxy_has_egl') == '1'
-      have_egl = true
-      conf_data.set('HAVE_EPOXY_EGL_H', 1)
-      if libdrm_dep.found()
-         gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: require_egl)
+      if with_host_windows
+         have_egl = true
+      else
+         if libdrm_dep.found()
+            gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: require_egl)
+         endif
+         have_egl = gbm_dep.found()
+         conf_data.set('ENABLE_GBM', have_egl)
       endif
-      conf_data.set('ENABLE_GBM', gbm_dep.found())
+      conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
    else
       assert(not require_egl,
              'egl was explicitely requested but it is not supported by epoxy')
