@@ -11645,7 +11645,6 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
 
    if (gl_ver > 0 && !vrend_state.use_core_profile) {
       caps->v1.bset.poly_stipple = 1;
-      caps->v1.bset.color_clamping = 1;
       caps->v1.prim_mask |= (1 << PIPE_PRIM_QUADS) |
                             (1 << PIPE_PRIM_QUAD_STRIP) |
                             (1 << PIPE_PRIM_POLYGON);
