@@ -522,11 +522,6 @@ spec@arb_gl_spirv@execution@xfb@vs_block_array,Timeout
 spec@arb_gl_spirv@execution@xfb@vs_two_sets,Timeout
 spec@arb_viewport_array@display-list,Fail
 
-spec@arb_gl_spirv@execution@ubo@aoa,Crash
-spec@arb_gl_spirv@execution@ubo@aoa-2,Crash
-spec@arb_gl_spirv@execution@ubo@array,Crash
-spec@arb_gl_spirv@execution@ubo@array-complex,Crash
-spec@arb_gl_spirv@execution@ubo@array-indirect,Crash
 
 spec@arb_enhanced_layouts@matching_fp64_types_1,Crash
 spec@arb_enhanced_layouts@matching_fp64_types_2,Crash
