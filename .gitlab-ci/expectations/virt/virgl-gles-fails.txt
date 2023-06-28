@@ -42,7 +42,6 @@ shaders@point-vertex-id gl_vertexid,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid divisor,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid,Fail
 spec@arb_clear_texture@arb_clear_texture-depth,Fail
-spec@arb_clear_texture@arb_clear_texture-sized-formats,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-clear,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-drawpixels,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-getteximage,Fail
@@ -52,7 +51,6 @@ spec@arb_color_buffer_float@gl_rgba8_snorm-render,Fail
 spec@arb_color_buffer_float@gl_rgba8_snorm-render-fog,Fail
 spec@arb_compute_shader@execution@min-dvec4-double-large-group-size,Fail
 spec@arb_copy_image@arb_copy_image-formats,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
@@ -354,19 +352,7 @@ spec@arb_texture_compression@texwrap formats bordercolor-swizzled@GL_COMPRESSED_
 spec@arb_texture_cube_map_array@arb_texture_cube_map_array-sampler-cube-array-shadow,Fail
 spec@arb_texture_cube_map_array@fbo-generatemipmap-cubemap array s3tc_dxt1,Fail
 spec@arb_texture_float@fbo-blending-formats,Fail
-spec@arb_texture_float@fbo-blending-formats@GL_ALPHA16F_ARB,Fail
-spec@arb_texture_float@fbo-blending-formats@GL_ALPHA32F_ARB,Fail
 spec@arb_texture_float@fbo-blending-formats@GL_RGB32F,Fail
-spec@arb_texture_float@fbo-clear-formats,Fail
-spec@arb_texture_float@fbo-clear-formats@GL_ALPHA16F_ARB,Fail
-spec@arb_texture_float@fbo-clear-formats@GL_ALPHA32F_ARB,Fail
-spec@arb_texture_float@fbo-colormask-formats,Fail
-spec@arb_texture_float@fbo-colormask-formats@GL_ALPHA16F_ARB,Fail
-spec@arb_texture_float@fbo-colormask-formats@GL_ALPHA32F_ARB,Fail
-spec@arb_texture_float@fbo-fast-clear,Fail
-spec@arb_texture_float@multisample-fast-clear gl_arb_texture_float,Fail
-spec@arb_texture_float@multisample-formats 2 gl_arb_texture_float,Fail
-spec@arb_texture_float@multisample-formats 4 gl_arb_texture_float,Fail
 spec@arb_texture_float@texwrap formats bordercolor,Fail
 spec@arb_texture_float@texwrap formats bordercolor@GL_ALPHA16F_ARB- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor@GL_ALPHA32F_ARB- border color only,Fail
@@ -2347,7 +2333,6 @@ spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x223344ff,Fail
 spec@nv_copy_depth_to_color@nv_copy_depth_to_color 1 0x76356278,Fail
 spec@nv_copy_depth_to_color@nv_copy_depth_to_color,Fail
 spec@nv_copy_image@nv_copy_image-formats,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_ALPHA16/Destination: GL_ALPHA16,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
@@ -3094,7 +3079,6 @@ spec@!opengl 1.1@read-front clear-front-first samples=4,Crash
 spec@!opengl 1.1@read-front,Crash
 spec@!opengl 1.1@read-front samples=2,Crash
 spec@!opengl 1.1@read-front samples=4,ExpectedFail
-spec@!opengl 1.1@teximage-colors gl_alpha16@Exact upload-download of GL_ALPHA16,Fail
 spec@!opengl 1.1@teximage-colors gl_r16_snorm@Exact upload-download of GL_R16_SNORM,Fail
 spec@!opengl 1.1@teximage-colors gl_r8_snorm@Exact upload-download of GL_R8_SNORM,Fail
 spec@!opengl 1.1@teximage-colors gl_rgb16_snorm@Exact upload-download of GL_RGB16_SNORM,Fail
