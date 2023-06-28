@@ -9857,7 +9857,7 @@ void vrend_set_polygon_stipple(struct vrend_context *ctx,
 
 void vrend_set_clip_state(struct vrend_context *ctx, struct pipe_clip_state *ucp)
 {
-   if (vrend_state.use_core_profile) {
+   if (vrend_shader_use_core(ctx)) {
       ctx->sub->ucp_state = *ucp;
 
       ctx->sub->sysvalue_data_cookie++;
