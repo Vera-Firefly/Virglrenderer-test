@@ -3549,6 +3549,8 @@ static GLenum vrend_get_arb_format(enum virgl_formats format)
    case VIRGL_FORMAT_A8_UNORM: return GL_R8;
    case VIRGL_FORMAT_A8_SINT: return GL_R8I;
    case VIRGL_FORMAT_A8_UINT: return GL_R8UI;
+   case VIRGL_FORMAT_A16_FLOAT: return GL_R16F;
+   case VIRGL_FORMAT_A32_FLOAT: return GL_R32F;
    case VIRGL_FORMAT_L8_UNORM: return GL_R8;
    case VIRGL_FORMAT_L8_SINT: return GL_R8I;
    case VIRGL_FORMAT_L8_UINT: return GL_R8UI;
