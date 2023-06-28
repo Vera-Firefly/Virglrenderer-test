@@ -4044,108 +4044,112 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 }
 
 static bool vrend_get_swizzle(struct vrend_sampler_view *view,
-                              GLint swizzle[4])
+                              enum pipe_swizzle swizzle[4])
 {
-   static const GLint OOOR[] = {GL_ZERO, GL_ZERO, GL_ZERO, GL_RED};
-   static const GLint RRR1[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
-   static const GLint RRRG[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
-   static const GLint RRRR[] = {GL_RED, GL_RED, GL_RED, GL_RED};
-   static const GLint RG01[] = {GL_RED, GL_GREEN, GL_ZERO, GL_ONE};
-   static const GLint R001[] = {GL_RED, GL_ZERO, GL_ZERO, GL_ONE};
+   static const enum pipe_swizzle OOOR[] = {PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_RED};
+   static const enum pipe_swizzle RRR1[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ONE};
+   static const enum pipe_swizzle RRRG[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN};
+   static const enum pipe_swizzle RRRR[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED};
+   static const enum pipe_swizzle RG01[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ONE};
+   static const enum pipe_swizzle R001[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ONE};
 
-   switch (view->format) {
-   case VIRGL_FORMAT_A8_UNORM:
-   case VIRGL_FORMAT_A8_SINT:
-   case VIRGL_FORMAT_A8_UINT:
-   case VIRGL_FORMAT_A16_UNORM:
-   case VIRGL_FORMAT_A16_SINT:
-   case VIRGL_FORMAT_A16_UINT:
-   case VIRGL_FORMAT_A16_FLOAT:
-   case VIRGL_FORMAT_A32_SINT:
-   case VIRGL_FORMAT_A32_UINT:
-   case VIRGL_FORMAT_A32_FLOAT:
-      memcpy(swizzle, OOOR, 4 * sizeof(GLuint));
+   if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
+      swizzle[0] = tex_conv_table[view->format].swizzle[0];
+      swizzle[1] = tex_conv_table[view->format].swizzle[1];
+      swizzle[2] = tex_conv_table[view->format].swizzle[2];
+      swizzle[3] = tex_conv_table[view->format].swizzle[3];
       return true;
-   case VIRGL_FORMAT_L8_UNORM:
-   case VIRGL_FORMAT_L8_SINT:
-   case VIRGL_FORMAT_L8_UINT:
-   case VIRGL_FORMAT_L16_UNORM:
-   case VIRGL_FORMAT_L16_SINT:
-   case VIRGL_FORMAT_L16_UINT:
-   case VIRGL_FORMAT_L16_FLOAT:
-   case VIRGL_FORMAT_L32_SINT:
-   case VIRGL_FORMAT_L32_UINT:
-   case VIRGL_FORMAT_L32_FLOAT:
-      memcpy(swizzle, RRR1, 4 * sizeof(GLuint));
-      return true;
-   case VIRGL_FORMAT_L8A8_UNORM:
-   case VIRGL_FORMAT_L8A8_SINT:
-   case VIRGL_FORMAT_L8A8_UINT:
-   case VIRGL_FORMAT_L16A16_UNORM:
-   case VIRGL_FORMAT_L16A16_SINT:
-   case VIRGL_FORMAT_L16A16_UINT:
-   case VIRGL_FORMAT_L16A16_FLOAT:
-   case VIRGL_FORMAT_L32A32_FLOAT:
-   case VIRGL_FORMAT_L32A32_SINT:
-   case VIRGL_FORMAT_L32A32_UINT:
-      memcpy(swizzle, RRRG, 4 * sizeof(GLuint));
-      return true;
-   case VIRGL_FORMAT_I8_UNORM:
-   case VIRGL_FORMAT_I8_SINT:
-   case VIRGL_FORMAT_I8_UINT:
-   case VIRGL_FORMAT_I16_UNORM:
-   case VIRGL_FORMAT_I16_SINT:
-   case VIRGL_FORMAT_I16_UINT:
-   case VIRGL_FORMAT_I16_FLOAT:
-   case VIRGL_FORMAT_I32_FLOAT:
-   case VIRGL_FORMAT_I32_SINT:
-   case VIRGL_FORMAT_I32_UINT:
-      memcpy(swizzle, RRRR, 4 * sizeof(GLuint));
-      return true;
-   case VIRGL_FORMAT_R32G32_FLOAT:
-   case VIRGL_FORMAT_R32G32_UINT:
-   case VIRGL_FORMAT_R32G32_SINT:
-   case VIRGL_FORMAT_R16G16_FLOAT:
-   case VIRGL_FORMAT_R16G16_UINT:
-   case VIRGL_FORMAT_R16G16_SINT:
-   case VIRGL_FORMAT_R16G16_SNORM:
-   case VIRGL_FORMAT_R16G16_UNORM:
-   case VIRGL_FORMAT_R8G8_UINT:
-   case VIRGL_FORMAT_R8G8_SINT:
-   case VIRGL_FORMAT_R8G8_SNORM:
-   case VIRGL_FORMAT_R8G8_UNORM:
-   case VIRGL_FORMAT_R8G8_SSCALED:
-   case VIRGL_FORMAT_R8G8_USCALED:
-      memcpy(swizzle, RG01, 4 * sizeof(GLuint));
-      return true;
-   case VIRGL_FORMAT_R32_FLOAT:
-   case VIRGL_FORMAT_R32_UINT:
-   case VIRGL_FORMAT_R32_SINT:
-   case VIRGL_FORMAT_R16_FLOAT:
-   case VIRGL_FORMAT_R16_UINT:
-   case VIRGL_FORMAT_R16_SINT:
-   case VIRGL_FORMAT_R16_SNORM:
-   case VIRGL_FORMAT_R16_UNORM:
-   case VIRGL_FORMAT_R8_UINT:
-   case VIRGL_FORMAT_R8_SINT:
-   case VIRGL_FORMAT_R8_SNORM:
-   case VIRGL_FORMAT_R8_UNORM:
-   case VIRGL_FORMAT_R8_SSCALED:
-   case VIRGL_FORMAT_R8_USCALED:
-      memcpy(swizzle, R001, 4 * sizeof(GLuint));
-      return true;
-
-   default:
-      if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
-         swizzle[0] = tex_conv_table[view->format].swizzle[0];
-         swizzle[1] = tex_conv_table[view->format].swizzle[1];
-         swizzle[2] = tex_conv_table[view->format].swizzle[2];
-         swizzle[3] = tex_conv_table[view->format].swizzle[3];
+   } else {
+      switch (view->format) {
+      case VIRGL_FORMAT_A8_UNORM:
+         if (vrend_state.use_gles) {
+            memcpy(swizzle, OOOR, sizeof(OOOR));
+            return true;
+         }
+         break;
+      case VIRGL_FORMAT_A16_FLOAT:
+      case VIRGL_FORMAT_A32_FLOAT:
+         if (vrend_state.use_core_profile) {
+            memcpy(swizzle, OOOR, sizeof(OOOR));
+            return true;
+         }
+         break;
+      case VIRGL_FORMAT_L8_UNORM:
+      case VIRGL_FORMAT_L8_SINT:
+      case VIRGL_FORMAT_L8_UINT:
+      case VIRGL_FORMAT_L16_UNORM:
+      case VIRGL_FORMAT_L16_SINT:
+      case VIRGL_FORMAT_L16_UINT:
+      case VIRGL_FORMAT_L16_FLOAT:
+      case VIRGL_FORMAT_L32_SINT:
+      case VIRGL_FORMAT_L32_UINT:
+      case VIRGL_FORMAT_L32_FLOAT:
+         memcpy(swizzle, RRR1, sizeof(RRR1));
          return true;
-      } else {
-         return false;
+      case VIRGL_FORMAT_L8A8_SINT:
+      case VIRGL_FORMAT_L8A8_UINT:
+      case VIRGL_FORMAT_L16A16_SINT:
+      case VIRGL_FORMAT_L16A16_UINT:
+      case VIRGL_FORMAT_L16A16_FLOAT:
+      case VIRGL_FORMAT_L32A32_FLOAT:
+      case VIRGL_FORMAT_L32A32_SINT:
+      case VIRGL_FORMAT_L32A32_UINT:
+         if (!vrend_state.use_core_profile)
+            break;
+         /* fallthrough */
+      case VIRGL_FORMAT_L8A8_UNORM:
+      case VIRGL_FORMAT_L16A16_UNORM:
+         memcpy(swizzle, RRRG, sizeof(RRRG));
+         return true;
+      case VIRGL_FORMAT_I8_UNORM:
+      case VIRGL_FORMAT_I8_SINT:
+      case VIRGL_FORMAT_I8_UINT:
+      case VIRGL_FORMAT_I16_UNORM:
+      case VIRGL_FORMAT_I16_SINT:
+      case VIRGL_FORMAT_I16_UINT:
+      case VIRGL_FORMAT_I16_FLOAT:
+      case VIRGL_FORMAT_I32_FLOAT:
+      case VIRGL_FORMAT_I32_SINT:
+      case VIRGL_FORMAT_I32_UINT:
+         memcpy(swizzle, RRRR, sizeof(RRRR));
+         return true;
+      case VIRGL_FORMAT_R32G32_FLOAT:
+      case VIRGL_FORMAT_R32G32_UINT:
+      case VIRGL_FORMAT_R32G32_SINT:
+      case VIRGL_FORMAT_R16G16_FLOAT:
+      case VIRGL_FORMAT_R16G16_UINT:
+      case VIRGL_FORMAT_R16G16_SINT:
+      case VIRGL_FORMAT_R16G16_SNORM:
+      case VIRGL_FORMAT_R16G16_UNORM:
+      case VIRGL_FORMAT_R8G8_UINT:
+      case VIRGL_FORMAT_R8G8_SINT:
+      case VIRGL_FORMAT_R8G8_SNORM:
+      case VIRGL_FORMAT_R8G8_UNORM:
+      case VIRGL_FORMAT_R8G8_SSCALED:
+      case VIRGL_FORMAT_R8G8_USCALED:
+         memcpy(swizzle, RG01, sizeof(RG01));
+         return true;
+      case VIRGL_FORMAT_R32_FLOAT:
+      case VIRGL_FORMAT_R32_UINT:
+      case VIRGL_FORMAT_R32_SINT:
+      case VIRGL_FORMAT_R16_FLOAT:
+      case VIRGL_FORMAT_R16_UINT:
+      case VIRGL_FORMAT_R16_SINT:
+      case VIRGL_FORMAT_R16_SNORM:
+      case VIRGL_FORMAT_R16_UNORM:
+      case VIRGL_FORMAT_R8_UINT:
+      case VIRGL_FORMAT_R8_SINT:
+      case VIRGL_FORMAT_R8_SNORM:
+      case VIRGL_FORMAT_R8_UNORM:
+      case VIRGL_FORMAT_R8_SSCALED:
+      case VIRGL_FORMAT_R8_USCALED:
+         memcpy(swizzle, R001, sizeof(R001));
+         return true;
+      default:
+         break;
       }
    }
+   return false;
 }
 
 
@@ -4220,13 +4224,13 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
       }
 
       if (view->texture->target == GL_TEXTURE_BUFFER) {
-         GLint swizzle[4];
+         enum pipe_swizzle swizzle[4];
          if (vrend_get_swizzle(view, swizzle)) {
             vrend_shader_sampler_views_mask_set(key->sampler_views_lower_swizzle_mask, i);
-            key->tex_swizzle[i] = to_pipe_swizzle(swizzle[0])  |
-                                  to_pipe_swizzle(swizzle[1]) << 3 |
-                                  to_pipe_swizzle(swizzle[2]) << 6 |
-                                  to_pipe_swizzle(swizzle[3]) << 9;
+            key->tex_swizzle[i] = swizzle[0]  |
+                                  swizzle[1] << 3 |
+                                  swizzle[2] << 6 |
+                                  swizzle[3] << 9;
          }
       }
    }
