@@ -4173,6 +4173,11 @@ static bool vrend_get_swizzle(struct vrend_sampler_view *view,
    return false;
 }
 
+static inline bool
+vrend_shader_use_core(struct vrend_context *ctx)
+{
+   return ctx->shader_cfg.glsl_version >= 140;
+}
 
 static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
                                          struct vrend_shader_selector *sel,
@@ -4214,10 +4219,11 @@ static inline void vrend_fill_shader_key(struct vrend_sub_context *sub_ctx,
             key->alpha_test = sub_ctx->dsa_state.alpha.func;
          }
       }
+   }
 
+   if (vrend_shader_use_core(sub_ctx->parent)) {
       key->pstipple_enabled = sub_ctx->rs_state.poly_stipple_enable;
       key->color_two_side = sub_ctx->rs_state.light_twoside;
-
       key->flatshade = sub_ctx->rs_state.flatshade ? true : false;
    }
 
@@ -6628,7 +6634,7 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
    else
        glPolygonOffset(state->offset_scale, state->offset_units);
 
-   if (vrend_state.use_core_profile == false) {
+   if (!vrend_shader_use_core(ctx)) {
       if (state->poly_stipple_enable)
          glEnable(GL_POLYGON_STIPPLE);
       else
@@ -9838,7 +9844,7 @@ void vrend_set_scissor_state(struct vrend_context *ctx,
 void vrend_set_polygon_stipple(struct vrend_context *ctx,
                                struct pipe_poly_stipple *ps)
 {
-   if (vrend_state.use_core_profile) {
+   if (vrend_shader_use_core(ctx)) {
 
       /* std140 aligns array elements at 16 byte */
       for (int i = 0; i < VREND_POLYGON_STIPPLE_SIZE ; ++i)
