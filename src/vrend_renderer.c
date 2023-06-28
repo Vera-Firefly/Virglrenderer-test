@@ -3674,6 +3674,7 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
 
          glBindTexture(GL_TEXTURE_BUFFER, view->texture->tbo_tex_id);
          internalformat = tex_conv_table[view->format].internalformat;
+         ctx->sub->shader_dirty = true;
 
          if (internalformat == GL_NONE ||
              (vrend_state.use_gles && internalformat == GL_ALPHA8)) {
