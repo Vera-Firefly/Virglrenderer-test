@@ -31,6 +31,7 @@
 #include "msm_renderer.h"
 
 static unsigned nr_timelines;
+static uint32_t uabi_version;
 
 /**
  * A single context (from the PoV of the virtio-gpu protocol) maps to
@@ -296,6 +297,7 @@ msm_renderer_probe(int fd, struct virgl_renderer_capset_drm *capset)
    get_param32(fd, MSM_PARAM_MAX_FREQ,   &capset->u.msm.max_freq);
 
    nr_timelines = capset->u.msm.priorities;
+   uabi_version = capset->version_minor;
 
    drm_log("wire_format_version: %u", capset->wire_format_version);
    drm_log("version_major:       %u", capset->version_major);
@@ -828,6 +830,9 @@ msm_ccmd_gem_cpu_prep(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
       .op = req->op | MSM_PREP_NOSYNC,
    };
 
+   if (uabi_version >= 11)
+      args.op |= MSM_PREP_BOOST;
+
    rsp->ret = drmCommandWrite(mctx->fd, DRM_MSM_GEM_CPU_PREP, &args, sizeof(args));
 
    return 0;
@@ -1046,6 +1051,7 @@ msm_ccmd_wait_fence(struct msm_context *mctx, const struct msm_ccmd_req *hdr)
 
    struct drm_msm_wait_fence args = {
       .fence = req->fence,
+      .flags = (uabi_version) >= 11 ? MSM_WAIT_FENCE_BOOST : 0,
       .queueid = req->queue_id,
       .timeout =
          {
