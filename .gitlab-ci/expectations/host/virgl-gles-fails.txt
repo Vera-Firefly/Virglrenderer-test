@@ -3159,6 +3159,3 @@ spec@arb_shader_draw_parameters@vertexid-zerobased-indirect,Fail
 spec@arb_viewport_array@display-list,Fail
 
 spec@khr_texture_compression_astc@void-extent-dl-bug,Crash
-spec@arb_enhanced_layouts@matching_fp64_types_1,Crash
-spec@arb_enhanced_layouts@matching_fp64_types_2,Crash
-spec@arb_enhanced_layouts@matching_fp64_types_3,Crash
