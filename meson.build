@@ -218,6 +218,7 @@ have_glx = false
 
 with_minigbm_allocation = get_option('minigbm_allocation')
 if with_minigbm_allocation
+   assert(not with_host_windows, 'minigbm allocation is not supported by windows host')
    conf_data.set('ENABLE_MINIGBM_ALLOCATION', 1)
    _gbm_ver = '18.0.0'
 else
