@@ -297,6 +297,30 @@ spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 2d,Fail
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 2d_projvec4,Fail
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 2dshadow,Fail
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 3d,Fail
+
+spec@arb_tessellation_shader@arb_tessellation_shader-minmax,Fail
+spec@arb_tessellation_shader@built-in-constants,Fail
+spec@arb_tessellation_shader@built-in-constants@gl_MaxTessControlOutputComponents,Fail
+spec@arb_tessellation_shader@built-in-constants@gl_MaxTessEvaluationOutputComponents,Fail
+spec@arb_tessellation_shader@execution@gs-primitiveid-instanced,Fail
+spec@arb_tessellation_shader@execution@double-array-vs-tcs-tes,Fail
+spec@arb_tessellation_shader@execution@double-vs-tcs-tes,Fail
+spec@arb_tessellation_shader@execution@dvec2-vs-tcs-tes,Fail
+spec@arb_tessellation_shader@execution@dvec3-vs-tcs-tes,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-input-array-dvec4-index-rd,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-dvec4-index-wr,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-float-index-rd-after-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-float-index-wr-before-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec2-index-rd-after-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec2-index-wr-before-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec3-index-rd-after-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec3-index-wr-before-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec4-index-rd-after-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tcs-output-array-vec4-index-wr-before-barrier,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@tes-input-array-dvec4-index-rd,Fail
+spec@arb_tessellation_shader@execution@variable-indexing@vs-output-array-dvec4-index-wr-before-tcs,Fail
+spec@arb_tessellation_shader@execution@vs-tes-max-in-out-components,Fail
+
 spec@arb_texture_compression_bptc@compressedteximage gl_compressed_rgb_bptc_signed_float,Fail
 spec@arb_texture_compression_bptc@compressedteximage gl_compressed_rgb_bptc_unsigned_float,Fail
 spec@arb_texture_compression_bptc@compressedteximage gl_compressed_srgb_alpha_bptc_unorm,Fail

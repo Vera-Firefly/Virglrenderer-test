@@ -3,9 +3,6 @@ glx@.*
 # Skip because we don't care for fp64 for now
 spec@arb_gpu_shader_fp64@.*
 
-# Skip TS tests for now
-spec@arb_tessellation_shader@.*
-
 # Skip, this is expected
 # Refer to src/mesa/main/drawpix.c:100
 spec@ext_texture_integer@fbo-integer
