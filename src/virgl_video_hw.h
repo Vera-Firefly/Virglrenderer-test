@@ -599,7 +599,10 @@ struct virgl_mjpeg_picture_desc
          uint8_t v_sampling_factor;
          uint8_t quantiser_table_selector;
       } components[255];
-
+      uint16_t crop_x;
+      uint16_t crop_y;
+      uint16_t crop_width;
+      uint16_t crop_height;
       uint8_t num_components;
    } picture_parameter;
 
