@@ -13,9 +13,6 @@ spec@ext_texture_integer@fbo-integer
 # Fails on iris too
 spec@arb_direct_state_access@gettextureimage-formats
 
-# Skip these as they get skipped with the Intel driver + vtest
-spec@arb_shader_texture_image_samples@builtin-image*
-
 # Skip for now
 spec@arb_vertex_attrib_64bit.*
 

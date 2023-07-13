@@ -105,6 +105,47 @@ spec@arb_shader_image_load_store@max-size@image2DMS max size test/4x8x16384x1,Fa
 spec@arb_shader_image_load_store@semantics,Fail
 spec@arb_shader_image_load_store@semantics@imageLoad/Vertex shader/rgba32f/image2DMSArray test,Fail
 spec@arb_shader_image_load_store@semantics@imageLoad/Vertex shader/rgba32f/image2DMS test,Fail
+spec@arb_shader_texture_image_samples@builtin-image,Fail
+spec@arb_shader_texture_image_samples@builtin-image@r8/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@r8/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@r8/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@r8/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16f/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16f/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16f/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16f/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16i/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16i/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16i/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16i/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16ui/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16ui/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16ui/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba16ui/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32f/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32f/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32f/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32f/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32i/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32i/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32i/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32i/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32ui/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32ui/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32ui/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba32ui/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8i/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8i/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8i/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8i/Fragment/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Compute/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Compute/image2DMSArray samples test/2x8x16x6,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Fragment/image2DMS samples test/2x8x96x1,Fail
+spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Fragment/image2DMSArray samples test/2x8x16x6,Fail
 spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,Fail
 spec@arb_shader_storage_buffer_object@layout-std140-write-shader,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,Fail
