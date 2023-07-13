@@ -26,7 +26,6 @@ spec@arb_vertex_attrib_64bit.*
 
 # Reported as crash, but no obvious crash
 spec@intel_shader_integer_functions2@execution@built-in-functions*
-spec@arb_vertex_program.*
 
 # Skip because they pass with the Intel driver
 spec@arb_shader_texture_image_samples@texturesamples@.*

@@ -21,7 +21,6 @@ spec@arb_vertex_attrib_64bit.*
 
 # Reported as crash, but no obvious crash
 spec@intel_shader_integer_functions2@execution@built-in-functions*
-spec@arb_vertex_program.*
 
 # Crashes when lowering GLSL to TGSI, but this is going away with the GLSL-NIR-TGSI lowering coming soon
 spec@glsl-4.00@execution@inout.*
