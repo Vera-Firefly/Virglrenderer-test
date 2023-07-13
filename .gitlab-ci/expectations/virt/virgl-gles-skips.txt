@@ -31,9 +31,6 @@ spec@glsl-4.*@*dvec*
 spec@glsl-4.*@*double*
 spec@arb_enhanced_layouts@execution@component-layout@vs-gs-fs-double
 
-# GLES doesn't support VS array inputs
-spec@arb_enhanced_layouts@execution@component-layout@vs-attribs-array
-
 # GLES doesn't support more than one stream
 spec@arb_enhanced_layouts@gs-stream-location-aliasing
 
