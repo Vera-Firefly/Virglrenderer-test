@@ -73,14 +73,14 @@ int testvirgl_init_ctx_cmdbuf(struct virgl_context *ctx);
 void testvirgl_fini_ctx_cmdbuf(struct virgl_context *ctx);
 
 int testvirgl_create_backed_simple_1d_res(struct virgl_resource *res,
-					  int handle);
+                                          int handle);
 int testvirgl_create_backed_simple_2d_res(struct virgl_resource *res,
-					  int handle, int w, int h);
+                                          int handle, int w, int h);
 int testvirgl_create_backed_simple_buffer(struct virgl_resource *res,
-					  int handle, int size, int bind);
+                                          int handle, int size, int bind);
 void testvirgl_destroy_backed_res(struct virgl_resource *res);
 int testvirgl_create_unbacked_simple_buffer(struct virgl_resource *res,
-					    int handle, int size, int bind);
+                                            int handle, int size, int bind);
 uint32_t testvirgl_get_glsl_level_from_caps(void);
 unsigned testvirgl_get_multisample_from_caps(void);
 #endif

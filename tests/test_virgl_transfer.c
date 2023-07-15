@@ -618,7 +618,7 @@ static unsigned get_box_size(struct pipe_box *box, int elsize)
 }
 
 static void virgl_test_transfer_res(enum pipe_texture_target target,
-				    bool write, bool invalid)
+                                    bool write, bool invalid)
 {
   struct virgl_renderer_resource_create_args res;
   struct pipe_box box;
@@ -642,10 +642,10 @@ static void virgl_test_transfer_res(enum pipe_texture_target target,
 
   if (write)
     ret = virgl_renderer_transfer_write_iov(res.handle, 1, 0, 0, 0,
-					 (struct virgl_box *)&box, 0, iovs, niovs);
+                                            (struct virgl_box *)&box, 0, iovs, niovs);
   else
     ret = virgl_renderer_transfer_read_iov(res.handle, 1, 0, 0, 0,
-					   (struct virgl_box *)&box, 0, iovs, niovs);
+                                           (struct virgl_box *)&box, 0, iovs, niovs);
   ck_assert_int_eq(ret, invalid ? EINVAL : 0);
   virgl_renderer_ctx_detach_resource(1, res.handle);
 
@@ -678,7 +678,7 @@ START_TEST(virgl_test_transfer_res_write_invalid)
 END_TEST
 
 static void virgl_test_transfer_inline(enum pipe_texture_target target,
-				       bool invalid, int large_flags)
+                                       bool invalid, int large_flags)
 {
   struct virgl_renderer_resource_create_args args;
   struct pipe_box box;

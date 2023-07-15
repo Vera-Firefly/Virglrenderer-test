@@ -123,7 +123,7 @@ int testvirgl_init_single_ctx(void)
     ret = virgl_renderer_init(&mystruct, context_flags, &test_cbs);
     ck_assert_int_eq(ret, 0);
     if (ret)
-	return ret;
+        return ret;
     ret = virgl_renderer_context_create(1, strlen("test1"), "test1");
     ck_assert_int_eq(ret, 0);
     return ret;
@@ -152,21 +152,21 @@ int testvirgl_init_ctx_cmdbuf(struct virgl_context *ctx)
     int ret;
     ret = testvirgl_init_single_ctx();
     if (ret)
-	return ret;
+        return ret;
 
     ctx->flush = testvirgl_flush;
     ctx->ctx_id = 1;
     ctx->cbuf = CALLOC_STRUCT(virgl_cmd_buf);
     if (!ctx->cbuf) {
-	testvirgl_fini_single_ctx();
-	return ENOMEM;
+        testvirgl_fini_single_ctx();
+        return ENOMEM;
     }
 
     ctx->cbuf->buf = CALLOC(1, VIRGL_MAX_CMDBUF_DWORDS * 4);
     if (!ctx->cbuf->buf) {
-	FREE(ctx->cbuf);
-	testvirgl_fini_single_ctx();
-	return ENOMEM;
+        FREE(ctx->cbuf);
+        testvirgl_fini_single_ctx();
+        return ENOMEM;
     }
     return 0;
 }
@@ -179,7 +179,7 @@ void testvirgl_fini_ctx_cmdbuf(struct virgl_context *ctx)
 }
 
 int testvirgl_create_backed_simple_2d_res(struct virgl_resource *res,
-					  int handle, int w, int h)
+                                          int handle, int w, int h)
 {
     struct virgl_renderer_resource_create_args args;
     uint32_t backing_size;
@@ -207,7 +207,7 @@ int testvirgl_create_backed_simple_2d_res(struct virgl_resource *res,
 }
 
 int testvirgl_create_backed_simple_1d_res(struct virgl_resource *res,
-					  int handle)
+                                          int handle)
 {
     struct virgl_renderer_resource_create_args args;
     uint32_t backing_size;
@@ -245,7 +245,7 @@ void testvirgl_destroy_backed_res(struct virgl_resource *res)
 }
 
 int testvirgl_create_backed_simple_buffer(struct virgl_resource *res,
-					  int handle, int size, int binding)
+                                          int handle, int size, int binding)
 {
     struct virgl_renderer_resource_create_args args;
     uint32_t backing_size;
@@ -272,7 +272,7 @@ int testvirgl_create_backed_simple_buffer(struct virgl_resource *res,
 }
 
 int testvirgl_create_unbacked_simple_buffer(struct virgl_resource *res,
-					    int handle, int size, int binding)
+                                            int handle, int size, int binding)
 {
     struct virgl_renderer_resource_create_args args;
     int ret;

@@ -48,44 +48,44 @@ struct res_test {
 };
 
 #define TEST(thandle, ttarget, tformat, tbind, twidth, theight, tdepth, tarray_size, tnr_samples, tretval) \
-  { .args = { .handle = (thandle),					\
-	      .target = (ttarget),					\
-	      .format = (tformat),					\
-	      .bind = (tbind),						\
-	      .width = (twidth),					\
-	      .height = (theight),					\
-	      .depth = (tdepth),					\
-	      .array_size = (tarray_size),				\
-	      .last_level = 0,						\
-	      .nr_samples = (tnr_samples),				\
-	      .flags = 0 },					\
+  { .args = { .handle = (thandle),                                      \
+              .target = (ttarget),                                      \
+              .format = (tformat),                                      \
+              .bind = (tbind),                                          \
+              .width = (twidth),                                        \
+              .height = (theight),                                      \
+              .depth = (tdepth),                                        \
+              .array_size = (tarray_size),                              \
+              .last_level = 0,                                          \
+              .nr_samples = (tnr_samples),                              \
+              .flags = 0 },                                             \
       .retval = (tretval)}
 
 #define TEST_MIP(thandle, ttarget, tformat, tbind, twidth, theight, tdepth, tarray_size, tnr_samples, tlast_level, tretval) \
-  { .args = { .handle = (thandle),					\
-	      .target = (ttarget),					\
-	      .format = (tformat),					\
-	      .bind = (tbind),						\
-	      .width = (twidth),					\
-	      .height = (theight),					\
-	      .depth = (tdepth),					\
-	      .array_size = (tarray_size),				\
-	      .last_level = (tlast_level),				\
-	      .nr_samples = (tnr_samples),				\
-	      .flags = 0 },					\
+  { .args = { .handle = (thandle),                                      \
+              .target = (ttarget),                                      \
+              .format = (tformat),                                      \
+              .bind = (tbind),                                          \
+              .width = (twidth),                                        \
+              .height = (theight),                                      \
+              .depth = (tdepth),                                        \
+              .array_size = (tarray_size),                              \
+              .last_level = (tlast_level),                              \
+              .nr_samples = (tnr_samples),                              \
+              .flags = 0 },                                             \
       .retval = (tretval)}
 
 #define TEST_F(thandle, ttarget, tformat, tbind, twidth, theight, tdepth, tarray_size, tnr_samples, tflags, tretval) \
-  { .args = { .handle = (thandle),					\
-	      .target = (ttarget),					\
-	      .format = (tformat),					\
-	      .bind = (tbind),						\
-	      .width = (twidth),					\
-	      .height = (theight),					\
-	      .depth = (tdepth),					\
-	      .array_size = (tarray_size),				\
-	      .nr_samples = (tnr_samples),				\
-	      .flags = (tflags) },					\
+  { .args = { .handle = (thandle),                                      \
+              .target = (ttarget),                                      \
+              .format = (tformat),                                      \
+              .bind = (tbind),                                          \
+              .width = (twidth),                                        \
+              .height = (theight),                                      \
+              .depth = (tdepth),                                        \
+              .array_size = (tarray_size),                              \
+              .nr_samples = (tnr_samples),                              \
+              .flags = (tflags) },                                      \
       .retval = (tretval)}
 
 

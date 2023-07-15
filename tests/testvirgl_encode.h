@@ -54,7 +54,7 @@ static inline void virgl_encoder_write_double(struct virgl_cmd_buf *state,
 }
 
 static inline void virgl_encoder_write_block(struct virgl_cmd_buf *state,
-					    const uint8_t *ptr, uint32_t len)
+                                            const uint8_t *ptr, uint32_t len)
 {
    int x;
    memcpy(state->buf + state->cdw, ptr, len);
@@ -78,8 +78,8 @@ extern int virgl_encode_rasterizer_state(struct virgl_context *ctx,
 extern int virgl_encode_shader_state(struct virgl_context *ctx,
                                     uint32_t handle,
                                     uint32_t type,
-				     const struct pipe_shader_state *shader,
-				     const char *shad_str);
+                                     const struct pipe_shader_state *shader,
+                                     const char *shad_str);
 
 int virgl_encode_stream_output_info(struct virgl_context *ctx,
                                    uint32_t handle,
@@ -103,25 +103,25 @@ int virgl_encode_clear(struct virgl_context *ctx,
                       double depth, unsigned stencil);
 
 int virgl_encode_bind_object(struct virgl_context *ctx,
-			    uint32_t handle, uint32_t object);
+                            uint32_t handle, uint32_t object);
 int virgl_encode_delete_object(struct virgl_context *ctx,
                               uint32_t handle, uint32_t object);
 
 int virgl_encoder_set_framebuffer_state(struct virgl_context *ctx,
-				       const struct pipe_framebuffer_state *state);
+                                       const struct pipe_framebuffer_state *state);
 int virgl_encoder_set_viewport_states(struct virgl_context *ctx,
                                       int start_slot,
                                       int num_viewports,
                                       const struct pipe_viewport_state *states);
 
 int virgl_encoder_draw_vbo(struct virgl_context *ctx,
-			  const struct pipe_draw_info *info);
+                          const struct pipe_draw_info *info);
 
 
 int virgl_encoder_create_surface(struct virgl_context *ctx,
                                 uint32_t handle,
                                 struct virgl_resource *res,
-				const struct pipe_surface *templat);
+                                const struct pipe_surface *templat);
 
 int virgl_encoder_flush_frontbuffer(struct virgl_context *ctx,
                                    struct virgl_resource *res);
@@ -212,9 +212,9 @@ int virgl_encoder_set_blend_color(struct virgl_context *ctx,
                                  const struct pipe_blend_color *color);
 
 int virgl_encoder_set_scissor_state(struct virgl_context *ctx,
-				    unsigned start_slot,
-				    int num_scissors,
-				    const struct pipe_scissor_state *ss);
+                                    unsigned start_slot,
+                                    int num_scissors,
+                                    const struct pipe_scissor_state *ss);
 
 void virgl_encoder_set_polygon_stipple(struct virgl_context *ctx,
                                       const struct pipe_poly_stipple *ps);

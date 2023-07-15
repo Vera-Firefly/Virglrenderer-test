@@ -1695,7 +1695,7 @@ static void bind_virgl_block_loc(struct vrend_linked_shader_program *sprog,
                                  int virgl_block_ubo_id)
 {
    sprog->separate_virgl_block_id[shader_type] =
-	 vrend_get_uniform_block_index(sprog, "VirglBlock", shader_type);
+      vrend_get_uniform_block_index(sprog, "VirglBlock", shader_type);
 
    if (sprog->separate_virgl_block_id[shader_type] != GL_INVALID_INDEX) {
       bool created_virgl_block_buffer = false;
@@ -1710,14 +1710,14 @@ static void bind_virgl_block_loc(struct vrend_linked_shader_program *sprog,
 
       vrend_set_active_pipeline_stage(sprog, shader_type);
       vrend_uniform_block_binding(sprog, shader_type,
-		                  sprog->separate_virgl_block_id[shader_type],
-				  sprog->virgl_block_bind);
+                                  sprog->separate_virgl_block_id[shader_type],
+                                  sprog->virgl_block_bind);
 
       GLint virgl_block_size;
       int prog_id = sprog->is_pipeline ? sprog->ss[shader_type]->program_id :
                                          sprog->id.program;
       glGetActiveUniformBlockiv(prog_id, sprog->separate_virgl_block_id[shader_type],
-				GL_UNIFORM_BLOCK_DATA_SIZE, &virgl_block_size);
+                                GL_UNIFORM_BLOCK_DATA_SIZE, &virgl_block_size);
       assert((size_t) virgl_block_size >= sizeof(struct sysval_uniform_block));
 
       if (created_virgl_block_buffer) {
@@ -6750,10 +6750,10 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
 
    if (has_feature(feat_multisample)) {
       if (has_feature(feat_sample_mask)) {
-	 if (state->multisample)
-	    glEnable(GL_SAMPLE_MASK);
-	 else
-	    glDisable(GL_SAMPLE_MASK);
+         if (state->multisample)
+            glEnable(GL_SAMPLE_MASK);
+         else
+            glDisable(GL_SAMPLE_MASK);
       }
 
       /* GLES doesn't have GL_MULTISAMPLE */
@@ -7712,8 +7712,8 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    if (nlen && debug_name) {
       strncpy(grctx->debug_name, debug_name,
-	      nlen < sizeof(grctx->debug_name) - 1 ?
-	      nlen : sizeof(grctx->debug_name) - 1);
+              nlen < sizeof(grctx->debug_name) - 1 ?
+              nlen : sizeof(grctx->debug_name) - 1);
       grctx->debug_name[sizeof(grctx->debug_name) - 1] = 0;
    }
 
@@ -8026,7 +8026,7 @@ static void vrend_create_buffer(struct vrend_resource *gr, uint32_t width, uint3
       else if (has_feature(feat_memory_object_fd) && has_feature(feat_memory_object)) {
          GLuint memobj = 0;
          int fd = -1;
-	 int ret;
+         int ret;
 
          /* Could use VK too. */
          struct gbm_bo *bo = gbm_bo_create(gbm->device, width, 1,
@@ -8940,11 +8940,11 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       glBindBufferARB(res->target, res->id);
       data = glMapBufferRange(res->target, info->box->x, info->box->width, map_flags);
       if (data == NULL) {
-	 vrend_printf("map failed for element buffer\n");
-	 vrend_read_from_iovec_cb(iov, num_iovs, info->offset, info->box->width, &iov_buffer_upload, &d);
+         vrend_printf("map failed for element buffer\n");
+         vrend_read_from_iovec_cb(iov, num_iovs, info->offset, info->box->width, &iov_buffer_upload, &d);
       } else {
-	 vrend_read_from_iovec(iov, num_iovs, info->offset, data, info->box->width);
-	 glUnmapBuffer(res->target);
+         vrend_read_from_iovec(iov, num_iovs, info->offset, data, info->box->width);
+         glUnmapBuffer(res->target);
       }
       glBindBufferARB(res->target, 0);
    } else {
@@ -9481,7 +9481,7 @@ static int vrend_transfer_send_readonly(struct vrend_resource *res,
 }
 
 static int vrend_renderer_transfer_send_iov(struct vrend_context *ctx,
-					    struct vrend_resource *res,
+                                            struct vrend_resource *res,
                                             const struct iovec *iov, int num_iovs,
                                             const struct vrend_transfer_info *info)
 {
@@ -11572,7 +11572,7 @@ static int vrender_get_glsl_version(void)
 }
 
 static void vrend_fill_caps_glsl_version(int gl_ver, int gles_ver,
-					  union virgl_caps *caps)
+                                         union virgl_caps *caps)
 {
    if (gles_ver > 0) {
       caps->v1.glsl_level = 120;
@@ -11752,7 +11752,7 @@ static void vrend_renderer_fill_caps_v1(int gl_ver, int gles_ver, union virgl_ca
      if (has_feature(feat_cull_distance))
         caps->v1.bset.has_cull = 1;
      if (epoxy_has_gl_extension("GL_ARB_derivative_control"))
-	caps->v1.bset.derivative_control = 1;
+        caps->v1.bset.derivative_control = 1;
    }
 
    if (has_feature(feat_polygon_offset_clamp))
@@ -12898,16 +12898,16 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          int fd = -1;
          GLenum internalformat = tex_conv_table[gr->base.format].internalformat;
 
-	 if (!has_feature(feat_memory_object_fd) || !has_feature(feat_memory_object)) {
+         if (!has_feature(feat_memory_object_fd) || !has_feature(feat_memory_object)) {
             FREE(gr);
             return EINVAL;
-	 }
+         }
 
-	 enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(res, &fd);
+         enum virgl_resource_fd_type fd_type = virgl_resource_export_fd(res, &fd);
          if (fd_type == VIRGL_RESOURCE_FD_INVALID) {
             FREE(gr);
             return EINVAL;
-	 }
+         }
 
          /* Create a GL memory object importing memory from a FD */
          GLuint mem_object;
@@ -12929,7 +12929,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          glTexParameteri(gr->target, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
          glTexStorageMem2DEXT(gr->target, 1, internalformat, width, height, mem_object, 0);
          glBindTexture(gr->target, 0);
-	 gr->is_imported = true;
+         gr->is_imported = true;
       }
       res->pipe_resource = &gr->base;
    }

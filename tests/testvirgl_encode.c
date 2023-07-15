@@ -46,16 +46,16 @@ static int virgl_encoder_write_cmd_dword(struct virgl_context *ctx,
 }
 
 static void virgl_encoder_write_res(struct virgl_context *ctx,
-				    struct virgl_resource *res)
+                                    struct virgl_resource *res)
 {
     if (res)
-	virgl_encoder_write_dword(ctx->cbuf, res->handle);
+        virgl_encoder_write_dword(ctx->cbuf, res->handle);
     else
-	virgl_encoder_write_dword(ctx->cbuf, 0);
+        virgl_encoder_write_dword(ctx->cbuf, 0);
 }
 
 int virgl_encode_bind_object(struct virgl_context *ctx,
-			    uint32_t handle, uint32_t object)
+                            uint32_t handle, uint32_t object)
 {
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_BIND_OBJECT, object, 1));
    virgl_encoder_write_dword(ctx->cbuf, handle);
@@ -63,7 +63,7 @@ int virgl_encode_bind_object(struct virgl_context *ctx,
 }
 
 int virgl_encode_delete_object(struct virgl_context *ctx,
-			      uint32_t handle, uint32_t object)
+                              uint32_t handle, uint32_t object)
 {
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_DESTROY_OBJECT, object, 1));
    virgl_encoder_write_dword(ctx->cbuf, handle);
@@ -318,7 +318,7 @@ int virgl_encode_clear(struct virgl_context *ctx,
 }
 
 int virgl_encoder_set_framebuffer_state(struct virgl_context *ctx,
-				       const struct pipe_framebuffer_state *state)
+                                       const struct pipe_framebuffer_state *state)
 {
    struct virgl_surface *zsurf = (struct virgl_surface *)state->zsbuf;
    uint i;
@@ -401,7 +401,7 @@ int virgl_encoder_set_index_buffer(struct virgl_context *ctx,
 }
 
 int virgl_encoder_draw_vbo(struct virgl_context *ctx,
-			  const struct pipe_draw_info *info)
+                          const struct pipe_draw_info *info)
 {
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_DRAW_VBO, 0, VIRGL_DRAW_VBO_SIZE));
    virgl_encoder_write_dword(ctx->cbuf, info->start);
@@ -423,9 +423,9 @@ int virgl_encoder_draw_vbo(struct virgl_context *ctx,
 }
 
 int virgl_encoder_create_surface(struct virgl_context *ctx,
-				uint32_t handle,
-				struct virgl_resource *res,
-				const struct pipe_surface *templat)
+                                uint32_t handle,
+                                struct virgl_resource *res,
+                                const struct pipe_surface *templat)
 {
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_CREATE_OBJECT, VIRGL_OBJECT_SURFACE, VIRGL_OBJ_SURFACE_SIZE));
    virgl_encoder_write_dword(ctx->cbuf, handle);
@@ -476,11 +476,11 @@ static void virgl_encoder_transfer3d_common(struct virgl_context *ctx,
 }
 
 static void virgl_encoder_inline_send_box(struct virgl_context *ctx,
-					  struct virgl_resource *res,
-					  unsigned level, unsigned usage,
-					  const struct pipe_box *box,
-					  const void *data, unsigned stride,
-					  unsigned layer_stride, int length)
+                                          struct virgl_resource *res,
+                                          unsigned level, unsigned usage,
+                                          const struct pipe_box *box,
+                                          const void *data, unsigned stride,
+                                          unsigned layer_stride, int length)
 {
   virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_RESOURCE_INLINE_WRITE, 0, ((length + 3) / 4) + 11));
   virgl_encoder_transfer3d_common(ctx, res, level, usage, box, stride, layer_stride);
@@ -542,19 +542,19 @@ int virgl_encoder_inline_write(struct virgl_context *ctx,
 
        left_bytes = box->width * elsize;
        while (left_bytes) {
-	 if (ctx->cbuf->cdw + 12 > VIRGL_MAX_CMDBUF_DWORDS)
-	   ctx->flush(ctx);
+         if (ctx->cbuf->cdw + 12 > VIRGL_MAX_CMDBUF_DWORDS)
+           ctx->flush(ctx);
 
-	 thispass = (VIRGL_MAX_CMDBUF_DWORDS - ctx->cbuf->cdw - 12) * 4;
+         thispass = (VIRGL_MAX_CMDBUF_DWORDS - ctx->cbuf->cdw - 12) * 4;
 
-	 length = MIN2(thispass, left_bytes);
+         length = MIN2(thispass, left_bytes);
 
-	 mybox.width = length / elsize;
+         mybox.width = length / elsize;
 
-	 virgl_encoder_inline_send_box(ctx, res, level, usage, &mybox, row_data, stride, layer_stride, length);
-	 left_bytes -= length;
-	 mybox.x += length / elsize;
-	 row_data += length;
+         virgl_encoder_inline_send_box(ctx, res, level, usage, &mybox, row_data, stride, layer_stride, length);
+         left_bytes -= length;
+         mybox.x += length / elsize;
+         row_data += length;
        }
        layer_data += stride_internal;
      }

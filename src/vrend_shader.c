@@ -4165,13 +4165,13 @@ translate_atomic(struct dump_ctx *ctx,
    if (src->Register.File == TGSI_FILE_BUFFER || src->Register.File == TGSI_FILE_MEMORY) {
       enum vrend_type_qualifier type;
       if ((is_integer_memory(ctx, src->Register.File, src->Register.Index))) {
-	 type = INT;
-	 dtypeprefix = INT_BITS_TO_FLOAT;
-	 stypeprefix = FLOAT_BITS_TO_INT;
+         type = INT;
+         dtypeprefix = INT_BITS_TO_FLOAT;
+         stypeprefix = FLOAT_BITS_TO_INT;
       } else {
-	 type = UINT;
-	 dtypeprefix = UINT_BITS_TO_FLOAT;
-	 stypeprefix = FLOAT_BITS_TO_UINT;
+         type = UINT;
+         dtypeprefix = UINT_BITS_TO_FLOAT;
+         stypeprefix = FLOAT_BITS_TO_UINT;
       }
 
       if (is_cas)
@@ -4448,7 +4448,7 @@ get_destination_info(struct dump_ctx *ctx,
       }
       else if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
-	 if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
+         if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
             int basearrayidx = lookup_image_array(ctx, dst_reg->Register.Index);
             if (dst_reg->Register.Indirect) {
                assert(dst_reg->Indirect.File == TGSI_FILE_ADDRESS);
@@ -5802,7 +5802,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL && ctx->cfg->has_cull_distance) {
          emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
       } else if (iter->processor.Processor == TGSI_PROCESSOR_TESS_EVAL && ctx->cfg->has_cull_distance) {
-	 if (ctx->so && !ctx->key->gs_present)
+         if (ctx->so && !ctx->key->gs_present)
             emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
          emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
          if (!ctx->key->gs_present) {
@@ -7193,7 +7193,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
                emit_hdrf(glsl_strbufs, "layout (location=%d%s) inout highp %s fsout_c%d;\n", i, noncoherent, type, i);
             } else
                emit_hdrf(glsl_strbufs, "layout (location=%d) out %s fsout_c%d;\n", i,
-			 type, i);
+                         type, i);
          } else
             emit_hdrf(glsl_strbufs, "out %s fsout_c%d;\n", type, i);
       }

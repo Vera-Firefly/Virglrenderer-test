@@ -45,23 +45,23 @@ START_TEST(virgl_test_overlap_obj_id)
 
     /* set blend state */
     {
-	struct pipe_blend_state blend;
-	int blend_handle = ctx_handle;
-	memset(&blend, 0, sizeof(blend));
-	blend.rt[0].colormask = PIPE_MASK_RGBA;
-	virgl_encode_blend_state(&ctx, blend_handle, &blend);
-	virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
+        struct pipe_blend_state blend;
+        int blend_handle = ctx_handle;
+        memset(&blend, 0, sizeof(blend));
+        blend.rt[0].colormask = PIPE_MASK_RGBA;
+        virgl_encode_blend_state(&ctx, blend_handle, &blend);
+        virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
     }
 
     /* set depth stencil alpha state */
     {
-	struct pipe_depth_stencil_alpha_state dsa;
-	int dsa_handle = ctx_handle;
-	memset(&dsa, 0, sizeof(dsa));
-	dsa.depth.writemask = 1;
-	dsa.depth.func = PIPE_FUNC_LESS;
-	virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
-	virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
+        struct pipe_depth_stencil_alpha_state dsa;
+        int dsa_handle = ctx_handle;
+        memset(&dsa, 0, sizeof(dsa));
+        dsa.depth.writemask = 1;
+        dsa.depth.func = PIPE_FUNC_LESS;
+        virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
+        virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
     }
     testvirgl_fini_ctx_cmdbuf(&ctx);
 }
@@ -132,8 +132,8 @@ START_TEST(virgl_test_clear)
 
     /* check the returned values */
     for (i = 0; i < 5; i++) {
-	uint32_t *ptr = res.iovs[0].iov_base;
-	ck_assert_int_eq(ptr[i], test_green);
+        uint32_t *ptr = res.iovs[0].iov_base;
+        ck_assert_int_eq(ptr[i], test_green);
     }
 
     /* cleanup */
@@ -221,8 +221,8 @@ START_TEST(virgl_test_blit_simple)
 
     /* check the returned values */
     for (i = 0; i < 5; i++) {
-	uint32_t *ptr = res2.iovs[0].iov_base;
-	ck_assert_int_eq(ptr[i], test_green);
+        uint32_t *ptr = res2.iovs[0].iov_base;
+        ck_assert_int_eq(ptr[i], test_green);
     }
 
     /* cleanup */
@@ -338,36 +338,36 @@ START_TEST(virgl_test_render_simple)
 
     /* create vertex shader */
     {
-	struct pipe_shader_state vs;
+        struct pipe_shader_state vs;
          const char *text =
-	   "VERT\n"
-	   "DCL IN[0]\n"
-	   "DCL IN[1]\n"
-	   "DCL OUT[0], POSITION\n"
-	   "DCL OUT[1], COLOR\n"
-	   "  0: MOV OUT[1], IN[1]\n"
-	   "  1: MOV OUT[0], IN[0]\n"
-	   "  2: END\n";
-	 memset(&vs, 0, sizeof(vs));
-	 vs_handle = ctx_handle++;
-	 virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
-				   &vs, text);
-	 virgl_encode_bind_shader(&ctx, vs_handle, PIPE_SHADER_VERTEX);
+           "VERT\n"
+           "DCL IN[0]\n"
+           "DCL IN[1]\n"
+           "DCL OUT[0], POSITION\n"
+           "DCL OUT[1], COLOR\n"
+           "  0: MOV OUT[1], IN[1]\n"
+           "  1: MOV OUT[0], IN[0]\n"
+           "  2: END\n";
+         memset(&vs, 0, sizeof(vs));
+         vs_handle = ctx_handle++;
+         virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
+                                   &vs, text);
+         virgl_encode_bind_shader(&ctx, vs_handle, PIPE_SHADER_VERTEX);
     }
 
     /* create fragment shader */
     {
-	struct pipe_shader_state fs;
-	const char *text =
-	    "FRAG\n"
-	    "DCL IN[0], COLOR, LINEAR\n"
-	    "DCL OUT[0], COLOR\n"
-	    "  0: MOV OUT[0], IN[0]\n"
-	    "  1: END\n";
-	memset(&fs, 0, sizeof(fs));
-	fs_handle = ctx_handle++;
-	virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
-				   &fs, text);
+        struct pipe_shader_state fs;
+        const char *text =
+            "FRAG\n"
+            "DCL IN[0], COLOR, LINEAR\n"
+            "DCL OUT[0], COLOR\n"
+            "  0: MOV OUT[0], IN[0]\n"
+            "  1: END\n";
+        memset(&fs, 0, sizeof(fs));
+        fs_handle = ctx_handle++;
+        virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
+                                   &fs, text);
 
         virgl_encode_bind_shader(&ctx, fs_handle, PIPE_SHADER_FRAGMENT);
     }
@@ -383,63 +383,63 @@ START_TEST(virgl_test_render_simple)
 
     /* set blend state */
     {
-	struct pipe_blend_state blend;
-	int blend_handle = ctx_handle++;
-	memset(&blend, 0, sizeof(blend));
-	blend.rt[0].colormask = PIPE_MASK_RGBA;
-	virgl_encode_blend_state(&ctx, blend_handle, &blend);
-	virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
+        struct pipe_blend_state blend;
+        int blend_handle = ctx_handle++;
+        memset(&blend, 0, sizeof(blend));
+        blend.rt[0].colormask = PIPE_MASK_RGBA;
+        virgl_encode_blend_state(&ctx, blend_handle, &blend);
+        virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
     }
 
     /* set depth stencil alpha state */
     {
-	struct pipe_depth_stencil_alpha_state dsa;
-	int dsa_handle = ctx_handle++;
-	memset(&dsa, 0, sizeof(dsa));
-	dsa.depth.writemask = 1;
-	dsa.depth.func = PIPE_FUNC_LESS;
-	virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
-	virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
+        struct pipe_depth_stencil_alpha_state dsa;
+        int dsa_handle = ctx_handle++;
+        memset(&dsa, 0, sizeof(dsa));
+        dsa.depth.writemask = 1;
+        dsa.depth.func = PIPE_FUNC_LESS;
+        virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
+        virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
     }
 
     /* set rasterizer state */
     {
-	struct pipe_rasterizer_state rasterizer;
-	int rs_handle = ctx_handle++;
-	memset(&rasterizer, 0, sizeof(rasterizer));
-	rasterizer.cull_face = PIPE_FACE_NONE;
-	rasterizer.half_pixel_center = 1;
-	rasterizer.bottom_edge_rule = 1;
-	rasterizer.depth_clip = 1;
-	virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
-	virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
+        struct pipe_rasterizer_state rasterizer;
+        int rs_handle = ctx_handle++;
+        memset(&rasterizer, 0, sizeof(rasterizer));
+        rasterizer.cull_face = PIPE_FACE_NONE;
+        rasterizer.half_pixel_center = 1;
+        rasterizer.bottom_edge_rule = 1;
+        rasterizer.depth_clip = 1;
+        virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
+        virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
     }
 
     /* set viewport state */
     {
-	struct pipe_viewport_state vp;
-	float znear = 0, zfar = 1.0;
-	float half_w = tw / 2.0f;
-	float half_h = th / 2.0f;
-	float half_d = (zfar - znear) / 2.0f;
+        struct pipe_viewport_state vp;
+        float znear = 0, zfar = 1.0;
+        float half_w = tw / 2.0f;
+        float half_h = th / 2.0f;
+        float half_d = (zfar - znear) / 2.0f;
 
-	vp.scale[0] = half_w;
-	vp.scale[1] = half_h;
-	vp.scale[2] = half_d;
+        vp.scale[0] = half_w;
+        vp.scale[1] = half_h;
+        vp.scale[2] = half_d;
 
-	vp.translate[0] = half_w + 0;
-	vp.translate[1] = half_h + 0;
-	vp.translate[2] = half_d + znear;
-	virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
+        vp.translate[0] = half_w + 0;
+        vp.translate[1] = half_h + 0;
+        vp.translate[2] = half_d + znear;
+        virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
     }
 
     /* draw */
     {
-	struct pipe_draw_info info;
-	memset(&info, 0, sizeof(info));
-	info.count = 3;
-	info.mode = PIPE_PRIM_TRIANGLES;
-	virgl_encoder_draw_vbo(&ctx, &info);
+        struct pipe_draw_info info;
+        memset(&info, 0, sizeof(info));
+        info.count = 3;
+        info.mode = PIPE_PRIM_TRIANGLES;
+        virgl_encoder_draw_vbo(&ctx, &info);
     }
 
     virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
@@ -450,13 +450,13 @@ START_TEST(virgl_test_render_simple)
     ck_assert_int_eq(ret, 0);
 
     do {
-	int fence;
+        int fence;
 
-	virgl_renderer_poll();
-	fence = testvirgl_get_last_fence();
-	if (fence >= 1)
-	    break;
-	nanosleep((struct timespec[]){{0, 50000}}, NULL);
+        virgl_renderer_poll();
+        fence = testvirgl_get_last_fence();
+        if (fence >= 1)
+            break;
+        nanosleep((struct timespec[]){{0, 50000}}, NULL);
     } while(1);
 
     /* read back the tri values in the resource */
@@ -470,16 +470,16 @@ START_TEST(virgl_test_render_simple)
     ck_assert_int_eq(ret, 0);
 
     {
-	int w, h;
-	bool all_cleared = true;
-	uint32_t *ptr = res.iovs[0].iov_base;
-	for (h = 0; h < th; h++) {
-	    for (w = 0; w < tw; w++) {
-		if (ptr[h * tw + w] != test_green)
-		    all_cleared = false;
-	    }
-	}
-	ck_assert_int_eq(all_cleared, false);
+        int w, h;
+        bool all_cleared = true;
+        uint32_t *ptr = res.iovs[0].iov_base;
+        for (h = 0; h < th; h++) {
+            for (w = 0; w < tw; w++) {
+                if (ptr[h * tw + w] != test_green)
+                    all_cleared = false;
+            }
+        }
+        ck_assert_int_eq(all_cleared, false);
     }
 
     /* cleanup */
@@ -580,130 +580,130 @@ START_TEST(virgl_test_render_geom_simple)
 
     /* create vertex shader */
     {
-	struct pipe_shader_state vs;
+        struct pipe_shader_state vs;
          const char *text =
-	   "VERT\n"
-	   "DCL IN[0]\n"
-	   "DCL IN[1]\n"
-	   "DCL OUT[0], POSITION\n"
-	   "DCL OUT[1], GENERIC[20]\n"
-	   "  0: MOV OUT[1], IN[1]\n"
-	   "  1: MOV OUT[0], IN[0]\n"
-	   "  2: END\n";
-	 memset(&vs, 0, sizeof(vs));
-	 vs_handle = ctx_handle++;
-	 virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
-				   &vs, text);
+           "VERT\n"
+           "DCL IN[0]\n"
+           "DCL IN[1]\n"
+           "DCL OUT[0], POSITION\n"
+           "DCL OUT[1], GENERIC[20]\n"
+           "  0: MOV OUT[1], IN[1]\n"
+           "  1: MOV OUT[0], IN[0]\n"
+           "  2: END\n";
+         memset(&vs, 0, sizeof(vs));
+         vs_handle = ctx_handle++;
+         virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
+                                   &vs, text);
          virgl_encode_bind_shader(&ctx, vs_handle, PIPE_SHADER_VERTEX);
     }
 
     /* create geometry shader */
     {
-	struct pipe_shader_state gs;
+        struct pipe_shader_state gs;
          const char *text =
-	   "GEOM\n"
-	   "PROPERTY GS_INPUT_PRIMITIVE TRIANGLES\n"
-	   "PROPERTY GS_OUTPUT_PRIMITIVE TRIANGLE_STRIP\n"
-	   "PROPERTY GS_MAX_OUTPUT_VERTICES 3\n"
-	   "PROPERTY GS_INVOCATIONS 1\n"
-	   "DCL IN[][0], POSITION\n"
-	   "DCL IN[][1], GENERIC[20]\n"
-	   "DCL OUT[0], POSITION\n"
-	   "DCL OUT[1], GENERIC[20]\n"
-	   "IMM[0] INT32 {0, 0, 0, 0}\n"
-	   "0:MOV OUT[0], IN[0][0]\n"
-	   "1:MOV OUT[1], IN[0][1]\n"
-	   "2:EMIT IMM[0].xxxx\n"
-	   "3:MOV OUT[0], IN[1][0]\n"
-	   "4:MOV OUT[1], IN[0][1]\n" /* copy color from input vertex 0 */
-	   "5:EMIT IMM[0].xxxx\n"
-	   "6:MOV OUT[0], IN[2][0]\n"
-	   "7:MOV OUT[1], IN[2][1]\n"
-	   "8:EMIT IMM[0].xxxx\n"
-	   "9:END\n";
-	 memset(&gs, 0, sizeof(gs));
-	 gs_handle = ctx_handle++;
-	 virgl_encode_shader_state(&ctx, gs_handle, PIPE_SHADER_GEOMETRY,
-				   &gs, text);
+           "GEOM\n"
+           "PROPERTY GS_INPUT_PRIMITIVE TRIANGLES\n"
+           "PROPERTY GS_OUTPUT_PRIMITIVE TRIANGLE_STRIP\n"
+           "PROPERTY GS_MAX_OUTPUT_VERTICES 3\n"
+           "PROPERTY GS_INVOCATIONS 1\n"
+           "DCL IN[][0], POSITION\n"
+           "DCL IN[][1], GENERIC[20]\n"
+           "DCL OUT[0], POSITION\n"
+           "DCL OUT[1], GENERIC[20]\n"
+           "IMM[0] INT32 {0, 0, 0, 0}\n"
+           "0:MOV OUT[0], IN[0][0]\n"
+           "1:MOV OUT[1], IN[0][1]\n"
+           "2:EMIT IMM[0].xxxx\n"
+           "3:MOV OUT[0], IN[1][0]\n"
+           "4:MOV OUT[1], IN[0][1]\n" /* copy color from input vertex 0 */
+           "5:EMIT IMM[0].xxxx\n"
+           "6:MOV OUT[0], IN[2][0]\n"
+           "7:MOV OUT[1], IN[2][1]\n"
+           "8:EMIT IMM[0].xxxx\n"
+           "9:END\n";
+         memset(&gs, 0, sizeof(gs));
+         gs_handle = ctx_handle++;
+         virgl_encode_shader_state(&ctx, gs_handle, PIPE_SHADER_GEOMETRY,
+                                   &gs, text);
          virgl_encode_bind_shader(&ctx, gs_handle, PIPE_SHADER_GEOMETRY);
     }
 
     /* create fragment shader */
     {
-	struct pipe_shader_state fs;
-	const char *text =
-	    "FRAG\n"
-	    "DCL IN[0], GENERIC[20], LINEAR\n"
-	    "DCL OUT[0], COLOR\n"
-	    "  0: MOV OUT[0], IN[0]\n"
-	    "  1: END\n";
-	memset(&fs, 0, sizeof(fs));
-	fs_handle = ctx_handle++;
-	virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
-				   &fs, text);
+        struct pipe_shader_state fs;
+        const char *text =
+            "FRAG\n"
+            "DCL IN[0], GENERIC[20], LINEAR\n"
+            "DCL OUT[0], COLOR\n"
+            "  0: MOV OUT[0], IN[0]\n"
+            "  1: END\n";
+        memset(&fs, 0, sizeof(fs));
+        fs_handle = ctx_handle++;
+        virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
+                                   &fs, text);
 
         virgl_encode_bind_shader(&ctx, fs_handle, PIPE_SHADER_FRAGMENT);
     }
 
     /* set blend state */
     {
-	struct pipe_blend_state blend;
-	int blend_handle = ctx_handle++;
-	memset(&blend, 0, sizeof(blend));
-	blend.rt[0].colormask = PIPE_MASK_RGBA;
-	virgl_encode_blend_state(&ctx, blend_handle, &blend);
-	virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
+        struct pipe_blend_state blend;
+        int blend_handle = ctx_handle++;
+        memset(&blend, 0, sizeof(blend));
+        blend.rt[0].colormask = PIPE_MASK_RGBA;
+        virgl_encode_blend_state(&ctx, blend_handle, &blend);
+        virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
     }
 
     /* set depth stencil alpha state */
     {
-	struct pipe_depth_stencil_alpha_state dsa;
-	int dsa_handle = ctx_handle++;
-	memset(&dsa, 0, sizeof(dsa));
-	dsa.depth.writemask = 1;
-	dsa.depth.func = PIPE_FUNC_LESS;
-	virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
-	virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
+        struct pipe_depth_stencil_alpha_state dsa;
+        int dsa_handle = ctx_handle++;
+        memset(&dsa, 0, sizeof(dsa));
+        dsa.depth.writemask = 1;
+        dsa.depth.func = PIPE_FUNC_LESS;
+        virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
+        virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
     }
 
     /* set rasterizer state */
     {
-	struct pipe_rasterizer_state rasterizer;
-	int rs_handle = ctx_handle++;
-	memset(&rasterizer, 0, sizeof(rasterizer));
-	rasterizer.cull_face = PIPE_FACE_NONE;
-	rasterizer.half_pixel_center = 1;
-	rasterizer.bottom_edge_rule = 1;
-	rasterizer.depth_clip = 1;
-	virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
-	virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
+        struct pipe_rasterizer_state rasterizer;
+        int rs_handle = ctx_handle++;
+        memset(&rasterizer, 0, sizeof(rasterizer));
+        rasterizer.cull_face = PIPE_FACE_NONE;
+        rasterizer.half_pixel_center = 1;
+        rasterizer.bottom_edge_rule = 1;
+        rasterizer.depth_clip = 1;
+        virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
+        virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
     }
 
     /* set viewport state */
     {
-	struct pipe_viewport_state vp;
-	float znear = 0, zfar = 1.0;
-	float half_w = tw / 2.0f;
-	float half_h = th / 2.0f;
-	float half_d = (zfar - znear) / 2.0f;
+        struct pipe_viewport_state vp;
+        float znear = 0, zfar = 1.0;
+        float half_w = tw / 2.0f;
+        float half_h = th / 2.0f;
+        float half_d = (zfar - znear) / 2.0f;
 
-	vp.scale[0] = half_w;
-	vp.scale[1] = half_h;
-	vp.scale[2] = half_d;
+        vp.scale[0] = half_w;
+        vp.scale[1] = half_h;
+        vp.scale[2] = half_d;
 
-	vp.translate[0] = half_w + 0;
-	vp.translate[1] = half_h + 0;
-	vp.translate[2] = half_d + znear;
-	virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
+        vp.translate[0] = half_w + 0;
+        vp.translate[1] = half_h + 0;
+        vp.translate[2] = half_d + znear;
+        virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
     }
 
     /* draw */
     {
-	struct pipe_draw_info info;
-	memset(&info, 0, sizeof(info));
-	info.count = 3;
-	info.mode = PIPE_PRIM_TRIANGLES;
-	virgl_encoder_draw_vbo(&ctx, &info);
+        struct pipe_draw_info info;
+        memset(&info, 0, sizeof(info));
+        info.count = 3;
+        info.mode = PIPE_PRIM_TRIANGLES;
+        virgl_encoder_draw_vbo(&ctx, &info);
     }
 
     virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
@@ -714,13 +714,13 @@ START_TEST(virgl_test_render_geom_simple)
     ck_assert_int_eq(ret, 0);
 
     do {
-	int fence;
+        int fence;
 
-	virgl_renderer_poll();
-	fence = testvirgl_get_last_fence();
-	if (fence >= 1)
-	    break;
-	nanosleep((struct timespec[]){{0, 50000}}, NULL);
+        virgl_renderer_poll();
+        fence = testvirgl_get_last_fence();
+        if (fence >= 1)
+            break;
+        nanosleep((struct timespec[]){{0, 50000}}, NULL);
     } while(1);
 
     /* read back the tri values in the resource */
@@ -734,16 +734,16 @@ START_TEST(virgl_test_render_geom_simple)
     ck_assert_int_eq(ret, 0);
 
     {
-	int w, h;
-	bool all_cleared = true;
-	uint32_t *ptr = res.iovs[0].iov_base;
-	for (h = 0; h < th; h++) {
-	    for (w = 0; w < tw; w++) {
-		if (ptr[h * tw + w] != test_green)
-		    all_cleared = false;
-	    }
-	}
-	ck_assert_int_eq(all_cleared, false);
+        int w, h;
+        bool all_cleared = true;
+        uint32_t *ptr = res.iovs[0].iov_base;
+        for (h = 0; h < th; h++) {
+            for (w = 0; w < tw; w++) {
+                if (ptr[h * tw + w] != test_green)
+                    all_cleared = false;
+            }
+        }
+        ck_assert_int_eq(all_cleared, false);
     }
 
     /* cleanup */
@@ -854,101 +854,101 @@ START_TEST(virgl_test_render_xfb)
 
     /* create vertex shader */
     {
-	struct pipe_shader_state vs;
+        struct pipe_shader_state vs;
          const char *text =
-	   "VERT\n"
-	   "DCL IN[0]\n"
-	   "DCL IN[1]\n"
-	   "DCL OUT[0], POSITION\n"
-	   "DCL OUT[1], COLOR\n"
-	   "  0: MOV OUT[1], IN[1]\n"
-	   "  1: MOV OUT[0], IN[0]\n"
-	   "  2: END\n";
-	 memset(&vs, 0, sizeof(vs));
-	 vs_handle = ctx_handle++;
-	 vs.stream_output.num_outputs = 1;
-	 vs.stream_output.stride[0] = 4;
-	 vs.stream_output.output[0].num_components = 4;
-	 virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
-				   &vs, text);
+           "VERT\n"
+           "DCL IN[0]\n"
+           "DCL IN[1]\n"
+           "DCL OUT[0], POSITION\n"
+           "DCL OUT[1], COLOR\n"
+           "  0: MOV OUT[1], IN[1]\n"
+           "  1: MOV OUT[0], IN[0]\n"
+           "  2: END\n";
+         memset(&vs, 0, sizeof(vs));
+         vs_handle = ctx_handle++;
+         vs.stream_output.num_outputs = 1;
+         vs.stream_output.stride[0] = 4;
+         vs.stream_output.output[0].num_components = 4;
+         virgl_encode_shader_state(&ctx, vs_handle, PIPE_SHADER_VERTEX,
+                                   &vs, text);
          virgl_encode_bind_shader(&ctx, vs_handle, PIPE_SHADER_VERTEX);
     }
 
     /* create fragment shader */
     {
-	struct pipe_shader_state fs;
-	const char *text =
-	    "FRAG\n"
-	    "DCL IN[0], COLOR, LINEAR\n"
-	    "DCL OUT[0], COLOR\n"
-	    "  0: MOV OUT[0], IN[0]\n"
-	    "  1: END\n";
-	memset(&fs, 0, sizeof(fs));
-	fs_handle = ctx_handle++;
-	virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
-				   &fs, text);
+        struct pipe_shader_state fs;
+        const char *text =
+            "FRAG\n"
+            "DCL IN[0], COLOR, LINEAR\n"
+            "DCL OUT[0], COLOR\n"
+            "  0: MOV OUT[0], IN[0]\n"
+            "  1: END\n";
+        memset(&fs, 0, sizeof(fs));
+        fs_handle = ctx_handle++;
+        virgl_encode_shader_state(&ctx, fs_handle, PIPE_SHADER_FRAGMENT,
+                                   &fs, text);
         virgl_encode_bind_shader(&ctx, fs_handle, PIPE_SHADER_FRAGMENT);
     }
 
     /* set blend state */
     {
-	struct pipe_blend_state blend;
-	int blend_handle = ctx_handle++;
-	memset(&blend, 0, sizeof(blend));
-	blend.rt[0].colormask = PIPE_MASK_RGBA;
-	virgl_encode_blend_state(&ctx, blend_handle, &blend);
-	virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
+        struct pipe_blend_state blend;
+        int blend_handle = ctx_handle++;
+        memset(&blend, 0, sizeof(blend));
+        blend.rt[0].colormask = PIPE_MASK_RGBA;
+        virgl_encode_blend_state(&ctx, blend_handle, &blend);
+        virgl_encode_bind_object(&ctx, blend_handle, VIRGL_OBJECT_BLEND);
     }
 
     /* set depth stencil alpha state */
     {
-	struct pipe_depth_stencil_alpha_state dsa;
-	int dsa_handle = ctx_handle++;
-	memset(&dsa, 0, sizeof(dsa));
-	dsa.depth.writemask = 1;
-	dsa.depth.func = PIPE_FUNC_LESS;
-	virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
-	virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
+        struct pipe_depth_stencil_alpha_state dsa;
+        int dsa_handle = ctx_handle++;
+        memset(&dsa, 0, sizeof(dsa));
+        dsa.depth.writemask = 1;
+        dsa.depth.func = PIPE_FUNC_LESS;
+        virgl_encode_dsa_state(&ctx, dsa_handle, &dsa);
+        virgl_encode_bind_object(&ctx, dsa_handle, VIRGL_OBJECT_DSA);
     }
 
     /* set rasterizer state */
     {
-	struct pipe_rasterizer_state rasterizer;
-	int rs_handle = ctx_handle++;
-	memset(&rasterizer, 0, sizeof(rasterizer));
-	rasterizer.cull_face = PIPE_FACE_NONE;
-	rasterizer.half_pixel_center = 1;
-	rasterizer.bottom_edge_rule = 1;
-	rasterizer.depth_clip = 1;
-	virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
-	virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
+        struct pipe_rasterizer_state rasterizer;
+        int rs_handle = ctx_handle++;
+        memset(&rasterizer, 0, sizeof(rasterizer));
+        rasterizer.cull_face = PIPE_FACE_NONE;
+        rasterizer.half_pixel_center = 1;
+        rasterizer.bottom_edge_rule = 1;
+        rasterizer.depth_clip = 1;
+        virgl_encode_rasterizer_state(&ctx, rs_handle, &rasterizer);
+        virgl_encode_bind_object(&ctx, rs_handle, VIRGL_OBJECT_RASTERIZER);
     }
 
     /* set viewport state */
     {
-	struct pipe_viewport_state vp;
-	float znear = 0, zfar = 1.0;
-	float half_w = tw / 2.0f;
-	float half_h = th / 2.0f;
-	float half_d = (zfar - znear) / 2.0f;
+        struct pipe_viewport_state vp;
+        float znear = 0, zfar = 1.0;
+        float half_w = tw / 2.0f;
+        float half_h = th / 2.0f;
+        float half_d = (zfar - znear) / 2.0f;
 
-	vp.scale[0] = half_w;
-	vp.scale[1] = half_h;
-	vp.scale[2] = half_d;
+        vp.scale[0] = half_w;
+        vp.scale[1] = half_h;
+        vp.scale[2] = half_d;
 
-	vp.translate[0] = half_w + 0;
-	vp.translate[1] = half_h + 0;
-	vp.translate[2] = half_d + znear;
-	virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
+        vp.translate[0] = half_w + 0;
+        vp.translate[1] = half_h + 0;
+        vp.translate[2] = half_d + znear;
+        virgl_encoder_set_viewport_states(&ctx, 0, 1, &vp);
     }
 
     /* draw */
     {
-	struct pipe_draw_info info;
-	memset(&info, 0, sizeof(info));
-	info.count = 3;
-	info.mode = PIPE_PRIM_TRIANGLES;
-	virgl_encoder_draw_vbo(&ctx, &info);
+        struct pipe_draw_info info;
+        memset(&info, 0, sizeof(info));
+        info.count = 3;
+        info.mode = PIPE_PRIM_TRIANGLES;
+        virgl_encoder_draw_vbo(&ctx, &info);
     }
 
     virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
@@ -959,13 +959,13 @@ START_TEST(virgl_test_render_xfb)
     ck_assert_int_eq(ret, 0);
 
     do {
-	int fence;
+        int fence;
 
-	virgl_renderer_poll();
-	fence = testvirgl_get_last_fence();
-	if (fence >= 1)
-	    break;
-	nanosleep((struct timespec[]){{0, 50000}}, NULL);
+        virgl_renderer_poll();
+        fence = testvirgl_get_last_fence();
+        if (fence >= 1)
+            break;
+        nanosleep((struct timespec[]){{0, 50000}}, NULL);
     } while(1);
 
     /* read back the tri values in the resource */
@@ -979,16 +979,16 @@ START_TEST(virgl_test_render_xfb)
     ck_assert_int_eq(ret, 0);
 
     {
-	int w, h;
-	bool all_cleared = true;
-	uint32_t *ptr = res.iovs[0].iov_base;
-	for (h = 0; h < th; h++) {
-	    for (w = 0; w < tw; w++) {
-		if (ptr[h * tw + w] != test_green)
-		    all_cleared = false;
-	    }
-	}
-	ck_assert_int_eq(all_cleared, false);
+        int w, h;
+        bool all_cleared = true;
+        uint32_t *ptr = res.iovs[0].iov_base;
+        for (h = 0; h < th; h++) {
+            for (w = 0; w < tw; w++) {
+                if (ptr[h * tw + w] != test_green)
+                    all_cleared = false;
+            }
+        }
+        ck_assert_int_eq(all_cleared, false);
     }
 
     /* cleanup */

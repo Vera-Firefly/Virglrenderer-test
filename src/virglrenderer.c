@@ -482,7 +482,7 @@ static int virgl_renderer_resource_get_info_common(int res_handle,
    info->fd = res->fd;
 
    if (!res->pipe_resource)
-	   return 0;
+      return 0;
 
    vrend_renderer_resource_get_info(res->pipe_resource,
                                     (struct vrend_renderer_resource_info *)info);

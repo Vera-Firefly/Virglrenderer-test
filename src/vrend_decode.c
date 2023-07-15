@@ -1181,7 +1181,7 @@ static int vrend_decode_bind_shader(struct vrend_context *ctx, const uint32_t *b
 }
 
 static int vrend_decode_set_tess_state(struct vrend_context *ctx,
-				       const uint32_t *buf, uint32_t length)
+                                       const uint32_t *buf, uint32_t length)
 {
    float tess_factors[6];
    int i;

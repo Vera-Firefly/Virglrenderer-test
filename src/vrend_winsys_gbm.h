@@ -67,10 +67,10 @@
 #define GBM_DEV_TYPE_FLAG_INTERNAL_LCD (1u << 6) /* Device is driving internal LCD. */
 
 struct gbm_device_info {
-	uint32_t dev_type_flags;
-	int dri_node_num; /* DRI node number (0..63), for easy matching of devices. */
-	unsigned int connectors;
-	unsigned int connected;
+   uint32_t dev_type_flags;
+   int dri_node_num; /* DRI node number (0..63), for easy matching of devices. */
+   unsigned int connectors;
+   unsigned int connected;
 };
 
 #define GBM_DETECT_FLAG_CONNECTED (1u << 0) /* Check if any connectors are connected. SLOW! */
@@ -78,7 +78,7 @@ struct gbm_device_info {
 #ifdef MINIGBM
 int gbm_detect_device_info(unsigned int detect_flags, int fd, struct gbm_device_info *info);
 int gbm_detect_device_info_path(unsigned int detect_flags, const char *dev_node,
-				struct gbm_device_info *info);
+                                struct gbm_device_info *info);
 
 /*
  * Create "default" gbm device. This can pick a different DRM device than

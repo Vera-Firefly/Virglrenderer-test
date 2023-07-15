@@ -817,12 +817,12 @@ void *virgl_egl_image_from_dmabuf(struct virgl_egl *egl,
             attrs[count++] = plane_offsets[i];
          }
 
-	 if (drm_modifier != DRM_FORMAT_MOD_INVALID) {
+         if (drm_modifier != DRM_FORMAT_MOD_INVALID) {
             attrs[count++] = EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT + i * 2;
             attrs[count++] = (uint32_t)drm_modifier;
             attrs[count++] = EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT + i * 2;
             attrs[count++] = (uint32_t)(drm_modifier >> 32);
-	 }
+         }
       }
    }
    attrs[count++] = EGL_NONE;
