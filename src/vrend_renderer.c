@@ -12842,6 +12842,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
       if (!gr)
          return ENOMEM;
 
+#ifdef HAVE_EPOXY_EGL_H
       if (egl) {
 #ifdef ENABLE_GBM
          int plane_fds[VIRGL_GBM_MAX_PLANES];
@@ -12884,13 +12885,16 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
             return ret;
          }
 
-#else /* HAVE_EPOXY_EGL_H */
+#else /* ENABLE_GBM */
          FREE(gr);
          vrend_printf("%s: no EGL/GBM support \n", __func__);
          return EINVAL;
 
-#endif /* HAVE_EPOXY_EGL_H */
+#endif /* ENABLE_GBM */
       } else {
+#else /* HAVE_EPOXY_EGL_H */
+      {
+#endif /* HAVE_EPOXY_EGL_H */
          int fd = -1;
          GLenum internalformat = tex_conv_table[gr->base.format].internalformat;
 
