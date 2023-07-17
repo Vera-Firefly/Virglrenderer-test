@@ -237,7 +237,7 @@ _dump_writemask(
    }
 }
 
-static void
+static bool
 dump_imm_data(struct tgsi_iterate_context *iter,
               union tgsi_immediate_data *data,
               unsigned num_tokens,
@@ -248,7 +248,8 @@ dump_imm_data(struct tgsi_iterate_context *iter,
 
    TXT( " {" );
 
-   assert( num_tokens <= 4 );
+   if (num_tokens > 4 )
+       return false;
    for (i = 0; i < num_tokens; i++) {
       switch (data_type) {
       case TGSI_IMM_FLOAT64: {
@@ -285,13 +286,14 @@ dump_imm_data(struct tgsi_iterate_context *iter,
          SID(data[i].Int);
          break;
       default:
-         assert( 0 );
+         return false;
       }
 
       if (i < num_tokens - 1)
          TXT( ", " );
    }
    TXT( "}" );
+   return true;
 }
 
 static boolean
@@ -521,8 +523,9 @@ iter_immediate(
    TXT( "] " );
    ENM( imm->Immediate.DataType, tgsi_immediate_type_names );
 
-   dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
-                 imm->Immediate.DataType);
+   if (!dump_imm_data(iter, imm->u, imm->Immediate.NrTokens - 1,
+                      imm->Immediate.DataType))
+       return false;
 
    EOL();
 

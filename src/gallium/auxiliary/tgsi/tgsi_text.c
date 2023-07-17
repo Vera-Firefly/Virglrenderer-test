@@ -1298,7 +1298,6 @@ static boolean parse_immediate_data(struct translate_ctx *ctx, unsigned type,
          ret = parse_int(&ctx->cur, &values[i].Int);
          break;
       default:
-         assert(0);
          ret = FALSE;
          break;
       }
@@ -1462,7 +1461,7 @@ static boolean parse_declaration( struct translate_ctx *ctx )
                      decl.SamplerView.ReturnTypeW = i;
                      break;
                   default:
-                     assert(0);
+                     return FALSE;
                   }
                   break;
                }

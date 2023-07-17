@@ -129,7 +129,7 @@ boolean
 tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx );
 
-void
+bool
 tgsi_parse_token(
    struct tgsi_parse_context *ctx );
 

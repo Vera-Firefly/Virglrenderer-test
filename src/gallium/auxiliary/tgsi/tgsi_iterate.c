@@ -45,7 +45,8 @@ tgsi_iterate_shader(
          goto fail;
 
    while (!tgsi_parse_end_of_tokens( &parse )) {
-      tgsi_parse_token( &parse );
+       if (!tgsi_parse_token( &parse ))
+           return false;
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_INSTRUCTION:
