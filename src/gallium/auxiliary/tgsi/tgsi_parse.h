@@ -69,10 +69,11 @@ struct tgsi_full_declaration
    struct tgsi_declaration_array Array;
 };
 
+#define TGSI_MAX_IMMEDIATE_PER_SLOT 4
 struct tgsi_full_immediate
 {
    struct tgsi_immediate   Immediate;
-   union tgsi_immediate_data u[4];
+   union tgsi_immediate_data u[TGSI_MAX_IMMEDIATE_PER_SLOT];
 };
 
 struct tgsi_full_property

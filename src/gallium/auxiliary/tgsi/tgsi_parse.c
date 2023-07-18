@@ -160,6 +160,9 @@ tgsi_parse_token(
 
       imm_count = imm->Immediate.NrTokens - 1;
 
+      if (imm_count > TGSI_MAX_IMMEDIATE_PER_SLOT)
+         return false;
+
       switch (imm->Immediate.DataType) {
       case TGSI_IMM_FLOAT32:
       case TGSI_IMM_FLOAT64:
