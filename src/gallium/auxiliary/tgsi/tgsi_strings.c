@@ -111,6 +111,8 @@ const char *tgsi_semantic_names[TGSI_SEMANTIC_COUNT] =
    "SUBGROUP_LT_MASK",
    "CS_USER_DATA_AMD",
    "VIEWPORT_MASK",
+   "TESS_DEFAULT_OUTER_LEVEL",
+   "TESS_DEFAULT_INNER_LEVEL"
 };
 
 const char *tgsi_texture_names[TGSI_TEXTURE_COUNT] =
