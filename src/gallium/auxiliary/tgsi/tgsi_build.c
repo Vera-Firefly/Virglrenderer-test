@@ -426,6 +426,9 @@ tgsi_build_full_declaration(
    dr = (struct tgsi_declaration_range *) &tokens[size];
    size++;
 
+   if (full_decl->Range.First > full_decl->Range.Last)
+      return 0;
+
    *dr = tgsi_build_declaration_range(
       full_decl->Range.First,
       full_decl->Range.Last,
