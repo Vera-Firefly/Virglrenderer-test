@@ -804,9 +804,9 @@ tgsi_dump_str(
    else
       ctx.base.dump_float_as_hex = FALSE;
 
-   tgsi_iterate_shader( tokens, &ctx.base.iter );
+   boolean success = tgsi_iterate_shader( tokens, &ctx.base.iter );
 
-   return !ctx.nospace;
+   return !ctx.nospace && success;
 }
 
 void
