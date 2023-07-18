@@ -207,6 +207,8 @@ tgsi_parse_token(
       if (inst->Instruction.Texture) {
          if (!next_token( ctx, &inst->Texture))
             return false;
+         if (inst->Texture.NumOffsets > TGSI_FULL_MAX_TEX_OFFSETS)
+            return false;
          for (i = 0; i < inst->Texture.NumOffsets; i++) {
             if (!next_token( ctx, &inst->TexOffsets[i] ))
                return false;
