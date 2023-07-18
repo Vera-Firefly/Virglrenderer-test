@@ -291,6 +291,10 @@ tgsi_parse_token(
       copy_token(&prop->Property, &token);
 
       prop_count = prop->Property.NrTokens - 1;
+
+      if (prop_count > TGSI_MAX_PROPERTY_DATA_SLOTS)
+         return false;
+
       for (i = 0; i < prop_count; i++) {
          if (!next_token(ctx, &prop->u[i]))
             return false;

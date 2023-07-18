@@ -70,6 +70,8 @@ struct tgsi_full_declaration
 };
 
 #define TGSI_MAX_IMMEDIATE_PER_SLOT 4
+#define TGSI_MAX_PROPERTY_DATA_SLOTS 8
+
 struct tgsi_full_immediate
 {
    struct tgsi_immediate   Immediate;
@@ -79,7 +81,7 @@ struct tgsi_full_immediate
 struct tgsi_full_property
 {
    struct tgsi_property   Property;
-   struct tgsi_property_data u[8];
+   struct tgsi_property_data u[TGSI_MAX_PROPERTY_DATA_SLOTS];
 };
 
 #define TGSI_FULL_MAX_DST_REGISTERS 2
