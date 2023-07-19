@@ -2596,21 +2596,6 @@ static inline GLenum to_gl_swizzle(enum pipe_swizzle swizzle)
    }
 }
 
-static inline enum pipe_swizzle to_pipe_swizzle(GLenum swizzle)
-{
-   switch (swizzle) {
-   case GL_RED: return PIPE_SWIZZLE_RED;
-   case GL_GREEN: return PIPE_SWIZZLE_GREEN;
-   case GL_BLUE: return PIPE_SWIZZLE_BLUE;
-   case GL_ALPHA: return PIPE_SWIZZLE_ALPHA;
-   case GL_ZERO: return PIPE_SWIZZLE_ZERO;
-   case GL_ONE: return PIPE_SWIZZLE_ONE;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
 int vrend_create_sampler_view(struct vrend_context *ctx,
                               uint32_t handle,
                               uint32_t res_handle, uint32_t format,
