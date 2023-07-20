@@ -3764,7 +3764,10 @@ translate_store(const struct dump_ctx *ctx,
 {
    const struct tgsi_full_dst_register *dst_reg = &inst->Dst[0];
 
-   assert(dinfo->dest_index >= 0);
+   if (dinfo->dest_index < 0) {
+      set_buf_error(glsl_strbufs);
+      return;
+   }
    if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
 
       /* bail out if we want to write to a non-existing image */
@@ -3879,7 +3882,9 @@ translate_load(const struct dump_ctx *ctx,
    if (src->Register.File == TGSI_FILE_IMAGE) {
 
       /* Bail out if we want to load from an image that is not actually used */
-      assert(sinfo->sreg_index >= 0);
+      if (sinfo->sreg_index < 0) {
+         return false;
+      }
       if (!((1 << sinfo->sreg_index) & ctx->images_used_mask))
             return false;
 
@@ -4451,7 +4456,8 @@ get_destination_info(struct dump_ctx *ctx,
          if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
             int basearrayidx = lookup_image_array(ctx, dst_reg->Register.Index);
             if (dst_reg->Register.Indirect) {
-               assert(dst_reg->Indirect.File == TGSI_FILE_ADDRESS);
+               if (dst_reg->Indirect.File != TGSI_FILE_ADDRESS)
+                  return false;
                strbuf_fmt(&dst_bufs[i], "%simg%d[addr%d + %d]", cname, basearrayidx, dst_reg->Indirect.Index, dst_reg->Register.Index - basearrayidx);
             } else
                strbuf_fmt(&dst_bufs[i], "%simg%d[%d]", cname, basearrayidx, dst_reg->Register.Index - basearrayidx);
@@ -4657,7 +4663,8 @@ get_source_info(struct dump_ctx *ctx,
 
       if (src->Register.Dimension) {
          if (src->Dimension.Indirect) {
-            assert(src->DimIndirect.File == TGSI_FILE_ADDRESS);
+            if (src->DimIndirect.File != TGSI_FILE_ADDRESS)
+               return false;
             sprintf(arrayname, "[addr%d]", src->DimIndirect.Index);
          } else
             sprintf(arrayname, "[%d]", src->Dimension.Index);
@@ -4811,10 +4818,12 @@ get_source_info(struct dump_ctx *ctx,
          if (src->Register.Dimension && src->Dimension.Index != 0) {
             dim = src->Dimension.Index;
             if (src->Dimension.Indirect) {
-               assert(src->DimIndirect.File == TGSI_FILE_ADDRESS);
+               if (src->DimIndirect.File != TGSI_FILE_ADDRESS)
+                  return false;
                ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
                if (src->Register.Indirect) {
-                  assert(src->Indirect.File == TGSI_FILE_ADDRESS);
+                  if (src->Indirect.File != TGSI_FILE_ADDRESS)
+                     return false;
                   strbuf_fmt(src_buf, "%s(%s%suboarr[addr%d].ubocontents[addr%d + %d]%s)", get_string(stypeprefix), prefix, cname, src->DimIndirect.Index, src->Indirect.Index, src->Register.Index, swizzle);
                } else
                   strbuf_fmt(src_buf, "%s(%s%suboarr[addr%d].ubocontents[%d]%s)", get_string(stypeprefix), prefix, cname, src->DimIndirect.Index, src->Register.Index, swizzle);
@@ -4864,7 +4873,8 @@ get_source_info(struct dump_ctx *ctx,
          if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
             int basearrayidx = lookup_image_array(ctx, src->Register.Index);
             if (src->Register.Indirect) {
-               assert(src->Indirect.File == TGSI_FILE_ADDRESS);
+               if (src->Indirect.File != TGSI_FILE_ADDRESS)
+                  return false;
                strbuf_fmt(src_buf, "%simg%d[addr%d + %d]", cname, basearrayidx, src->Indirect.Index, src->Register.Index - basearrayidx);
             } else
                strbuf_fmt(src_buf, "%simg%d[%d]", cname, basearrayidx, src->Register.Index - basearrayidx);
@@ -5058,7 +5068,8 @@ get_source_info(struct dump_ctx *ctx,
                if (ctx->abo_sizes[j] > 1) {
                   int offset = src->Register.Index - ctx->abo_offsets[j];
                   if (src->Register.Indirect) {
-                     assert(src->Indirect.File == TGSI_FILE_ADDRESS);
+                     if (src->Indirect.File != TGSI_FILE_ADDRESS)
+                        return false;
                      strbuf_fmt(src_buf, "ac%d_%d[addr%d + %d]", abo_idx, abo_offset, src->Indirect.Index, offset);
                   } else
                      strbuf_fmt(src_buf, "ac%d_%d[%d]", abo_idx, abo_offset, offset);
@@ -6707,7 +6718,10 @@ static void emit_ios_indirect_generics_input(const struct dump_ctx *ctx,
       if (size > 1)
          snprintf(array_handle, sizeof(array_handle), "[%d]", size);
 
-      assert(size < 256 && size >= 0);
+      if (size >= 256 || size < 0) {
+         set_buf_error(glsl_strbufs);
+         return;
+      }
 
       if (prefer_generic_io_block(ctx, io_in)) {
 
@@ -6768,14 +6782,21 @@ emit_ios_generic(const struct dump_ctx *ctx,
                 postfix);
 
       if (io->name == TGSI_SEMANTIC_GENERIC) {
-         assert(io->sid < 64);
+         if (io->sid >= 64) {
+            set_buf_error(glsl_strbufs);
+            return;
+         }
+
          if (iot == io_in) {
             generic_ios->match.inputs_emitted_mask |= 1ull << io->sid;
          } else {
             generic_ios->match.outputs_emitted_mask |= 1ull << io->sid;
          }
       } else if (io->name == TGSI_SEMANTIC_TEXCOORD) {
-         assert(io->sid < 8);
+         if (io->sid >= 8)  {
+            set_buf_error(glsl_strbufs);
+            return;
+         }
          if (iot == io_in) {
             texcoord_ios->match.inputs_emitted_mask |= 1ull << io->sid;
          } else {
@@ -6819,14 +6840,20 @@ emit_ios_generic(const struct dump_ctx *ctx,
 
          uint64_t mask = ((1ull << array_size) - 1) << io->sid;
          if (io->name == TGSI_SEMANTIC_GENERIC) {
-            assert(io->sid + array_size < 64);
+            if (io->sid + array_size >= 64)  {
+               set_buf_error(glsl_strbufs);
+               return;
+            }
             if (iot == io_in) {
                generic_ios->match.inputs_emitted_mask |= mask;
             } else {
                generic_ios->match.outputs_emitted_mask |= mask;
             }
          } else if (io->name == TGSI_SEMANTIC_TEXCOORD) {
-            assert(io->sid + array_size < 8);
+            if (io->sid + array_size > 8)  {
+               set_buf_error(glsl_strbufs);
+               return;
+            }
             if (iot == io_in) {
                texcoord_ios->match.inputs_emitted_mask |= mask;
             } else {
