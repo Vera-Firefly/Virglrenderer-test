@@ -209,7 +209,7 @@ struct dump_ctx {
    uint instno;
 
    struct vrend_strbuf src_bufs[4];
-   struct vrend_strbuf dst_bufs[3];
+   struct vrend_strbuf dst_bufs[TGSI_FULL_MAX_DST_REGISTERS];
 
    uint64_t interp_input_mask;
    uint32_t num_inputs;
@@ -4263,10 +4263,13 @@ static bool
 get_destination_info(struct dump_ctx *ctx,
                      const struct tgsi_full_instruction *inst,
                      struct dest_info *dinfo,
-                     struct vrend_strbuf dst_bufs[3],
-                     char fp64_dsts[3][255],
+                     struct vrend_strbuf dst_bufs[TGSI_FULL_MAX_DST_REGISTERS],
+                     char fp64_dsts[TGSI_FULL_MAX_DST_REGISTERS][255],
                      char *writemask)
 {
+   if (inst->Instruction.NumDstRegs > TGSI_FULL_MAX_DST_REGISTERS)
+      return false;
+
    const struct tgsi_full_dst_register *dst_reg;
    enum tgsi_opcode_type dtype = tgsi_opcode_infer_dst_type(inst->Instruction.Opcode);
 
@@ -4337,7 +4340,8 @@ get_destination_info(struct dump_ctx *ctx,
          dinfo->idstconv = IVEC4;
       }
 
-      if (dst_reg->Register.File == TGSI_FILE_OUTPUT) {
+      switch (dst_reg->Register.File) {
+      case TGSI_FILE_OUTPUT: {
          int j = find_io_index(ctx->num_outputs, ctx->outputs,
                                dst_reg->Register.Index);
 
@@ -4437,8 +4441,9 @@ get_destination_info(struct dump_ctx *ctx,
                break;
             }
          }
+         break;
       }
-      else if (dst_reg->Register.File == TGSI_FILE_TEMPORARY) {
+      case TGSI_FILE_TEMPORARY: {
          char temp_buf[64];
          get_temp(ctx, dst_reg->Register.Indirect, 0, dst_reg->Register.Index,
                   temp_buf, &ctx->require_dummy_value);
@@ -4450,8 +4455,9 @@ get_destination_info(struct dump_ctx *ctx,
                ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
             }
          }
+         break;
       }
-      else if (dst_reg->Register.File == TGSI_FILE_IMAGE) {
+      case TGSI_FILE_IMAGE: {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
             int basearrayidx = lookup_image_array(ctx, dst_reg->Register.Index);
@@ -4464,19 +4470,28 @@ get_destination_info(struct dump_ctx *ctx,
          } else
             strbuf_fmt(&dst_bufs[i], "%simg%d", cname, dst_reg->Register.Index);
          dinfo->dest_index = dst_reg->Register.Index;
-      } else if (dst_reg->Register.File == TGSI_FILE_BUFFER) {
+         break;
+      }
+      case TGSI_FILE_BUFFER: {
          char dst[128];
          make_ssbo_varstring(ctx, dst, dst_reg->Register.Index, dst_reg->Register.Indirect, dst_reg->Indirect.Index);
          strbuf_fmt(&dst_bufs[i], "%s", dst);
          dinfo->dest_index = dst_reg->Register.Index;
-      } else if (dst_reg->Register.File == TGSI_FILE_MEMORY) {
+         break;
+      }
+      case TGSI_FILE_MEMORY:
          strbuf_fmt(&dst_bufs[i], "values");
-      } else if (dst_reg->Register.File == TGSI_FILE_ADDRESS) {
+         break;
+      case TGSI_FILE_ADDRESS:
          strbuf_fmt(&dst_bufs[i], "addr%d", dst_reg->Register.Index);
+         break;
+      default:
+         /* illegal destination type */
+         return false;
       }
 
       if (dtype == TGSI_TYPE_DOUBLE) {
-         strcpy(fp64_dsts[i], dst_bufs[i].buf);
+         strncpy(fp64_dsts[i], dst_bufs[i].buf, sizeof(fp64_dsts[i]));
          strbuf_fmt(&dst_bufs[i], "fp64_dst[%d]%s", i, fp64_writemask);
          writemask[0] = 0;
       }
