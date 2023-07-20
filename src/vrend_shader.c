@@ -208,7 +208,7 @@ struct dump_ctx {
    struct vrend_glsl_strbufs glsl_strbufs;
    uint instno;
 
-   struct vrend_strbuf src_bufs[4];
+   struct vrend_strbuf src_bufs[TGSI_FULL_MAX_SRC_REGISTERS];
    struct vrend_strbuf dst_bufs[TGSI_FULL_MAX_DST_REGISTERS];
 
    uint64_t interp_input_mask;
@@ -4625,8 +4625,11 @@ static bool
 get_source_info(struct dump_ctx *ctx,
                 const struct tgsi_full_instruction *inst,
                 struct source_info *sinfo,
-                struct vrend_strbuf srcs[4], char src_swizzle0[16])
+                struct vrend_strbuf srcs[TGSI_FULL_MAX_SRC_REGISTERS], char src_swizzle0[16])
 {
+   if (inst->Instruction.NumSrcRegs > TGSI_FULL_MAX_SRC_REGISTERS)
+      return false;
+
    bool stprefix = false;
 
    enum vrend_type_qualifier stypeprefix = TYPE_CONVERSION_NONE;
@@ -4699,7 +4702,8 @@ get_source_info(struct dump_ctx *ctx,
 
       get_source_swizzle(src, swizzle_writer + swz_idx);
 
-      if (src->Register.File == TGSI_FILE_INPUT) {
+      switch (src->Register.File) {
+      case TGSI_FILE_INPUT: {
          int j = find_io_index(ctx->num_inputs, ctx->inputs, src->Register.Index);
          if (j < 0)
             return false;
@@ -4776,7 +4780,9 @@ get_source_info(struct dump_ctx *ctx,
                strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, input->glsl_name, arrayname, input->is_int ? "" : swizzle);
          }
          sinfo->override_no_wm[i] = input->override_no_wm;
-      } else if (src->Register.File == TGSI_FILE_OUTPUT) {
+         break;
+      }
+      case TGSI_FILE_OUTPUT: {
          int j = find_io_index(ctx->num_outputs, ctx->outputs, src->Register.Index);
          if (j < 0)
             return false;
@@ -4815,7 +4821,9 @@ get_source_info(struct dump_ctx *ctx,
             strbuf_fmt(src_buf, "%s(%s%s%s%s)", get_string(srcstypeprefix), prefix, output->glsl_name, arrayname, output->is_int ? "" : swizzle);
          }
          sinfo->override_no_wm[i] = output->override_no_wm;
-      } else if (src->Register.File == TGSI_FILE_TEMPORARY) {
+         break;
+         }
+      case TGSI_FILE_TEMPORARY: {
          struct vrend_temp_range *range = find_temp_range(ctx, src->Register.Index);
          if (!range)
             return false;
@@ -4827,7 +4835,9 @@ get_source_info(struct dump_ctx *ctx,
          get_temp(ctx, src->Register.Indirect, src->Indirect.Index, src->Register.Index,
                   temp_buf, &ctx->require_dummy_value);
          strbuf_fmt(src_buf, "%s%c%s%s%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, temp_buf, swizzle, stprefix ? ')' : ' ');
-      } else if (src->Register.File == TGSI_FILE_CONSTANT) {
+         break;
+      }
+      case TGSI_FILE_CONSTANT: {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          int dim = 0;
          if (src->Register.Dimension && src->Dimension.Index != 0) {
@@ -4870,7 +4880,9 @@ get_source_info(struct dump_ctx *ctx,
             } else
                strbuf_fmt(src_buf, "%s%s(%sconst%d[%d]%s)", prefix, get_string(csp), cname, dim, src->Register.Index, swizzle);
          }
-      } else if (src->Register.File == TGSI_FILE_SAMPLER) {
+         break;
+      }
+      case TGSI_FILE_SAMPLER: {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          if (ctx->info.indirect_files & (1 << TGSI_FILE_SAMPLER)) {
             int basearrayidx = lookup_sampler_array(ctx, src->Register.Index);
@@ -4883,7 +4895,8 @@ get_source_info(struct dump_ctx *ctx,
             strbuf_fmt(src_buf, "%ssamp%d%s", cname, src->Register.Index, swizzle);
          }
          sinfo->sreg_index = src->Register.Index;
-      } else if (src->Register.File == TGSI_FILE_IMAGE) {
+      } break;
+      case TGSI_FILE_IMAGE: {
          const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
          if (ctx->info.indirect_files & (1 << TGSI_FILE_IMAGE)) {
             int basearrayidx = lookup_image_array(ctx, src->Register.Index);
@@ -4896,108 +4909,112 @@ get_source_info(struct dump_ctx *ctx,
          } else
             strbuf_fmt(src_buf, "%simg%d%s", cname, src->Register.Index, swizzle);
          sinfo->sreg_index = src->Register.Index;
-      } else if (src->Register.File == TGSI_FILE_BUFFER) {
+      } break;
+      case  TGSI_FILE_BUFFER: {
          char src_str[128];
          make_ssbo_varstring(ctx, src_str, src->Register.Index, src->Register.Indirect, src->Indirect.Index);
          strbuf_fmt(src_buf, "%s", src_str);
          sinfo->sreg_index = src->Register.Index;
-      } else if (src->Register.File == TGSI_FILE_MEMORY) {
+      } break;
+      case  TGSI_FILE_MEMORY:
          strbuf_fmt(src_buf, "values");
          sinfo->sreg_index = src->Register.Index;
-      } else if (src->Register.File == TGSI_FILE_IMMEDIATE) {
-         if (src->Register.Index >= (int)ARRAY_SIZE(ctx->imm)) {
-            vrend_printf( "Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
-            return false;
-         }
-         struct immed *imd = &ctx->imm[src->Register.Index];
-         int idx = src->Register.SwizzleX;
-         char temp[48];
-         enum vrend_type_qualifier vtype = VEC4;
-         enum vrend_type_qualifier imm_stypeprefix = stypeprefix;
-
-         if ((inst->Instruction.Opcode == TGSI_OPCODE_TG4 && i == 1) ||
-             (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1))
-            stype = TGSI_TYPE_SIGNED;
-
-         if (imd->type == TGSI_IMM_UINT32 || imd->type == TGSI_IMM_INT32) {
-            if (imd->type == TGSI_IMM_UINT32)
-               vtype = UVEC4;
-            else
-               vtype = IVEC4;
-
-            if (stype == TGSI_TYPE_UNSIGNED && imd->type == TGSI_IMM_INT32)
-               imm_stypeprefix = UVEC4;
-            else if (stype == TGSI_TYPE_SIGNED && imd->type == TGSI_IMM_UINT32)
-               imm_stypeprefix = IVEC4;
-            else if (stype == TGSI_TYPE_FLOAT || stype == TGSI_TYPE_UNTYPED) {
-               if (imd->type == TGSI_IMM_INT32)
-                  imm_stypeprefix = INT_BITS_TO_FLOAT;
-               else
-                  imm_stypeprefix = UINT_BITS_TO_FLOAT;
-            } else if (stype == TGSI_TYPE_UNSIGNED || stype == TGSI_TYPE_SIGNED)
-               imm_stypeprefix = TYPE_CONVERSION_NONE;
-         } else if (imd->type == TGSI_IMM_FLOAT64) {
-            vtype = UVEC4;
-            if (stype == TGSI_TYPE_DOUBLE)
-               imm_stypeprefix = TYPE_CONVERSION_NONE;
-            else
-               imm_stypeprefix = UINT_BITS_TO_FLOAT;
-         }
-
-         /* build up a vec4 of immediates */
-         strbuf_fmt(src_buf, "%s%s(%s(", prefix,
-                    get_string(imm_stypeprefix), get_string(vtype));
-
-         for (uint32_t j = 0; j < 4; j++) {
-            if (j == 0)
-               idx = src->Register.SwizzleX;
-            else if (j == 1)
-               idx = src->Register.SwizzleY;
-            else if (j == 2)
-               idx = src->Register.SwizzleZ;
-            else if (j == 3)
-               idx = src->Register.SwizzleW;
-
-            if (inst->Instruction.Opcode == TGSI_OPCODE_TG4 && i == 1 && j == 0) {
-               if (imd->val[idx].ui > 0) {
-                  sinfo->tg4_has_component = true;
-                  if (!ctx->cfg->use_gles)
-                     ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
-               }
-            }
-
-            switch (imd->type) {
-            case TGSI_IMM_FLOAT32:
-               if (isinf(imd->val[idx].f) || isnan(imd->val[idx].f)) {
-                  ctx->shader_req_bits |= SHADER_REQ_INTS;
-                  snprintf(temp, 48, "uintBitsToFloat(%uU)", imd->val[idx].ui);
-               } else
-                  snprintf(temp, 25, "%.8g", imd->val[idx].f);
-               break;
-            case TGSI_IMM_UINT32:
-               snprintf(temp, 25, "%uU", imd->val[idx].ui);
-               break;
-            case TGSI_IMM_INT32:
-               snprintf(temp, 25, "%d", imd->val[idx].i);
-               sinfo->imm_value = imd->val[idx].i;
-               break;
-            case TGSI_IMM_FLOAT64:
-               snprintf(temp, 48, "%uU", imd->val[idx].ui);
-               break;
-            default:
-               vrend_printf( "unhandled imm type: %x\n", imd->type);
+         break;
+      case TGSI_FILE_IMMEDIATE: {
+            if (src->Register.Index >= (int)ARRAY_SIZE(ctx->imm)) {
+               vrend_printf( "Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
                return false;
             }
-            strbuf_append(src_buf, temp);
-            if (j < 3)
-               strbuf_append(src_buf, ",");
-            else {
-               snprintf(temp, 4, "))%c", isfloatabsolute ? ')' : 0);
-               strbuf_append(src_buf, temp);
+            struct immed *imd = &ctx->imm[src->Register.Index];
+            int idx = src->Register.SwizzleX;
+            char temp[48];
+            enum vrend_type_qualifier vtype = VEC4;
+            enum vrend_type_qualifier imm_stypeprefix = stypeprefix;
+
+            if ((inst->Instruction.Opcode == TGSI_OPCODE_TG4 && i == 1) ||
+                (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1))
+               stype = TGSI_TYPE_SIGNED;
+
+            if (imd->type == TGSI_IMM_UINT32 || imd->type == TGSI_IMM_INT32) {
+               if (imd->type == TGSI_IMM_UINT32)
+                  vtype = UVEC4;
+               else
+                  vtype = IVEC4;
+
+               if (stype == TGSI_TYPE_UNSIGNED && imd->type == TGSI_IMM_INT32)
+                  imm_stypeprefix = UVEC4;
+               else if (stype == TGSI_TYPE_SIGNED && imd->type == TGSI_IMM_UINT32)
+                  imm_stypeprefix = IVEC4;
+               else if (stype == TGSI_TYPE_FLOAT || stype == TGSI_TYPE_UNTYPED) {
+                  if (imd->type == TGSI_IMM_INT32)
+                     imm_stypeprefix = INT_BITS_TO_FLOAT;
+                  else
+                     imm_stypeprefix = UINT_BITS_TO_FLOAT;
+               } else if (stype == TGSI_TYPE_UNSIGNED || stype == TGSI_TYPE_SIGNED)
+                  imm_stypeprefix = TYPE_CONVERSION_NONE;
+            } else if (imd->type == TGSI_IMM_FLOAT64) {
+               vtype = UVEC4;
+               if (stype == TGSI_TYPE_DOUBLE)
+                  imm_stypeprefix = TYPE_CONVERSION_NONE;
+               else
+                  imm_stypeprefix = UINT_BITS_TO_FLOAT;
             }
-         }
-      } else if (src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-         for (uint32_t j = 0; j < ctx->num_system_values; j++)
+
+            /* build up a vec4 of immediates */
+            strbuf_fmt(src_buf, "%s%s(%s(", prefix,
+                       get_string(imm_stypeprefix), get_string(vtype));
+
+            for (uint32_t j = 0; j < 4; j++) {
+               if (j == 0)
+                  idx = src->Register.SwizzleX;
+               else if (j == 1)
+                  idx = src->Register.SwizzleY;
+               else if (j == 2)
+                  idx = src->Register.SwizzleZ;
+               else if (j == 3)
+                  idx = src->Register.SwizzleW;
+
+               if (inst->Instruction.Opcode == TGSI_OPCODE_TG4 && i == 1 && j == 0) {
+                  if (imd->val[idx].ui > 0) {
+                     sinfo->tg4_has_component = true;
+                     if (!ctx->cfg->use_gles)
+                        ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+                  }
+               }
+
+               switch (imd->type) {
+               case TGSI_IMM_FLOAT32:
+                  if (isinf(imd->val[idx].f) || isnan(imd->val[idx].f)) {
+                     ctx->shader_req_bits |= SHADER_REQ_INTS;
+                     snprintf(temp, 48, "uintBitsToFloat(%uU)", imd->val[idx].ui);
+                  } else
+                     snprintf(temp, 25, "%.8g", imd->val[idx].f);
+                  break;
+               case TGSI_IMM_UINT32:
+                  snprintf(temp, 25, "%uU", imd->val[idx].ui);
+                  break;
+               case TGSI_IMM_INT32:
+                  snprintf(temp, 25, "%d", imd->val[idx].i);
+                  sinfo->imm_value = imd->val[idx].i;
+                  break;
+               case TGSI_IMM_FLOAT64:
+                  snprintf(temp, 48, "%uU", imd->val[idx].ui);
+                  break;
+               default:
+                  vrend_printf( "unhandled imm type: %x\n", imd->type);
+                  return false;
+               }
+               strbuf_append(src_buf, temp);
+               if (j < 3)
+                  strbuf_append(src_buf, ",");
+               else {
+                  snprintf(temp, 4, "))%c", isfloatabsolute ? ')' : 0);
+                  strbuf_append(src_buf, temp);
+               }
+            }
+      }  break;
+      case  TGSI_FILE_SYSTEM_VALUE: {
+         for (uint32_t j = 0; j < ctx->num_system_values; j++) {
             if (ctx->system_values[j].first == src->Register.Index) {
                if (ctx->system_values[j].name == TGSI_SEMANTIC_VERTEXID ||
                    ctx->system_values[j].name == TGSI_SEMANTIC_INSTANCEID ||
@@ -5073,7 +5090,9 @@ get_source_info(struct dump_ctx *ctx,
                sinfo->override_no_wm[i] = ctx->system_values[j].override_no_wm;
                break;
             }
-      } else if (src->Register.File == TGSI_FILE_HW_ATOMIC) {
+         }
+      } break;
+      case TGSI_FILE_HW_ATOMIC: {
          for (uint32_t j = 0; j < ctx->num_abo; j++) {
             if (src->Dimension.Index == ctx->abo_idx[j] &&
                 src->Register.Index >= ctx->abo_offsets[j] &&
@@ -5094,11 +5113,14 @@ get_source_info(struct dump_ctx *ctx,
             }
          }
          sinfo->sreg_index = src->Register.Index;
+      } break;
+      default:
+         return false;
       }
 
       if (stype == TGSI_TYPE_DOUBLE) {
          boolean isabsolute = src->Register.Absolute;
-         strcpy(fp64_src, src_buf->buf);
+         strncpy(fp64_src, src_buf->buf, sizeof(fp64_src));
          strbuf_fmt(src_buf, "fp64_src[%d]", i);
          emit_buff(&ctx->glsl_strbufs, "%s.x = %spackDouble2x32(uvec2(%s%s))%s;\n", src_buf->buf, isabsolute ? "abs(" : "", fp64_src, swizzle, isabsolute ? ")" : "");
       }
