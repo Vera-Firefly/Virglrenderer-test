@@ -157,3 +157,5 @@ spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic
 spec@arb_get_texture_sub_image@arb_get_texture_sub_image-get
+spec@ext_packed_depth_stencil@depthstencil-render-miplevels 585 d=z24_s8
+dEQP-GLES31.functional.copy_image.non_compressed.viewclass_32_bits.rg16ui_r32f.texture3d_to_cubemap

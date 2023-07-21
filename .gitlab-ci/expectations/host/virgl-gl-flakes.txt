@@ -50,3 +50,33 @@ spec@!opengl 2.0@vertex-program-two-side enabled front front2@vs- gs and fs
 spec@!opengl 2.0@vertex-program-two-side front2 back2@gs-out and fs
 spec@!opengl 2.0@vertex-program-two-side front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic
+spec@!opengl 1.1@ppgtt_memory_alignment
+spec@!opengl 1.0@gl-1.0-drawbuffer-modes
+spec@ext_framebuffer_blit@fbo-blit-check-limits
+spec@arb_shader_storage_buffer_object@layout-std140-write-shader
+spec@ext_framebuffer_blit@fbo-sys-blit
+spec@arb_shader_atomic_counter_ops@execution@add
+spec@ext_framebuffer_blit@fbo-sys-sub-blit
+spec@!opengl 3.0@gl30basic
+spec@!opengl 1.0@gl-1.0-front-invalidate-back
+spec@arb_get_texture_sub_image@arb_get_texture_sub_image-getcompressed
+spec@!opengl 1.1@masked-clear
+shaders@glsl-uniform-interstage-limits@subdivide 5
+spec@ext_framebuffer_blit@fbo-sys-blit
+spec@!opengl 1.1@masked-clear
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@ext_framebuffer_blit@fbo-sys-sub-blit
+spec@!opengl 1.0@gl-1.0-drawbuffer-modes
+spec@!opengl 1.1@ppgtt_memory_alignment
+spec@!opengl 1.0@gl-1.0-front-invalidate-back
+spec@!opengl 3.0@gl30basic
+spec@ext_framebuffer_blit@fbo-blit-check-limits
+spec@ext_framebuffer_blit@fbo-sys-blit
+spec@ext_framebuffer_blit@fbo-sys-sub-blit
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@!opengl 1.0@gl-1.0-drawbuffer-modes
+spec@!opengl 1.0@gl-1.0-front-invalidate-back
+spec@ext_framebuffer_blit@fbo-blit-check-limits
+spec@!opengl 1.1@ppgtt_memory_alignment
+spec@!opengl 1.1@masked-clear
+spec@!opengl 3.0@gl30basic

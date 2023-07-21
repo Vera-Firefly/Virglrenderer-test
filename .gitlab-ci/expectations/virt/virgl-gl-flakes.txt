@@ -79,3 +79,15 @@ spec@!opengl 2.0@vertex-program-two-side front back@vs- gs and fs
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@gs-out and fs
 spec@!opengl 2.0@vertex-program-two-side front front2 back2@vs- gs and fs
 spec@!opengl 3.0@gl30basic
+spec@!opengl 3.0@gl30basic
+spec@!opengl 1.0@gl-1.0-front-invalidate-back
+KHR-GL31.transform_feedback.capture_special_interleaved_test
+KHR-GL30.shaders30.glsl_constructors.bvec4_from_mat4x2_vs
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@!opengl 1.0@gl-1.0-front-invalidate-back
+shaders@glsl-uniform-interstage-limits@subdivide 5
+spec@!opengl 3.0@gl30basic
+shaders@glsl-uniform-interstage-limits@subdivide 5- statechanges
+spec@!opengl 3.0@gl30basic
+shaders@glsl-uniform-interstage-limits@subdivide 5
+spec@!opengl 1.0@gl-1.0-front-invalidate-back

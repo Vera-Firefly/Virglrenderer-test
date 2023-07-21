@@ -7,24 +7,6 @@ dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two
 dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two_samples.multisample_rbo_2,Fail
 dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two_samples.multisample_texture_1,Fail
 dEQP-GLES31.functional.shaders.sample_variables.sample_mask_in.bit_count_per_two_samples.multisample_texture_2,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_dst_x,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_src_dst_x,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_src_dst_y,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_mag_reverse_src_x,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_dst_x,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_src_dst_x,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_src_dst_y,Fail
-dEQP-GLES3.functional.fbo.blit.rect.nearest_consistency_min_reverse_src_x,Fail
-KHR-GL30.transform_feedback.api_errors_test,Fail
-KHR-GL30.transform_feedback.draw_xfb_stream_instanced_test,Fail
-KHR-GL31.transform_feedback.draw_xfb_stream_instanced_test,Fail
-KHR-GL32.transform_feedback.draw_xfb_stream_instanced_test,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.advanced-single-stream-interleaved-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.advanced-single-stream-separate-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.basic-single-stream-interleaved-attribs,Fail
-KHR-GL32.transform_feedback_overflow_query_ARB.basic-single-stream-separate-attribs,Fail
 KHR-GL32.transform_feedback_overflow_query_ARB.multiple-streams-multiple-buffers-per-stream,Fail
 KHR-GL32.transform_feedback_overflow_query_ARB.multiple-streams-one-buffer-per-stream,Fail
 
@@ -375,9 +357,6 @@ spec@arb_texture_compression@texwrap formats bordercolor-swizzled@GL_COMPRESSED_
 spec@arb_texture_compression@texwrap formats bordercolor-swizzled@GL_COMPRESSED_RGB- swizzled- border color only,Fail
 spec@arb_texture_cube_map_array@arb_texture_cube_map_array-sampler-cube-array-shadow,Fail
 spec@arb_texture_cube_map_array@fbo-generatemipmap-cubemap array s3tc_dxt1,Fail
-spec@arb_texture_float@fbo-blending-formats,Fail
-spec@arb_texture_float@fbo-blending-formats@GL_RGB32F,Fail
-spec@arb_texture_float@texwrap formats bordercolor,Fail
 spec@arb_texture_float@texwrap formats bordercolor@GL_ALPHA16F_ARB- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor@GL_ALPHA32F_ARB- border color only,Fail
 spec@arb_texture_float@texwrap formats bordercolor@GL_INTENSITY16F_ARB- border color only,Fail
@@ -557,7 +536,6 @@ spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_y416,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yuv420,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yuyv,Fail
 spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yvu420,Fail
-spec@ext_packed_depth_stencil@depthstencil-render-miplevels 585 d=z24_s8,Fail
 spec@ext_packed_depth_stencil@texwrap formats bordercolor,Fail
 spec@ext_packed_depth_stencil@texwrap formats bordercolor@GL_DEPTH24_STENCIL8- border color only,Fail
 spec@ext_packed_depth_stencil@texwrap formats bordercolor-swizzled,Fail
@@ -3236,3 +3214,9 @@ spec@arb_viewport_array@display-list,Fail
 
 spec@khr_texture_compression_astc@void-extent-dl-bug,Crash
 
+KHR-GL31.transform_feedback.draw_xfb_stream_instanced_test,Fail
+KHR-GL32.transform_feedback.draw_xfb_stream_instanced_test,Fail
+KHR-GL30.transform_feedback.draw_xfb_stream_instanced_test,Fail
+KHR-GL30.transform_feedback.api_errors_test,Fail
+
+spec@arb_texture_float@texwrap formats bordercolor,Fail
