@@ -5014,29 +5014,34 @@ get_source_info(struct dump_ctx *ctx,
             }
       }  break;
       case  TGSI_FILE_SYSTEM_VALUE: {
+         bool sysvalue_found = false;
          for (uint32_t j = 0; j < ctx->num_system_values; j++) {
             if (ctx->system_values[j].first == src->Register.Index) {
-               if (ctx->system_values[j].name == TGSI_SEMANTIC_VERTEXID ||
-                   ctx->system_values[j].name == TGSI_SEMANTIC_INSTANCEID ||
-                   ctx->system_values[j].name == TGSI_SEMANTIC_PRIMID ||
-                   ctx->system_values[j].name == TGSI_SEMANTIC_VERTICESIN ||
-                   ctx->system_values[j].name == TGSI_SEMANTIC_INVOCATIONID ||
-                   ctx->system_values[j].name == TGSI_SEMANTIC_SAMPLEID) {
+               switch (ctx->system_values[j].name) {
+               case TGSI_SEMANTIC_VERTEXID:
+               case TGSI_SEMANTIC_INSTANCEID:
+               case TGSI_SEMANTIC_PRIMID:
+               case TGSI_SEMANTIC_VERTICESIN:
+               case TGSI_SEMANTIC_INVOCATIONID:
+               case TGSI_SEMANTIC_SAMPLEID:
                   if (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1)
                      strbuf_fmt(src_buf, "ivec4(%s)", ctx->system_values[j].glsl_name);
                   else
                      strbuf_fmt(src_buf, "%s(vec4(intBitsToFloat(%s)))", get_string(stypeprefix), ctx->system_values[j].glsl_name);
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_HELPER_INVOCATION) {
+                  break;
+               case TGSI_SEMANTIC_HELPER_INVOCATION:
                   strbuf_fmt(src_buf, "uvec4(%s)", ctx->system_values[j].glsl_name);
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_TESSINNER ||
-                        ctx->system_values[j].name == TGSI_SEMANTIC_TESSOUTER) {
+                  break;
+               case TGSI_SEMANTIC_TESSINNER:
+               case TGSI_SEMANTIC_TESSOUTER:
                   strbuf_fmt(src_buf, "%s(vec4(%s[%d], %s[%d], %s[%d], %s[%d]))",
                              prefix,
                              ctx->system_values[j].glsl_name, src->Register.SwizzleX,
                              ctx->system_values[j].glsl_name, src->Register.SwizzleY,
                              ctx->system_values[j].glsl_name, src->Register.SwizzleZ,
                              ctx->system_values[j].glsl_name, src->Register.SwizzleW);
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_SAMPLEPOS) {
+                  break;
+               case TGSI_SEMANTIC_SAMPLEPOS: {
                   /* gl_SamplePosition is a vec2, but TGSI_SEMANTIC_SAMPLEPOS
                    * is a vec4 with z = w = 0
                    */
@@ -5049,27 +5054,32 @@ get_source_info(struct dump_ctx *ctx,
                              components[src->Register.SwizzleY],
                              components[src->Register.SwizzleZ],
                              components[src->Register.SwizzleW]);
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_TESSCOORD) {
+                  break;
+               }
+               case TGSI_SEMANTIC_TESSCOORD:
                   strbuf_fmt(src_buf, "%s(vec4(%s.%c, %s.%c, %s.%c, %s.%c))",
                              prefix,
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleX),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleY),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleZ),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleW));
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_GRID_SIZE ||
-                          ctx->system_values[j].name == TGSI_SEMANTIC_THREAD_ID ||
-                          ctx->system_values[j].name == TGSI_SEMANTIC_BLOCK_ID) {
+                  break;
+               case TGSI_SEMANTIC_GRID_SIZE:
+               case TGSI_SEMANTIC_THREAD_ID:
+               case TGSI_SEMANTIC_BLOCK_ID: {
                   enum vrend_type_qualifier mov_conv = TYPE_CONVERSION_NONE;
                   if (inst->Instruction.Opcode == TGSI_OPCODE_MOV &&
                       inst->Dst[0].Register.File == TGSI_FILE_TEMPORARY)
-                    mov_conv = UINT_BITS_TO_FLOAT;
+                     mov_conv = UINT_BITS_TO_FLOAT;
                   strbuf_fmt(src_buf, "%s(uvec4(%s.%c, %s.%c, %s.%c, %s.%c))", get_string(mov_conv),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleX),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleY),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleZ),
                              ctx->system_values[j].glsl_name, get_swiz_char(src->Register.SwizzleW));
                   sinfo->override_no_cast[i] = true;
-               } else if (ctx->system_values[j].name == TGSI_SEMANTIC_SAMPLEMASK) {
+                  break;
+               }
+               case TGSI_SEMANTIC_SAMPLEMASK: {
                   const char *vec_type = "ivec4";
                   enum vrend_type_qualifier srcstypeprefix = TYPE_CONVERSION_NONE;
                   if (stypeprefix == TYPE_CONVERSION_NONE)
@@ -5085,12 +5095,18 @@ get_source_info(struct dump_ctx *ctx,
                      src->Register.SwizzleY == TGSI_SWIZZLE_X ? ctx->system_values[j].glsl_name : "0",
                      src->Register.SwizzleZ == TGSI_SWIZZLE_X ? ctx->system_values[j].glsl_name : "0",
                      src->Register.SwizzleW == TGSI_SWIZZLE_X ? ctx->system_values[j].glsl_name : "0");
-               } else
+                  break;
+               }
+               default:
                   strbuf_fmt(src_buf, "%s%s", prefix, ctx->system_values[j].glsl_name);
-               sinfo->override_no_wm[i] = ctx->system_values[j].override_no_wm;
+                  sinfo->override_no_wm[i] = ctx->system_values[j].override_no_wm;
+               }
+               sysvalue_found = true;
                break;
             }
          }
+         if (!sysvalue_found)
+            return false;
       } break;
       case TGSI_FILE_HW_ATOMIC: {
          for (uint32_t j = 0; j < ctx->num_abo; j++) {
