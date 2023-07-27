@@ -1375,10 +1375,16 @@ virgl_renderer_resource_import_blob(const struct virgl_renderer_resource_import_
 }
 
 int
-virgl_renderer_export_fence(uint32_t client_fence_id, int *fd)
+virgl_renderer_export_fence(uint64_t client_fence_id, int *fd)
 {
    TRACE_FUNC();
-   return vrend_renderer_export_ctx0_fence(client_fence_id, fd);
+
+   /* transfers FD ownership to caller */
+   *fd = virgl_fence_get_fd(client_fence_id);
+   if (*fd >= 0)
+      return 0;
+
+   return -EINVAL;
 }
 
 static int virgl_renderer_context_attach_in_fence(struct virgl_context *ctx,

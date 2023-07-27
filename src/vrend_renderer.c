@@ -60,6 +60,7 @@
 #include "virglrenderer.h"
 #include "virglrenderer_hw.h"
 #include "virgl_protocol.h"
+#include "virgl_fence.h"
 
 #include "tgsi/tgsi_text.h"
 
@@ -10858,8 +10859,18 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
       list_addtail(&fence->fences, &vrend_state.fence_wait_list);
       cnd_signal(&vrend_state.fence_cond);
       mtx_unlock(&vrend_state.fence_mutex);
-   } else
+   } else {
       list_addtail(&fence->fences, &vrend_state.fence_list);
+   }
+
+#ifdef HAVE_EPOXY_EGL_H
+   int fence_fd = -1;
+   if (vrend_renderer_export_ctx0_fence(fence_id, &fence_fd) == 0 &&
+       virgl_fence_set_fd(fence_id, fence_fd))
+      virgl_error("failed to export fence sync object\n");
+   if (fence_fd != -1)
+      close(fence_fd);
+#endif
    return 0;
 
  fail:
