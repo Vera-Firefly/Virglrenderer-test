@@ -1029,6 +1029,54 @@ START_TEST(virgl_test_large_shader)
 }
 END_TEST
 
+START_TEST(virgl_decode_set_scissor_state)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_scissor_state ss[PIPE_MAX_VIEWPORTS + 1] = {0};
+
+   int start_slot = 0;
+   int scissors_count = 2;
+
+   /* Here we are using correct values, no error expected */
+   ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
+   ck_assert_int_eq(ret, 0);
+   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ck_assert_int_eq(ret, 0);
+
+   /* Too many scissors for viewports */
+   start_slot = 0;
+   scissors_count = PIPE_MAX_VIEWPORTS + 1;
+
+   ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
+   ck_assert_int_eq(ret, 0);
+   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Using too large index to place scissors */
+   start_slot = PIPE_MAX_VIEWPORTS;
+   scissors_count = 2;
+
+   ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
+   ck_assert_int_eq(ret, 0);
+   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Combination of previous conditions */
+   start_slot = 2;
+   scissors_count = PIPE_MAX_VIEWPORTS - 2;
+
+   ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
+   ck_assert_int_eq(ret, 0);
+   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1043,6 +1091,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_render_simple);
   tcase_add_test(tc_core, virgl_test_render_geom_simple);
   tcase_add_test(tc_core, virgl_test_render_xfb);
+  tcase_add_test(tc_core, virgl_decode_set_scissor_state);
 
   suite_add_tcase(s, tc_core);
   return s;
