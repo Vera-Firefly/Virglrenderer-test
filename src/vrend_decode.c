@@ -881,31 +881,33 @@ static int vrend_decode_set_blend_color(struct vrend_context *ctx, const uint32_
 
 static int vrend_decode_set_scissor_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
-   struct pipe_scissor_state ss[PIPE_MAX_VIEWPORTS];
-   uint32_t temp;
-   int32_t num_scissor;
-   uint32_t start_slot;
-   int s;
    if (length < 1)
       return EINVAL;
 
    if ((length - 1) % 2)
       return EINVAL;
 
-   num_scissor = (length - 1) / 2;
+   const int32_t num_scissor = (length - 1) / 2;
    if (num_scissor > PIPE_MAX_VIEWPORTS)
       return EINVAL;
 
-   start_slot = get_buf_entry(buf, VIRGL_SET_SCISSOR_START_SLOT);
+   const uint32_t start_slot = get_buf_entry(buf, VIRGL_SET_SCISSOR_START_SLOT);
 
-   for (s = 0; s < num_scissor; s++) {
-      temp = get_buf_entry(buf, VIRGL_SET_SCISSOR_MINX_MINY(s));
-      ss[s].minx = temp & 0xffff;
-      ss[s].miny = (temp >> 16) & 0xffff;
+   if (start_slot >= PIPE_MAX_VIEWPORTS ||
+       start_slot + num_scissor > PIPE_MAX_VIEWPORTS) {
+      vrend_report_buffer_error(ctx, 0);
+      return EINVAL;
+   }
 
-      temp = get_buf_entry(buf, VIRGL_SET_SCISSOR_MAXX_MAXY(s));
-      ss[s].maxx = temp & 0xffff;
-      ss[s].maxy = (temp >> 16) & 0xffff;
+   struct pipe_scissor_state ss[PIPE_MAX_VIEWPORTS];
+   for (int s = 0; s < num_scissor; s++) {
+      const uint32_t minxy = get_buf_entry(buf, VIRGL_SET_SCISSOR_MINX_MINY(s));
+      ss[s].minx = minxy & 0xffff;
+      ss[s].miny = (minxy >> 16) & 0xffff;
+
+      const uint32_t maxxy = get_buf_entry(buf, VIRGL_SET_SCISSOR_MAXX_MAXY(s));
+      ss[s].maxx = maxxy & 0xffff;
+      ss[s].maxy = (maxxy >> 16) & 0xffff;
    }
 
    vrend_set_scissor_state(ctx, start_slot, num_scissor, ss);

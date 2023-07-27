@@ -9819,15 +9819,11 @@ void vrend_set_scissor_state(struct vrend_context *ctx,
                              uint32_t num_scissor,
                              struct pipe_scissor_state *ss)
 {
-   if (start_slot < PIPE_MAX_VIEWPORTS &&
-       start_slot + num_scissor <= PIPE_MAX_VIEWPORTS) {
-      for (uint i = 0; i < num_scissor; i++) {
-         uint idx = start_slot + i;
-         ctx->sub->ss[idx] = ss[i];
-         ctx->sub->scissor_state_dirty |= (1 << idx);
-      }
-   } else
-      vrend_report_buffer_error(ctx, 0);
+    for (uint i = 0; i < num_scissor; i++) {
+      uint idx = start_slot + i;
+      ctx->sub->ss[idx] = ss[i];
+      ctx->sub->scissor_state_dirty |= (1 << idx);
+    }
 }
 
 void vrend_set_polygon_stipple(struct vrend_context *ctx,
