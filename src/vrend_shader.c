@@ -1262,6 +1262,7 @@ struct syvalue_prop_map {
    [TGSI_SEMANTIC_SAMPLEID] = {"gl_SampleID", SHADER_REQ_SAMPLE_SHADING | SHADER_REQ_INTS, true},
    [TGSI_SEMANTIC_SAMPLEPOS] = { "gl_SamplePosition", SHADER_REQ_SAMPLE_SHADING, true},
    [TGSI_SEMANTIC_INVOCATIONID] = { "gl_InvocationID", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
+   [TGSI_SEMANTIC_VERTEXID_NOBASE] = {"(gl_VertexID - gl_BaseVertexARB)", SHADER_REQ_SHADER_DRAW_PARAMETERS | SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
    [TGSI_SEMANTIC_SAMPLEMASK] = {"gl_SampleMaskIn[0]", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
    [TGSI_SEMANTIC_PRIMID] = {"gl_PrimitiveID", SHADER_REQ_INTS | SHADER_REQ_GPU_SHADER5, true},
    [TGSI_SEMANTIC_TESSCOORD] = {"gl_TessCoord", SHADER_REQ_NONE, false},
@@ -5019,6 +5020,7 @@ get_source_info(struct dump_ctx *ctx,
             if (ctx->system_values[j].first == src->Register.Index) {
                switch (ctx->system_values[j].name) {
                case TGSI_SEMANTIC_VERTEXID:
+               case TGSI_SEMANTIC_VERTEXID_NOBASE:
                case TGSI_SEMANTIC_INSTANCEID:
                case TGSI_SEMANTIC_PRIMID:
                case TGSI_SEMANTIC_VERTICESIN:
