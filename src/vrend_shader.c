@@ -4835,7 +4835,7 @@ get_source_info(struct dump_ctx *ctx,
          char temp_buf[64];
          get_temp(ctx, src->Register.Indirect, src->Indirect.Index, src->Register.Index,
                   temp_buf, &ctx->require_dummy_value);
-         strbuf_fmt(src_buf, "%s%c%s%s%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, temp_buf, swizzle, stprefix ? ')' : ' ');
+         strbuf_fmt(src_buf, "%s%cvec4(%s%s)%s%c", get_string(stypeprefix), stprefix ? '(' : ' ', prefix, temp_buf, swizzle, stprefix ? ')' : ' ');
          break;
       }
       case TGSI_FILE_CONSTANT: {
@@ -4861,7 +4861,12 @@ get_source_info(struct dump_ctx *ctx,
                      strbuf_fmt(src_buf, "%s(%s%suboarr[%d].ubocontents[%d]%s)", get_string(stypeprefix), prefix, cname, dim - ctx->ubo_base, src->Register.Index, swizzle);
                } else {
                   if (src->Register.Indirect) {
-                     strbuf_fmt(src_buf, "%s(%s%subo%dcontents[addr0 + %d]%s)", get_string(stypeprefix), prefix, cname, dim, src->Register.Index, swizzle);
+                     if (src->Indirect.File != TGSI_FILE_ADDRESS)
+                        return false;
+                     strbuf_fmt(src_buf, "%s(%s%subo%dcontents[addr%d + %d]%s)",
+                                get_string(stypeprefix), prefix, cname, dim,
+                                src->Indirect.Index, src->Register.Index,
+                                swizzle);
                   } else
                      strbuf_fmt(src_buf, "%s(%s%subo%dcontents[%d]%s)", get_string(stypeprefix), prefix, cname, dim, src->Register.Index, swizzle);
                }
@@ -4877,7 +4882,11 @@ get_source_info(struct dump_ctx *ctx,
                csp = IVEC4;
 
             if (src->Register.Indirect) {
-               strbuf_fmt(src_buf, "%s%s(%sconst%d[addr0 + %d]%s)", prefix, get_string(csp), cname, dim, src->Register.Index, swizzle);
+               if (src->Indirect.File != TGSI_FILE_ADDRESS)
+                  return false;
+               strbuf_fmt(src_buf, "%s%s(%sconst%d[addr%d + %d]%s)", prefix,
+                          get_string(csp), cname, dim, src->Indirect.Index,
+                          src->Register.Index, swizzle);
             } else
                strbuf_fmt(src_buf, "%s%s(%sconst%d[%d]%s)", prefix, get_string(csp), cname, dim, src->Register.Index, swizzle);
          }
