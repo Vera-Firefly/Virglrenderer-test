@@ -11463,10 +11463,12 @@ void vrend_render_condition(struct vrend_context *ctx,
    GLenum glmode = 0;
 
    if (handle == 0) {
-      if (has_feature(feat_gl_conditional_render))
-         glEndConditionalRender();
-      else if (has_feature(feat_nv_conditional_render))
-         glEndConditionalRenderNV();
+      if (ctx->sub->cond_render_q_id != 0) {
+         if (has_feature(feat_gl_conditional_render))
+            glEndConditionalRender();
+         else if (has_feature(feat_nv_conditional_render))
+            glEndConditionalRenderNV();
+      }
       ctx->sub->cond_render_q_id = 0;
       ctx->sub->cond_render_gl_mode = 0;
       return;
