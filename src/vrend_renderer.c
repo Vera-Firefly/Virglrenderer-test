@@ -5742,11 +5742,6 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       sub_ctx->prim_mode = (int)info->mode;
    }
 
-   if (!sub_ctx->ve) {
-      vrend_printf("illegal VE setup - skipping renderering\n");
-      return 0;
-   }
-
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
        sub_ctx->needs_manual_srgb_encode_bitmask || sub_ctx->vbo_dirty)
       new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
@@ -5784,10 +5779,21 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    vrend_draw_bind_objects(sub_ctx, new_program);
    vrend_fill_sysval_uniform_block(sub_ctx);
 
-   if (has_feature(feat_gles31_vertex_attrib_binding))
-      vrend_draw_bind_vertex_binding(ctx, sub_ctx->ve);
-   else
-      vrend_draw_bind_vertex_legacy(ctx, sub_ctx->ve);
+   if (has_feature(feat_gles31_vertex_attrib_binding)) {
+      if (sub_ctx->ve) {
+         vrend_draw_bind_vertex_binding(ctx, sub_ctx->ve);
+      } else {
+         glBindVertexArray(sub_ctx->vaoid);
+      }
+   } else {
+      if (sub_ctx->ve) {
+         vrend_draw_bind_vertex_legacy(ctx, sub_ctx->ve);
+      } else {
+         struct vrend_vertex_element_array va;
+         va.count = 0;
+         vrend_draw_bind_vertex_legacy(ctx, &va);
+      }
+   }
 
    if (info->indexed) {
       struct vrend_resource *res = (struct vrend_resource *)sub_ctx->ib.buffer;
@@ -7571,9 +7577,8 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 
          glDisableVertexAttribArray(i);
       }
-      glDeleteVertexArrays(1, &sub->vaoid);
    }
-
+   glDeleteVertexArrays(1, &sub->vaoid);
    glBindVertexArray(0);
 
    if (sub->current_so)
@@ -12614,8 +12619,8 @@ void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
       sub->hw_blend_state.rt[i].colormask = 0xf;
    }
 
+   glGenVertexArrays(1, &sub->vaoid);
    if (!has_feature(feat_gles31_vertex_attrib_binding)) {
-      glGenVertexArrays(1, &sub->vaoid);
       glBindVertexArray(sub->vaoid);
    }
 
