@@ -114,6 +114,10 @@ struct virgl_video_codec {
    void *opaque;                                /* User opaque data */
 };
 
+struct virgl_video_supported_entry {
+    VAProfile profile;
+    VAEntrypoint entrypoints[16];
+};
 
 static VADisplay va_dpy;
 
@@ -576,6 +580,46 @@ void virgl_video_destroy(void)
     callbacks = NULL;
 }
 
+/* When entrypoint equals VAEntrypointNone, only match profile */
+static bool is_supported(VAProfile profile, VAEntrypoint entrypoint)
+{
+    /* The profiles and entrypoints that virgl video currently supported */
+    static const struct virgl_video_supported_entry tbl[] = {
+        {VAProfileMPEG2Simple,  {VAEntrypointVLD, 0}},
+        {VAProfileMPEG2Main,    {VAEntrypointVLD, 0}},
+        {VAProfileH264ConstrainedBaseline,
+                                {VAEntrypointVLD, VAEntrypointEncSlice, 0}},
+        {VAProfileH264Main,     {VAEntrypointVLD, VAEntrypointEncSlice, 0}},
+        {VAProfileH264High,     {VAEntrypointVLD, VAEntrypointEncSlice, 0}},
+        {VAProfileHEVCMain,     {VAEntrypointVLD, VAEntrypointEncSlice, 0}},
+        {VAProfileHEVCMain10,   {VAEntrypointVLD, VAEntrypointEncSlice, 0}},
+        {VAProfileJPEGBaseline, {VAEntrypointVLD, 0}},
+        {VAProfileVC1Simple,    {VAEntrypointVLD, 0}},
+        {VAProfileVC1Main,      {VAEntrypointVLD, 0}},
+        {VAProfileVC1Advanced,  {VAEntrypointVLD, 0}},
+        {VAProfileVP9Profile0,  {VAEntrypointVLD, 0}},
+        {VAProfileVP9Profile2,  {VAEntrypointVLD, 0}},
+        {VAProfileAV1Profile0,  {VAEntrypointVLD, 0}},
+        {VAProfileAV1Profile1,  {VAEntrypointVLD, 0}},
+    };
+
+    for (unsigned i = 0; i < ARRAY_SIZE(tbl); i++) {
+        if (tbl[i].profile == profile) {
+            if (entrypoint == VAEntrypointNone)
+                return true;
+
+            for (unsigned j = 0; j < ARRAY_SIZE(tbl[i].entrypoints) &&
+                 tbl[i].entrypoints[j] != 0; j++)
+                if (entrypoint == tbl[i].entrypoints[j])
+                    return true;
+
+            return false;
+        }
+    }
+
+    return false;
+}
+
 static int fill_vcaps_entry(VAProfile profile, VAEntrypoint entrypoint,
                             struct virgl_video_caps *vcaps)
 {
@@ -655,32 +699,15 @@ int virgl_video_fill_caps(union virgl_caps *caps)
 
     vaQueryConfigProfiles(va_dpy, profiles, &num_profiles);
     for (i = 0, caps->v2.num_video_caps = 0; i < num_profiles; i++) {
-        /* only support H.264 and H.265 now */
-        if (profiles[i] != VAProfileMPEG2Simple &&
-            profiles[i] != VAProfileMPEG2Main &&
-            profiles[i] != VAProfileH264Main &&
-            profiles[i] != VAProfileH264High &&
-            profiles[i] != VAProfileH264ConstrainedBaseline &&
-            profiles[i] != VAProfileHEVCMain &&
-            profiles[i] != VAProfileHEVCMain10 &&
-            profiles[i] != VAProfileJPEGBaseline &&
-            profiles[i] != VAProfileVC1Simple &&
-            profiles[i] != VAProfileVC1Main &&
-            profiles[i] != VAProfileVC1Advanced&&
-            profiles[i] != VAProfileVP9Profile0 &&
-            profiles[i] != VAProfileVP9Profile2 &&
-            profiles[i] != VAProfileAV1Profile0 &&
-            profiles[i] != VAProfileAV1Profile1)
-            continue;
+        if (!is_supported(profiles[i], VAEntrypointNone))
+		continue;
 
         vaQueryConfigEntrypoints(va_dpy, profiles[i],
                                  entrypoints, &num_entrypoints);
         for (j = 0; j < num_entrypoints &&
              caps->v2.num_video_caps < ARRAY_SIZE(caps->v2.video_caps); j++) {
-            /* support encoding and decoding */
-            if (VAEntrypointVLD != entrypoints[j] &&
-                VAEntrypointEncSlice != entrypoints[j])
-                continue;
+	    if (!is_supported(profiles[i], entrypoints[j]))
+		continue;
 
             fill_vcaps_entry(profiles[i], entrypoints[j],
                     &caps->v2.video_caps[caps->v2.num_video_caps++]);
