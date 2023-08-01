@@ -479,6 +479,5 @@ venus-lavapipe:
     DEQP_SUITE: venus
     GPU_VERSION: venus
     LP_NUM_THREADS: 1 # There will be FDO_CI_CONCURRENT Crosvm processes, so each should use a single thread
-    FDO_CI_CONCURRENT: 32 # Seems to be the fastest value, more gets actually slower
     CROSVM_MEMORY: 3072
     CROSVM_GPU_ARGS: "vulkan=true,gles=false,backend=virglrenderer,egl=true,surfaceless=true"
