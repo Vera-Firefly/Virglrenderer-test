@@ -1387,6 +1387,14 @@ virgl_renderer_export_fence(uint64_t client_fence_id, int *fd)
    return -EINVAL;
 }
 
+int virgl_renderer_export_signalled_fence(void)
+{
+   TRACE_FUNC();
+
+   /* transfers FD ownership to caller, returns -1 on failure */
+   return virgl_fence_get_last_signalled_fence_fd();
+}
+
 static int virgl_renderer_context_attach_in_fence(struct virgl_context *ctx,
                                                   uint64_t fence_id)
 {
