@@ -5465,8 +5465,8 @@ iter_instruction(struct tgsi_iterate_context *iter,
    struct dest_info dinfo = { 0 };
    struct source_info sinfo = { 0 };
    const char *srcs[4];
-   char *dsts[3];
-   char fp64_dsts[3][255];
+   char *dsts[TGSI_FULL_MAX_DST_REGISTERS];
+   char fp64_dsts[TGSI_FULL_MAX_DST_REGISTERS][255];
    uint instno = ctx->instno++;
    char writemask[6] = "";
    char src_swizzle0[16];
