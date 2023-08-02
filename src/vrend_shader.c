@@ -4491,7 +4491,7 @@ get_destination_info(struct dump_ctx *ctx,
       }
 
       if (dtype == TGSI_TYPE_DOUBLE) {
-         strncpy(fp64_dsts[i], dst_bufs[i].buf, sizeof(fp64_dsts[i]));
+         snprintf(fp64_dsts[i], sizeof(fp64_dsts[i]), "%s", dst_bufs[i].buf);
          strbuf_fmt(&dst_bufs[i], "fp64_dst[%d]%s", i, fp64_writemask);
          writemask[0] = 0;
       }
@@ -5136,7 +5136,7 @@ get_source_info(struct dump_ctx *ctx,
 
       if (stype == TGSI_TYPE_DOUBLE) {
          boolean isabsolute = src->Register.Absolute;
-         strncpy(fp64_src, src_buf->buf, sizeof(fp64_src));
+         snprintf(fp64_src, sizeof(fp64_src), "%s", src_buf->buf);
          strbuf_fmt(src_buf, "fp64_src[%d]", i);
          emit_buff(&ctx->glsl_strbufs, "%s.x = %spackDouble2x32(uvec2(%s%s))%s;\n", src_buf->buf, isabsolute ? "abs(" : "", fp64_src, swizzle, isabsolute ? ")" : "");
       }
