@@ -294,26 +294,6 @@ vkr_device_lookup_queue(struct vkr_device *dev,
 }
 
 static void
-vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
-                              struct vn_command_vkGetDeviceQueue *args)
-{
-   struct vkr_context *ctx = dispatch->data;
-
-   struct vkr_device *dev = vkr_device_from_handle(args->device);
-
-   struct vkr_queue *queue = vkr_device_lookup_queue(
-      dev, 0 /* flags */, args->queueFamilyIndex, args->queueIndex);
-   if (!queue) {
-      vkr_context_set_fatal(ctx);
-      return;
-   }
-
-   const vkr_object_id id =
-      vkr_cs_handle_load_id((const void **)args->pQueue, VK_OBJECT_TYPE_QUEUE);
-   vkr_queue_assign_object_id(ctx, queue, id);
-}
-
-static void
 vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkGetDeviceQueue2 *args)
 {
@@ -352,6 +332,27 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
    const vkr_object_id id =
       vkr_cs_handle_load_id((const void **)args->pQueue, VK_OBJECT_TYPE_QUEUE);
    vkr_queue_assign_object_id(ctx, queue, id);
+}
+
+static void
+vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
+                              struct vn_command_vkGetDeviceQueue *args)
+{
+   const VkDeviceQueueInfo2 info2 = {
+      .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2,
+      .pNext = NULL,
+      .flags = 0,
+      .queueFamilyIndex = args->queueFamilyIndex,
+      .queueIndex = args->queueIndex,
+   };
+
+   struct vn_command_vkGetDeviceQueue2 args2 = {
+      .device = args->device,
+      .pQueueInfo = &info2,
+      .pQueue = args->pQueue,
+   };
+
+   vkr_dispatch_vkGetDeviceQueue2(dispatch, &args2);
 }
 
 static void
