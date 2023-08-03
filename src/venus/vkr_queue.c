@@ -309,11 +309,11 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
       return;
    }
 
+   /* Ignore VkDeviceQueueTimelineInfoMESA if its ringIdx is 0. */
    const VkDeviceQueueTimelineInfoMESA *timeline_info = vkr_find_struct(
       args->pQueueInfo->pNext, VK_STRUCTURE_TYPE_DEVICE_QUEUE_TIMELINE_INFO_MESA);
-   if (timeline_info) {
-      if (timeline_info->ringIdx == 0 ||
-          timeline_info->ringIdx >= ARRAY_SIZE(ctx->sync_queues)) {
+   if (timeline_info && timeline_info->ringIdx != 0) {
+      if (timeline_info->ringIdx >= ARRAY_SIZE(ctx->sync_queues)) {
          vkr_log("invalid ring_idx %d", timeline_info->ringIdx);
          vkr_context_set_fatal(ctx);
          return;
