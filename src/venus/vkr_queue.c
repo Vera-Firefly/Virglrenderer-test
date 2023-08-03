@@ -264,6 +264,20 @@ vkr_queue_assign_ring_idx(struct vkr_context *ctx,
                           struct vkr_queue *queue,
                           uint32_t ring_idx)
 {
+   if (unlikely(queue->base.id)) {
+      /* Queue was fully initialized by a previous call to vkGetDeviceQueue*().
+       * The Vulkan spec allows this if all params are the same.
+       */
+      if (queue->ring_idx != ring_idx) {
+         vkr_log("refusing to rebind queue ring_idx from %u to %u",
+                 queue->ring_idx, ring_idx);
+         vkr_context_set_fatal(ctx);
+         return false;
+      }
+
+      return true;
+   }
+
    if (ring_idx == 0)
       return true;
 
