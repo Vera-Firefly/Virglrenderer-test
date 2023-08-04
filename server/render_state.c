@@ -94,11 +94,11 @@ render_state_lookup_context(uint32_t ctx_id)
 }
 
 static void
-render_state_cb_debug_logger(const char *fmt, va_list ap)
+render_state_cb_debug_logger(UNUSED enum virgl_log_level_flags log_level,
+                             const char *message,
+                             UNUSED void* user_data)
 {
-   char buf[1024];
-   vsnprintf(buf, sizeof(buf), fmt, ap);
-   render_log(buf);
+   render_log(message);
 }
 
 static void

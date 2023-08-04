@@ -12,7 +12,7 @@
 #include <stdint.h>
 
 #include "virgl_resource.h"
-#include "virgl_util.h"
+#include "virglrenderer.h"
 
 #define VKR_RENDERER_THREAD_SYNC (1u << 0)
 #define VKR_RENDERER_ASYNC_FENCE_CB (1u << 1)
@@ -22,7 +22,7 @@ typedef void (*vkr_renderer_retire_fence_callback_type)(uint32_t ctx_id,
                                                         uint64_t fence_id);
 
 struct vkr_renderer_callbacks {
-   virgl_debug_callback_type debug_logger;
+   virgl_log_callback_type debug_logger;
    vkr_renderer_retire_fence_callback_type retire_fence;
 };
 
