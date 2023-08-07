@@ -72,14 +72,6 @@ unsigned vrend_debug(const struct vrend_context *ctx, enum virgl_debug_flags fla
 
 void vrend_debug_add_flag(enum virgl_debug_flags flag);
 
-static inline void vrend_printf(const char *fmt, ...)
-{
-   va_list va;
-   va_start(va, fmt);
-   virgl_logv(VIRGL_LOG_LEVEL_INFO, fmt, va);
-   va_end(va);
-}
-
 #ifdef NDEBUG
 #define VREND_DEBUG_ENABLED (false)
 #else
