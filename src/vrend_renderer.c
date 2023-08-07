@@ -1243,11 +1243,11 @@ static void vrend_shader_dump(struct vrend_shader *shader)
 {
    const char *prefix = pipe_shader_to_prefix(shader->sel->type);
    if (shader->sel->tmp_buf)
-      vrend_printf("%s: %d TGSI:\n%s\n", prefix, shader->id, shader->sel->tmp_buf);
+      virgl_debug("%s: %d TGSI:\n%s\n", prefix, shader->id, shader->sel->tmp_buf);
 
-   vrend_printf("%s: %d GLSL:\n", prefix, shader->id);
+   virgl_debug("%s: %d GLSL:\n", prefix, shader->id);
    strarray_dump_with_line_numbers(&shader->glsl_strings);
-   vrend_printf("\n");
+   virgl_debug("\n");
 }
 
 static void vrend_shader_destroy(struct vrend_shader *shader)
@@ -1454,21 +1454,21 @@ static void dump_stream_out(struct pipe_stream_output_info *so)
    unsigned i;
    if (!so)
       return;
-   vrend_printf("streamout: %d\n", so->num_outputs);
-   vrend_printf("strides: ");
+   virgl_debug("streamout: %d\n", so->num_outputs);
+   virgl_debug("strides: ");
    for (i = 0; i < 4; i++)
-      vrend_printf("%d ", so->stride[i]);
-   vrend_printf("\n");
-   vrend_printf("outputs:\n");
+      virgl_debug("%d ", so->stride[i]);
+   virgl_debug("\n");
+   virgl_debug("outputs:\n");
    for (i = 0; i < so->num_outputs; i++) {
-      vrend_printf("\t%d: reg: %d sc: %d, nc: %d ob: %d do: %d st: %d\n",
-                   i,
-                   so->output[i].register_index,
-                   so->output[i].start_component,
-                   so->output[i].num_components,
-                   so->output[i].output_buffer,
-                   so->output[i].dst_offset,
-                   so->output[i].stream);
+      virgl_debug("\t%d: reg: %d sc: %d, nc: %d ob: %d do: %d st: %d\n",
+                  i,
+                  so->output[i].register_index,
+                  so->output[i].start_component,
+                  so->output[i].num_components,
+                  so->output[i].output_buffer,
+                  so->output[i].dst_offset,
+                  so->output[i].stream);
    }
 }
 
@@ -2854,9 +2854,9 @@ static
 void debug_texture(ASSERTED const char *f, const struct vrend_resource *gt)
 {
    ASSERTED const struct pipe_resource *pr = &gt->base;
-#define PRINT_TARGET(X) case X: vrend_printf( #X); break
+#define PRINT_TARGET(X) case X: virgl_debug( #X); break
    VREND_DEBUG_EXT(dbg_tex, NULL,
-               vrend_printf("%s: ", f);
+               virgl_debug("%s: ", f);
                switch (tgsitargettogltarget(pr->target, pr->nr_samples)) {
                PRINT_TARGET(GL_TEXTURE_RECTANGLE_NV);
                PRINT_TARGET(GL_TEXTURE_1D);
@@ -2868,11 +2868,11 @@ void debug_texture(ASSERTED const char *f, const struct vrend_resource *gt)
                PRINT_TARGET(GL_TEXTURE_CUBE_MAP);
                PRINT_TARGET(GL_TEXTURE_CUBE_MAP_ARRAY);
                default:
-                  vrend_printf("UNKNOWN");
+                  virgl_debug("UNKNOWN");
                }
-               vrend_printf(" id:%d pipe_type:%d ms:%d format:%s size: %dx%dx%d mip:%d\n",
-                            gt->id, pr->target, pr->nr_samples, util_format_name(pr->format),
-                            pr->width0, pr->height0, pr->depth0, pr->last_level);
+               virgl_debug(" id:%d pipe_type:%d ms:%d format:%s size: %dx%dx%d mip:%d\n",
+                           gt->id, pr->target, pr->nr_samples, util_format_name(pr->format),
+                           pr->width0, pr->height0, pr->depth0, pr->last_level);
                );
 #undef PRINT_TARGET
 }
@@ -12655,9 +12655,9 @@ unsigned vrend_context_has_debug_flag(const struct vrend_context *ctx, enum virg
 void vrend_print_context_name(const struct vrend_context *ctx)
 {
    if (ctx)
-      vrend_printf("%s: ", ctx->debug_name);
+      virgl_debug("%s: ", ctx->debug_name);
    else
-      vrend_printf("HOST: ");
+      virgl_debug("HOST: ");
 }
 
 

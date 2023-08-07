@@ -77,6 +77,14 @@ void virgl_prefixed_logv(const char *domain,
                          enum virgl_log_level_flags log_level,
                          const char *fmt, va_list va);
 
+static inline void PRINTFLIKE(1, 2) virgl_debug(const char *fmt, ...)
+{
+   va_list va;
+   va_start(va, fmt);
+   virgl_logv(VIRGL_LOG_LEVEL_DEBUG, fmt, va);
+   va_end(va);
+}
+
 static inline void PRINTFLIKE(1, 2) virgl_log(const char *fmt, ...)
 {
    va_list va;

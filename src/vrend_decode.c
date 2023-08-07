@@ -843,7 +843,7 @@ static int vrend_decode_destroy_object(struct vrend_context *ctx, const uint32_t
 
    VREND_DEBUG_EXT(dbg_object, ctx,
                uint32_t obj = (get_buf_entry(buf, 0) >> 8) & 0xFF;
-               vrend_printf("  DESTROY %-17s handle:0x%x\n",
+               virgl_debug("  DESTROY %-17s handle:0x%x\n",
                        vrend_get_object_type_name(obj), handle));
 
    vrend_renderer_object_destroy(ctx, handle);

@@ -326,31 +326,31 @@ static void fill_video_dma_buf(struct virgl_video_dma_buf *dmabuf,
     struct virgl_video_dma_buf_plane *plane;
 
 /*
-    virgl_log("surface: fourcc=0x%08x, size=%ux%u, num_objects=%u,
-              num_layers=%u\n", desc->fourcc, desc->width, desc->height,
-              desc->num_objects, desc->num_layers);
+    virgl_debug("surface: fourcc=0x%08x, size=%ux%u, num_objects=%u,
+                num_layers=%u\n", desc->fourcc, desc->width, desc->height,
+                desc->num_objects, desc->num_layers);
 
     for (i = 0; i < desc->num_objects; i++)
-        virgl_log("  objects[%u]: fd=%d, size=%u, modifier=0x%lx\n",
-                  i, desc->objects[i].fd, desc->objects[i].size,
-                  desc->objects[i].drm_format_modifier);
+        virgl_debug("  objects[%u]: fd=%d, size=%u, modifier=0x%lx\n",
+                    i, desc->objects[i].fd, desc->objects[i].size,
+                    desc->objects[i].drm_format_modifier);
 
     for (i = 0; i < desc->num_layers; i++)
-        virgl_log("  layers[%u] : format=0x%08x, num_planes=%u, "
-                  "obj=%u,%u,%u,%u, offset=%u,%u,%u,%u, pitch=%u,%u,%u,%u\n",
-                  i, desc->layers[i].drm_format, desc->layers[i].num_planes,
-                  desc->layers[i].object_index[0],
-                  desc->layers[i].object_index[1],
-                  desc->layers[i].object_index[2],
-                  desc->layers[i].object_index[3],
-                  desc->layers[i].offset[0],
-                  desc->layers[i].offset[1],
-                  desc->layers[i].offset[2],
-                  desc->layers[i].offset[3],
-                  desc->layers[i].pitch[0],
-                  desc->layers[i].pitch[1],
-                  desc->layers[i].pitch[2],
-                  desc->layers[i].pitch[3]);
+        virgl_debug("  layers[%u] : format=0x%08x, num_planes=%u, "
+                    "obj=%u,%u,%u,%u, offset=%u,%u,%u,%u, pitch=%u,%u,%u,%u\n",
+                    i, desc->layers[i].drm_format, desc->layers[i].num_planes,
+                    desc->layers[i].object_index[0],
+                    desc->layers[i].object_index[1],
+                    desc->layers[i].object_index[2],
+                    desc->layers[i].object_index[3],
+                    desc->layers[i].offset[0],
+                    desc->layers[i].offset[1],
+                    desc->layers[i].offset[2],
+                    desc->layers[i].offset[3],
+                    desc->layers[i].pitch[0],
+                    desc->layers[i].pitch[1],
+                    desc->layers[i].pitch[2],
+                    desc->layers[i].pitch[3]);
 */
 
     dmabuf->drm_format = drm_format_from_va_fourcc(desc->fourcc);

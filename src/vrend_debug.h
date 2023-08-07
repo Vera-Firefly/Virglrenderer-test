@@ -90,7 +90,7 @@ static inline void vrend_printf(const char *fmt, ...)
    if (VREND_DEBUG_ENABLED && vrend_debug(ctx, flag)) \
       do { \
             vrend_print_context_name(ctx); \
-            vrend_printf(__VA_ARGS__); \
+            virgl_debug(__VA_ARGS__); \
       } while (0)
 
 #define VREND_DEBUG_EXT(flag, ctx, X) \
@@ -103,7 +103,7 @@ static inline void vrend_printf(const char *fmt, ...)
 #define VREND_DEBUG_NOCTX(flag, ctx, ...) \
    if (VREND_DEBUG_ENABLED && vrend_debug(ctx, flag)) \
       do { \
-            vrend_printf(__VA_ARGS__); \
+            virgl_debug(__VA_ARGS__); \
       } while (0)
 
 #endif
