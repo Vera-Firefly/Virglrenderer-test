@@ -280,6 +280,7 @@ static int vrend_decode_set_constant_buffer(struct vrend_context *ctx, const uin
 {
    uint32_t shader;
    int nc = (length - 2);
+   const float *data = NULL;
 
    if (length < 2)
       return EINVAL;
@@ -290,7 +291,10 @@ static int vrend_decode_set_constant_buffer(struct vrend_context *ctx, const uin
    if (shader >= PIPE_SHADER_TYPES)
       return EINVAL;
 
-   vrend_set_constants(ctx, shader, nc, get_buf_ptr(buf, VIRGL_SET_CONSTANT_BUFFER_DATA_START));
+   if (length > 2)
+      data = get_buf_ptr(buf, VIRGL_SET_CONSTANT_BUFFER_DATA_START);
+
+   vrend_set_constants(ctx, shader, nc, data);
    return 0;
 }
 
