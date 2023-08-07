@@ -867,6 +867,15 @@ vkr_dispatch_vkCmdSetColorWriteEnableEXT(
                 args->pColorWriteEnables);
 }
 
+static void
+vkr_dispatch_vkCmdSetVertexInputEXT(UNUSED struct vn_dispatch_context *dispatch,
+                                    struct vn_command_vkCmdSetVertexInputEXT *args)
+{
+   VKR_CMD_CALL(CmdSetVertexInputEXT, args, args->vertexBindingDescriptionCount,
+                args->pVertexBindingDescriptions, args->vertexAttributeDescriptionCount,
+                args->pVertexAttributeDescriptions);
+}
+
 void
 vkr_context_init_command_pool_dispatch(struct vkr_context *ctx)
 {
@@ -1015,4 +1024,7 @@ vkr_context_init_command_buffer_dispatch(struct vkr_context *ctx)
    /* VK_EXT_color_write_enable */
    dispatch->dispatch_vkCmdSetColorWriteEnableEXT =
       vkr_dispatch_vkCmdSetColorWriteEnableEXT;
+
+   /* VK_EXT_vertex_input_dynamic_state */
+   dispatch->dispatch_vkCmdSetVertexInputEXT = vkr_dispatch_vkCmdSetVertexInputEXT;
 }
