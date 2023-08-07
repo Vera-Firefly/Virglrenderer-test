@@ -1352,7 +1352,7 @@ static int vrend_decode_texture_barrier(struct vrend_context *ctx, const uint32_
 static int vrend_decode_set_debug_mask(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
    char *flagstring;
-   size_t slen = sizeof(uint32_t) * length;
+   size_t slen = sizeof(uint32_t) * (length - VIRGL_SET_DEBUG_FLAGSTRING_OFFSET);
 
    if (length < VIRGL_SET_DEBUG_FLAGS_MIN_SIZE)
       return EINVAL;
