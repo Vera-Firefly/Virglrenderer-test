@@ -336,7 +336,7 @@ static void vrend_video_encode_completed(
         feedback.stat = VIRGL_VIDEO_ENCODE_STAT_SUCCESS;
         feedback.coded_size = data_size;
     } else {
-        vrend_printf("unexcepted coded res type\n");
+        virgl_warn("unexcepted coded res type\n");
         feedback.stat = VIRGL_VIDEO_ENCODE_STAT_FAILURE;
         feedback.coded_size = 0;
     }
@@ -773,8 +773,8 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
     for (i = 0, num_bs = 0; i < num_buffers; i++) {
         res = vrend_renderer_ctx_res_lookup(ctx->ctx, buffer_handles[i]);
         if (!res || !res->ptr) {
-            vrend_printf("%s: bs res %d invalid or not found",
-                         __func__, buffer_handles[i]);
+            virgl_warn("%s: bs res %d invalid or not found",
+                       __func__, buffer_handles[i]);
             continue;
         }
 

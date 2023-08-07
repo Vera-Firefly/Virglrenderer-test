@@ -941,7 +941,7 @@ static bool client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool bloc
    EGLint egl_result = eglClientWaitSyncKHR(egl->egl_display, fence, 0,
                                             blocking ? EGL_FOREVER_KHR : 0);
    if (egl_result == EGL_FALSE)
-      vrend_printf("wait sync failed\n");
+      virgl_warn("Wait sync failed\n");
    return egl_result != EGL_TIMEOUT_EXPIRED_KHR;
 }
 
@@ -972,7 +972,7 @@ bool virgl_egl_client_wait_fence(struct virgl_egl *egl, EGLSyncKHR fence, bool b
    close(fd);
 
    if (ret < 0)
-      vrend_printf("wait sync failed\n");
+      virgl_warn("Wait sync failed\n");
    return ret != 0;
 #else
    return client_wait_fence(egl, fence, blocking);

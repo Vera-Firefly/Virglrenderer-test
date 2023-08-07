@@ -1119,7 +1119,7 @@ varying_bit_from_semantic_and_index(enum tgsi_semantic semantic, int index)
    case TGSI_SEMANTIC_PATCH:
       return VARYING_SLOT_PATCH0 + index;
    default:
-      vrend_printf("Warning: Bad TGSI semantic: %d/%d\n", semantic, index);
+      virgl_warn("Warning: Bad TGSI semantic: %d/%d\n", semantic, index);
       return 0;
    }
 }
@@ -1570,7 +1570,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          break;
       default:
-         vrend_printf("unhandled input semantic: %x\n", ctx->inputs[i].name);
+         virgl_warn("Unhandled input semantic: %x\n", ctx->inputs[i].name);
          break;
       }
 
@@ -1651,7 +1651,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
              iter->processor.Processor == TGSI_PROCESSOR_TESS_CTRL ||
              iter->processor.Processor == TGSI_PROCESSOR_TESS_EVAL) {
             if (ctx->outputs[i].first > 0)
-               vrend_printf("Illegal position input\n");
+               virgl_warn("Illegal position input\n");
             name_prefix = "gl_Position";
             ctx->outputs[i].glsl_predefined_no_emit = true;
             ctx->outputs[i].glsl_no_index = true;
@@ -1835,7 +1835,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
          }
          break;
       default:
-         vrend_printf("unhandled output semantic: %x\n", ctx->outputs[i].name);
+         virgl_warn("Unhandled output semantic: %x\n", ctx->outputs[i].name);
          break;
       }
 
@@ -6086,7 +6086,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_buff(&ctx->glsl_strbufs, "%s = uintBitsToFloat(clock2x32ARB());\n", dsts[0]);
       break;
    default:
-      vrend_printf("failed to convert opcode %d\n", inst->Instruction.Opcode);
+      virgl_warn("Failed to convert opcode %d\n", inst->Instruction.Opcode);
       break;
    }
 
@@ -6520,7 +6520,7 @@ const char *get_internalformat_string(int virgl_format, enum tgsi_return_type *s
       return "";
    default:
       *stype = TGSI_RETURN_TYPE_UNORM;
-      vrend_printf( "illegal format %d\n", virgl_format);
+      virgl_warn("Illegal format %d\n", virgl_format);
       return "";
    }
 }

@@ -1093,9 +1093,9 @@ static const char *vrend_core_profile_warn_strings[] = {
 static void __report_core_warn(const char *fname, struct vrend_context *ctx,
                                enum virgl_ctx_errors error)
 {
-   vrend_printf("%s: core profile violation reported %d \"%s\" %s\n", fname,
-                ctx->ctx_id, ctx->debug_name,
-                vrend_core_profile_warn_strings[error]);
+   virgl_warn("%s: core profile violation reported %d \"%s\" %s\n", fname,
+              ctx->ctx_id, ctx->debug_name,
+              vrend_core_profile_warn_strings[error]);
 }
 #define report_core_warn(ctx, error) __report_core_warn(__func__, ctx, error)
 
@@ -2519,7 +2519,7 @@ static void apply_sampler_border_color(GLuint sampler,
    if (has_feature(feat_sampler_border_colors)) {
       glSamplerParameterIuiv(sampler, GL_TEXTURE_BORDER_COLOR, colors);
    } else if (colors[0] || colors[1] || colors[2] || colors[3]) {
-      vrend_printf("sampler border color setting requested but not supported\n");
+      virgl_warn("Sampler border color setting requested but not supported\n");
    }
 }
 
@@ -3588,7 +3588,7 @@ static GLenum vrend_get_arb_format(enum virgl_formats format)
    case VIRGL_FORMAT_I32_SINT: return GL_R32I;
    case VIRGL_FORMAT_I32_UINT: return GL_R32UI;
    default:
-      vrend_printf("Texture format %s unsupported for texture buffers\n", util_format_name(format));
+      virgl_warn("Texture format %s unsupported for texture buffers\n", util_format_name(format));
       return GL_R8;
    }
 }
@@ -4838,7 +4838,7 @@ static GLenum get_gs_xfb_mode(GLenum mode)
    case GL_TRIANGLE_STRIP:
       return GL_TRIANGLES;
    default:
-      vrend_printf( "illegal gs transform feedback mode %d\n", mode);
+      virgl_warn("Illegal gs transform feedback mode %d\n", mode);
       return GL_POINTS;
    }
 }
@@ -4854,7 +4854,7 @@ static GLenum get_tess_xfb_mode(int mode, bool is_point_mode)
    case GL_LINES:
       return GL_LINES;
    default:
-      vrend_printf( "illegal gs transform feedback mode %d\n", mode);
+      virgl_warn("Illegal gs transform feedback mode %d\n", mode);
       return GL_POINTS;
    }
 }
@@ -4876,7 +4876,7 @@ static GLenum get_xfb_mode(GLenum mode)
    case GL_LINE_STRIP:
       return GL_LINES;
    default:
-      vrend_printf( "failed to translate TFB %d\n", mode);
+      virgl_warn("Failed to translate TFB %d\n", mode);
       return GL_POINTS;
    }
 }
@@ -4903,7 +4903,7 @@ static void vrend_draw_bind_vertex_legacy(struct vrend_context *ctx,
       res = (struct vrend_resource *)ctx->sub->vbo[vbo_index].base.buffer;
 
       if (!res) {
-         vrend_printf("cannot find vbo buf %d %d %d\n", i, va->count, ctx->sub->prog->ss[PIPE_SHADER_VERTEX]->sel->sinfo.num_inputs);
+         virgl_warn("Cannot find vbo buf %d %d %d\n", i, va->count, ctx->sub->prog->ss[PIPE_SHADER_VERTEX]->sel->sinfo.num_inputs);
          continue;
       }
 
@@ -4915,9 +4915,9 @@ static void vrend_draw_bind_vertex_legacy(struct vrend_context *ctx,
          } else loc = -1;
 
          if (loc == -1) {
-            vrend_printf("%s: cannot find loc %d %d %d\n", ctx->debug_name, i, va->count, ctx->sub->prog->ss[PIPE_SHADER_VERTEX]->sel->sinfo.num_inputs);
+            virgl_warn("%s: Cannot find loc %d %d %d\n", ctx->debug_name, i, va->count, ctx->sub->prog->ss[PIPE_SHADER_VERTEX]->sel->sinfo.num_inputs);
             if (i == 0) {
-               vrend_printf("%s: shader probably didn't compile - skipping rendering\n", ctx->debug_name);
+               virgl_warn("%s: Shader probably didn't compile - skipping rendering\n", ctx->debug_name);
                return;
             }
             continue;
@@ -4925,7 +4925,7 @@ static void vrend_draw_bind_vertex_legacy(struct vrend_context *ctx,
       }
 
       if (ve->type == GL_FALSE) {
-         vrend_printf("failed to translate vertex type - skipping render\n");
+         virgl_warn("Failed to translate vertex type - skipping render\n");
          return;
       }
 
@@ -5277,8 +5277,8 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
             break;
          default:
             /* This should not be possible, warn and set a default format. */
-            vrend_printf("%s: Unsupported format block bit size %d\n", __func__,
-                         util_format_get_blocksizebits(iview->vformat));
+            virgl_warn("%s: Unsupported format block bit size %d\n", __func__,
+                       util_format_get_blocksizebits(iview->vformat));
             format = GL_R8UI;
          }
 
@@ -5345,7 +5345,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
          access = GL_READ_WRITE;
          break;
       default:
-         vrend_printf( "Invalid access specified\n");
+         virgl_warn("Invalid access specified\n");
          return;
       }
 
@@ -6604,7 +6604,7 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
           glClipControl(GL_LOWER_LEFT, depthrule);
           ctx->sub->hw_rs_state.clip_halfz = state->clip_halfz;
        } else {
-          vrend_printf("No clip control supported\n");
+          virgl_warn("No clip control supported\n");
        }
    }
    if (state->flatshade_first != ctx->sub->hw_rs_state.flatshade_first) {
@@ -6660,7 +6660,7 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
          glCullFace(GL_FRONT_AND_BACK);
          break;
       default:
-         vrend_printf( "unhandled cull-face: %x\n", state->cull_face);
+         virgl_warn("Unhandled cull-face: %x\n", state->cull_face);
       }
       glEnable(GL_CULL_FACE);
    } else
@@ -6822,7 +6822,7 @@ void vrend_bind_sampler_states(struct vrend_context *ctx,
          state = vrend_object_lookup(ctx->sub->object_hash, handles[i], VIRGL_OBJECT_SAMPLER_STATE);
 
       if (!state && handles[i])
-         vrend_printf("Failed to bind sampler state (handle=%d)\n", handles[i]);
+         virgl_warn("Failed to bind sampler state (handle=%d)\n", handles[i]);
 
       if (state)
          state->sub_ctx = ctx->sub;
@@ -7056,7 +7056,7 @@ static bool do_wait(struct vrend_fence *fence, bool can_block)
    do {
       GLenum glret = glClientWaitSync(fence->glsyncobj, 0, timeout);
       if (glret == GL_WAIT_FAILED) {
-         vrend_printf( "wait sync failed: illegal fence object %p\n", fence->glsyncobj);
+         virgl_warn("Wait sync failed: illegal fence object %p\n", (void*) fence->glsyncobj);
       }
       done = glret != GL_TIMEOUT_EXPIRED;
    } while (!done && can_block);
@@ -7126,7 +7126,7 @@ static void wait_sync(struct vrend_fence *fence)
          ts.tv_sec += 5;
          ret = cnd_timedwait(&vrend_state.poll_cond, &vrend_state.poll_mutex, &ts);
          if (ret)
-            vrend_printf("timeout (5s) waiting for renderer poll() to finish.");
+            virgl_warn("timeout (5s) waiting for renderer poll() to finish.");
       } while (vrend_state.polling && ret);
    }
 
@@ -7156,7 +7156,7 @@ static int thread_sync(UNUSED void *arg)
    while (!vrend_state.stop_sync_thread) {
       if (LIST_IS_EMPTY(&vrend_state.fence_wait_list) &&
           cnd_wait(&vrend_state.fence_cond, &vrend_state.fence_mutex) != 0) {
-         vrend_printf( "error while waiting on condition\n");
+         virgl_warn("Error while waiting on condition\n");
          break;
       }
 
@@ -7298,7 +7298,7 @@ bool vrend_check_no_error(struct vrend_context *ctx)
 #ifdef CHECK_GL_ERRORS
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_UNKNOWN, err);
 #else
-      vrend_printf("GL error reported (%d) for context %d\n", err, ctx->ctx_id);
+      virgl_warn("GL error reported (%d) for context %d\n", err, ctx->ctx_id);
 #endif
       err = glGetError();
    }
@@ -7414,7 +7414,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
 
    if (!has_feature(feat_arb_robustness) &&
        !has_feature(feat_gles_khr_robustness)) {
-      vrend_printf("WARNING: running without ARB/KHR robustness in place may crash\n");
+      virgl_warn("Running without ARB/KHR robustness in place may crash\n");
    }
 
    /* callbacks for when we are cleaning up the object table */
@@ -7484,7 +7484,7 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
         if (vrend_clicbs->get_drm_fd)
             vrend_video_init(vrend_clicbs->get_drm_fd());
         else
-            vrend_printf("video disabled due to missing get_drm_fd\n");
+            virgl_warn("Video disabled due to missing get_drm_fd\n");
    }
 #endif
 
@@ -8378,7 +8378,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
        !(tex_conv_table[format].flags & VIRGL_TEXTURE_CAN_TARGET_RECTANGLE)) {
       /* for some guests this is the only usage of rect */
       if (pr->width0 != 1 || pr->height0 != 1) {
-         vrend_printf("Warning: specifying format incompatible with GL_TEXTURE_RECTANGLE_NV\n");
+         virgl_warn("Specifying format incompatible with GL_TEXTURE_RECTANGLE_NV\n");
       }
       gr->target = GL_TEXTURE_2D;
    }
@@ -8410,7 +8410,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
               format == VIRGL_FORMAT_NV21 ||
               format == VIRGL_FORMAT_YV12 ||
               format == VIRGL_FORMAT_P010) && glGetError() != GL_NO_ERROR) {
-            vrend_printf("glEGLImageTargetTexture2DOES maybe fail\n");
+            virgl_warn("glEGLImageTargetTexture2DOES maybe fail\n");
          }
       } else {
          virgl_error("Missing GL_OES_EGL_image extensions\n");
@@ -9276,13 +9276,13 @@ static void do_readpixels(struct vrend_resource *res,
           type != GL_INT && type != GL_FLOAT) {
          glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &imp);
          if (imp != (GLint)type) {
-            vrend_printf( "GL_IMPLEMENTATION_COLOR_READ_TYPE is not expected native type 0x%x != imp 0x%x\n", type, imp);
+            virgl_warn("GL_IMPLEMENTATION_COLOR_READ_TYPE is not expected native type 0x%x != imp 0x%x\n", type, imp);
          }
       }
       if (format != GL_RGBA && format != GL_RGBA_INTEGER) {
          glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &imp);
          if (imp != (GLint)format) {
-            vrend_printf( "GL_IMPLEMENTATION_COLOR_READ_FORMAT is not expected native format 0x%x != imp 0x%x\n", format, imp);
+            virgl_warn("GL_IMPLEMENTATION_COLOR_READ_FORMAT is not expected native format 0x%x != imp 0x%x\n", format, imp);
          }
       }
    }
@@ -10176,7 +10176,7 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
    //   "ERROR: GL_INVALID_VALUE in glCopyImageSubData(srcX or srcWidth exceeds image bounds)"
    if (has_bit(src_res->storage_bits, VREND_STORAGE_GBM_BUFFER) &&
        glGetError() != GL_NO_ERROR) {
-      vrend_printf("glCopyImageSubData maybe fail\n");
+      virgl_warn("glCopyImageSubData maybe fail\n");
    }
 }
 
@@ -11059,7 +11059,7 @@ static void vrend_renderer_check_queries(void)
 
    LIST_FOR_EACH_ENTRY_SAFE(query, stor, &vrend_state.waiting_query_list, waiting_queries) {
       if (!vrend_hw_switch_context_with_sub(query->ctx, query->sub_ctx_id)) {
-         vrend_printf("failed to switch to context (%d) with sub (%d) for query %u\n",
+         virgl_warn("Failed to switch to context (%d) with sub (%d) for query %u\n",
                       query->ctx->ctx_id, query->sub_ctx_id, query->id);
       }
       else if (!vrend_check_query(query)) {
@@ -11231,7 +11231,7 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
          err = EINVAL;
       break;
    default:
-      vrend_printf("unknown query object received %d\n", q->type);
+      virgl_warn("Unknown query object received %d\n", q->type);
       break;
    }
 
@@ -11494,7 +11494,7 @@ void vrend_render_condition(struct vrend_context *ctx,
       glmode = condition ? GL_QUERY_BY_REGION_NO_WAIT_INVERTED : GL_QUERY_BY_REGION_NO_WAIT;
       break;
    default:
-      vrend_printf( "unhandled condition %x\n", mode);
+      virgl_warn("Unhandled condition %x\n", mode);
    }
 
    ctx->sub->cond_render_q_id = q->id;
@@ -12323,7 +12323,7 @@ void vrend_renderer_fill_caps(uint32_t set, uint32_t version,
     * have cleaned up propperly, so read the error state until we are okay.
     */
    while ((err = glGetError()) != GL_NO_ERROR)
-      vrend_printf("%s: Entering with stale GL error: %d\n", __func__, err);
+      virgl_warn("%s: Entering with stale GL error: %d\n", __func__, err);
 
    if (vrend_state.use_gles) {
       gles_ver = epoxy_gl_version();
@@ -12475,7 +12475,7 @@ void vrend_renderer_attach_res_ctx(struct vrend_context *ctx,
             wrapper->resource = last;
             list_add(&wrapper->head, &ctx->untyped_resources);
          } else {
-            vrend_printf("dropping attached resource %d due to OOM\n", last->res_id);
+            virgl_warn("Dropping attached resource %d due to OOM\n", last->res_id);
          }
       }
 
