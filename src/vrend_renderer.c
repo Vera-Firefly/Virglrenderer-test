@@ -1069,9 +1069,9 @@ void vrend_report_context_error_internal(const char *fname, struct vrend_context
 {
    ctx->in_error = true;
    ctx->last_error = error;
-   vrend_printf("%s: context error reported %d \"%s\" %s %d\n", fname,
-                ctx->ctx_id, ctx->debug_name, vrend_ctx_error_strings[error],
-                value);
+   virgl_error("%s: context error reported %d \"%s\" %s %d\n", fname,
+               ctx->ctx_id, ctx->debug_name, vrend_ctx_error_strings[error],
+               value);
 }
 
 #define CORE_PROFILE_WARN_NONE 0
@@ -1317,7 +1317,7 @@ static bool vrend_compile_shader(struct vrend_sub_context *sub_ctx,
       int len;
       glGetShaderInfoLog(shader->id, 65536, &len, infolog);
       vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, 0);
-      vrend_printf("shader failed to compile\n%s\n", infolog);
+      virgl_error("Shader failed to compile\n%s\n", infolog);
       vrend_shader_dump(shader);
       return false;
    }
@@ -1798,7 +1798,7 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
             sprog->img_locs[shader_type][img_array->first + j] =
                vrend_get_uniform_location(sprog, name, shader_type);
             if (sprog->img_locs[shader_type][img_array->first + j] == -1)
-               vrend_printf( "failed to get uniform loc for image %s\n", name);
+               virgl_error("Failed to get uniform loc for image %s\n", name);
          }
       }
    } else if (mask) {
@@ -1808,7 +1808,7 @@ static void bind_image_locs(struct vrend_linked_shader_program *sprog,
             sprog->img_locs[shader_type][i] =
                vrend_get_uniform_location(sprog, name, shader_type);
             if (sprog->img_locs[shader_type][i] == -1)
-               vrend_printf( "failed to get uniform loc for image %s\n", name);
+               virgl_error("Failed to get uniform loc for image %s\n", name);
          } else {
             sprog->img_locs[shader_type][i] = -1;
          }
@@ -1826,7 +1826,7 @@ static bool vrend_link(GLuint id)
       char infolog[65536];
       int len;
       glGetProgramInfoLog(id, 65536, &len, infolog);
-      vrend_printf("Error linking program:\n%s\n", infolog);
+      virgl_error("Error linking program:\n%s\n", infolog);
       return false;
    }
    return true;
@@ -3165,7 +3165,7 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
    if (sub_ctx->nr_cbufs > 0 || sub_ctx->zsurf) {
       status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
       if (status != GL_FRAMEBUFFER_COMPLETE)
-         vrend_printf("failed to complete framebuffer 0x%x %s\n", status, ctx->debug_name);
+         virgl_error("Failed to complete framebuffer 0x%x %s\n", status, ctx->debug_name);
    }
 
    sub_ctx->shader_dirty = true;
@@ -4429,14 +4429,14 @@ int vrend_create_shader(struct vrend_context *ctx,
    } else {
       sel = vrend_object_lookup(sub_ctx->object_hash, handle, VIRGL_OBJECT_SHADER);
       if (!sel) {
-         vrend_printf( "got continuation without original shader %d\n", handle);
+         virgl_error("Got continuation without original shader %d\n", handle);
          ret = EINVAL;
          goto error;
       }
 
       offlen &= ~VIRGL_OBJ_SHADER_OFFSET_CONT;
       if (offlen != sel->buf_offset) {
-         vrend_printf( "Got mismatched shader continuation %d vs %d\n",
+         virgl_error("Got mismatched shader continuation %d vs %d\n",
                  offlen, sel->buf_offset);
          ret = EINVAL;
          goto error;
@@ -4451,7 +4451,7 @@ int vrend_create_shader(struct vrend_context *ctx,
           }
 
       if ((pkt_length_bytes + sel->buf_offset) > sel->buf_len) {
-         vrend_printf("Got too large shader continuation %d vs %d\n",
+         virgl_error("Got too large shader continuation %d vs %d\n",
                       pkt_length_bytes + sel->buf_offset, sel->buf_len);
          ret = EINVAL;
          goto error;
@@ -5611,7 +5611,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
    return new_program;
 
 fail:
-   vrend_printf( "failure to compile shader variants: %s\n", sub_ctx->parent->debug_name);
+   virgl_error("Failure to compile shader variants: %s\n", sub_ctx->parent->debug_name);
    return false;
 }
 
@@ -5747,7 +5747,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
 
    if (!sub_ctx->prog) {
-      vrend_printf("dropping rendering due to missing shaders: %s\n", ctx->debug_name);
+      virgl_error("Dropping rendering due to missing shaders: %s\n", ctx->debug_name);
       return 0;
    }
 
@@ -5798,7 +5798,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    if (info->indexed) {
       struct vrend_resource *res = (struct vrend_resource *)sub_ctx->ib.buffer;
       if (!res) {
-         vrend_printf( "VBO missing indexed array buffer\n");
+         virgl_error("VBO missing indexed array buffer\n");
          return 0;
       }
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, res->id);
@@ -5983,18 +5983,18 @@ void vrend_launch_grid(struct vrend_context *ctx,
       sub_ctx->cs_shader_dirty = false;
 
       if (!sub_ctx->shaders[PIPE_SHADER_COMPUTE]) {
-         vrend_printf("dropping rendering due to missing shaders: %s\n", ctx->debug_name);
+         virgl_error("Dropping rendering due to missing shaders: %s\n", ctx->debug_name);
          return;
       }
 
       vrend_shader_select(sub_ctx, sub_ctx->shaders[PIPE_SHADER_COMPUTE], &cs_dirty);
       if (!sub_ctx->shaders[PIPE_SHADER_COMPUTE]->current) {
-         vrend_printf( "failure to select compute shader variant: %s\n", ctx->debug_name);
+         virgl_error("Failure to select compute shader variant: %s\n", ctx->debug_name);
          return;
       }
       if (!sub_ctx->shaders[PIPE_SHADER_COMPUTE]->current->is_compiled) {
          if(!vrend_compile_shader(sub_ctx, sub_ctx->shaders[PIPE_SHADER_COMPUTE]->current)) {
-            vrend_printf( "failure to compile compute shader variant: %s\n", ctx->debug_name);
+            virgl_error("Failure to compile compute shader variant: %s\n", ctx->debug_name);
             return;
          }
       }
@@ -6019,7 +6019,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
    }
 
    if (!sub_ctx->prog) {
-      vrend_printf("%s: Skipping compute shader execution due to missing shaders: %s\n",
+      virgl_error("%s: Skipping compute shader execution due to missing shaders: %s\n",
                    __func__, ctx->debug_name);
       return;
    }
@@ -6213,7 +6213,7 @@ static void vrend_hw_emit_blend(struct vrend_sub_context *sub_ctx, struct pipe_b
          if (state->rt[i].blend_enable) {
             bool dual_src = util_blend_state_is_dual(&sub_ctx->blend_state, i);
             if (dual_src && !has_feature(feat_dual_src_blend)) {
-               vrend_printf( "dual src blend requested but not supported for rt %d\n", i);
+               virgl_error("Dual src blend requested but not supported for rt %d\n", i);
                continue;
             }
 
@@ -6239,7 +6239,7 @@ static void vrend_hw_emit_blend(struct vrend_sub_context *sub_ctx, struct pipe_b
       if (state->rt[0].blend_enable) {
          bool dual_src = util_blend_state_is_dual(&sub_ctx->blend_state, 0);
          if (dual_src && !has_feature(feat_dual_src_blend)) {
-            vrend_printf( "dual src blend requested but not supported for rt 0\n");
+            virgl_error("Dual src blend requested but not supported for rt 0\n");
          }
          glBlendFuncSeparate(translate_blend_factor(state->rt[0].rgb_src_factor),
                              translate_blend_factor(state->rt[0].rgb_dst_factor),
@@ -7189,13 +7189,13 @@ static void vrend_renderer_use_threaded_sync(void)
 
    vrend_state.sync_context = vrend_clicbs->create_gl_context_surfaceless(0, &ctx_params);
    if (vrend_state.sync_context == NULL) {
-      vrend_printf( "failed to create sync opengl context\n");
+      virgl_error("Failed to create sync opengl context\n");
       return;
    }
 
    vrend_state.eventfd = create_eventfd(0);
    if (vrend_state.eventfd == -1) {
-      vrend_printf( "Failed to create eventfd\n");
+      virgl_error("Failed to create eventfd\n");
       vrend_clicbs->destroy_gl_context_surfaceless(vrend_state.sync_context);
       return;
    }
@@ -7226,7 +7226,7 @@ static void vrend_debug_cb(UNUSED GLenum source, GLenum type, UNUSED GLuint id,
       return;
    }
 
-   vrend_printf( "ERROR: %s\n", message);
+   virgl_error("ERROR: %s\n", message);
 }
 
 static void vrend_pipe_resource_unref(struct pipe_resource *pres,
@@ -8022,13 +8022,13 @@ static void vrend_create_buffer(struct vrend_resource *gr, uint32_t width, uint3
          struct gbm_bo *bo = gbm_bo_create(gbm->device, width, 1,
                                            GBM_FORMAT_R8, GBM_BO_USE_LINEAR);
          if (!bo) {
-            vrend_printf("Failed to allocate emulated GL buffer backing storage");
+            virgl_error("Failed to allocate emulated GL buffer backing storage");
             return;
          }
 
          ret = virgl_gbm_export_fd(gbm->device, gbm_bo_get_handle(bo).u32, &fd);
          if (ret || fd < 0) {
-            vrend_printf("Failed to get file descriptor\n");
+            virgl_error("Failed to get file descriptor\n");
             return;
          }
 
@@ -8046,7 +8046,7 @@ static void vrend_create_buffer(struct vrend_resource *gr, uint32_t width, uint3
       }
 #endif
       else {
-         vrend_printf("Missing buffer storage and interop extensions\n");
+         virgl_error("Missing buffer storage and interop extensions\n");
          return;
       }
 
@@ -8111,7 +8111,7 @@ vrend_resource_alloc_buffer(struct vrend_resource *gr, uint32_t flags)
       }
       vrend_create_buffer(gr, size, flags);
    } else {
-      vrend_printf("%s: Illegal buffer binding flags 0x%x\n", __func__, bind);
+      virgl_error("%s: Illegal buffer binding flags 0x%x\n", __func__, bind);
       return -EINVAL;
    }
 
@@ -8413,7 +8413,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
             vrend_printf("glEGLImageTargetTexture2DOES maybe fail\n");
          }
       } else {
-         vrend_printf( "missing GL_OES_EGL_image extensions\n");
+         virgl_error("Missing GL_OES_EGL_image extensions\n");
          glBindTexture(gr->target, 0);
          return EINVAL;
       }
@@ -8424,7 +8424,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       gltype = tex_conv_table[format].gltype;
 
       if (internalformat == 0) {
-         vrend_printf("unknown format is %d\n", pr->format);
+         virgl_error("Unknown format is %d\n", pr->format);
          glBindTexture(gr->target, 0);
          return EINVAL;
       }
@@ -8547,7 +8547,7 @@ vrend_resource_create(const struct vrend_renderer_resource_create_args *args)
 
    ret = check_resource_valid(args, error_string);
    if (ret) {
-      vrend_printf("%s, Illegal resource parameters, error: %s\n", __func__, error_string);
+      virgl_error("%s, Illegal resource parameters, error: %s\n", __func__, error_string);
       return NULL;
    }
 
@@ -8930,7 +8930,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       glBindBufferARB(res->target, res->id);
       data = glMapBufferRange(res->target, info->box->x, info->box->width, map_flags);
       if (data == NULL) {
-         vrend_printf("map failed for element buffer\n");
+         virgl_error("Map failed for element buffer\n");
          vrend_read_from_iovec_cb(iov, num_iovs, info->offset, info->box->width, &iov_buffer_upload, &d);
       } else {
          vrend_read_from_iovec(iov, num_iovs, info->offset, data, info->box->width);
@@ -9349,7 +9349,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
       send_size = util_format_get_nblocks(res->base.format, info->box->width, info->box->height) * info->box->depth * util_format_get_blocksize(res->base.format);
       data = malloc(send_size);
       if (!data) {
-         vrend_printf("malloc failed %d\n", send_size);
+         virgl_error("Memory allocation failed for %d\n", send_size);
          return ENOMEM;
       }
    } else {
@@ -9496,7 +9496,7 @@ static int vrend_renderer_transfer_send_iov(struct vrend_context *ctx,
       glBindBufferARB(res->target, res->id);
       data = glMapBufferRange(res->target, info->box->x, info->box->width, GL_MAP_READ_BIT);
       if (!data)
-         vrend_printf("unable to open buffer for reading %d\n", res->target);
+         virgl_error("Unable to open buffer for reading %d\n", res->target);
       else
          vrend_write_to_iovec(iov, num_iovs, info->offset, data, send_size);
       glUnmapBuffer(res->target);
@@ -10003,7 +10003,7 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
       cube_slice = 6;
 
    if (src_res->base.format != dst_res->base.format) {
-      vrend_printf( "copy fallback failed due to mismatched formats %d %d\n", src_res->base.format, dst_res->base.format);
+      virgl_error("Copy fallback failed due to mismatched formats %d %d\n", src_res->base.format, dst_res->base.format);
       return;
    }
 
@@ -10855,7 +10855,7 @@ int vrend_renderer_create_fence(struct vrend_context *ctx,
    return 0;
 
  fail:
-   vrend_printf( "failed to create fence sync object\n");
+   virgl_error("Failed to create fence sync object\n");
    free(fence);
    return ENOMEM;
 }
@@ -12715,7 +12715,7 @@ int vrend_renderer_get_poll_fd(void)
 {
    int fd = vrend_state.eventfd;
    if (vrend_state.use_async_fence_cb && fd < 0)
-      vrend_printf("failed to duplicate eventfd: error=%d\n", errno);
+      virgl_error("Failed to duplicate eventfd: error=%d\n", errno);
    return fd;
 }
 
@@ -12844,7 +12844,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          virgl_format = gr->base.format;
          drm_format = 0;
          if (virgl_gbm_convert_format(&virgl_format, &drm_format)) {
-            vrend_printf("%s: unsupported format %d\n", __func__, virgl_format);
+            virgl_error("%s: unsupported format %d\n", __func__, virgl_format);
             FREE(gr);
             return EINVAL;
          }
@@ -12859,7 +12859,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
                                                      args->plane_strides,
                                                      args->plane_offsets);
          if (!gr->egl_image) {
-            vrend_printf("%s: failed to create egl image\n", __func__);
+            virgl_error("%s: failed to create egl image\n", __func__);
             FREE(gr);
             return EINVAL;
          }
@@ -12875,7 +12875,7 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
 
 #else /* ENABLE_GBM */
          FREE(gr);
-         vrend_printf("%s: no EGL/GBM support \n", __func__);
+         virgl_error("%s: no EGL/GBM support \n", __func__);
          return EINVAL;
 
 #endif /* ENABLE_GBM */

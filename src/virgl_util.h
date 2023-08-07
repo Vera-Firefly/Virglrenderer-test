@@ -85,6 +85,14 @@ static inline void PRINTFLIKE(1, 2) virgl_log(const char *fmt, ...)
    va_end(va);
 }
 
+static inline void PRINTFLIKE(1, 2) virgl_error(const char *fmt, ...)
+{
+   va_list va;
+   va_start(va, fmt);
+   virgl_logv(VIRGL_LOG_LEVEL_ERROR, fmt, va);
+   va_end(va);
+}
+
 #ifdef ENABLE_TRACING
 void trace_init(void);
 

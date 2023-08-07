@@ -397,7 +397,7 @@ static struct virgl_video_dma_buf *export_video_dma_buf(
     va_stat = vaExportSurfaceHandle(va_dpy, buffer->va_sfc,
                     VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2, exp_flags, &desc);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("export surface failed, err = 0x%X\n", va_stat);
+        virgl_error("export surface failed, err = 0x%X\n", va_stat);
         goto free_dmabuf;
     }
 
@@ -434,7 +434,7 @@ static void encode_upload_picture(struct virgl_video_codec *codec,
 
     va_stat = vaSyncSurface(va_dpy, buffer->va_sfc);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("sync surface failed, err = 0x%x\n", va_stat);
+        virgl_error("sync surface failed, err = 0x%x\n", va_stat);
         return;
     }
 
@@ -459,7 +459,7 @@ static void encode_completed(struct virgl_video_codec *codec,
 
     va_stat = vaMapBuffer(va_dpy, codec->va_coded_buf, (void **)(&buf_list));
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("map coded buffer failed, err = 0x%x\n", va_stat);
+        virgl_error("map coded buffer failed, err = 0x%x\n", va_stat);
         return;
     }
 
@@ -469,7 +469,7 @@ static void encode_completed(struct virgl_video_codec *codec,
     coded_bufs = calloc(num_coded_bufs, sizeof(void *));
     coded_sizes = calloc(num_coded_bufs, sizeof(unsigned));
     if (!coded_bufs || !coded_sizes) {
-        virgl_log("alloc memory failed, num_coded_bufs %u\n", num_coded_bufs);
+        virgl_error("alloc memory failed, num_coded_bufs %u\n", num_coded_bufs);
         goto fail_unmap_buffer;
     }
 
@@ -519,7 +519,7 @@ static VASurfaceID get_enc_ref_pic(struct virgl_video_codec *codec,
         args.opaque = NULL;
         codec->ref_pic_list[idx] = virgl_video_create_buffer(&args);
         if (!codec->ref_pic_list[idx]) {
-            virgl_log("create ref pic for frame_num %u failed\n", frame_num);
+            virgl_error("create ref pic for frame_num %u failed\n", frame_num);
             return VA_INVALID_ID;
         }
     }
@@ -537,19 +537,19 @@ int virgl_video_init(int drm_fd,
     (void)flags;
 
     if (drm_fd < 0) {
-        virgl_log("invalid drm fd: %d\n", drm_fd);
+        virgl_error("invalid drm fd: %d\n", drm_fd);
         return -1;
     }
 
     va_dpy = vaGetDisplayDRM(drm_fd);
     if (!va_dpy) {
-        virgl_log("get va display failed\n");
+        virgl_error("get va display failed\n");
         return -1;
     }
 
     va_stat = vaInitialize(va_dpy, &major_ver, &minor_ver);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("init va library failed\n");
+        virgl_error("init va library failed\n");
         virgl_video_destroy();
         return -1;
     }
@@ -560,7 +560,7 @@ int virgl_video_init(int drm_fd,
     virgl_log("Driver version: %s\n", driver ? driver : "<unknown>");
 
     if (!driver || !strstr(driver, "Mesa Gallium")) {
-        virgl_log("only supports mesa va drivers now\n");
+        virgl_error("only supports mesa va drivers now\n");
         virgl_video_destroy();
         return -1;
     }
@@ -748,14 +748,14 @@ struct virgl_video_codec *virgl_video_create_codec(
     attr.type = VAConfigAttribRTFormat;
     vaGetConfigAttributes(va_dpy, profile, entrypoint, &attr, 1);
     if (!(attr.value & format)) {
-        virgl_log("format 0x%x not supported, supported formats: 0x%x\n",
+        virgl_error("format 0x%x not supported, supported formats: 0x%x\n",
                   format, attr.value);
         goto err;
     }
 
     va_stat = vaCreateConfig(va_dpy, profile, entrypoint, &attr, 1, &cfg);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("create config failed, err = 0x%x\n", va_stat);
+        virgl_error("create config failed, err = 0x%x\n", va_stat);
         goto err;
     }
     codec->va_cfg = cfg;
@@ -763,7 +763,7 @@ struct virgl_video_codec *virgl_video_create_codec(
     va_stat = vaCreateContext(va_dpy, cfg, args->width, args->height,
                                 VA_PROGRESSIVE, NULL, 0, &ctx);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("create context failed, err = 0x%x\n", va_stat);
+        virgl_error("create context failed, err = 0x%x\n", va_stat);
         goto err;
     }
     codec->va_ctx = ctx;
@@ -832,7 +832,7 @@ struct virgl_video_buffer *virgl_video_create_buffer(
      */
     format = VA_RT_FORMAT_YUV420;
     if (!format) {
-        virgl_log("pipe format %d not supported\n", args->format);
+        virgl_error("pipe format %d not supported\n", args->format);
         return NULL;
     }
 
@@ -905,7 +905,7 @@ int virgl_video_begin_frame(struct virgl_video_codec *codec,
     codec->buffer = target;
     va_stat = vaBeginPicture(va_dpy, codec->va_ctx, target->va_sfc);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("begin picture failed, err = 0x%x\n", va_stat);
+        virgl_error("begin picture failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
@@ -1381,7 +1381,7 @@ static int h264_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -1404,21 +1404,21 @@ static int h264_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &iq_matrix_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render iq matrix failed, err = 0x%x\n", va_stat);
+        virgl_error("render iq matrix failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -1427,7 +1427,7 @@ static int h264_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -1479,21 +1479,21 @@ static int h264_encode_render_sequence(
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &seq_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h264 sequence param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h264 sequence param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &rc_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h264 rate control param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h264 rate control param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &fr_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h264 frame rate param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h264 frame rate param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
@@ -1524,7 +1524,7 @@ static int h264_encode_render_picture(
     vaDestroyBuffer(va_dpy, pic_param_buf);
 
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h264 picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h264 picture param failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
@@ -1549,7 +1549,7 @@ static int h264_encode_render_slice(
     vaDestroyBuffer(va_dpy, slice_param_buf);
 
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h264 slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h264 slice param failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
@@ -2097,7 +2097,7 @@ static int h265_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -2116,14 +2116,14 @@ static int h265_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -2132,7 +2132,7 @@ static int h265_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -2183,21 +2183,21 @@ static int h265_encode_render_sequence(
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &seq_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h265 sequence param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h265 sequence param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &rc_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h265 rate control param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h265 rate control param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &fr_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h265 frame rate param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h265 frame rate param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto error;
     }
@@ -2228,7 +2228,7 @@ static int h265_encode_render_picture(
     vaDestroyBuffer(va_dpy, pic_param_buf);
 
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h265 picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h265 picture param failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
@@ -2253,7 +2253,7 @@ static int h265_encode_render_slice(
     vaDestroyBuffer(va_dpy, slice_param_buf);
 
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render h265 slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render h265 slice param failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
@@ -2323,7 +2323,7 @@ static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -2342,14 +2342,14 @@ static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -2358,7 +2358,7 @@ static int mpeg12_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -2456,7 +2456,7 @@ static int mjpeg_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -2483,28 +2483,28 @@ static int mjpeg_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &huffman_table_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render huffman_table_buf failed, err = 0x%x\n", va_stat);
+        virgl_error("render huffman_table_buf failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &iq_matrix_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render iq_matrix_buf failed, err = 0x%x\n", va_stat);
+        virgl_error("render iq_matrix_buf failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -2513,7 +2513,7 @@ static int mjpeg_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -2590,7 +2590,7 @@ static int vc1_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -2609,14 +2609,14 @@ static int vc1_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -2625,7 +2625,7 @@ static int vc1_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -2727,7 +2727,7 @@ static int vp9_decode_bitstream(struct virgl_video_codec *codec,
 
     slice_data_buf = calloc(num_buffers, sizeof(VABufferID));
     if (!slice_data_buf) {
-        virgl_log("alloc slice data buffer id failed\n");
+        virgl_error("alloc slice data buffer id failed\n");
         return -1;
     }
 
@@ -2746,14 +2746,14 @@ static int vp9_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -2762,7 +2762,7 @@ static int vp9_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -3035,14 +3035,14 @@ static int av1_decode_bitstream(struct virgl_video_codec *codec,
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &pic_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render picture param failed, err = 0x%x\n", va_stat);
+        virgl_error("render picture param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
 
     va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_param_buf, 1);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("render slice param failed, err = 0x%x\n", va_stat);
+        virgl_error("render slice param failed, err = 0x%x\n", va_stat);
         err = -1;
         goto err;
     }
@@ -3051,7 +3051,7 @@ static int av1_decode_bitstream(struct virgl_video_codec *codec,
         va_stat = vaRenderPicture(va_dpy, codec->va_ctx, &slice_data_buf[i], 1);
 
         if (VA_STATUS_SUCCESS != va_stat) {
-            virgl_log("render slice data failed, err = 0x%x\n", va_stat);
+            virgl_error("render slice data failed, err = 0x%x\n", va_stat);
             err = -1;
         }
     }
@@ -3081,8 +3081,8 @@ int virgl_video_decode_bitstream(struct virgl_video_codec *codec,
     }  
 
     if (desc->base.profile != codec->profile) {
-        virgl_log("profiles not matched, picture: %d, codec: %d\n",
-                desc->base.profile, codec->profile);
+        virgl_error("profiles not matched, picture: %d, codec: %d\n",
+                    desc->base.profile, codec->profile);
         return -1;
     }
 
@@ -3138,8 +3138,8 @@ int virgl_video_encode_bitstream(struct virgl_video_codec *codec,
         return -1;
 
     if (desc->base.profile != codec->profile) {
-        virgl_log("profiles not matched, picture: %d, codec: %d\n",
-                desc->base.profile, codec->profile);
+        virgl_error("profiles not matched, picture: %d, codec: %d\n",
+                    desc->base.profile, codec->profile);
         return -1;
     }
 
@@ -3176,13 +3176,13 @@ int virgl_video_end_frame(struct virgl_video_codec *codec,
 
     va_stat = vaEndPicture(va_dpy, codec->va_ctx);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("end picture failed, err = 0x%x\n", va_stat);
+        virgl_error("end picture failed, err = 0x%x\n", va_stat);
         return -1;
     }
 
     va_stat = vaSyncSurface(va_dpy, target->va_sfc);
     if (VA_STATUS_SUCCESS != va_stat) {
-        virgl_log("sync surface failed, err = 0x%x\n", va_stat);
+        virgl_error("sync surface failed, err = 0x%x\n", va_stat);
         return -1;
     }
 

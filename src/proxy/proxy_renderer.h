@@ -41,7 +41,7 @@ proxy_context_create(uint32_t ctx_id,
 static inline int
 proxy_renderer_init(UNUSED const struct proxy_renderer_cbs *cbs, UNUSED uint32_t flags)
 {
-   virgl_log("Render server support was not enabled in virglrenderer\n");
+   virgl_error("Render server support was not enabled in virglrenderer\n");
    return -1;
 }
 

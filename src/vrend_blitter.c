@@ -135,8 +135,8 @@ static GLint blit_shader_build_and_check(GLenum shader_type, const char *buf)
       char infolog[65536];
       int len;
       glGetShaderInfoLog(id, 65536, &len, infolog);
-      vrend_printf("shader failed to compile\n%s\n", infolog);
-      vrend_printf("GLSL:\n%s\n", buf);
+      virgl_error("Shader failed to compile\n%s\n", infolog);
+      virgl_error("GLSL:\n%s\n", buf);
       glDeleteShader(id);
       return 0;
    }
@@ -153,7 +153,7 @@ static bool blit_shader_link_and_check(GLuint prog_id)
       char infolog[65536];
       int len;
       glGetProgramInfoLog(prog_id, 65536, &len, infolog);
-      vrend_printf("got error linking\n%s\n", infolog);
+      virgl_error("Got error linking\n%s\n", infolog);
       /* dump shaders */
       glDeleteProgram(prog_id);
       return false;
@@ -477,7 +477,7 @@ static void vrend_renderer_init_blit_ctx(struct vrend_blitter_ctx *blit_ctx)
    }
 
    if (!blit_ctx->gl_context) {
-      vrend_printf("virglrenderer: Unable to create blit context");
+      virgl_error("virglrenderer: Unable to create blit context");
       abort();
    }
 
@@ -839,7 +839,7 @@ void vrend_renderer_blit_gl(ASSERTED struct vrend_context *ctx,
                                       flags);
    }
    if (!prog_id) {
-      vrend_printf("Blitter: unable to create or find shader program\n");
+      virgl_error("Blitter: unable to create or find shader program\n");
       return;
    }
 

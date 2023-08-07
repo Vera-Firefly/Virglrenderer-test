@@ -622,7 +622,7 @@ static int make_current(virgl_renderer_gl_context ctx)
 
    ret = state.cbs->make_current(state.cookie, 0, ctx);
    if (ret && state.cbs->version >= 4) {
-      vrend_printf("%s: Error switching context: %d\n", __func__, ret);
+      virgl_error("%s: Error switching context: %d\n", __func__, ret);
       assert(!ret && "Failed to switch GL context");
       return -1;
    }
@@ -664,8 +664,8 @@ static int make_current_surfaceless(virgl_renderer_gl_context ctx)
 
    ret = state.cbs->make_current(state.cookie, 0, ctx);
    if (ret && state.cbs->version >= 4) {
-      vrend_printf("%s: Error switching surfaceless context: %d\n",
-                   __func__, ret);
+      virgl_error("%s: Error switching surfaceless context: %d\n",
+                  __func__, ret);
       assert(!ret && "Failed to switch GL context");
       return -1;
    }

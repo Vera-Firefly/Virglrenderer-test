@@ -189,7 +189,7 @@ static bool virgl_egl_add_extensions(struct virgl_egl *egl, const char *extensio
 static bool virgl_egl_check_extensions(struct virgl_egl *egl)
 {
    if (!has_bits(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT | EGL_KHR_CREATE_CONTEXT)) {
-      vrend_printf( "Missing EGL_KHR_surfaceless_context or EGL_KHR_create_context\n");
+      virgl_error("Missing EGL_KHR_surfaceless_context or EGL_KHR_create_context\n");
       return false;
    }
 
@@ -431,7 +431,7 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
       egl->signaled_fence = eglCreateSyncKHR(egl->egl_display,
                                              EGL_SYNC_NATIVE_FENCE_ANDROID, NULL);
       if (!egl->signaled_fence) {
-         vrend_printf("Failed to create signaled fence");
+         virgl_error("Failed to create signaled fence");
          goto fail;
       }
 
@@ -858,7 +858,7 @@ void *virgl_egl_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo *bo)
       uint32_t handle = gbm_bo_get_handle_for_plane(bo, plane).u32;
       ret = virgl_gbm_export_fd(egl->gbm->device, handle, &fds[plane]);
       if (ret < 0) {
-         vrend_printf( "failed to export plane handle\n");
+         virgl_error("Failed to export plane handle\n");
          goto out_close;
       }
 
@@ -896,7 +896,7 @@ void *virgl_egl_aux_plane_image_from_gbm_bo(struct virgl_egl *egl, struct gbm_bo
    uint32_t handle = gbm_bo_get_handle_for_plane(bo, plane).u32;
    ret = drmPrimeHandleToFD(gbm_device_get_fd(egl->gbm->device), handle, DRM_CLOEXEC, &fd);
    if (ret < 0) {
-      vrend_printf("failed to export plane handle %d\n", errno);
+      virgl_error("Failed to export plane handle %d\n", errno);
       return NULL;
    }
 

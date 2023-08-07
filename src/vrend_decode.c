@@ -1937,7 +1937,7 @@ static int vrend_decode_ctx_submit_cmd(struct virgl_context *ctx,
       if (!vrend_check_no_error(gdctx->grctx) && !ret)
          ret = EINVAL;
       if (ret) {
-         vrend_printf("context %d failed to dispatch %s: %d\n",
+         virgl_error("context %d failed to dispatch %s: %d\n",
                gdctx->base.ctx_id, vrend_get_comand_name(cmd), ret);
          if (ret == EINVAL)
             vrend_report_buffer_error(gdctx->grctx, *buf);

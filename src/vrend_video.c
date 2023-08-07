@@ -154,7 +154,7 @@ static int sync_dmabuf_to_video_buffer(struct vrend_video_buffer *buf,
                                        const struct virgl_video_dma_buf *dmabuf)
 {
     if (!(dmabuf->flags & VIRGL_VIDEO_DMABUF_READ_ONLY)) {
-        vrend_printf("%s: dmabuf is not readable\n", __func__);
+        virgl_error("%s: dmabuf is not readable\n", __func__);
         return -1;
     }
 
@@ -164,7 +164,7 @@ static int sync_dmabuf_to_video_buffer(struct vrend_video_buffer *buf,
 
         res = vrend_renderer_ctx_res_lookup(buf->ctx->ctx, plane->res_handle);
         if (!res) {
-            vrend_printf("%s: res %d not found\n", __func__, plane->res_handle);
+            virgl_error("%s: res %d not found\n", __func__, plane->res_handle);
             continue;
         }
 
@@ -185,7 +185,7 @@ static int sync_dmabuf_to_video_buffer(struct vrend_video_buffer *buf,
         }
 
         if (EGL_NO_IMAGE_KHR == plane->egl_image) {
-            vrend_printf("%s: create egl image failed\n", __func__);
+            virgl_error("%s: create egl image failed\n", __func__);
             continue;
         }
 
@@ -215,7 +215,7 @@ static int sync_video_buffer_to_dmabuf(struct vrend_video_buffer *buf,
                                        const struct virgl_video_dma_buf *dmabuf)
 {
     if (!(dmabuf->flags & VIRGL_VIDEO_DMABUF_WRITE_ONLY)) {
-        vrend_printf("%s: dmabuf is not writable\n", __func__);
+        virgl_error("%s: dmabuf is not writable\n", __func__);
         return -1;
     }
 
@@ -225,7 +225,7 @@ static int sync_video_buffer_to_dmabuf(struct vrend_video_buffer *buf,
 
         res = vrend_renderer_ctx_res_lookup(buf->ctx->ctx, plane->res_handle);
         if (!res) {
-            vrend_printf("%s: res %d not found\n", __func__, plane->res_handle);
+            virgl_error("%s: res %d not found\n", __func__, plane->res_handle);
             continue;
         }
 
@@ -246,7 +246,7 @@ static int sync_video_buffer_to_dmabuf(struct vrend_video_buffer *buf,
         }
 
         if (EGL_NO_IMAGE_KHR == plane->egl_image) {
-            vrend_printf("%s: create egl image failed\n", __func__);
+            virgl_error("%s: create egl image failed\n", __func__);
             continue;
         }
 
@@ -465,7 +465,7 @@ int vrend_video_create_buffer(struct vrend_video_context *ctx,
         return 0;
 
     if (format <= PIPE_FORMAT_NONE || format >= PIPE_FORMAT_COUNT){
-        vrend_printf("Invalid vrend video buffer format: %d\n", format);
+        virgl_error("Invalid vrend video buffer format: %d\n", format);
         return -1;
     }
 
@@ -754,19 +754,19 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
     union virgl_picture_desc desc;
 
     if (!cdc || !tgt){
-        vrend_printf("video codec: 0x%x, video buffer: 0x%x, invalid.\n", cdc, tgt);
+        virgl_error("video codec: 0x%x, video buffer: 0x%x, invalid.\n", cdc, tgt);
         return -1;
     }
 
     bs_buffers = calloc(num_buffers, sizeof(void *));
     if (!bs_buffers) {
-        vrend_printf("%s: alloc bs_buffers failed\n", __func__);
+        virgl_error("%s: alloc bs_buffers failed\n", __func__);
         return -1;
     }
 
     bs_sizes = calloc(num_buffers, sizeof(unsigned));
     if (!bs_sizes) {
-        vrend_printf("%s: alloc bs_sizes failed\n", __func__);
+        virgl_error("%s: alloc bs_sizes failed\n", __func__);
         goto err;
     }
 
@@ -787,7 +787,7 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
 
     res = vrend_renderer_ctx_res_lookup(ctx->ctx, desc_handle);
     if (!res) {
-        vrend_printf("%s: desc res %d not found\n", __func__, desc_handle);
+        virgl_error("%s: desc res %d not found\n", __func__, desc_handle);
         goto err;
     }
     memset(&desc, 0, sizeof(desc));
@@ -823,14 +823,14 @@ int vrend_video_encode_bitstream(struct vrend_video_context *ctx,
     /* Feedback resource */
     feed_res = vrend_renderer_ctx_res_lookup(ctx->ctx, feed_handle);
     if (!feed_res) {
-        vrend_printf("%s: feedback res %d not found\n", __func__, feed_handle);
+        virgl_error("%s: feedback res %d not found\n", __func__, feed_handle);
         return -1;
     }
 
     /* Picture descriptor resource */
     desc_res = vrend_renderer_ctx_res_lookup(ctx->ctx, desc_handle);
     if (!desc_res) {
-        vrend_printf("%s: desc res %d not found\n", __func__, desc_handle);
+        virgl_error("%s: desc res %d not found\n", __func__, desc_handle);
         return -1;
     }
     memset(&desc, 0, sizeof(desc));
@@ -840,7 +840,7 @@ int vrend_video_encode_bitstream(struct vrend_video_context *ctx,
     /* Destination buffer resource. */
     dest_res = vrend_renderer_ctx_res_lookup(ctx->ctx, dest_handle);
     if (!dest_res) {
-        vrend_printf("%s: dest res %d not found\n", __func__, dest_handle);
+        virgl_error("%s: dest res %d not found\n", __func__, dest_handle);
         return -1;
     }
 

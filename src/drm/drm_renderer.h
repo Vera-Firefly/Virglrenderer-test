@@ -31,7 +31,7 @@ struct virgl_context *drm_renderer_create(size_t debug_len, const char *debug_na
 static inline int
 drm_renderer_init(UNUSED int drm_fd)
 {
-   virgl_log("DRM native context support was not enabled in virglrenderer\n");
+   virgl_error("DRM native context support was not enabled in virglrenderer\n");
    return -1;
 }
 
