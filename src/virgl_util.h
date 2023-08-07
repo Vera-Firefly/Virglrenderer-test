@@ -93,7 +93,7 @@ static inline void PRINTFLIKE(1, 2) virgl_debug(const char *fmt, ...)
    va_end(va);
 }
 
-static inline void PRINTFLIKE(1, 2) virgl_log(const char *fmt, ...)
+static inline void PRINTFLIKE(1, 2) virgl_info(const char *fmt, ...)
 {
    va_list va;
    va_start(va, fmt);

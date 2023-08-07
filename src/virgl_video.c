@@ -554,10 +554,10 @@ int virgl_video_init(int drm_fd,
         return -1;
     }
 
-    virgl_log("VA-API version: %d.%d\n", major_ver, minor_ver);
+    virgl_info("VA-API version: %d.%d\n", major_ver, minor_ver);
 
     driver = vaQueryVendorString(va_dpy);
-    virgl_log("Driver version: %s\n", driver ? driver : "<unknown>");
+    virgl_info("Driver version: %s\n", driver ? driver : "<unknown>");
 
     if (!driver || !strstr(driver, "Mesa Gallium")) {
         virgl_error("only supports mesa va drivers now\n");

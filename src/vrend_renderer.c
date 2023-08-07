@@ -7385,15 +7385,15 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
    vrend_state.gl_minor_ver = gl_ver % 10;
 
    if (gles) {
-      vrend_printf( "gl_version %d - es profile enabled\n", gl_ver);
+      virgl_info("gl_version %d - es profile enabled\n", gl_ver);
       vrend_state.use_gles = true;
       /* for now, makes the rest of the code use the most GLES 3.x like path */
       vrend_state.use_core_profile = true;
    } else if (gl_ver > 30 && !epoxy_has_gl_extension("GL_ARB_compatibility")) {
-      vrend_printf( "gl_version %d - core profile enabled\n", gl_ver);
+      virgl_info("gl_version %d - core profile enabled\n", gl_ver);
       vrend_state.use_core_profile = true;
    } else {
-      vrend_printf( "gl_version %d - compat profile\n", gl_ver);
+      virgl_info("gl_version %d - compat profile\n", gl_ver);
    }
 
    vrend_state.use_integer = use_integer();
@@ -11607,7 +11607,7 @@ static void vrend_fill_caps_glsl_version(int gl_ver, int gles_ver,
          }
       }
    }
-   vrend_printf("GLSL feature level %d\n", caps->v1.glsl_level);
+   virgl_info("GLSL feature level %d\n", caps->v1.glsl_level);
 }
 
 static void set_format_bit(struct virgl_supported_format_mask *mask, enum virgl_formats fmt)
