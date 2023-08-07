@@ -76,7 +76,7 @@ static inline void vrend_printf(const char *fmt, ...)
 {
    va_list va;
    va_start(va, fmt);
-   virgl_logv(fmt, va);
+   virgl_logv(VIRGL_LOG_LEVEL_INFO, fmt, va);
    va_end(va);
 }
 

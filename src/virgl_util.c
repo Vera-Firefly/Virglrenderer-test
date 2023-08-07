@@ -36,6 +36,7 @@
 
 #include "util/os_misc.h"
 #include "util/u_pointer.h"
+#include "util/u_string.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -212,7 +213,7 @@ void virgl_log_set_handler(virgl_log_callback_type log_cb,
    virgl_log_data.user_data = user_data;
 }
 
-void virgl_logv(const char *fmt, va_list va)
+void virgl_logv(enum virgl_log_level_flags log_level, const char *fmt, va_list va)
 {
    char *str = NULL;
 
@@ -222,8 +223,24 @@ void virgl_logv(const char *fmt, va_list va)
    if (vasprintf(&str, fmt, va) < 0)
       return;
 
-   virgl_log_data.log_cb(VIRGL_LOG_LEVEL_INFO, str, virgl_log_data.user_data);
+   virgl_log_data.log_cb(log_level, str, virgl_log_data.user_data);
    free (str);
+}
+
+void virgl_prefixed_logv(const char *domain,
+                         enum virgl_log_level_flags log_level,
+                         const char *fmt,
+                         va_list va)
+{
+   char *prefixed_fmt = NULL;
+
+   assert(strchr(domain,'%') == NULL);
+
+   if (asprintf(&prefixed_fmt, "%s: %s", domain, fmt) < 0)
+      return;
+
+   virgl_logv(log_level, prefixed_fmt, va);
+   free (prefixed_fmt);
 }
 
 #if ENABLE_TRACING == TRACE_WITH_PERCETTO
@@ -237,7 +254,7 @@ void trace_init(void)
 
 #if ENABLE_TRACING == TRACE_WITH_PERFETTO
 static void on_tracing_state_change(bool enabled) {
-    virgl_log("%s: tracing state change: %d\n", __func__, enabled);
+    virgl_debug("%s: tracing state change: %d\n", __func__, enabled);
 }
 
 void trace_init(void)
