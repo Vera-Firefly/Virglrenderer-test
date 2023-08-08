@@ -6366,26 +6366,26 @@ void vrend_object_bind_blend(struct vrend_context *ctx,
    ctx->sub->blend_state_dirty = true;
 }
 
-static void vrend_hw_emit_dsa(struct vrend_context *ctx)
+static void vrend_hw_emit_dsa(struct vrend_sub_context *sub_ctx)
 {
-   struct pipe_depth_stencil_alpha_state *state = &ctx->sub->dsa_state;
+   struct pipe_depth_stencil_alpha_state *state = &sub_ctx->dsa_state;
 
    if (state->depth.enabled) {
-      vrend_depth_test_enable(ctx->sub, true);
+      vrend_depth_test_enable(sub_ctx, true);
       glDepthFunc(GL_NEVER + state->depth.func);
       if (state->depth.writemask)
          glDepthMask(GL_TRUE);
       else
          glDepthMask(GL_FALSE);
    } else
-      vrend_depth_test_enable(ctx->sub, false);
+      vrend_depth_test_enable(sub_ctx, false);
 
    if (state->alpha.enabled) {
-      vrend_alpha_test_enable(ctx->sub, true);
+      vrend_alpha_test_enable(sub_ctx, true);
       if (!vrend_state.use_core_profile)
          glAlphaFunc(GL_NEVER + state->alpha.func, state->alpha.ref_value);
    } else
-      vrend_alpha_test_enable(ctx->sub, false);
+      vrend_alpha_test_enable(sub_ctx, false);
 
 
 }
@@ -6402,7 +6402,7 @@ void vrend_object_bind_dsa(struct vrend_context *ctx,
          ctx->sub->dsa = NULL;
          ctx->sub->stencil_state_dirty = true;
          ctx->sub->shader_dirty = true;
-         vrend_hw_emit_dsa(ctx);
+         vrend_hw_emit_dsa(ctx->sub);
       }
 
       return;
@@ -6428,7 +6428,7 @@ void vrend_object_bind_dsa(struct vrend_context *ctx,
       ctx->sub->sysvalue_data_cookie++;
    }
 
-   vrend_hw_emit_dsa(ctx);
+   vrend_hw_emit_dsa(ctx->sub);
 }
 
 static void vrend_update_frontface_state(struct vrend_sub_context *sub_ctx)
