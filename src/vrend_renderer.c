@@ -854,6 +854,8 @@ static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
                                       uint32_t shader_type,
                                       int id, int sampler_id,
                                       struct vrend_sampler_view *tview);
+static void vrend_object_bind_dsa_to_sub_context(struct vrend_sub_context *sub_ctx,
+                                                 uint32_t handle);
 static GLenum tgsitargettogltarget(const enum pipe_texture_target target, int nr_samples);
 
 void vrend_update_stencil_state(struct vrend_sub_context *sub_ctx);
@@ -2463,7 +2465,7 @@ static void vrend_destroy_dsa_object(void *obj_ptr)
    struct vrend_depth_stencil_alpha_state *state = obj_ptr;
 
    if (state->owning_sub && state == state->owning_sub->dsa)
-      vrend_object_bind_dsa(state->owning_sub->parent, 0 /* unbind */);
+      vrend_object_bind_dsa_to_sub_context(state->owning_sub, 0 /* unbind */);
 
    FREE(state);
 }
@@ -6389,46 +6391,53 @@ static void vrend_hw_emit_dsa(struct vrend_sub_context *sub_ctx)
 
 
 }
-void vrend_object_bind_dsa(struct vrend_context *ctx,
-                           uint32_t handle)
+
+static void vrend_object_bind_dsa_to_sub_context(struct vrend_sub_context *sub_ctx,
+                                                 uint32_t handle)
 {
    struct vrend_depth_stencil_alpha_state *state;
 
    if (handle == 0) {
-      if (ctx->sub->dsa) {
+      if (sub_ctx->dsa) {
          // unbind and set default state
-         memset(&ctx->sub->dsa_state, 0, sizeof(ctx->sub->dsa_state));
-         ctx->sub->dsa->owning_sub = NULL;
-         ctx->sub->dsa = NULL;
-         ctx->sub->stencil_state_dirty = true;
-         ctx->sub->shader_dirty = true;
-         vrend_hw_emit_dsa(ctx->sub);
+         memset(&sub_ctx->dsa_state, 0, sizeof(sub_ctx->dsa_state));
+         sub_ctx->dsa->owning_sub = NULL;
+         sub_ctx->dsa = NULL;
+         sub_ctx->stencil_state_dirty = true;
+         sub_ctx->shader_dirty = true;
+         vrend_hw_emit_dsa(sub_ctx);
       }
 
       return;
    }
 
-   state = vrend_object_lookup(ctx->sub->object_hash, handle, VIRGL_OBJECT_DSA);
+   state = vrend_object_lookup(sub_ctx->object_hash, handle, VIRGL_OBJECT_DSA);
    if (!state) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_HANDLE, handle);
+      vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_HANDLE, handle);
       return;
    }
 
-   if (ctx->sub->dsa != state) {
-      ctx->sub->stencil_state_dirty = true;
-      ctx->sub->shader_dirty = true;
+   if (sub_ctx->dsa != state) {
+      sub_ctx->stencil_state_dirty = true;
+      sub_ctx->shader_dirty = true;
    }
 
-   ctx->sub->dsa_state = state->base;
-   ctx->sub->dsa = state;
-   state->owning_sub = ctx->sub;
+   sub_ctx->dsa_state = state->base;
+   sub_ctx->dsa = state;
+   state->owning_sub = sub_ctx;
 
-   if (ctx->sub->sysvalue_data.alpha_ref_val != state->base.alpha.ref_value) {
-      ctx->sub->sysvalue_data.alpha_ref_val = state->base.alpha.ref_value;
-      ctx->sub->sysvalue_data_cookie++;
+   if (sub_ctx->sysvalue_data.alpha_ref_val != state->base.alpha.ref_value) {
+      sub_ctx->sysvalue_data.alpha_ref_val = state->base.alpha.ref_value;
+      sub_ctx->sysvalue_data_cookie++;
    }
 
-   vrend_hw_emit_dsa(ctx->sub);
+   vrend_hw_emit_dsa(sub_ctx);
+}
+
+void vrend_object_bind_dsa(struct vrend_context *ctx,
+                           uint32_t handle)
+{
+   vrend_object_bind_dsa_to_sub_context (ctx->sub, handle);
 }
 
 static void vrend_update_frontface_state(struct vrend_sub_context *sub_ctx)
