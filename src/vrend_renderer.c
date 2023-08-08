@@ -1422,14 +1422,14 @@ static void vrend_depth_test_enable(struct vrend_context *ctx, bool depth_test_e
    }
 }
 
-static void vrend_alpha_test_enable(struct vrend_context *ctx, bool alpha_test_enable)
+static void vrend_alpha_test_enable(struct vrend_sub_context *sub_ctx, bool alpha_test_enable)
 {
    if (vrend_state.use_core_profile) {
       /* handled in shaders */
       return;
    }
-   if (ctx->sub->alpha_test_enabled != alpha_test_enable) {
-      ctx->sub->alpha_test_enabled = alpha_test_enable;
+   if (sub_ctx->alpha_test_enabled != alpha_test_enable) {
+      sub_ctx->alpha_test_enabled = alpha_test_enable;
       if (alpha_test_enable)
          glEnable(GL_ALPHA_TEST);
       else
@@ -6381,11 +6381,11 @@ static void vrend_hw_emit_dsa(struct vrend_context *ctx)
       vrend_depth_test_enable(ctx, false);
 
    if (state->alpha.enabled) {
-      vrend_alpha_test_enable(ctx, true);
+      vrend_alpha_test_enable(ctx->sub, true);
       if (!vrend_state.use_core_profile)
          glAlphaFunc(GL_NEVER + state->alpha.func, state->alpha.ref_value);
    } else
-      vrend_alpha_test_enable(ctx, false);
+      vrend_alpha_test_enable(ctx->sub, false);
 
 
 }
@@ -9032,7 +9032,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          glDisable(GL_BLEND);
 
          vrend_depth_test_enable(ctx, false);
-         vrend_alpha_test_enable(ctx, false);
+         vrend_alpha_test_enable(ctx->sub, false);
          vrend_stencil_test_enable(ctx->sub, false);
 
          glPixelZoom(1.0f, res->y_0_top ? -1.0f : 1.0f);
