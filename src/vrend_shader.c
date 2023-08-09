@@ -2121,15 +2121,22 @@ iter_immediate(struct tgsi_iterate_context *iter,
 
    ctx->imm[first].type = imm->Immediate.DataType;
    for (i = 0; i < 4; i++) {
-      if (imm->Immediate.DataType == TGSI_IMM_FLOAT32) {
+      switch (imm->Immediate.DataType) {
+      case TGSI_IMM_FLOAT32:
          ctx->imm[first].val[i].f = imm->u[i].Float;
-      } else if (imm->Immediate.DataType == TGSI_IMM_UINT32 ||
-                 imm->Immediate.DataType == TGSI_IMM_FLOAT64) {
+         break;
+      case TGSI_IMM_UINT32:
+      case TGSI_IMM_FLOAT64:
          ctx->shader_req_bits |= SHADER_REQ_INTS;
          ctx->imm[first].val[i].ui = imm->u[i].Uint;
-      } else if (imm->Immediate.DataType == TGSI_IMM_INT32) {
+         break;
+      case TGSI_IMM_INT32:
          ctx->shader_req_bits |= SHADER_REQ_INTS;
          ctx->imm[first].val[i].i = imm->u[i].Int;
+         break;
+      default:
+         virgl_error("Unhandled immediate type, ignoring: %x\n", imm->Immediate.DataType);
+         break;
       }
    }
    ctx->num_imm++;
