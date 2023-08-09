@@ -38,7 +38,7 @@ project(
 # 3. If the ABI has changed in an incompatible way increment the binary_age
 #    and set revision and interface_age to zero
 binary_age    = 1
-interface_age = 7
+interface_age = 8
 revision      = 7
 
 cc = meson.get_compiler('c')
