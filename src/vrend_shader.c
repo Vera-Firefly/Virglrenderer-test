@@ -4952,29 +4952,36 @@ get_source_info(struct dump_ctx *ctx,
                 (inst->Instruction.Opcode == TGSI_OPCODE_INTERP_SAMPLE && i == 1))
                stype = TGSI_TYPE_SIGNED;
 
-            if (imd->type == TGSI_IMM_UINT32 || imd->type == TGSI_IMM_INT32) {
-               if (imd->type == TGSI_IMM_UINT32)
-                  vtype = UVEC4;
-               else
-                  vtype = IVEC4;
-
-               if (stype == TGSI_TYPE_UNSIGNED && imd->type == TGSI_IMM_INT32)
-                  imm_stypeprefix = UVEC4;
-               else if (stype == TGSI_TYPE_SIGNED && imd->type == TGSI_IMM_UINT32)
-                  imm_stypeprefix = IVEC4;
-               else if (stype == TGSI_TYPE_FLOAT || stype == TGSI_TYPE_UNTYPED) {
-                  if (imd->type == TGSI_IMM_INT32)
-                     imm_stypeprefix = INT_BITS_TO_FLOAT;
-                  else
-                     imm_stypeprefix = UINT_BITS_TO_FLOAT;
-               } else if (stype == TGSI_TYPE_UNSIGNED || stype == TGSI_TYPE_SIGNED)
+            switch (imd->type) {
+            case TGSI_IMM_INT32:
+               vtype = IVEC4;
+               if (stype == TGSI_TYPE_SIGNED)
                   imm_stypeprefix = TYPE_CONVERSION_NONE;
-            } else if (imd->type == TGSI_IMM_FLOAT64) {
+               else if (stype == TGSI_TYPE_UNSIGNED)
+                  imm_stypeprefix = UVEC4;
+               else if (stype == TGSI_TYPE_FLOAT || stype == TGSI_TYPE_UNTYPED)
+                  imm_stypeprefix = INT_BITS_TO_FLOAT;
+               break;
+            case TGSI_IMM_UINT32:
+               vtype = UVEC4;
+               if (stype == TGSI_TYPE_UNSIGNED)
+                  imm_stypeprefix = TYPE_CONVERSION_NONE;
+               else if (stype == TGSI_TYPE_SIGNED)
+                  imm_stypeprefix = IVEC4;
+               else if (stype == TGSI_TYPE_FLOAT || stype == TGSI_TYPE_UNTYPED)
+                  imm_stypeprefix = UINT_BITS_TO_FLOAT;
+               break;
+            case TGSI_IMM_FLOAT64:
                vtype = UVEC4;
                if (stype == TGSI_TYPE_DOUBLE)
                   imm_stypeprefix = TYPE_CONVERSION_NONE;
                else
                   imm_stypeprefix = UINT_BITS_TO_FLOAT;
+               break;
+            case TGSI_IMM_INT64:
+            case TGSI_IMM_UINT64:
+            case TGSI_IMM_FLOAT32:
+               break;
             }
 
             /* build up a vec4 of immediates */
