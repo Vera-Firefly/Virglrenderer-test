@@ -68,6 +68,7 @@ int create_eventfd(unsigned int initval);
 int write_eventfd(int fd, uint64_t val);
 void flush_eventfd(int fd);
 
+void virgl_override_log_level(enum virgl_log_level_flags log_level);
 void virgl_log_set_handler(virgl_log_callback_type log_cb,
                            void *user_data,
                            virgl_free_data_callback_type free_data_cb);

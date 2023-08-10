@@ -195,6 +195,12 @@ void virgl_default_logger(UNUSED enum virgl_log_level_flags log_level,
    fflush(fp);
 }
 
+void virgl_override_log_level(enum virgl_log_level_flags log_level)
+{
+   virgl_log_level = log_level;
+   virgl_log_level_initialized = true;
+}
+
 static struct {
    virgl_log_callback_type log_cb;
    virgl_free_data_callback_type free_data_cb;
