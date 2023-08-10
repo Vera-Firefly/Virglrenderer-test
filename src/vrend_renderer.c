@@ -3207,12 +3207,6 @@ void vrend_set_viewport_states(struct vrend_context *ctx,
    bool viewport_is_negative = (state[0].scale[1] < 0) ? true : false;
    uint i, idx;
 
-   if (num_viewports > PIPE_MAX_VIEWPORTS ||
-       start_slot > (PIPE_MAX_VIEWPORTS - num_viewports)) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, num_viewports);
-      return;
-   }
-
    for (i = 0; i < num_viewports; i++) {
       GLfloat abs_s1 = fabsf(state[i].scale[1]);
 
