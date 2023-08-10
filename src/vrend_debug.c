@@ -194,6 +194,8 @@ void vrend_init_debug_flags(void)
       vrend_debug_flags_initalized = 1;
       vrend_debug_flags = debug_get_flags_option("VREND_DEBUG",
                                                  vrend_debug_options, 0);
+      if (vrend_debug_flags)
+         virgl_override_log_level(VIRGL_LOG_LEVEL_DEBUG);
    }
 }
 
