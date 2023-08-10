@@ -1029,6 +1029,69 @@ START_TEST(virgl_test_large_shader)
 }
 END_TEST
 
+START_TEST(virgl_test_set_viewport_state)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_viewport_state vp[PIPE_MAX_VIEWPORTS];
+   int start_slot = 0;
+   int viewports_count = 1;
+
+   /* Filling the struct with real values is actually not needed, clearing to 0 should suffice if we
+       don't want to re-use the context  for more drawing */
+   int tw = 300, th = 300;
+
+   float znear = 0, zfar = 1.0;
+   float half_w = tw / 2.0f;
+   float half_h = th / 2.0f;
+   float half_d = (zfar - znear) / 2.0f;
+
+   vp[0].scale[0] = half_w;
+   vp[0].scale[1] = half_h;
+   vp[0].scale[2] = half_d;
+
+   vp[0].translate[0] = half_w + 0;
+   vp[0].translate[1] = half_h + 0;
+   vp[0].translate[2] = half_d + znear;
+
+   /* Here we are in range, no error expected */
+   ret = virgl_encoder_set_viewport_states(&ctx, start_slot, viewports_count, vp);
+   ck_assert_int_eq(ret, 0);
+
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* Too many viewports */
+   viewports_count = PIPE_MAX_VIEWPORTS + 1;
+
+   ret = virgl_encoder_set_viewport_states(&ctx, start_slot, viewports_count, vp);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Using too large index to place viewport */
+   start_slot = PIPE_MAX_VIEWPORTS;
+   viewports_count = 1;
+
+   ret = virgl_encoder_set_viewport_states(&ctx, start_slot, viewports_count, vp);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Combination of previous conditions */
+   start_slot = 2;
+   viewports_count = PIPE_MAX_VIEWPORTS + 1;
+
+   ret = virgl_encoder_set_viewport_states(&ctx, start_slot, viewports_count, vp);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+
 START_TEST(virgl_decode_set_scissor_state)
 {
    struct virgl_context ctx;
@@ -1146,6 +1209,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_render_simple);
   tcase_add_test(tc_core, virgl_test_render_geom_simple);
   tcase_add_test(tc_core, virgl_test_render_xfb);
+  tcase_add_test(tc_core, virgl_test_set_viewport_state);
   tcase_add_test(tc_core, virgl_decode_set_scissor_state);
   tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
   tcase_add_test(tc_core, virgl_decode_bind_sampler_states);
