@@ -704,7 +704,7 @@ static void virgl_test_transfer_inline(enum pipe_texture_target target,
 
   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
   virgl_encoder_inline_write(&ctx, &res, 0, 0, (struct pipe_box *)&box, data, box.width * elsize, 0);
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, invalid ? EINVAL : 0);
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
 
@@ -749,7 +749,7 @@ START_TEST(virgl_test_transfer_to_staging_without_iov_fails)
   box.width = bufsize;
   virgl_encoder_transfer(&ctx, &res, 0, 0, &box, 0, VIRGL_TRANSFER_TO_HOST);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, EINVAL);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
@@ -776,7 +776,7 @@ START_TEST(virgl_test_transfer_to_staging_with_iov_succeeds)
   box.width = bufsize;
   virgl_encoder_transfer(&ctx, &res, 0, 0, &box, 0, VIRGL_TRANSFER_TO_HOST);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, 0);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
@@ -809,7 +809,7 @@ START_TEST(virgl_test_copy_transfer_from_staging_without_iov_fails)
   box.width = bufsize;
   virgl_encoder_copy_transfer(&ctx, &dst_res, 0, 0, &box, &src_res, 0, synchronized);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, EINVAL);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, src_res.handle);
@@ -844,7 +844,7 @@ START_TEST(virgl_test_copy_transfer_from_staging_with_iov_succeeds)
   box.width = bufsize;
   virgl_encoder_copy_transfer(&ctx, &dst_res, 0, 0, &box, &src_res, 0, synchronized);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, 0);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, src_res.handle);
@@ -878,7 +878,7 @@ START_TEST(virgl_test_copy_transfer_to_staging_without_iov_fails)
 
   virgl_encoder_copy_transfer(&ctx, &dst_res, 0, 0, &box, &src_res, 0, synchronized);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, EINVAL);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, src_res.handle);
@@ -912,7 +912,7 @@ START_TEST(virgl_test_copy_transfer_to_staging_with_iov_succeeds)
 
   virgl_encoder_copy_transfer(&ctx, &dst_res, 0, 0, &box, &src_res, 0, synchronized);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, 0);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, src_res.handle);
@@ -943,7 +943,7 @@ START_TEST(virgl_test_transfer_near_res_bounds_with_stride_succeeds)
   virgl_encoder_transfer_with_stride(&ctx, &res, 0, 0, &box, 6 * 4, VIRGL_TRANSFER_TO_HOST,
                                      res_stride, 0);
 
-  ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+  ret = testvirgl_ctx_send_cmdbuf(&ctx);
   ck_assert_int_eq(ret, 0);
 
   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);

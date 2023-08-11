@@ -118,7 +118,7 @@ START_TEST(virgl_test_clear)
     virgl_encode_clear(&ctx, PIPE_CLEAR_COLOR0, &color, 0.0, 0);
 
     /* submit the cmd stream */
-    virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+    testvirgl_ctx_send_cmdbuf(&ctx);
 
     /* read back the cleared values in the resource */
     box.x = 0;
@@ -207,7 +207,7 @@ START_TEST(virgl_test_blit_simple)
     virgl_encode_blit(&ctx, &res2, &res, &blit);
 
     /* submit the cmd stream */
-    virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+    testvirgl_ctx_send_cmdbuf(&ctx);
 
     /* read back the cleared values in the resource */
     box.x = 0;
@@ -442,7 +442,7 @@ START_TEST(virgl_test_render_simple)
         virgl_encoder_draw_vbo(&ctx, &info);
     }
 
-    virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+    testvirgl_ctx_send_cmdbuf(&ctx);
 
     /* create a fence */
     testvirgl_reset_fence();
@@ -706,7 +706,7 @@ START_TEST(virgl_test_render_geom_simple)
         virgl_encoder_draw_vbo(&ctx, &info);
     }
 
-    virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+    testvirgl_ctx_send_cmdbuf(&ctx);
 
     /* create a fence */
     testvirgl_reset_fence();
@@ -951,7 +951,7 @@ START_TEST(virgl_test_render_xfb)
         virgl_encoder_draw_vbo(&ctx, &info);
     }
 
-    virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+    testvirgl_ctx_send_cmdbuf(&ctx);
 
     /* create a fence */
     testvirgl_reset_fence();
@@ -1043,7 +1043,7 @@ START_TEST(virgl_decode_set_scissor_state)
    /* Here we are using correct values, no error expected */
    ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
    ck_assert_int_eq(ret, 0);
-   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
    ck_assert_int_eq(ret, 0);
 
    /* Too many scissors for viewports */
@@ -1052,7 +1052,7 @@ START_TEST(virgl_decode_set_scissor_state)
 
    ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
    ck_assert_int_eq(ret, 0);
-   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
    ck_assert_int_eq(ret, EINVAL);
 
    /* Using too large index to place scissors */
@@ -1061,7 +1061,7 @@ START_TEST(virgl_decode_set_scissor_state)
 
    ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
    ck_assert_int_eq(ret, 0);
-   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
    ck_assert_int_eq(ret, EINVAL);
 
    /* Combination of previous conditions */
@@ -1070,7 +1070,7 @@ START_TEST(virgl_decode_set_scissor_state)
 
    ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
    ck_assert_int_eq(ret, 0);
-   ret = virgl_renderer_submit_cmd(ctx.cbuf->buf, ctx.ctx_id, ctx.cbuf->cdw);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
    ck_assert_int_eq(ret, EINVAL);
 
    testvirgl_fini_ctx_cmdbuf(&ctx);
