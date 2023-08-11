@@ -1066,7 +1066,7 @@ START_TEST(virgl_decode_set_scissor_state)
 
    /* Combination of previous conditions */
    start_slot = 2;
-   scissors_count = PIPE_MAX_VIEWPORTS - 2;
+   scissors_count = PIPE_MAX_VIEWPORTS + 1 - 2;
 
    ret = virgl_encoder_set_scissor_state(&ctx, start_slot, scissors_count, ss);
    ck_assert_int_eq(ret, 0);
