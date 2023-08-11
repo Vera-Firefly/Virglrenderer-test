@@ -70,6 +70,7 @@ uint32_t testvirgl_get_last_fence(void);
 void testvirgl_reset_fence(void);
 
 int testvirgl_init_ctx_cmdbuf(struct virgl_context *ctx);
+int testvirgl_ctx_send_cmdbuf(struct virgl_context *ctx);
 void testvirgl_fini_ctx_cmdbuf(struct virgl_context *ctx);
 
 int testvirgl_create_backed_simple_1d_res(struct virgl_resource *res,

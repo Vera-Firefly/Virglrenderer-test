@@ -178,6 +178,13 @@ void testvirgl_fini_ctx_cmdbuf(struct virgl_context *ctx)
     testvirgl_fini_single_ctx();
 }
 
+int testvirgl_ctx_send_cmdbuf(struct virgl_context *ctx)
+{
+   int res = virgl_renderer_submit_cmd(ctx->cbuf->buf, ctx->ctx_id, ctx->cbuf->cdw);
+   ctx->cbuf->cdw = 0;
+   return res;
+}
+
 int testvirgl_create_backed_simple_2d_res(struct virgl_resource *res,
                                           int handle, int w, int h)
 {
