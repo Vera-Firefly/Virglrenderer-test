@@ -11243,8 +11243,10 @@ int vrend_create_query(struct vrend_context *ctx, uint32_t handle,
       }
    }
 
-   if (err)
+   if (err) {
+      vrend_resource_reference(&q->res, NULL);
       FREE(q);
+   }
 
    return err;
 }
