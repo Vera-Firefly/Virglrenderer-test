@@ -173,12 +173,15 @@ void virgl_default_logger(UNUSED enum virgl_log_level_flags log_level,
    if (!virgl_log_level_initialized) {
       const char* log_level_env = getenv("VIRGL_LOG_LEVEL");
       if (log_level_env != NULL && log_level_env[0] != '\0') {
-         const struct log_levels_lut *lut = log_levels_table;
+         int log_index = 0;
+         const struct log_levels_lut *lut = &log_levels_table[0];
          while (lut->name) {
             if (!strcmp(lut->name, log_level_env)) {
                virgl_log_level = lut->log_level;
                break;
             }
+
+            lut = &log_levels_table[++log_index];
          }
 
          if (!lut->name)
