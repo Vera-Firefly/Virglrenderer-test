@@ -11360,7 +11360,7 @@ void vrend_get_query_result_qbo(struct vrend_context *ctx, uint32_t handle,
      return;
 
   res = vrend_renderer_ctx_res_lookup(ctx, qbo_handle);
-  if (!res) {
+  if (!res || !res->id) {
      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, qbo_handle);
      return;
   }
