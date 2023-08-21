@@ -264,20 +264,6 @@ vkr_queue_assign_ring_idx(struct vkr_context *ctx,
                           struct vkr_queue *queue,
                           uint32_t ring_idx)
 {
-   if (unlikely(queue->base.id)) {
-      /* Queue was fully initialized by a previous call to vkGetDeviceQueue*().
-       * The Vulkan spec allows this if all params are the same.
-       */
-      if (queue->ring_idx != ring_idx) {
-         vkr_log("refusing to rebind queue ring_idx from %u to %u",
-                 queue->ring_idx, ring_idx);
-         vkr_context_set_fatal(ctx);
-         return false;
-      }
-
-      return true;
-   }
-
    if (ring_idx == 0)
       return true;
 
@@ -344,6 +330,15 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
                                                      args->pQueueInfo->queueFamilyIndex,
                                                      args->pQueueInfo->queueIndex);
    if (!queue) {
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
+   /* Venus driver implementation is required to retrieve device queue only once to avoid
+    * overriding vkr_queue object id assignment.
+    */
+   if (queue->base.id) {
+      vkr_log("invalid to reinitialize vkr_queue");
       vkr_context_set_fatal(ctx);
       return;
    }
