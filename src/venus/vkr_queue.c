@@ -358,23 +358,12 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
 
 static void
 vkr_dispatch_vkGetDeviceQueue(struct vn_dispatch_context *dispatch,
-                              struct vn_command_vkGetDeviceQueue *args)
+                              UNUSED struct vn_command_vkGetDeviceQueue *args)
 {
-   const VkDeviceQueueInfo2 info2 = {
-      .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2,
-      .pNext = NULL,
-      .flags = 0,
-      .queueFamilyIndex = args->queueFamilyIndex,
-      .queueIndex = args->queueIndex,
-   };
-
-   struct vn_command_vkGetDeviceQueue2 args2 = {
-      .device = args->device,
-      .pQueueInfo = &info2,
-      .pQueue = args->pQueue,
-   };
-
-   vkr_dispatch_vkGetDeviceQueue2(dispatch, &args2);
+   /* Must use vkGetDeviceQueue2 for proper device queue initialization. */
+   struct vkr_context *ctx = dispatch->data;
+   vkr_context_set_fatal(ctx);
+   return;
 }
 
 static void
