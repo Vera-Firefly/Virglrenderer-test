@@ -1047,6 +1047,7 @@ static int vrend_decode_blit(struct vrend_context *ctx, const uint32_t *buf, uin
 
 static int vrend_decode_bind_sampler_states(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
+   const uint32_t *handles = NULL;
    if (length < 2)
       return EINVAL;
 
@@ -1057,8 +1058,10 @@ static int vrend_decode_bind_sampler_states(struct vrend_context *ctx, const uin
    if (shader_type >= PIPE_SHADER_TYPES)
       return EINVAL;
 
-   vrend_bind_sampler_states(ctx, shader_type, start_slot, num_states,
-                             get_buf_ptr(buf, VIRGL_BIND_SAMPLER_STATES_S0_HANDLE));
+   if (num_states > 0)
+      handles = get_buf_ptr(buf, VIRGL_BIND_SAMPLER_STATES_S0_HANDLE);
+
+   vrend_bind_sampler_states(ctx, shader_type, start_slot, num_states, handles);
    return 0;
 }
 
