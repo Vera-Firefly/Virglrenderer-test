@@ -1077,6 +1077,37 @@ START_TEST(virgl_decode_set_scissor_state)
 }
 END_TEST
 
+START_TEST(virgl_decode_set_constant_buffer)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   uint8_t constant_buffer[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+   /* Here we are using correct values, no error expected */
+   ret = virgl_encoder_write_constant_buffer(&ctx, PIPE_SHADER_VERTEX, 1, 10, constant_buffer);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* Sending a NULL constant buffer */
+   ret = virgl_encoder_write_constant_buffer(&ctx, PIPE_SHADER_FRAGMENT, 2, 0, NULL);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+   ctx.cbuf->cdw = 0;
+
+   /* Sending constant for non-existing shader type */
+   ret = virgl_encoder_write_constant_buffer(&ctx, PIPE_SHADER_INVALID, 4, 10, constant_buffer);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1092,6 +1123,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_render_geom_simple);
   tcase_add_test(tc_core, virgl_test_render_xfb);
   tcase_add_test(tc_core, virgl_decode_set_scissor_state);
+  tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
 
   suite_add_tcase(s, tc_core);
   return s;
