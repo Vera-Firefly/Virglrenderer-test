@@ -262,20 +262,21 @@ vkr_queue_create(struct vkr_context *ctx,
 static bool MUST_CHECK
 vkr_queue_assign_ring_idx(struct vkr_context *ctx,
                           struct vkr_queue *queue,
-                          uint32_t ring_idx)
+                          const VkDeviceQueueTimelineInfoMESA *timeline_info)
 {
-   if (ring_idx == 0)
-      return true;
+   if (unlikely(!timeline_info)) {
+      vkr_log("missing VkDeviceQueueTimelineInfoMESA");
+      return false;
+   }
 
-   if (unlikely(ring_idx >= ARRAY_SIZE(ctx->sync_queues))) {
+   const uint32_t ring_idx = timeline_info->ringIdx;
+   if (unlikely(!ring_idx || ring_idx >= ARRAY_SIZE(ctx->sync_queues))) {
       vkr_log("invalid ring_idx %u", ring_idx);
-      vkr_context_set_fatal(ctx);
       return false;
    }
 
    if (unlikely(ctx->sync_queues[ring_idx])) {
       vkr_log("sync_queue is already bound to ring_idx %u", ring_idx);
-      vkr_context_set_fatal(ctx);
       return false;
    }
 
@@ -343,13 +344,12 @@ vkr_dispatch_vkGetDeviceQueue2(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   /* Ignore VkDeviceQueueTimelineInfoMESA if its ringIdx is 0. */
    const VkDeviceQueueTimelineInfoMESA *timeline_info = vkr_find_struct(
       args->pQueueInfo->pNext, VK_STRUCTURE_TYPE_DEVICE_QUEUE_TIMELINE_INFO_MESA);
-
-   const uint32_t ring_idx = timeline_info ? timeline_info->ringIdx : 0;
-   if (!vkr_queue_assign_ring_idx(ctx, queue, ring_idx))
+   if (!vkr_queue_assign_ring_idx(ctx, queue, timeline_info)) {
+      vkr_context_set_fatal(ctx);
       return;
+   }
 
    const vkr_object_id id =
       vkr_cs_handle_load_id((const void **)args->pQueue, VK_OBJECT_TYPE_QUEUE);
