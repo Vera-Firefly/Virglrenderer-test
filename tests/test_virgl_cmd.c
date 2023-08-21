@@ -1108,6 +1108,30 @@ START_TEST(virgl_decode_set_constant_buffer)
 }
 END_TEST
 
+START_TEST(virgl_decode_bind_sampler_states)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   uint32_t handles[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+   /* Here we are using correct values, no error expected */
+   ret = virgl_encode_bind_sampler_states(&ctx, PIPE_SHADER_VERTEX, 0, 10, handles);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* Sending constant for non-existing shader type */
+   ret = virgl_encode_bind_sampler_states(&ctx, PIPE_SHADER_INVALID, 0, 10, handles);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1124,6 +1148,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_render_xfb);
   tcase_add_test(tc_core, virgl_decode_set_scissor_state);
   tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
+  tcase_add_test(tc_core, virgl_decode_bind_sampler_states);
 
   suite_add_tcase(s, tc_core);
   return s;
