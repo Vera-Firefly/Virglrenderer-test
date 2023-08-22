@@ -11,6 +11,36 @@ static void
 vkr_dispatch_vkCreateShaderModule(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkCreateShaderModule *args)
 {
+   struct vkr_context *ctx = dispatch->data;
+
+   /* Reject invalid codeSize.
+    *
+    * VkShaderModuleCreateInfo is unique in the Vulkan API (as of 2023-08-22).
+    * Except in rare cases, (see the `altlen` attribute in vk.xml), for each
+    * typed non-void array in Vulkan, the api specifies the array length as the
+    * count of array elements. But VkShaderModuleCreateInfo has a typed array
+    * (uint32_t *pCode) whose length (codeSize) is specified in bytes, not as
+    * a count of uint32_t.
+    *
+    * Also, the Vulkan 1.3.261 spec seems confused about the size of `pCode`.
+    * The spec says "codeSize is the size, in bytes, of the code pointed to by
+    * pCode", and then later says "pCode must be a valid pointer to an array of
+    * codeSize/4 uint32_t values".
+    *
+    * (FWIW, VkShaderCreateInfoEXT learned from this mistake and declared the
+    * array to be typeless, `void *pCode`).
+    *
+    * The venus encoder/decoder believes the array size is `4 * (codeSize / 4)`
+    * because the vk.xml says so. For example, if codeSize is 259, then venus
+    * encodes/decodes only 256 bytes. But the native driver may try to read all
+    * 259 bytes, leading to out-of-bound access. Prevent the oob access by
+    * validating codeSize here.
+    */
+   if (args->pCreateInfo->codeSize % 4 != 0) {
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    vkr_shader_module_create_and_add(dispatch->data, args);
 }
 
