@@ -64,8 +64,6 @@ spec@arb_point_sprite@arb_point_sprite-mipmap,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex,Fail
 spec@arb_program_interface_query@arb_program_interface_query-getprogramresourceindex@'vs_input2[1][0]' on GL_PROGRAM_INPUT,Fail
 spec@arb_sample_shading@builtin-gl-sample-position 2,Fail
-spec@arb_shader_image_load_store@early-z,Fail
-spec@arb_shader_image_load_store@early-z@occlusion query test/early-z pass,Fail
 spec@arb_shader_image_load_store@layer,Fail
 spec@arb_shader_image_load_store@layer@image2DMSArray/layered binding test,Fail
 spec@arb_shader_image_load_store@layer@image2DMSArray/non-layered binding test,Fail
@@ -119,7 +117,6 @@ spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Compute/image2DMS sa
 spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Compute/image2DMSArray samples test/2x8x16x6,Fail
 spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Fragment/image2DMS samples test/2x8x96x1,Fail
 spec@arb_shader_texture_image_samples@builtin-image@rgba8ui/Fragment/image2DMSArray samples test/2x8x16x6,Fail
-spec@arb_shader_storage_buffer_object@execution@ssbo-atomiccompswap-int,Fail
 spec@arb_shader_texture_lod@execution@arb_shader_texture_lod-texgrad,Fail
 spec@arb_tessellation_shader@execution@gs-primitiveid-instanced,Fail
 spec@arb_texture_compression_bptc@texwrap formats bordercolor,Fail

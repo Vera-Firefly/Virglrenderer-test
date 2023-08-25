@@ -10,10 +10,10 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 950156
+  MESA_PIPELINE_ID: 973582
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
-  CI_REGISTRY_IMAGE: "harbor.freedesktop.org/${MESA_PROJECT_PATH}"
+  CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
   # per-pipeline artifact storage on MinIO
   PIPELINE_ARTIFACTS_BASE: ${STORAGE_HOST}/artifacts/${CI_PROJECT_PATH}/${CI_PIPELINE_ID}
   # per-job artifact storage on MinIO
@@ -36,7 +36,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: e5b65566974e70fdc1fb16c52218f30f7219007d
+    ref: ae5e2c1fea864d7d9836a443ad68950be66da679
     file:
       - '/.gitlab-ci/image-tags.yml'
 
