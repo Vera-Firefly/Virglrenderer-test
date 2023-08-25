@@ -7671,8 +7671,13 @@ void vrend_destroy_context(struct vrend_context *ctx)
 
    vrend_set_index_buffer(ctx, 0, 0, 0);
 
-   LIST_FOR_EACH_ENTRY_SAFE(sub, tmp, &ctx->sub_ctxs, head)
+   LIST_FOR_EACH_ENTRY_SAFE_REV(sub, tmp, &ctx->sub_ctxs, head) {
+      ctx->sub = sub;
       vrend_destroy_sub_context(sub);
+   }
+   ctx->sub = NULL;
+   ctx->sub0 = NULL;
+
    if(ctx->ctx_id)
       vrend_renderer_force_ctx_0();
 
