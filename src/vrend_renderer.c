@@ -10136,6 +10136,11 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
    slice_offset = src_box->z * slice_size;
    cube_slice = (src_res->target == GL_TEXTURE_CUBE_MAP) ? src_box->z + src_box->depth : cube_slice;
    i = (src_res->target == GL_TEXTURE_CUBE_MAP) ? src_box->z : 0;
+   if (slice_offset + src_box->width * src_box->height + cube_slice * slice_size > total_size) {
+      virgl_error("Offset out of bound: %d\n", src_box->z);
+      goto cleanup;
+   }
+
    for (; i < cube_slice; i++) {
       GLenum ctarget = dst_res->target == GL_TEXTURE_CUBE_MAP ?
                           (GLenum)(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i) : dst_res->target;
@@ -10163,9 +10168,10 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
       slice_offset += slice_size;
    }
 
+cleanup:
    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
    free(tptr);
-   glBindTexture(GL_TEXTURE_2D, 0);
+   glBindTexture(dst_res->target, 0);
 }
 
 static inline void
