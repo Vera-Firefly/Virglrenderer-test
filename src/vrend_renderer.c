@@ -5398,16 +5398,18 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
    vrend_set_active_pipeline_stage(sub_ctx->prog, PIPE_SHADER_FRAGMENT);
 }
 
-static
-void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
+static bool
+vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
 {
    struct pipe_stream_output_info so_info;
 
    memset(&so_info, 0, sizeof(so_info));
    struct vrend_shader_selector *sel = vrend_create_shader_state(&so_info,
                                                                  false, PIPE_SHADER_TESS_CTRL);
-   struct vrend_shader *shader;
-   shader = CALLOC_STRUCT(vrend_shader);
+   struct vrend_shader *shader = CALLOC_STRUCT(vrend_shader);
+   if (!shader)
+      return false;
+
    vrend_fill_shader_key(sub_ctx, sel, &shader->key);
 
    shader->sel = sel;
@@ -5422,7 +5424,7 @@ void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
       FREE(shader);
       vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_SHADER, sel->type);
       vrend_destroy_shader_selector(sel);
-      return;
+      return false;
    }
    // Need to add inject the selected shader to the shader selector and then the code below
    // can continue
@@ -5431,6 +5433,7 @@ void vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
    sub_ctx->shaders[PIPE_SHADER_TESS_CTRL] = sel;
 
    vrend_compile_shader(sub_ctx, shader);
+   return true;
 }
 
 
@@ -5464,7 +5467,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_TESS_CTRL], &tcs_dirty);
    else if (vrend_state.use_gles && shaders[PIPE_SHADER_TESS_EVAL]) {
       VREND_DEBUG(dbg_shader, sub_ctx->parent, "Need to inject a TCS\n");
-      vrend_inject_tcs(sub_ctx, vertices_per_patch);
+      if (!vrend_inject_tcs(sub_ctx, vertices_per_patch))
+         goto fail;
 
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
    }
@@ -5486,7 +5490,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_TESS_CTRL], &tcs_dirty);
    else if (vrend_state.use_gles && shaders[PIPE_SHADER_TESS_EVAL]) {
       VREND_DEBUG(dbg_shader, sub_ctx->parent, "Need to inject a TCS\n");
-      vrend_inject_tcs(sub_ctx, vertices_per_patch);
+      if (!vrend_inject_tcs(sub_ctx, vertices_per_patch))
+         goto fail;
    }
    sub_ctx->drawing = true;
    vrend_shader_select(sub_ctx, shaders[PIPE_SHADER_VERTEX], &vs_dirty);
