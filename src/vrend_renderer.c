@@ -8761,49 +8761,49 @@ static bool check_transfer_iovec(struct vrend_resource *res,
    return (info->iovec && info->iovec_cnt) || res->iov;
 }
 
-static bool check_transfer_bounds(struct vrend_resource *res,
-                                  const struct vrend_transfer_info *info)
+static inline bool resource_contains_box(struct vrend_resource *res,
+                                         const struct pipe_box *box,
+                                         uint32_t level)
 {
-   int lwidth, lheight;
+   int64_t end_x, end_y, end_z;
+   int64_t width, height, depth;
 
    /* check mipmap level is in bounds */
-   if (info->level > res->base.last_level)
-      return false;
-   if (info->box->x < 0 || info->box->y < 0 || info->box->z < 0)
-      return false;
-   /* these will catch bad y/z/w/d with 1D textures etc */
-   lwidth = u_minify(res->base.width0, info->level);
-   if (info->box->width > lwidth || info->box->width < 0)
-      return false;
-   if (info->box->x > lwidth)
-      return false;
-   if (info->box->width + info->box->x > lwidth)
+   if (unlikely(level > res->base.last_level))
       return false;
 
-   lheight = u_minify(res->base.height0, info->level);
-   if (info->box->height > lheight || info->box->height < 0)
-      return false;
-   if (info->box->y > lheight)
-      return false;
-   if (info->box->height + info->box->y > lheight)
-      return false;
+   width = u_minify(res->base.width0, level);
+   height = u_minify(res->base.height0, level);
 
-   if (res->base.target == PIPE_TEXTURE_3D) {
-      int ldepth = u_minify(res->base.depth0, info->level);
-      if (info->box->depth > ldepth || info->box->depth < 0)
-         return false;
-      if (info->box->z > ldepth)
-         return false;
-      if (info->box->z + info->box->depth > ldepth)
-         return false;
-   } else {
-      if (info->box->depth > (int)res->base.array_size)
-         return false;
-      if (info->box->z > (int)res->base.array_size)
-         return false;
-      if (info->box->z + info->box->depth > (int)res->base.array_size)
-         return false;
+   /* The z value has two meanings depending of the texture type */
+   switch (res->base.target) {
+   case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_1D_ARRAY:
+   case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      depth = res->base.array_size;
+      break;
+   case PIPE_TEXTURE_3D:
+      depth = u_minify(res->base.depth0, level);
+      break;
+   default:
+      depth = 1;
+      break;
    }
+
+   /* check that the starting point is not outside of the range */
+   if (unlikely(box->x < 0 || box->y < 0 || box->z < 0 ||
+                box->x > width || box->y > height || box->z > depth))
+      return false;
+
+   end_x = (int64_t) box->x + (int64_t) box->width;
+   end_y = (int64_t) box->y + (int64_t) box->height;
+   end_z = (int64_t) box->z + (int64_t) box->depth;
+
+   /* check that the end point is not outside of the range */
+   if (unlikely(end_x < 0 || end_y < 0 || end_z < 0 ||
+                end_x > width || end_y > height  || end_z > depth ))
+      return false;
 
    return true;
 }
@@ -9567,7 +9567,7 @@ static int vrend_renderer_transfer_internal(struct vrend_context *ctx,
    }
 #endif
 
-   if (!check_transfer_bounds(res, info)) {
+   if (!resource_contains_box(res, info->box, info->level)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS, res->id);
       return EINVAL;
    }
@@ -9639,7 +9639,7 @@ int vrend_transfer_inline_write(struct vrend_context *ctx,
       return EINVAL;
    }
 
-   if (!check_transfer_bounds(res, info)) {
+   if (!resource_contains_box(res, info->box, info->level)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, dst_handle);
       return EINVAL;
    }
@@ -9689,7 +9689,7 @@ int vrend_renderer_copy_transfer3d(struct vrend_context *ctx,
       return EINVAL;
    }
 
-   if (!check_transfer_bounds(dst_res, info)) {
+   if (!resource_contains_box(dst_res, info->box, info->level)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, dst_handle);
       return EINVAL;
    }
@@ -9761,7 +9761,7 @@ int vrend_renderer_copy_transfer3d_from_host(struct vrend_context *ctx,
       return EINVAL;
    }
 
-   if (!check_transfer_bounds(src_res, info)) {
+   if (!resource_contains_box(src_res, info->box, info->level)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, dst_handle);
       return EINVAL;
    }
@@ -10197,53 +10197,6 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
        glGetError() != GL_NO_ERROR) {
       virgl_warn("glCopyImageSubData maybe fail\n");
    }
-}
-
-static inline bool resource_contains_box(struct vrend_resource *res,
-                                         const struct pipe_box *box,
-                                         uint32_t level)
-{
-   int64_t end_x, end_y, end_z;
-   int64_t width, height, depth;
-
-   /* check mipmap level is in bounds */
-   if (unlikely(level > res->base.last_level))
-      return false;
-
-   width = u_minify(res->base.width0, level);
-   height = u_minify(res->base.height0, level);
-
-   /* The z value has two meanings depending of the texture type */
-   switch (res->base.target) {
-   case PIPE_TEXTURE_CUBE:
-   case PIPE_TEXTURE_1D_ARRAY:
-   case PIPE_TEXTURE_2D_ARRAY:
-   case PIPE_TEXTURE_CUBE_ARRAY:
-      depth = res->base.array_size;
-      break;
-   case PIPE_TEXTURE_3D:
-      depth = u_minify(res->base.depth0, level);
-      break;
-   default:
-      depth = 1;
-      break;
-   }
-
-   /* check that the starting point is not outside of the range */
-   if (unlikely(box->x < 0 || box->y < 0 || box->z < 0 ||
-                box->x > width || box->y > height || box->z > depth))
-      return false;
-
-   end_x = (int64_t) box->x + (int64_t) box->width;
-   end_y = (int64_t) box->y + (int64_t) box->height;
-   end_z = (int64_t) box->z + (int64_t) box->depth;
-
-   /* check that the end point is not outside of the range */
-   if (unlikely(end_x < 0 || end_y < 0 || end_z < 0 ||
-                end_x > width || end_y > height  || end_z > depth ))
-      return false;
-
-   return true;
 }
 
 void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
