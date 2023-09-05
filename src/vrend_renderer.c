@@ -9154,7 +9154,6 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
                                            const struct vrend_transfer_info *info)
 {
    GLenum format, type;
-   uint32_t tex_size;
    char *data;
    int elsize = util_format_get_blocksize(res->base.format);
    int compressed = util_format_is_compressed(res->base.format);
@@ -9166,8 +9165,16 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
    if (compressed)
       format = tex_conv_table[res->base.format].internalformat;
 
-   tex_size = util_format_get_nblocks(res->base.format, u_minify(res->base.width0, info->level), u_minify(res->base.height0, info->level)) *
-              util_format_get_blocksize(res->base.format) * vrend_get_texture_depth(res, info->level);
+   uint64_t tex_size = util_format_get_nblocks(res->base.format,
+                                               u_minify(res->base.width0, info->level),
+                                               u_minify(res->base.height0, info->level));
+   tex_size *= util_format_get_blocksize(res->base.format);
+   tex_size *= vrend_get_texture_depth(res, info->level);
+
+   /* glGetnTexImage takes a GLsizei which is a 32 bit unsigned integer, so if the texture size
+    * is larger than that then something is wrong. */
+   if (tex_size > UINT_MAX)
+      return EINVAL;
 
    if (info->box->z && res->target != GL_TEXTURE_CUBE_MAP) {
       send_offset = util_format_get_nblocks(res->base.format, u_minify(res->base.width0, info->level), u_minify(res->base.height0, info->level)) * util_format_get_blocksize(res->base.format) * info->box->z;
