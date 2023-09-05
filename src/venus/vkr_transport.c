@@ -199,6 +199,12 @@ vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
    struct vkr_context *ctx = dispatch->data;
    const VkRingCreateInfoMESA *info = args->pCreateInfo;
 
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    const struct vkr_resource *res = vkr_context_get_resource(ctx, info->resourceId);
    if (!res) {
       vkr_context_set_fatal(ctx);
@@ -263,6 +269,13 @@ vkr_dispatch_vkDestroyRingMESA(struct vn_dispatch_context *dispatch,
                                struct vn_command_vkDestroyRingMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring || !vkr_ring_stop(ring)) {
       vkr_context_set_fatal(ctx);
@@ -279,6 +292,13 @@ vkr_dispatch_vkNotifyRingMESA(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkNotifyRingMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
       vkr_context_set_fatal(ctx);
@@ -293,6 +313,13 @@ vkr_dispatch_vkWriteRingExtraMESA(struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkWriteRingExtraMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
       vkr_context_set_fatal(ctx);
@@ -308,6 +335,13 @@ vkr_dispatch_vkSubmitVirtqueueSeqnoMESA(struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkSubmitVirtqueueSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
       vkr_context_set_fatal(ctx);
@@ -342,6 +376,13 @@ vkr_dispatch_vkWaitRingSeqnoMESA(struct vn_dispatch_context *dispatch,
                                  struct vn_command_vkWaitRingSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
+
+   if (unlikely(!is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on context dispatch", __func__);
+      vkr_context_set_fatal(ctx);
+      return;
+   }
+
    struct vkr_ring *ring = lookup_ring(ctx, args->ring);
    if (!ring) {
       vkr_context_set_fatal(ctx);
