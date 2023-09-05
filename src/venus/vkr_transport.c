@@ -182,6 +182,16 @@ vkr_ring_layout_init(struct vkr_ring_layout *layout,
    return true;
 }
 
+static inline bool
+is_dispatched_from_vkr_context(const struct vn_dispatch_context *dispatch)
+{
+   /* this is for -Wgnu-statement-expression-from-macro-expansion */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+   return dispatch->data == container_of(dispatch, struct vkr_context, dispatch);
+#pragma GCC diagnostic pop
+}
+
 static void
 vkr_dispatch_vkCreateRingMESA(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkCreateRingMESA *args)
@@ -312,15 +322,15 @@ vkr_dispatch_vkWaitVirtqueueSeqnoMESA(struct vn_dispatch_context *dispatch,
                                       struct vn_command_vkWaitVirtqueueSeqnoMESA *args)
 {
    struct vkr_context *ctx = dispatch->data;
-   /* this is for -Wgnu-statement-expression-from-macro-expansion */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-   if (unlikely(ctx == container_of(dispatch, struct vkr_context, dispatch))) {
-      vkr_log("vkWaitVirtqueueSeqnoMESA must be called on ring dispatch");
+   if (unlikely(is_dispatched_from_vkr_context(dispatch))) {
+      vkr_log("%s must be called on ring dispatch", __func__);
       vkr_context_set_fatal(ctx);
       return;
    }
 
+   /* this is for -Wgnu-statement-expression-from-macro-expansion */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
    struct vkr_ring *ring = container_of(dispatch, struct vkr_ring, dispatch);
 #pragma GCC diagnostic pop
    if (!vkr_ring_wait_virtqueue_seqno(ring, args->seqno))
