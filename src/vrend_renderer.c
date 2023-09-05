@@ -10199,6 +10199,52 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
    }
 }
 
+static inline bool resource_contains_box(struct vrend_resource *res,
+                                         const struct pipe_box *box,
+                                         uint32_t level)
+{
+   int64_t end_x, end_y, end_z;
+   int64_t width, height, depth;
+
+   /* check mipmap level is in bounds */
+   if (unlikely(level > res->base.last_level))
+      return false;
+
+   width = u_minify(res->base.width0, level);
+   height = u_minify(res->base.height0, level);
+
+   /* The z value has two meanings depending of the texture type */
+   switch (res->base.target) {
+   case PIPE_TEXTURE_CUBE:
+   case PIPE_TEXTURE_1D_ARRAY:
+   case PIPE_TEXTURE_2D_ARRAY:
+   case PIPE_TEXTURE_CUBE_ARRAY:
+      depth = res->base.array_size;
+      break;
+   case PIPE_TEXTURE_3D:
+      depth = u_minify(res->base.depth0, level);
+      break;
+   default:
+      depth = 1;
+      break;
+   }
+
+   /* check that the starting point is not outside of the range */
+   if (unlikely(box->x < 0 || box->y < 0 || box->z < 0 ||
+                box->x > width || box->y > height || box->z > depth))
+      return false;
+
+   end_x = (int64_t) box->x + (int64_t) box->width;
+   end_y = (int64_t) box->y + (int64_t) box->height;
+   end_z = (int64_t) box->z + (int64_t) box->depth;
+
+   /* check that the end point is not outside of the range */
+   if (unlikely(end_x < 0 || end_y < 0 || end_z < 0 ||
+                end_x > width || end_y > height  || end_z > depth ))
+      return false;
+
+   return true;
+}
 
 void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
                                          uint32_t dst_handle, uint32_t dst_level,
@@ -10223,6 +10269,11 @@ void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
    }
    if (!dst_res) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, dst_handle);
+      return;
+   }
+
+   if (!resource_contains_box(src_res, src_box, src_level)) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, src_handle);
       return;
    }
 
