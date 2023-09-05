@@ -1155,6 +1155,11 @@ iter_decls(struct tgsi_iterate_context *iter,
       }
 
       if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT) {
+         if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
+               virgl_error( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
+            return false;
+         }
+
          for (uint32_t j = 0; j < ctx->num_inputs; j++) {
             if (ctx->inputs[j].name == decl->Semantic.Name &&
                 ctx->inputs[j].sid == decl->Semantic.Index &&
