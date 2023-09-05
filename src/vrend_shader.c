@@ -2938,6 +2938,10 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
                                bool *require_dummy_value)
 {
    if (inst->TexOffsets[0].File == TGSI_FILE_IMMEDIATE) {
+      if (inst->TexOffsets[0].Index >= MAX_IMMEDIATE) {
+         virgl_error("Immediate exceeded, max is %u\n", MAX_IMMEDIATE);
+         return false;
+      }
       const struct immed *imd = &ctx->imm[inst->TexOffsets[0].Index];
       switch (inst->Texture.Texture) {
       case TGSI_TEXTURE_1D:
@@ -5930,29 +5934,37 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_BRK:
       emit_buf(&ctx->glsl_strbufs, "break;\n");
       break;
-   case TGSI_OPCODE_EMIT: {
-      struct immed *imd = &ctx->imm[(inst->Src[0].Register.Index)];
-      if (ctx->so && ctx->key->gs_present)
-         emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
-      if (ctx->cfg->has_cull_distance && ctx->key->gs.emit_clip_distance)
-         emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
-      emit_prescale(&ctx->glsl_strbufs);
-      if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
-         ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
-         emit_buff(&ctx->glsl_strbufs, "EmitStreamVertex(%d);\n", imd->val[inst->Src[0].Register.SwizzleX].ui);
-      } else
-         emit_buf(&ctx->glsl_strbufs, "EmitVertex();\n");
-      break;
-   }
-   case TGSI_OPCODE_ENDPRIM: {
-      struct immed *imd = &ctx->imm[(inst->Src[0].Register.Index)];
-      if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
-         ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
-         emit_buff(&ctx->glsl_strbufs, "EndStreamPrimitive(%d);\n", imd->val[inst->Src[0].Register.SwizzleX].ui);
-      } else
-         emit_buf(&ctx->glsl_strbufs, "EndPrimitive();\n");
-      break;
-   }
+   case TGSI_OPCODE_EMIT:
+      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+         struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
+         if (ctx->so && ctx->key->gs_present)
+            emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
+         if (ctx->cfg->has_cull_distance && ctx->key->gs.emit_clip_distance)
+            emit_clip_dist_movs(ctx, &ctx->glsl_strbufs);
+         emit_prescale(&ctx->glsl_strbufs);
+         if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
+            ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            emit_buff(&ctx->glsl_strbufs, "EmitStreamVertex(%d);\n", imd->val[inst->Src[0].Register.SwizzleX].ui);
+         } else
+            emit_buf(&ctx->glsl_strbufs, "EmitVertex();\n");
+         break;
+      } else {
+         virgl_error("Immediate range exceeded, max is %u\n", MAX_IMMEDIATE);
+         return false;
+      }
+   case TGSI_OPCODE_ENDPRIM:
+      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+         struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
+         if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
+            ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
+            emit_buff(&ctx->glsl_strbufs, "EndStreamPrimitive(%d);\n", imd->val[inst->Src[0].Register.SwizzleX].ui);
+         } else
+            emit_buf(&ctx->glsl_strbufs, "EndPrimitive();\n");
+         break;
+      } else {
+         virgl_error("Immediate range exceeded, max is %u\n", MAX_IMMEDIATE);
+         return false;
+      }
    case TGSI_OPCODE_INTERP_CENTROID:
       emit_buff(&ctx->glsl_strbufs, "%s = %s(%s(vec4(interpolateAtCentroid(%s)%s)));\n", dsts[0], get_string(dinfo.dstconv), get_string(dinfo.dtypeprefix), srcs[0], src_swizzle0);
       ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
@@ -6020,37 +6032,41 @@ iter_instruction(struct tgsi_iterate_context *iter,
    case TGSI_OPCODE_BARRIER:
       emit_buf(&ctx->glsl_strbufs, "barrier();\n");
       break;
-   case TGSI_OPCODE_MEMBAR: {
-      struct immed *imd = &ctx->imm[(inst->Src[0].Register.Index)];
-      uint32_t val = imd->val[inst->Src[0].Register.SwizzleX].ui;
-      uint32_t all_val = (TGSI_MEMBAR_SHADER_BUFFER |
-                          TGSI_MEMBAR_ATOMIC_BUFFER |
-                          TGSI_MEMBAR_SHADER_IMAGE |
-                          TGSI_MEMBAR_SHARED);
+   case TGSI_OPCODE_MEMBAR:
+      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+         struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
+         uint32_t val = imd->val[inst->Src[0].Register.SwizzleX].ui;
+         uint32_t all_val = (TGSI_MEMBAR_SHADER_BUFFER |
+                             TGSI_MEMBAR_ATOMIC_BUFFER |
+                             TGSI_MEMBAR_SHADER_IMAGE |
+                             TGSI_MEMBAR_SHARED);
 
-      if (val & TGSI_MEMBAR_THREAD_GROUP) {
-         emit_buf(&ctx->glsl_strbufs, "groupMemoryBarrier();\n");
-      } else {
-         if ((val & all_val) == all_val) {
-            emit_buf(&ctx->glsl_strbufs, "memoryBarrier();\n");
-            ctx->shader_req_bits |= SHADER_REQ_IMAGE_LOAD_STORE;
+         if (val & TGSI_MEMBAR_THREAD_GROUP) {
+            emit_buf(&ctx->glsl_strbufs, "groupMemoryBarrier();\n");
          } else {
-            if (val & TGSI_MEMBAR_SHADER_BUFFER) {
-               emit_buf(&ctx->glsl_strbufs, "memoryBarrierBuffer();\n");
-            }
-            if (val & TGSI_MEMBAR_ATOMIC_BUFFER) {
-               emit_buf(&ctx->glsl_strbufs, "memoryBarrierAtomicCounter();\n");
-            }
-            if (val & TGSI_MEMBAR_SHADER_IMAGE) {
-               emit_buf(&ctx->glsl_strbufs, "memoryBarrierImage();\n");
-            }
-            if (val & TGSI_MEMBAR_SHARED) {
+            if ((val & all_val) == all_val) {
+               emit_buf(&ctx->glsl_strbufs, "memoryBarrier();\n");
+               ctx->shader_req_bits |= SHADER_REQ_IMAGE_LOAD_STORE;
+            } else {
+               if (val & TGSI_MEMBAR_SHADER_BUFFER) {
+                  emit_buf(&ctx->glsl_strbufs, "memoryBarrierBuffer();\n");
+               }
+               if (val & TGSI_MEMBAR_ATOMIC_BUFFER) {
+                  emit_buf(&ctx->glsl_strbufs, "memoryBarrierAtomicCounter();\n");
+               }
+               if (val & TGSI_MEMBAR_SHADER_IMAGE) {
+                  emit_buf(&ctx->glsl_strbufs, "memoryBarrierImage();\n");
+               }
+               if (val & TGSI_MEMBAR_SHARED) {
                emit_buf(&ctx->glsl_strbufs, "memoryBarrierShared();\n");
+               }
             }
          }
+         break;
+      } else {
+         virgl_error("Immediate range exceeded, max is %u\n", MAX_IMMEDIATE);
+         return false;
       }
-      break;
-   }
    case TGSI_OPCODE_STORE:
       if (ctx->cfg->use_gles) {
          if (!rewrite_1d_image_coordinate(ctx->src_bufs + 1, inst))
