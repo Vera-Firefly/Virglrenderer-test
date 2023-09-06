@@ -13071,6 +13071,11 @@ void vrend_renderer_get_meminfo(struct vrend_context *ctx, uint32_t res_handle)
       return;
    }
 
+   if (!res->iov || res->iov->iov_len < sizeof(struct virgl_memory_info)) {
+       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
+       return;
+   }
+
    info = (struct virgl_memory_info *)res->iov->iov_base;
 
    if (has_feature(feat_nvx_gpu_memory_info)) {
