@@ -1195,6 +1195,69 @@ START_TEST(virgl_decode_bind_sampler_states)
 }
 END_TEST
 
+START_TEST(virgl_test_encode_sampler_view)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_sampler_view state = {
+       .format = VIRGL_FORMAT_B8G8R8A8_UNORM
+   };
+
+   struct virgl_resource res;
+   struct virgl_resource res2;
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res, 1, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res2, 2, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* attach resource to context */
+   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+   /* Here we are using correct values, no error expected */
+   ret = virgl_encode_sampler_view(&ctx, res.handle,
+                                   &res,
+                                   &state);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* Sending illegal format */
+   state.format = VIRGL_FORMAT_NONE;
+   ret = virgl_encode_sampler_view(&ctx, res2.handle,
+                                   &res2,
+                                   &state);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Sending illegal format */
+   state.format = VIRGL_FORMAT_MAX;
+   ret = virgl_encode_sampler_view(&ctx, res2.handle,
+                                   &res2,
+                                   &state);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Sending illegal sampler view target */
+   state.format = VIRGL_FORMAT_B8G8R8A8_UNORM | PIPE_MAX_TEXTURE_TYPES << 24;
+   ret = virgl_encode_sampler_view(&ctx, res2.handle,
+                                   &res2,
+                                   &state);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1213,6 +1276,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_decode_set_scissor_state);
   tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
   tcase_add_test(tc_core, virgl_decode_bind_sampler_states);
+  tcase_add_test(tc_core, virgl_test_encode_sampler_view);
 
   suite_add_tcase(s, tc_core);
   return s;

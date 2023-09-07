@@ -635,17 +635,35 @@ static int vrend_decode_create_msaa_surface(struct vrend_context *ctx, const uin
 
 static int vrend_decode_create_sampler_view(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)
 {
-   uint32_t res_handle, format, val0, val1, swizzle_packed;
-
    if (length != VIRGL_OBJ_SAMPLER_VIEW_SIZE)
       return EINVAL;
 
-   res_handle = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_RES_HANDLE);
-   format = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_FORMAT);
-   val0 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_FIRST_ELEMENT);
-   val1 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_LAST_ELEMENT);
-   swizzle_packed = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_SWIZZLE);
-   return vrend_create_sampler_view(ctx, handle, res_handle, format, val0, val1,swizzle_packed);
+   uint32_t res_handle = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_RES_HANDLE);
+   uint32_t format_data = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_FORMAT);
+
+   enum virgl_formats format = format_data & 0xffffff;
+   if (!format || format >= VIRGL_FORMAT_MAX) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, format_data);
+      return EINVAL;
+   }
+
+   enum pipe_texture_target pipe_target = (format_data >> 24) & 0xff;
+   if (pipe_target >= PIPE_MAX_TEXTURE_TYPES) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SAMPLER_VIEW_TARGET,
+                                 format_data);
+      return EINVAL;
+   }
+
+   struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   if (!res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
+      return EINVAL;
+   }
+
+   uint32_t val0 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_FIRST_ELEMENT);
+   uint32_t val1 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_LAST_ELEMENT);
+   uint32_t swizzle_packed = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_SWIZZLE);
+   return vrend_create_sampler_view(ctx, handle, res, format, pipe_target, val0, val1,swizzle_packed);
 }
 
 static int vrend_decode_create_sampler_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)

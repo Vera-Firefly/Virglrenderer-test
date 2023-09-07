@@ -2601,40 +2601,20 @@ static inline GLenum to_gl_swizzle(enum pipe_swizzle swizzle)
 
 int vrend_create_sampler_view(struct vrend_context *ctx,
                               uint32_t handle,
-                              uint32_t res_handle, uint32_t format,
+                              struct vrend_resource *res,
+                              enum virgl_formats format, enum pipe_texture_target pipe_target,
                               uint32_t val0, uint32_t val1, uint32_t swizzle_packed)
 {
    struct vrend_sampler_view *view;
-   struct vrend_resource *res;
    int ret_handle;
    enum pipe_swizzle swizzle[4];
-
-   res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-   if (!res) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
-      return EINVAL;
-   }
 
    view = CALLOC_STRUCT(vrend_sampler_view);
    if (!view)
       return ENOMEM;
 
    pipe_reference_init(&view->reference, 1);
-   view->format = format & 0xffffff;
-
-   if (!view->format || view->format >= VIRGL_FORMAT_MAX) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, view->format);
-      FREE(view);
-      return EINVAL;
-   }
-
-   uint32_t pipe_target = (format >> 24) & 0xff;
-   if (pipe_target >= PIPE_MAX_TEXTURE_TYPES) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SAMPLER_VIEW_TARGET,
-                           view->format);
-      FREE(view);
-      return EINVAL;
-   }
+   view->format = format;
 
    view->target = tgsitargettogltarget(pipe_target, res->base.nr_samples);
 
