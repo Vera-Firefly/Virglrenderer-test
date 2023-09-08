@@ -11559,6 +11559,7 @@ int vrend_create_so_target(struct vrend_context *ctx,
    ret_handle = vrend_renderer_object_insert(ctx, target, handle,
                                              VIRGL_OBJECT_STREAMOUT_TARGET);
    if (ret_handle == 0) {
+      vrend_resource_reference(&target->buffer, NULL);
       FREE(target);
       return ENOMEM;
    }
