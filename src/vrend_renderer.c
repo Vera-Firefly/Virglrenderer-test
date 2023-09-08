@@ -9310,7 +9310,7 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
    bool actually_invert, separate_invert = false;
    GLenum format, type;
    GLint y1;
-   uint32_t send_size = 0;
+   uint64_t send_size = 0;
    uint32_t h = u_minify(res->base.height0, info->level);
    int elsize = util_format_get_blocksize(res->base.format);
    float depth_scale;
@@ -9341,10 +9341,20 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
       need_temp = true;
 
    if (need_temp) {
-      send_size = util_format_get_nblocks(res->base.format, info->box->width, info->box->height) * info->box->depth * util_format_get_blocksize(res->base.format);
+      send_size = util_format_get_nblocks(res->base.format, info->box->width, info->box->height);
+      send_size *= info->box->depth;
+      send_size *= util_format_get_blocksize(res->base.format);
+
+      /* glReadnPixels only supports a buffer size of GLsizei = uint32_t, anything larger
+       * is bogous */
+      if (send_size > UINT_MAX) {
+         virgl_error("Readback size out of range %ld\n", send_size);
+         return EINVAL;
+      }
+
       data = malloc(send_size);
       if (!data) {
-         virgl_error("Memory allocation failed for %d\n", send_size);
+         virgl_error("Memory allocation failed for %ld\n", send_size);
          return ENOMEM;
       }
    } else {
