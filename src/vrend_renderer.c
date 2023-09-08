@@ -2341,6 +2341,7 @@ int vrend_create_surface(struct vrend_context *ctx,
 
    ret_handle = vrend_renderer_object_insert(ctx, surf, handle, VIRGL_OBJECT_SURFACE);
    if (ret_handle == 0) {
+      vrend_resource_reference(&surf->texture, NULL);
       FREE(surf);
       return ENOMEM;
    }
