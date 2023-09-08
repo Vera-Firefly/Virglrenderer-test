@@ -79,7 +79,6 @@ struct tgsi_opcode_info
    int post_indent:2;
    enum tgsi_output_mode output_mode:3;
    const char *mnemonic;
-   uint opcode;
 };
 
 const struct tgsi_opcode_info *
