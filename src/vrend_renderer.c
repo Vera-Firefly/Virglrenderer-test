@@ -11017,10 +11017,14 @@ static bool vrend_check_query(struct vrend_query *query)
    state.query_state = VIRGL_QUERY_STATE_DONE;
 
    if (query->res->iov) {
-      vrend_write_to_iovec(query->res->iov, query->res->num_iovs, 0,
-            (const void *) &state, sizeof(state));
+      if (vrend_write_to_iovec(query->res->iov, query->res->num_iovs, 0,
+                               (const void *) &state, sizeof(state)) != sizeof(state))
+         virgl_error("Query state does not fit IOV size\n");
    } else {
-      *((struct virgl_host_query_state *) query->res->ptr) = state;
+      if (query->res->base.width0 >= sizeof(state) )
+         *((struct virgl_host_query_state *) query->res->ptr) = state;
+      else
+         virgl_error("Query state does not fit buffer size\n");
    }
 
    return true;
