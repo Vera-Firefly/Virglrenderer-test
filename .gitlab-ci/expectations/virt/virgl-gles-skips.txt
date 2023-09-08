@@ -174,11 +174,5 @@ spec@arb_shader_image_load_store@level@CubeArray level binding test
 spec@arb_shader_image_load_store@level@Cube level binding test
 spec@arb_shader_image_load_store@level
 
-# Currently crashes the host
-spec@arb_cull_distance@vs-cull-distance-vertex-outside-cull-volume
-spec@arb_cull_distance@basic-cull-4
-spec@arb_cull_distance@arb_cull_distance-exceed-limits cull
-spec@arb_cull_distance@basic-cull-3
-
 #OOM
 spec@!opengl 1.1@streaming-texture-leak
