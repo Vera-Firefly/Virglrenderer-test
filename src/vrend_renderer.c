@@ -2813,6 +2813,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
 
    ret_handle = vrend_renderer_object_insert(ctx, view, handle, VIRGL_OBJECT_SAMPLER_VIEW);
    if (ret_handle == 0) {
+      vrend_resource_reference(&view->texture, NULL);
       FREE(view);
       return ENOMEM;
    }
