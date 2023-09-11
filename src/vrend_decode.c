@@ -605,15 +605,25 @@ static int vrend_decode_create_rasterizer(struct vrend_context *ctx, const uint3
 
 static int vrend_decode_create_surface_common(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint32_t sample_count)
 {
-   uint32_t res_handle, format, val0, val1;
+   uint32_t res_handle = get_buf_entry(buf, VIRGL_OBJ_SURFACE_RES_HANDLE);
 
-   res_handle = get_buf_entry(buf, VIRGL_OBJ_SURFACE_RES_HANDLE);
-   format = get_buf_entry(buf, VIRGL_OBJ_SURFACE_FORMAT);
+   struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
+   if (!res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
+      return EINVAL;
+   }
+
+   enum virgl_formats format = get_buf_entry(buf, VIRGL_OBJ_SURFACE_FORMAT);
+
+   if (format >= PIPE_FORMAT_COUNT) {
+      return EINVAL;
+   }
+
    /* decide later if these are texture or buffer */
-   val0 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_FIRST_ELEMENT);
-   val1 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_LAST_ELEMENT);
+   uint32_t val0 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_FIRST_ELEMENT);
+   uint32_t val1 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_LAST_ELEMENT);
 
-   return vrend_create_surface(ctx, handle, res_handle, format, val0, val1, sample_count);
+   return vrend_create_surface(ctx, handle, res, format, val0, val1, sample_count);
 }
 
 static int vrend_decode_create_surface(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)

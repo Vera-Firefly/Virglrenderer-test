@@ -231,10 +231,9 @@ struct pipe_resource *
 vrend_renderer_resource_create(const struct vrend_renderer_resource_create_args *args,
                                void *image_eos);
 
-int vrend_create_surface(struct vrend_context *ctx,
-                         uint32_t handle,
-                         uint32_t res_handle, uint32_t format,
-                         uint32_t val0, uint32_t val1,
+int vrend_create_surface(struct vrend_context *ctx, uint32_t handle,
+                         struct vrend_resource *res,
+                         enum virgl_formats format, uint32_t val0, uint32_t val1,
                          uint32_t nr_samples);
 int vrend_create_sampler_view(struct vrend_context *ctx, uint32_t handle,
                               struct vrend_resource *res, enum virgl_formats format,

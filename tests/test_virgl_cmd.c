@@ -1258,6 +1258,56 @@ START_TEST(virgl_test_encode_sampler_view)
 }
 END_TEST
 
+static void test_create_surface(enum pipe_format format, int expected_error)
+{
+   struct virgl_context ctx;
+   struct virgl_resource res;
+   struct virgl_surface surf;
+   int ret;
+
+   ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res, 1, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* attach resource to context */
+   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+   /* create a surface for the resource */
+   memset(&surf, 0, sizeof(surf));
+   surf.base.format = format;
+   surf.handle = 1;
+   surf.base.texture = &res.base;
+
+   ret = virgl_encoder_create_surface(&ctx, surf.handle, &res, &surf.base);
+   ck_assert_int_eq(ret, 0);
+
+   /* submit the cmd stream */
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, expected_error);
+
+   /* cleanup */
+   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
+
+   testvirgl_destroy_backed_res(&res);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+
+START_TEST(virgl_test_create_surface_pass)
+{
+   test_create_surface(VIRGL_FORMAT_B8G8R8A8_UNORM, 0);
+}
+END_TEST
+
+START_TEST(virgl_test_create_surface_fail_format)
+{
+   test_create_surface(VIRGL_FORMAT_MAX, EINVAL);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1277,6 +1327,8 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
   tcase_add_test(tc_core, virgl_decode_bind_sampler_states);
   tcase_add_test(tc_core, virgl_test_encode_sampler_view);
+  tcase_add_test(tc_core, virgl_test_create_surface_pass);
+  tcase_add_test(tc_core, virgl_test_create_surface_fail_format);
 
   suite_add_tcase(s, tc_core);
   return s;
