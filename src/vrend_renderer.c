@@ -518,7 +518,6 @@ struct vrend_texture {
 struct vrend_surface {
    struct pipe_reference reference;
    GLuint id;
-   GLuint res_handle;
    GLuint format;
    GLuint val0, val1;
    GLuint nr_samples;
@@ -2276,7 +2275,6 @@ int vrend_create_surface(struct vrend_context *ctx,
    if (!surf)
       return ENOMEM;
 
-   surf->res_handle = res_handle;
    surf->format = format;
 
    surf->val0 = val0;
