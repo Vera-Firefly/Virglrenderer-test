@@ -754,7 +754,7 @@ int vrend_video_decode_bitstream(struct vrend_video_context *ctx,
     union virgl_picture_desc desc;
 
     if (!cdc || !tgt){
-        virgl_error("video codec: 0x%x, video buffer: 0x%x, invalid.\n", cdc, tgt);
+        virgl_error("video codec: %p, video buffer: %p, invalid.\n", (void *)cdc, (void *)tgt);
         return -1;
     }
 
