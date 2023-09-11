@@ -1156,7 +1156,7 @@ iter_decls(struct tgsi_iterate_context *iter,
 
       if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT) {
          if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
-               virgl_error( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
+               virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
             return false;
          }
 
@@ -1307,7 +1307,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
 
       i = ctx->num_inputs++;
       if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
-         virgl_error( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
+         virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
          return false;
       }
 
@@ -1390,7 +1390,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                if (ctx->key->color_two_side) {
                   int j = ctx->num_inputs++;
                   if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
-                     virgl_error( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
+                     virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
                      return false;
                   }
 
@@ -1409,7 +1409,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                   if (ctx->front_face_emitted == false) {
                      int k = ctx->num_inputs++;
                      if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
-                        virgl_error( "Number of inputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->inputs));
+                        virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
                         return false;
                      }
 
@@ -1619,7 +1619,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
       i = ctx->num_outputs++;
       if (ctx->num_outputs > ARRAY_SIZE(ctx->outputs)) {
-         virgl_error("Number of outputs exceeded, max is %lu\n", ARRAY_SIZE(ctx->outputs));
+         virgl_error("Number of outputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->outputs));
          return false;
       }
 
@@ -1887,7 +1887,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
 
       if (decl->Range.Last >= ARRAY_SIZE(ctx->samplers)) {
-         virgl_error("Sampler view exceeded, max is %lu\n", ARRAY_SIZE(ctx->samplers));
+         virgl_error("Sampler view exceeded, max is %zd\n", ARRAY_SIZE(ctx->samplers));
          return false;
       }
       if (!add_samplers(ctx, decl->Range.First, decl->Range.Last, decl->SamplerView.Resource, decl->SamplerView.ReturnTypeX))
@@ -1903,7 +1903,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       ctx->shader_req_bits |= SHADER_REQ_EXPLICIT_UNIFORM_LOCATION;
       ctx->shader_req_bits |= SHADER_REQ_EXPLICIT_ATTRIB_LOCATION;
       if (decl->Range.Last >= ARRAY_SIZE(ctx->images)) {
-         virgl_error("Image view exceeded, max is %lu\n", ARRAY_SIZE(ctx->images));
+         virgl_error("Image view exceeded, max is %zd\n", ARRAY_SIZE(ctx->images));
          return false;
       }
       if (!add_images(ctx, decl->Range.First, decl->Range.Last, &decl->Image))
@@ -1956,7 +1956,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
    case TGSI_FILE_SYSTEM_VALUE:
       i = ctx->num_system_values++;
       if (ctx->num_system_values > ARRAY_SIZE(ctx->system_values)) {
-         virgl_error("Number of system values exceeded, max is %lu\n", ARRAY_SIZE(ctx->system_values));
+         virgl_error("Number of system values exceeded, max is %zd\n", ARRAY_SIZE(ctx->system_values));
          return false;
       }
 
@@ -1993,7 +1993,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
       }
 
       if (ctx->num_abo >= ARRAY_SIZE(ctx->abo_idx)) {
-         virgl_error("Number of atomic counter buffers exceeded, max is %lu\n", ARRAY_SIZE(ctx->abo_idx));
+         virgl_error("Number of atomic counter buffers exceeded, max is %zd\n", ARRAY_SIZE(ctx->abo_idx));
          return false;
       }
       ctx->abo_idx[ctx->num_abo] = decl->Dim.Index2D;
@@ -2120,7 +2120,7 @@ iter_immediate(struct tgsi_iterate_context *iter,
    uint32_t first = ctx->num_imm;
 
    if (first >= ARRAY_SIZE(ctx->imm)) {
-      virgl_error("Number of immediates exceeded, max is: %lu\n", ARRAY_SIZE(ctx->imm));
+      virgl_error("Number of immediates exceeded, max is: %zd\n", ARRAY_SIZE(ctx->imm));
       return false;
    }
 
@@ -2716,7 +2716,7 @@ static bool set_texture_reqs(struct dump_ctx *ctx,
                              uint32_t sreg_index)
 {
    if (sreg_index >= ARRAY_SIZE(ctx->samplers)) {
-      virgl_error("Sampler view exceeded, max is %lu\n", ARRAY_SIZE(ctx->samplers));
+      virgl_error("Sampler view exceeded, max is %zd\n", ARRAY_SIZE(ctx->samplers));
       return false;
    }
    ctx->samplers[sreg_index].tgsi_sampler_type = inst->Texture.Texture;
@@ -3321,7 +3321,7 @@ static void translate_tex(struct dump_ctx *ctx,
    bool exchange_bias_offset = false;
    if (inst->Texture.NumOffsets == 1) {
       if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
-         virgl_error("Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
+         virgl_error("Immediate exceeded, max is %zd\n", ARRAY_SIZE(ctx->imm));
          set_buf_error(&ctx->glsl_strbufs);
          goto cleanup;
       }
@@ -4948,7 +4948,7 @@ get_source_info(struct dump_ctx *ctx,
          break;
       case TGSI_FILE_IMMEDIATE: {
             if (src->Register.Index >= (int)ARRAY_SIZE(ctx->imm)) {
-               virgl_error("Immediate exceeded, max is %lu\n", ARRAY_SIZE(ctx->imm));
+               virgl_error("Immediate exceeded, max is %zd\n", ARRAY_SIZE(ctx->imm));
                return false;
             }
             struct immed *imd = &ctx->imm[src->Register.Index];

@@ -9342,13 +9342,13 @@ static int vrend_transfer_send_readpixels(struct vrend_context *ctx,
       /* glReadnPixels only supports a buffer size of GLsizei = uint32_t, anything larger
        * is bogous */
       if (send_size > UINT_MAX) {
-         virgl_error("Readback size out of range %ld\n", send_size);
+         virgl_error("Readback size out of range %"PRIu64"\n", send_size);
          return EINVAL;
       }
 
       data = malloc(send_size);
       if (!data) {
-         virgl_error("Memory allocation failed for %ld\n", send_size);
+         virgl_error("Memory allocation failed for %"PRIu64"\n", send_size);
          return ENOMEM;
       }
    } else {
