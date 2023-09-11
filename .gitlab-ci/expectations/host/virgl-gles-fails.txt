@@ -11,111 +11,67 @@ shaders@point-vertex-id gl_vertexid,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid divisor,Fail
 shaders@point-vertex-id gl_vertexid gl_instanceid,Fail
 spec@arb_clear_texture@arb_clear_texture-depth,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-clear,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-drawpixels,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-probepixel,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-readpixels,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-render,Fail
-spec@arb_color_buffer_float@gl_rgba8_snorm-render-fog,Fail
 spec@arb_compute_shader@execution@min-dvec4-double-large-group-size,Fail
 spec@arb_copy_image@arb_copy_image-formats,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_COMPRESSED_RED_RGTC1,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_BPTC_UNORM/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_S3TC_DXT3_EXT/Destination: GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGBA_S3TC_DXT5_EXT/Destination: GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT/Destination: GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT/Destination: GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGB_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RGB_S3TC_DXT1_EXT/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_RG_RGTC2/Destination: GL_COMPRESSED_RG_RGTC2,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SIGNED_RED_RGTC1/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SIGNED_RED_RGTC1/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SIGNED_RG_RGTC2/Destination: GL_COMPRESSED_SIGNED_RG_RGTC2,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM/Destination: GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_DEPTH_COMPONENT24/Destination: GL_DEPTH_COMPONENT24,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R16/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R16I/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R16_SNORM/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R16UI/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R32F/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8/Destination: GL_R8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8I/Destination: GL_R8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8_SNORM/Destination: GL_R8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_R8UI/Destination: GL_R8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG16/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG16I/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG16_SNORM/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG16UI/Destination: GL_RGBA8_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32F/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32I/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG32UI/Destination: GL_RGBA16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG8/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG8I/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG8_SNORM/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RG8UI/Destination: GL_R16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB16/Destination: GL_RGB16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB16I/Destination: GL_RGB16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB16_SNORM/Destination: GL_RGB16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB16UI/Destination: GL_RGB16_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB8/Destination: GL_RGB8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB8I/Destination: GL_RGB8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB8_SNORM/Destination: GL_RGB8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGB8UI/Destination: GL_RGB8_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16I/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_RGB_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA16UI/Destination: GL_RGBA16_SNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32F/Destination: GL_COMPRESSED_RGBA_BPTC_UNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32F/Destination: GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32F/Destination: GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,Fail
@@ -146,10 +102,6 @@ spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32UI/Destination: GL_C
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32UI/Destination: GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32UI/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,Fail
 spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA32UI/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8I/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8_SNORM/Destination: GL_RGBA8_SNORM,Fail
-spec@arb_copy_image@arb_copy_image-formats@Source: GL_RGBA8UI/Destination: GL_RGBA8_SNORM,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor@GL_DEPTH32F_STENCIL8- border color only,Fail
 spec@arb_depth_buffer_float@texwrap formats bordercolor@GL_DEPTH_COMPONENT32F- border color only,Fail
@@ -449,7 +401,6 @@ spec@ext_framebuffer_multisample@upsample 4 stencil,Fail
 spec@ext_framebuffer_object@fbo-blending-formats,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA12,Fail
 spec@ext_framebuffer_object@fbo-blending-formats@GL_ALPHA16,Fail
-spec@ext_framebuffer_object@fbo-blending-snorm,Fail
 spec@ext_framebuffer_object@fbo-clear-formats,Fail
 spec@ext_framebuffer_object@fbo-clear-formats@GL_ALPHA12,Fail
 spec@ext_framebuffer_object@fbo-clear-formats@GL_ALPHA16,Fail
@@ -484,9 +435,6 @@ spec@ext_provoking_vertex@provoking-vertex,Fail
 spec@ext_texture_array@fbo-generatemipmap-array rgb9_e5,Fail
 spec@ext_texture_array@fbo-generatemipmap-array s3tc_dxt1,Fail
 spec@ext_texture_array@gen-mipmap,Fail
-spec@ext_texture_compression_rgtc@fbo-generatemipmap-formats-signed,Fail
-spec@ext_texture_compression_rgtc@fbo-generatemipmap-formats-signed@GL_COMPRESSED_SIGNED_RED_RGTC1,Fail
-spec@ext_texture_compression_rgtc@fbo-generatemipmap-formats-signed@GL_COMPRESSED_SIGNED_RED_RGTC1 NPOT,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor@GL_COMPRESSED_RED_RGTC1- border color only,Fail
 spec@ext_texture_compression_rgtc@texwrap formats bordercolor@GL_COMPRESSED_RG_RGTC2- border color only,Fail
@@ -530,8 +478,6 @@ spec@ext_texture_shared_exponent@texwrap formats bordercolor,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor@GL_RGB9_E5- border color only,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor-swizzled,Fail
 spec@ext_texture_shared_exponent@texwrap formats bordercolor-swizzled@GL_RGB9_E5- swizzled- border color only,Fail
-spec@ext_texture_snorm@multisample-formats 2 gl_ext_texture_snorm,Fail
-spec@ext_texture_snorm@multisample-formats 4 gl_ext_texture_snorm,Fail
 spec@ext_texture_snorm@texwrap formats bordercolor,Fail
 spec@ext_texture_snorm@texwrap formats bordercolor@GL_ALPHA16_SNORM- border color only,Fail
 spec@ext_texture_snorm@texwrap formats bordercolor@GL_ALPHA8_SNORM- border color only,Fail
@@ -2278,12 +2224,6 @@ spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_D
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT/Destination: GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT/Destination: GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,Fail
 spec@nv_copy_image@nv_copy_image-formats@Source: GL_DEPTH_COMPONENT24/Destination: GL_DEPTH_COMPONENT24,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_R16_SNORM/Destination: GL_R16_SNORM,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_R8_SNORM/Destination: GL_R8_SNORM,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_RGB16_SNORM/Destination: GL_RGB16_SNORM,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_RGB8_SNORM/Destination: GL_RGB8_SNORM,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_RGBA16_SNORM/Destination: GL_RGBA16_SNORM,Fail
-spec@nv_copy_image@nv_copy_image-formats@Source: GL_RGBA8_SNORM/Destination: GL_RGBA8_SNORM,Fail
 spec@nv_primitive_restart@primitive-restart-disable_vbo,Fail
 spec@nv_primitive_restart@primitive-restart-vbo_combined_vertex_and_index,Fail
 spec@nv_primitive_restart@primitive-restart-vbo_index_only,Fail
