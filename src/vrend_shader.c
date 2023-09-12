@@ -2119,8 +2119,8 @@ iter_immediate(struct tgsi_iterate_context *iter,
    int i;
    uint32_t first = ctx->num_imm;
 
-   if (first >= ARRAY_SIZE(ctx->imm)) {
-      virgl_error("Number of immediates exceeded, max is: %zd\n", ARRAY_SIZE(ctx->imm));
+   if (unlikely(first >= MAX_IMMEDIATE)) {
+      virgl_error("Number of immediates exceeded, max is: %u\n", MAX_IMMEDIATE);
       return false;
    }
 
@@ -2943,7 +2943,7 @@ static bool fill_offset_buffer(const struct dump_ctx *ctx,
                                bool *require_dummy_value)
 {
    if (inst->TexOffsets[0].File == TGSI_FILE_IMMEDIATE) {
-      if (inst->TexOffsets[0].Index >= MAX_IMMEDIATE) {
+      if (unlikely((unsigned) inst->TexOffsets[0].Index >= MAX_IMMEDIATE)) {
          virgl_error("Immediate exceeded, max is %u\n", MAX_IMMEDIATE);
          return false;
       }
@@ -3320,8 +3320,8 @@ static void translate_tex(struct dump_ctx *ctx,
 
    bool exchange_bias_offset = false;
    if (inst->Texture.NumOffsets == 1) {
-      if (inst->TexOffsets[0].Index >= (int)ARRAY_SIZE(ctx->imm)) {
-         virgl_error("Immediate exceeded, max is %zd\n", ARRAY_SIZE(ctx->imm));
+      if (unlikely((unsigned) inst->TexOffsets[0].Index >= MAX_IMMEDIATE)) {
+         virgl_error("Immediate exceeded, max is %u\n", MAX_IMMEDIATE);
          set_buf_error(&ctx->glsl_strbufs);
          goto cleanup;
       }
@@ -4947,8 +4947,8 @@ get_source_info(struct dump_ctx *ctx,
          sinfo->sreg_index = src->Register.Index;
          break;
       case TGSI_FILE_IMMEDIATE: {
-            if (src->Register.Index >= (int)ARRAY_SIZE(ctx->imm)) {
-               virgl_error("Immediate exceeded, max is %zd\n", ARRAY_SIZE(ctx->imm));
+            if (unlikely((unsigned) src->Register.Index >= MAX_IMMEDIATE)) {
+               virgl_error("Immediate exceeded, max is %u\n", MAX_IMMEDIATE);
                return false;
             }
             struct immed *imd = &ctx->imm[src->Register.Index];
@@ -5940,7 +5940,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_buf(&ctx->glsl_strbufs, "break;\n");
       break;
    case TGSI_OPCODE_EMIT:
-      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+      if (likely((unsigned) inst->Src[0].Register.Index < MAX_IMMEDIATE)) {
          struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
          if (ctx->so && ctx->key->gs_present)
             emit_so_movs(ctx, &ctx->glsl_strbufs, &ctx->has_clipvertex_so);
@@ -5958,7 +5958,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
          return false;
       }
    case TGSI_OPCODE_ENDPRIM:
-      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+      if (likely((unsigned) inst->Src[0].Register.Index < MAX_IMMEDIATE)) {
          struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
          if (imd->val[inst->Src[0].Register.SwizzleX].ui > 0) {
             ctx->shader_req_bits |= SHADER_REQ_GPU_SHADER5;
@@ -6038,7 +6038,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       emit_buf(&ctx->glsl_strbufs, "barrier();\n");
       break;
    case TGSI_OPCODE_MEMBAR:
-      if (inst->Src[0].Register.Index < MAX_IMMEDIATE) {
+      if (likely((unsigned) inst->Src[0].Register.Index < MAX_IMMEDIATE)) {
          struct immed *imd = &ctx->imm[inst->Src[0].Register.Index];
          uint32_t val = imd->val[inst->Src[0].Register.SwizzleX].ui;
          uint32_t all_val = (TGSI_MEMBAR_SHADER_BUFFER |
