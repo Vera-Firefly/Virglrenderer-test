@@ -1308,6 +1308,44 @@ START_TEST(virgl_test_create_surface_fail_format)
 }
 END_TEST
 
+static void test_vertex_elements(int ve_num, int expected_error)
+{
+   struct virgl_context ctx;
+   struct pipe_vertex_element ve[PIPE_MAX_ATTRIBS+1];
+
+   int ret;
+
+   ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* create vertex elements */
+   memset(ve, 0, sizeof(ve));
+
+  for (int i = 0; i < ve_num;i++) {
+     ve[i].src_offset = sizeof(float[4])* i;
+     ve[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+  }
+
+   virgl_encoder_create_vertex_elements(&ctx, 2000, ve_num, ve);
+
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, expected_error);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+
+START_TEST(virgl_test_create_vertex_elements_pass)
+{
+   test_vertex_elements(PIPE_MAX_ATTRIBS, 0);
+}
+END_TEST
+
+START_TEST(virgl_test_create_vertex_elements_fail)
+{
+   test_vertex_elements(PIPE_MAX_ATTRIBS + 1, EINVAL);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1329,6 +1367,8 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_encode_sampler_view);
   tcase_add_test(tc_core, virgl_test_create_surface_pass);
   tcase_add_test(tc_core, virgl_test_create_surface_fail_format);
+  tcase_add_test(tc_core, virgl_test_create_vertex_elements_pass);
+  tcase_add_test(tc_core, virgl_test_create_vertex_elements_fail);
 
   suite_add_tcase(s, tc_core);
   return s;

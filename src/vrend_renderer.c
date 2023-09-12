@@ -3265,9 +3265,6 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
    uint i;
    uint32_t ret_handle;
 
-   if (num_elements > PIPE_MAX_ATTRIBS)
-      return EINVAL;
-
    v = CALLOC_STRUCT(vrend_vertex_element_array);
    if (!v)
       return ENOMEM;

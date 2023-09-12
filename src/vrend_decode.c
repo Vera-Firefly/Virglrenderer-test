@@ -727,6 +727,9 @@ static int vrend_decode_create_ve(struct vrend_context *ctx, const uint32_t *buf
 
    num_elements = (length - 1) / 4;
 
+   if (num_elements > PIPE_MAX_ATTRIBS)
+      return EINVAL;
+
    if (num_elements) {
       ve = calloc(num_elements, sizeof(struct pipe_vertex_element));
 
