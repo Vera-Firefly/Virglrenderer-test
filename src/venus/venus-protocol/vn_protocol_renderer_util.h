@@ -113,6 +113,7 @@ struct vn_device_proc_table {
    PFN_vkCmdSetStencilReference CmdSetStencilReference;
    PFN_vkCmdSetStencilTestEnable CmdSetStencilTestEnable;
    PFN_vkCmdSetStencilWriteMask CmdSetStencilWriteMask;
+   PFN_vkCmdSetVertexInputEXT CmdSetVertexInputEXT;
    PFN_vkCmdSetViewport CmdSetViewport;
    PFN_vkCmdSetViewportWithCount CmdSetViewportWithCount;
    PFN_vkCmdUpdateBuffer CmdUpdateBuffer;
@@ -479,6 +480,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetStencilTestEnableEXT) :
       NULL;
    proc_table->CmdSetStencilWriteMask = VN_GDPA(dev, vkCmdSetStencilWriteMask);
+   proc_table->CmdSetVertexInputEXT =
+      ext_table->EXT_vertex_input_dynamic_state ? VN_GDPA(dev, vkCmdSetVertexInputEXT) :
+      NULL;
    proc_table->CmdSetViewport = VN_GDPA(dev, vkCmdSetViewport);
    proc_table->CmdSetViewportWithCount =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetViewportWithCount) :

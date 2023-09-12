@@ -263,6 +263,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     case VK_COMMAND_TYPE_vkCmdCopyBufferToImage2_EXT: return "vkCmdCopyBufferToImage2";
     case VK_COMMAND_TYPE_vkCmdCopyImageToBuffer2_EXT: return "vkCmdCopyImageToBuffer2";
     case VK_COMMAND_TYPE_vkCmdResolveImage2_EXT: return "vkCmdResolveImage2";
+    case VK_COMMAND_TYPE_vkCmdSetVertexInputEXT_EXT: return "vkCmdSetVertexInputEXT";
     case VK_COMMAND_TYPE_vkCmdSetColorWriteEnableEXT_EXT: return "vkCmdSetColorWriteEnableEXT";
     case VK_COMMAND_TYPE_vkCmdSetEvent2_EXT: return "vkCmdSetEvent2";
     case VK_COMMAND_TYPE_vkCmdResetEvent2_EXT: return "vkCmdResetEvent2";
@@ -301,7 +302,7 @@ static inline const char *vn_dispatch_command_name(VkCommandTypeEXT type)
     }
 }
 
-static void (*const vn_dispatch_table[255])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
+static void (*const vn_dispatch_table[256])(struct vn_dispatch_context *ctx, VkCommandFlagsEXT flags) = {
     [VK_COMMAND_TYPE_vkCreateInstance_EXT] = vn_dispatch_vkCreateInstance,
     [VK_COMMAND_TYPE_vkDestroyInstance_EXT] = vn_dispatch_vkDestroyInstance,
     [VK_COMMAND_TYPE_vkEnumeratePhysicalDevices_EXT] = vn_dispatch_vkEnumeratePhysicalDevices,
@@ -522,6 +523,7 @@ static void (*const vn_dispatch_table[255])(struct vn_dispatch_context *ctx, VkC
     [VK_COMMAND_TYPE_vkCmdCopyBufferToImage2_EXT] = vn_dispatch_vkCmdCopyBufferToImage2,
     [VK_COMMAND_TYPE_vkCmdCopyImageToBuffer2_EXT] = vn_dispatch_vkCmdCopyImageToBuffer2,
     [VK_COMMAND_TYPE_vkCmdResolveImage2_EXT] = vn_dispatch_vkCmdResolveImage2,
+    [VK_COMMAND_TYPE_vkCmdSetVertexInputEXT_EXT] = vn_dispatch_vkCmdSetVertexInputEXT,
     [VK_COMMAND_TYPE_vkCmdSetColorWriteEnableEXT_EXT] = vn_dispatch_vkCmdSetColorWriteEnableEXT,
     [VK_COMMAND_TYPE_vkCmdSetEvent2_EXT] = vn_dispatch_vkCmdSetEvent2,
     [VK_COMMAND_TYPE_vkCmdResetEvent2_EXT] = vn_dispatch_vkCmdResetEvent2,
@@ -559,7 +561,7 @@ static inline void vn_dispatch_command(struct vn_dispatch_context *ctx)
 #ifdef DEBUG
         TRACE_SCOPE_SLOW(vn_dispatch_command_name(cmd_type));
 #endif
-        if (cmd_type < 255 && vn_dispatch_table[cmd_type])
+        if (cmd_type < 256 && vn_dispatch_table[cmd_type])
             vn_dispatch_table[cmd_type](ctx, cmd_flags);
         else
             vn_cs_decoder_set_fatal(ctx->decoder);

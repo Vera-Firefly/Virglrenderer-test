@@ -341,6 +341,7 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT_EXT = 235,
     VK_COMMAND_TYPE_vkGetCalibratedTimestampsEXT_EXT = 236,
     VK_COMMAND_TYPE_vkCmdSetLineStippleEXT_EXT = 237,
+    VK_COMMAND_TYPE_vkCmdSetVertexInputEXT_EXT = 255,
     VK_COMMAND_TYPE_vkCmdSetPatchControlPointsEXT_EXT = 233,
     VK_COMMAND_TYPE_vkCmdSetLogicOpEXT_EXT = 234,
     VK_COMMAND_TYPE_vkCmdSetColorWriteEnableEXT_EXT = 254,
@@ -2138,6 +2139,14 @@ struct vn_command_vkCmdResolveImage2 {
     const VkResolveImageInfo2* pResolveImageInfo;
 };
 
+struct vn_command_vkCmdSetVertexInputEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t vertexBindingDescriptionCount;
+    const VkVertexInputBindingDescription2EXT* pVertexBindingDescriptions;
+    uint32_t vertexAttributeDescriptionCount;
+    const VkVertexInputAttributeDescription2EXT* pVertexAttributeDescriptions;
+};
+
 struct vn_command_vkCmdSetColorWriteEnableEXT {
     VkCommandBuffer commandBuffer;
     uint32_t attachmentCount;
@@ -2506,6 +2515,7 @@ struct vn_dispatch_context {
     void (*dispatch_vkCmdCopyBufferToImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyBufferToImage2 *args);
     void (*dispatch_vkCmdCopyImageToBuffer2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdCopyImageToBuffer2 *args);
     void (*dispatch_vkCmdResolveImage2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdResolveImage2 *args);
+    void (*dispatch_vkCmdSetVertexInputEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetVertexInputEXT *args);
     void (*dispatch_vkCmdSetColorWriteEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetColorWriteEnableEXT *args);
     void (*dispatch_vkCmdSetEvent2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetEvent2 *args);
     void (*dispatch_vkCmdResetEvent2)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdResetEvent2 *args);
