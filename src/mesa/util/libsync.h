@@ -39,6 +39,7 @@
 #include <time.h>
 
 #if defined(__GNUC__)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #endif
@@ -221,6 +222,8 @@ static inline int sync_accumulate(const char *name, int *fd1, int fd2)
 }
 #endif
 
+#if defined(__GNUC__)
 #pragma GCC diagnostic pop
+#endif
 
 #endif
