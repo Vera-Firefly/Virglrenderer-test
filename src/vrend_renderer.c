@@ -9489,15 +9489,12 @@ static int vrend_renderer_transfer_send_iov(struct vrend_context *ctx,
    }
 
    if (has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER)) {
-      uint32_t send_size = info->box->width * util_format_get_blocksize(res->base.format);
-      void *data;
-
       glBindBufferARB(res->target, res->id);
-      data = glMapBufferRange(res->target, info->box->x, info->box->width, GL_MAP_READ_BIT);
+      void *data = glMapBufferRange(res->target, info->box->x, info->box->width, GL_MAP_READ_BIT);
       if (!data)
          virgl_error("Unable to open buffer for reading %d\n", res->target);
       else
-         vrend_write_to_iovec(iov, num_iovs, info->offset, data, send_size);
+         vrend_write_to_iovec(iov, num_iovs, info->offset, data, info->box->width);
       glUnmapBuffer(res->target);
       glBindBufferARB(res->target, 0);
    } else {
