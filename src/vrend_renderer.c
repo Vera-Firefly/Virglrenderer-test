@@ -505,9 +505,15 @@ struct vrend_shader_selector {
    struct tgsi_token *tokens;
 
    uint32_t req_local_mem;
+};
+
+struct vrend_long_shader_buffer {
+   uint32_t handle;
+   struct vrend_shader_selector *sel;
+
    char *tmp_buf;
-   uint32_t buf_len;
-   uint32_t buf_offset;
+   uint32_t total_length;
+   uint32_t current_length;
 };
 
 struct vrend_texture {
@@ -684,7 +690,7 @@ struct vrend_sub_context {
    bool image_state_dirty;
    bool blend_state_dirty;
 
-   uint32_t long_shader_in_progress_handle[PIPE_SHADER_TYPES];
+   struct vrend_long_shader_buffer *long_shader_in_progress[PIPE_SHADER_TYPES];
    struct vrend_shader_selector *shaders[PIPE_SHADER_TYPES];
    struct vrend_linked_shader_program *prog;
 
@@ -1302,12 +1308,32 @@ static void vrend_destroy_shader_selector(struct vrend_shader_selector *sel)
    if (sel->sinfo.so_names)
       for (i = 0; i < sel->sinfo.so_info.num_outputs; i++)
          free(sel->sinfo.so_names[i]);
-   free(sel->tmp_buf);
    free(sel->sinfo.so_names);
    free(sel->sinfo.sampler_arrays);
    free(sel->sinfo.image_arrays);
    free(sel->tokens);
    free(sel);
+}
+
+static inline void
+vrend_shader_state_reference(struct vrend_shader_selector **ptr, struct vrend_shader_selector *shader)
+{
+   struct vrend_shader_selector *old_shader = *ptr;
+
+   /**
+    * We are are not acessing ptr memory here.
+    * Check the comment in vrend_sampler_view_reference for more information.
+    */
+   if (pipe_reference(&(*ptr)->reference, &shader->reference))
+      vrend_destroy_shader_selector(old_shader);
+   *ptr = shader;
+}
+
+static void vrend_destroy_long_shader_buffer(struct vrend_long_shader_buffer *lsbuf)
+{
+   vrend_shader_state_reference(&lsbuf->sel, NULL);
+   free(lsbuf->tmp_buf);
+   free(lsbuf);
 }
 
 static inline int conv_shader_type(int type)
@@ -1356,20 +1382,6 @@ static bool vrend_compile_shader(struct vrend_sub_context *sub_ctx,
 
    shader->is_compiled = true;
    return true;
-}
-
-static inline void
-vrend_shader_state_reference(struct vrend_shader_selector **ptr, struct vrend_shader_selector *shader)
-{
-   struct vrend_shader_selector *old_shader = *ptr;
-
-   /**
-    * We are are not acessing ptr memory here.
-    * Check the comment in vrend_sampler_view_reference for more information.
-    */
-   if (pipe_reference(&(*ptr)->reference, &shader->reference))
-      vrend_destroy_shader_selector(old_shader);
-   *ptr = shader;
 }
 
 void
@@ -4349,6 +4361,63 @@ static int vrend_finish_shader(struct vrend_context *ctx,
    return vrend_shader_select(ctx->sub, sel, NULL) ? EINVAL : 0;
 }
 
+static int vrend_shader_assign_tgsi(struct vrend_context *ctx,
+                                    struct vrend_shader_selector *sel,
+                                    const char *shader_buf,
+                                    uint32_t current_length,
+                                    uint32_t num_tokens)
+{
+   struct tgsi_token *tokens;
+
+   /* check for null termination */
+   if (current_length < 4 || !memchr(shader_buf + current_length - 4, '\0', 4))
+      return EINVAL;
+
+   tokens = calloc(num_tokens + 10, sizeof(struct tgsi_token));
+   if (!tokens)
+      return ENOMEM;
+
+   if (!tgsi_text_translate(shader_buf, tokens, num_tokens + 10)) {
+      free(tokens);
+      return EINVAL;
+   }
+
+   if (vrend_finish_shader(ctx, sel, tokens)) {
+      free(tokens);
+      return EINVAL;
+   }
+
+   free(tokens);
+   return 0;
+}
+
+static int vrend_shader_store_long_shader(uint32_t handle,
+                                          struct vrend_shader_selector *sel,
+                                          uint32_t pkt_length_bytes,
+                                          uint32_t expected_token_count,
+                                          const char *shd_text,
+                                          struct vrend_long_shader_buffer **lsb)
+{
+   /* We only got a partial shader, start a long shader transfer */
+   struct vrend_long_shader_buffer *lsbuf = CALLOC_STRUCT(vrend_long_shader_buffer);
+   if (!lsbuf)
+      return ENOMEM;
+
+   lsbuf->handle = handle;
+   vrend_shader_state_reference(&lsbuf->sel, sel);
+   lsbuf->current_length = pkt_length_bytes;
+   lsbuf->total_length = expected_token_count * 4;
+   lsbuf->tmp_buf = malloc(lsbuf->total_length);
+   if (!lsbuf->tmp_buf) {
+      vrend_destroy_long_shader_buffer(lsbuf);
+      return ENOMEM;
+   }
+
+   memcpy(lsbuf->tmp_buf, shd_text, pkt_length_bytes);
+   *lsb = lsbuf;
+   return 0;
+}
+
 int vrend_create_shader(struct vrend_context *ctx,
                         uint32_t handle,
                         const struct pipe_stream_output_info *so_info,
@@ -4356,11 +4425,6 @@ int vrend_create_shader(struct vrend_context *ctx,
                         const char *shd_text, uint32_t offlen, uint32_t num_tokens,
                         enum pipe_shader_type type, uint32_t pkt_length)
 {
-   struct vrend_shader_selector *sel = NULL;
-   int ret_handle;
-   bool finished = false;
-   int ret;
-
    if (type == PIPE_SHADER_GEOMETRY &&
        !has_feature(feat_geometry_shader))
       return EINVAL;
@@ -4385,12 +4449,16 @@ int vrend_create_shader(struct vrend_context *ctx,
 
    /* if we have an in progress one - don't allow a new shader
       of that type or a different handle. */
-   if (sub_ctx->long_shader_in_progress_handle[type]) {
+   if (sub_ctx->long_shader_in_progress[type]) {
       if (new_shader == true)
          return EINVAL;
-      if (handle != sub_ctx->long_shader_in_progress_handle[type])
+      if (handle != sub_ctx->long_shader_in_progress[type]->handle)
          return EINVAL;
    }
+
+   /* Ensure that we won't hit an overflow */
+   if (pkt_length >= (UINT32_MAX >> 2))
+      return EINVAL;
 
    const uint32_t pkt_length_bytes = pkt_length * 4;
 
@@ -4399,114 +4467,79 @@ int vrend_create_shader(struct vrend_context *ctx,
       if (expected_token_count < pkt_length)
         return EINVAL;
 
+      struct vrend_shader_selector *sel;
       sel = vrend_create_shader_state(so_info, req_local_mem, type);
       if (sel == NULL)
          return ENOMEM;
 
-      sel->buf_len = expected_token_count * 4;
-      sel->tmp_buf = malloc(sel->buf_len);
-      if (!sel->tmp_buf) {
-         ret = ENOMEM;
-         goto error;
+      int ret_handle = vrend_renderer_object_insert(ctx, sel, handle, VIRGL_OBJECT_SHADER);
+      if (ret_handle == 0) {
+         vrend_destroy_shader_selector(sel);
+         return ENOMEM;
       }
 
-      memcpy(sel->tmp_buf, shd_text, pkt_length_bytes);
       if (expected_token_count > pkt_length) {
-         sel->buf_offset = pkt_length_bytes;
-         sub_ctx->long_shader_in_progress_handle[type] = handle;
-      } else
-         finished = true;
+         /* We only got a partial shader, start a long shader transfer */
+         int ret = vrend_shader_store_long_shader(handle, sel,
+                                                  pkt_length_bytes, expected_token_count,
+                                                  shd_text,
+                                                  &sub_ctx->long_shader_in_progress[type]);
+         if (ret != 0) {
+            vrend_renderer_object_destroy(ctx, handle);
+            return ret;
+         }
+      } else {
+         int ret = vrend_shader_assign_tgsi(ctx, sel,
+                                            shd_text, pkt_length_bytes,
+                                            num_tokens);
+         if (ret != 0) {
+            vrend_renderer_object_destroy(ctx, handle);
+            return ret;
+         }
+      }
    } else {
-      sel = vrend_object_lookup(sub_ctx->object_hash, handle, VIRGL_OBJECT_SHADER);
-      if (!sel) {
-         virgl_error("Got continuation without original shader %d\n", handle);
-         ret = EINVAL;
-         goto error;
+      struct vrend_long_shader_buffer *lsbuf = sub_ctx->long_shader_in_progress[type];
+      if (!lsbuf) {
+         virgl_error("Got continuation without original long shader %u\n", handle);
+         vrend_renderer_object_destroy(ctx, handle);
+         return EINVAL;
       }
 
       offlen &= ~VIRGL_OBJ_SHADER_OFFSET_CONT;
-      if (offlen != sel->buf_offset) {
-         virgl_error("Got mismatched shader continuation %d vs %d\n",
-                 offlen, sel->buf_offset);
-         ret = EINVAL;
-         goto error;
+      if (offlen != lsbuf->current_length) {
+         virgl_error("Got mismatched shader continuation %u vs %u\n",
+                 offlen, lsbuf->current_length);
+         sub_ctx->long_shader_in_progress[type] = NULL;
+         vrend_destroy_long_shader_buffer(lsbuf);
+         vrend_renderer_object_destroy(ctx, handle);
+         return EINVAL;
       }
 
-      /*make sure no overflow */
-      if (pkt_length_bytes < pkt_length ||
-          pkt_length_bytes + sel->buf_offset < pkt_length_bytes ||
-          pkt_length_bytes + sel->buf_offset < sel->buf_offset) {
-            ret = EINVAL;
-            goto error;
-          }
-
-      if ((pkt_length_bytes + sel->buf_offset) > sel->buf_len) {
-         virgl_error("Got too large shader continuation %d vs %d\n",
-                      pkt_length_bytes + sel->buf_offset, sel->buf_len);
-         ret = EINVAL;
-         goto error;
+      if (lsbuf->total_length - lsbuf->current_length < pkt_length_bytes) {
+         virgl_error("Got too large shader continuation %u vs %u\n",
+                      pkt_length_bytes + lsbuf->current_length, lsbuf->total_length);
+         sub_ctx->long_shader_in_progress[type] = NULL;
+         vrend_destroy_long_shader_buffer(lsbuf);
+         vrend_renderer_object_destroy(ctx, handle);
+         return EINVAL;
       }
 
-      memcpy(sel->tmp_buf + sel->buf_offset, shd_text, pkt_length_bytes);
-
-      sel->buf_offset += pkt_length_bytes;
-      if (sel->buf_offset >= sel->buf_len) {
-         finished = true;
-         shd_text = sel->tmp_buf;
-      }
-   }
-
-   if (finished) {
-      struct tgsi_token *tokens;
-
-      /* check for null termination */
-      uint32_t last_chunk_offset = sel->buf_offset ? sel->buf_offset : pkt_length_bytes;
-      if (last_chunk_offset < 4 || !memchr(shd_text + last_chunk_offset - 4, '\0', 4)) {
-         ret = EINVAL;
-         goto error;
-      }
-
-      tokens = calloc(num_tokens + 10, sizeof(struct tgsi_token));
-      if (!tokens) {
-         ret = ENOMEM;
-         goto error;
-      }
-
-      if (!tgsi_text_translate((const char *)shd_text, tokens, num_tokens + 10)) {
-         free(tokens);
-         ret = EINVAL;
-         goto error;
-      }
-
-      if (vrend_finish_shader(ctx, sel, tokens)) {
-         free(tokens);
-         ret = EINVAL;
-         goto error;
-      } else if (!VREND_DEBUG_ENABLED) {
-         free(sel->tmp_buf);
-         sel->tmp_buf = NULL;
-      }
-      free(tokens);
-      sub_ctx->long_shader_in_progress_handle[type] = 0;
-   }
-
-   if (new_shader) {
-      ret_handle = vrend_renderer_object_insert(ctx, sel, handle, VIRGL_OBJECT_SHADER);
-      if (ret_handle == 0) {
-         ret = ENOMEM;
-         goto error;
+      memcpy(lsbuf->tmp_buf + lsbuf->current_length, shd_text, pkt_length_bytes);
+      lsbuf->current_length += pkt_length_bytes;
+      if (lsbuf->current_length == lsbuf->total_length) {
+         int ret = vrend_shader_assign_tgsi(ctx, lsbuf->sel,
+                                            lsbuf->tmp_buf, lsbuf->current_length,
+                                            num_tokens);
+         sub_ctx->long_shader_in_progress[type] = NULL;
+         vrend_destroy_long_shader_buffer(lsbuf);
+         if (ret != 0) {
+            vrend_renderer_object_destroy(ctx, handle);
+            return ret;
+         }
       }
    }
 
    return 0;
-
-error:
-   if (new_shader)
-      vrend_destroy_shader_selector(sel);
-   else
-      vrend_renderer_object_destroy(ctx, handle);
-
-   return ret;
 }
 
 void vrend_bind_shader(struct vrend_context *ctx,
@@ -7618,6 +7651,9 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
       for (unsigned i = 0; i < PIPE_MAX_SHADER_IMAGES; i++) {
          glDeleteTextures(1, &sub->image_views[type][i].view_id);
       }
+
+      if (sub->long_shader_in_progress[type])
+         vrend_destroy_long_shader_buffer(sub->long_shader_in_progress[type]);
    }
 
    if (sub->zsurf)
