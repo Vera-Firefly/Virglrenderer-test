@@ -372,6 +372,7 @@ struct global_renderer_state {
    uint32_t max_texture_3d_size;
    uint32_t max_texture_cube_size;
    uint32_t max_shader_patch_varyings;
+   uint32_t max_vertex_attributes;
 
    /* inferred GL caching type */
    uint32_t inferred_gl_caching_type;
@@ -3343,26 +3344,6 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
          v->zyxw_bitmask |= 1 << i;
    }
 
-   if (has_feature(feat_gles31_vertex_attrib_binding)) {
-      glGenVertexArrays(1, &v->id);
-      glBindVertexArray(v->id);
-      for (i = 0; i < num_elements; i++) {
-         struct vrend_vertex_element *ve = &v->elements[i];
-         GLint size = !vrend_state.use_gles && (v->zyxw_bitmask & (1 << i)) ? GL_BGRA : ve->nr_chan;
-
-         if (util_format_is_pure_integer(ve->base.src_format)) {
-            UPDATE_INT_SIGN_MASK(ve->base.src_format, i,
-                                 v->signed_int_bitmask,
-                                 v->unsigned_int_bitmask);
-            glVertexAttribIFormat(i, size, ve->type, ve->base.src_offset);
-         }
-         else
-            glVertexAttribFormat(i, size, ve->type, ve->norm, ve->base.src_offset);
-         glVertexAttribBinding(i, ve->base.vertex_buffer_index);
-         glVertexBindingDivisor(i, ve->base.instance_divisor);
-         glEnableVertexAttribArray(i);
-      }
-   }
    ret_handle = vrend_renderer_object_insert(ctx, v, handle,
                                              VIRGL_OBJECT_VERTEX_ELEMENTS);
    if (!ret_handle) {
@@ -3391,6 +3372,32 @@ void vrend_bind_vertex_elements_state(struct vrend_context *ctx,
    if (ctx->sub->ve != v)
       ctx->sub->vbo_dirty = true;
    ctx->sub->ve = v;
+
+   if (v->count > vrend_state.max_vertex_attributes) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES, handle);
+      return;
+   }
+
+   if (has_feature(feat_gles31_vertex_attrib_binding) && v->id == 0) {
+      glGenVertexArrays(1, &v->id);
+      glBindVertexArray(v->id);
+      for (uint32_t i = 0; i < v->count; i++) {
+         struct vrend_vertex_element *ve = &v->elements[i];
+         GLint size = !vrend_state.use_gles && (v->zyxw_bitmask & (1 << i)) ? GL_BGRA : ve->nr_chan;
+
+         if (util_format_is_pure_integer(ve->base.src_format)) {
+            UPDATE_INT_SIGN_MASK(ve->base.src_format, i,
+                                 v->signed_int_bitmask,
+                                 v->unsigned_int_bitmask);
+            glVertexAttribIFormat(i, size, ve->type, ve->base.src_offset);
+         }
+         else
+            glVertexAttribFormat(i, size, ve->type, ve->norm, ve->base.src_offset);
+         glVertexAttribBinding(i, ve->base.vertex_buffer_index);
+         glVertexBindingDivisor(i, ve->base.instance_divisor);
+         glEnableVertexAttribArray(i);
+      }
+   }
 }
 
 void vrend_set_constants(struct vrend_context *ctx,
@@ -7406,6 +7413,9 @@ int vrend_renderer_init(const struct vrend_if_cbs *cbs, uint32_t flags)
       clear_feature(feat_srgb_write_control) ;
 
    glGetIntegerv(GL_MAX_DRAW_BUFFERS, (GLint *) &vrend_state.max_draw_buffers);
+
+   /* For testing we need to know maximum */
+   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, (GLint*)&vrend_state.max_vertex_attributes);
 
    /* Mesa clamps this value to 8 anyway, so just make sure that this side
     * doesn't exceed the number to be on the save side when using 8-bit masks
@@ -11936,7 +11946,8 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
    }
 
    glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS, &caps->v2.max_texture_lod_bias);
-   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, (GLint*)&caps->v2.max_vertex_attribs);
+
+   caps->v2.max_vertex_attribs = vrend_state.max_vertex_attributes;
 
    if (gl_ver >= 32 || (vrend_state.use_gles && gl_ver >= 30))
       glGetIntegerv(GL_MAX_VERTEX_OUTPUT_COMPONENTS, &max);

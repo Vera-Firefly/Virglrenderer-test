@@ -687,6 +687,7 @@ enum virgl_ctx_errors {
         VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND,
         VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION,
         VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE,
+        VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES,
 };
 
 enum virgl_statistics_query_index {
