@@ -8952,7 +8952,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       bool compressed;
       bool invert = false;
       float depth_scale;
-      GLuint send_size = 0;
+      uint64_t send_size = 0;
       uint32_t stride = info->stride;
       uint32_t layer_stride = info->layer_stride;
 
@@ -8981,7 +8981,9 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       }
 
       send_size = util_format_get_nblocks(res->base.format, info->box->width,
-                                          info->box->height) * elsize;
+                                          info->box->height);
+      send_size *= elsize;
+
       if (res->target == GL_TEXTURE_3D ||
           res->target == GL_TEXTURE_1D_ARRAY ||
           res->target == GL_TEXTURE_2D_ARRAY ||
@@ -8992,9 +8994,19 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          return EINVAL;
 
       if (need_temp) {
+         /* functions like glCompressedTexSubImage3D only support
+          * a buffer size of GLsizei = uint32_t, anything larger
+          * is bogous */
+         if (send_size > UINT_MAX) {
+            virgl_error("Used write size out of range %"PRIu64"\n", send_size);
+            return EINVAL;
+         }
+
          data = malloc(send_size);
-         if (!data)
+         if (!data) {
+            virgl_error("Memory allocation failed for %"PRIu64"\n", send_size);
             return ENOMEM;
+         }
          read_transfer_data(iov, num_iovs, data, res->base.format, info->offset,
                             stride, layer_stride, info->box, invert);
       } else {
