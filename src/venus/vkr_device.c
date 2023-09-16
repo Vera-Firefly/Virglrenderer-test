@@ -84,6 +84,46 @@ vkr_dispatch_vkCreateDevice(struct vn_dispatch_context *dispatch,
    struct vkr_physical_device *physical_dev =
       vkr_physical_device_from_handle(args->physicalDevice);
 
+   /* there can be at most two members sharing a queueFamilyIndex (one
+    * protected-capable, one not), in which case their summed queueCount must
+    * be <= the family's VkQueueFamilyProperties::queueCount.
+    */
+   {
+      uint32_t *counts =
+         malloc(sizeof(uint32_t) * physical_dev->queue_family_property_count);
+      if (!counts) {
+         args->ret = VK_ERROR_OUT_OF_HOST_MEMORY;
+         return;
+      }
+      memset(counts, 0, sizeof(uint32_t) * physical_dev->queue_family_property_count);
+
+      args->ret = VK_SUCCESS;
+      for (uint32_t i = 0; i < args->pCreateInfo->queueCreateInfoCount; i++) {
+         const uint32_t queue_family_index =
+            args->pCreateInfo->pQueueCreateInfos[i].queueFamilyIndex;
+         const uint32_t queue_count = args->pCreateInfo->pQueueCreateInfos[i].queueCount;
+
+         if (queue_family_index >= physical_dev->queue_family_property_count) {
+            args->ret = VK_ERROR_UNKNOWN;
+            break;
+         }
+
+         const VkQueueFamilyProperties *queue_family_properties =
+            &physical_dev->queue_family_properties[queue_family_index];
+
+         if (queue_family_properties->queueCount - counts[queue_family_index] <
+             queue_count) {
+            args->ret = VK_ERROR_UNKNOWN;
+            break;
+         }
+         counts[queue_family_index] += queue_count;
+      }
+
+      free(counts);
+      if (args->ret != VK_SUCCESS)
+         return;
+   }
+
    /* append extensions for our own use */
    const char **exts = NULL;
    uint32_t ext_count = args->pCreateInfo->enabledExtensionCount;
