@@ -33,6 +33,9 @@ struct vkr_physical_device {
    bool is_opaque_fd_export_supported;
    void *gbm_device;
 
+   VkQueueFamilyProperties *queue_family_properties;
+   uint32_t queue_family_property_count;
+
    struct list_head devices;
 };
 VKR_DEFINE_OBJECT_CAST(physical_device, VK_OBJECT_TYPE_PHYSICAL_DEVICE, VkPhysicalDevice)

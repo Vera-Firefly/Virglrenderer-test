@@ -62,6 +62,7 @@ vkr_physical_device_destroy(struct vkr_context *ctx,
       vkr_device_destroy(ctx, dev);
 
    free(physical_dev->extensions);
+   free(physical_dev->queue_family_properties);
 
    vkr_context_remove_object(ctx, &physical_dev->base);
 }
@@ -276,6 +277,25 @@ vkr_physical_device_init_proc_table(struct vkr_physical_device *physical_dev,
 }
 
 static void
+vkr_physical_device_init_queue_family_properties(struct vkr_physical_device *physical_dev)
+{
+   VkPhysicalDevice handle = physical_dev->base.handle.physical_device;
+
+   VkQueueFamilyProperties *props;
+   uint32_t count;
+   vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, NULL);
+
+   props = malloc(sizeof(*props) * count);
+   if (!props)
+      return;
+
+   vkGetPhysicalDeviceQueueFamilyProperties(handle, &count, props);
+
+   physical_dev->queue_family_property_count = count;
+   physical_dev->queue_family_properties = props;
+}
+
+static void
 vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
                                         struct vn_command_vkEnumeratePhysicalDevices *args)
 {
@@ -339,6 +359,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
       vkr_physical_device_init_extensions(physical_dev, instance);
       vkr_physical_device_init_memory_properties(physical_dev);
       vkr_physical_device_init_id_properties(physical_dev);
+      vkr_physical_device_init_queue_family_properties(physical_dev);
 
       list_inithead(&physical_dev->devices);
 
@@ -353,6 +374,7 @@ vkr_dispatch_vkEnumeratePhysicalDevices(struct vn_dispatch_context *dispatch,
          if (!physical_dev)
             break;
          free(physical_dev->extensions);
+         free(physical_dev->queue_family_properties);
          vkr_context_remove_object(ctx, &physical_dev->base);
          instance->physical_devices[i] = NULL;
       }
