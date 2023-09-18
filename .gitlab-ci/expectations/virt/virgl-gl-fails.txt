@@ -526,3 +526,6 @@ KHR-GL30.transform_feedback.api_errors_test,Fail
 fast_color_clear@fcc-front-buffer-distraction,Fail
 spec@!opengl 1.1@line-flat-clip-color,Fail
 spec@arb_texture_float@texwrap formats bordercolor,Fail
+spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_nv21,Fail
+spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_yvyu,Fail
+spec@ext_image_dma_buf_import@ext_image_dma_buf_import-sample_vyuy,Fail
