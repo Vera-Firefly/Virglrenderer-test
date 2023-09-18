@@ -1176,10 +1176,8 @@ int virgl_renderer_resource_create_blob(const struct virgl_renderer_resource_cre
                                           args->iovecs,
                                           args->num_iovs,
                                           &blob.vulkan_info);
-      if (!res) {
-         close(blob.u.fd);
+      if (!res)
          return -ENOMEM;
-      }
    } else {
       res = virgl_resource_create_from_pipe(args->res_handle,
                                             blob.u.pipe_resource,
