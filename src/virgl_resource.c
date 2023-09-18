@@ -116,8 +116,10 @@ virgl_resource_create_from_pipe(uint32_t res_id,
    struct virgl_resource *res;
 
    res = virgl_resource_create(res_id);
-   if (!res)
+   if (!res) {
+      pipe_callbacks.unref(pres, pipe_callbacks.data);
       return NULL;
+   }
 
    /* take ownership */
    res->pipe_resource = pres;
