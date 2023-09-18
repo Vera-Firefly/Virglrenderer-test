@@ -59,6 +59,11 @@ esac
 RET=0
 RESULTS_DIR=$(pwd)/results/${TEST_SUITE:-build}
 rm -rf _build
+if [ -n "${TEST_SUITE}" ]; then
+    COVERAGE=-D b_coverage=true
+else
+    COVERAGE=
+fi
 
 meson setup _build --native-file=native.file \
     --wrap-mode=${WRAP_DEBUG:-nofallback} \
@@ -70,11 +75,12 @@ meson setup _build --native-file=native.file \
     -D cpp_args="$(echo -n $CPP_ARGS)" \
     ${DRI_LOADERS} \
     ${GALLIUM_ST} \
+    ${COVERAGE} \
     -D tests=true \
     -D render-server=true \
     -D render-server-worker=process \
     -D venus=true \
-    -Dtracing=${TRACING_BACKEND:-none} \
+    -D tracing=${TRACING_BACKEND:-none} \
     --fatal-meson-warnings \
     ${EXTRA_OPTION} && \
 pushd _build && \
@@ -91,6 +97,7 @@ if [ -n "${TEST_SUITE}" ]; then
     VRENDTEST_USE_EGL_SURFACELESS=1 meson test --num-processes ${FDO_CI_CONCURRENT:-4} || RET=$?
     mkdir -p ${RESULTS_DIR}
     mv -f meson-logs/testlog.txt ${RESULTS_DIR}/
+    ninja coverage-html
 fi
 
 popd
