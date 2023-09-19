@@ -94,6 +94,9 @@ static int virgl_renderer_resource_create_internal(struct virgl_renderer_resourc
    if (args->handle == 0)
       return EINVAL;
 
+   if (virgl_resource_lookup(args->handle))
+      return -EINVAL;
+
    vrend_args.target = args->target;
    vrend_args.format = args->format;
    vrend_args.bind = args->bind;
