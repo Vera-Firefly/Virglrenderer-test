@@ -4361,9 +4361,6 @@ int vrend_create_shader(struct vrend_context *ctx,
    bool finished = false;
    int ret;
 
-   if (type > PIPE_SHADER_COMPUTE)
-      return EINVAL;
-
    if (type == PIPE_SHADER_GEOMETRY &&
        !has_feature(feat_geometry_shader))
       return EINVAL;

@@ -1346,6 +1346,50 @@ START_TEST(virgl_test_create_vertex_elements_fail)
 }
 END_TEST
 
+static void test_create_shader(enum pipe_shader_type type, int expected_error)
+{
+   struct virgl_context ctx;
+
+   int ret;
+
+   ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_shader_state vs;
+   const char *text =
+       "VERT\n"
+       "DCL IN[0]\n"
+       "DCL IN[1]\n"
+       "DCL OUT[0], POSITION\n"
+       "DCL OUT[1], COLOR\n"
+       "  0: MOV OUT[1], IN[1]\n"
+       "  1: MOV OUT[0], IN[0]\n"
+       "  2: END\n";
+   memset(&vs, 0, sizeof(vs));
+   vs.stream_output.num_outputs = 1;
+   vs.stream_output.stride[0] = 4;
+   vs.stream_output.output[0].num_components = 4;
+   virgl_encode_shader_state(&ctx, 2000, type,
+                             &vs, text);
+
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, expected_error);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+
+START_TEST(virgl_test_create_shader_pass)
+{
+   test_create_shader(PIPE_SHADER_VERTEX, 0);
+}
+END_TEST
+
+START_TEST(virgl_test_create_shader_fail)
+{
+   test_create_shader(PIPE_SHADER_TYPES, EINVAL);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1369,6 +1413,8 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_create_surface_fail_format);
   tcase_add_test(tc_core, virgl_test_create_vertex_elements_pass);
   tcase_add_test(tc_core, virgl_test_create_vertex_elements_fail);
+  tcase_add_test(tc_core, virgl_test_create_shader_pass);
+  tcase_add_test(tc_core, virgl_test_create_shader_fail);
 
   suite_add_tcase(s, tc_core);
   return s;

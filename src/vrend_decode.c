@@ -80,6 +80,10 @@ static int vrend_decode_create_shader(struct vrend_context *ctx,
       return EINVAL;
 
    type = get_buf_entry(buf, VIRGL_OBJ_SHADER_TYPE);
+
+   if (type >= PIPE_SHADER_TYPES)
+      return EINVAL;
+
    num_tokens = get_buf_entry(buf, VIRGL_OBJ_SHADER_NUM_TOKENS);
    offlen = get_buf_entry(buf, VIRGL_OBJ_SHADER_OFFSET);
 
