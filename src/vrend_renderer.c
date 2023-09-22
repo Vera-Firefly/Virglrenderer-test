@@ -1072,6 +1072,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND]= "Dual source blend not supported",
    [VIRGL_ERROR_CTX_UNSUPPORTED_FUNCTION]  = "Unsupported host function called",
    [VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE] = "Illegal shader program pipeline",
+   [VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES] = "Too many vertex attributes are requested",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
