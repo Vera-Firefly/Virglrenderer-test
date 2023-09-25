@@ -21,10 +21,9 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 
-sources_libgallium = [
+sources_libgallium = files(
    'include/pipe/p_defines.h',
    'include/pipe/p_state.h',
-   'include/pipe/p_format.h',
    'include/pipe/p_shader_tokens.h',
    'auxiliary/util/u_format.h',
    'auxiliary/util/u_format.c',
@@ -66,7 +65,7 @@ sources_libgallium = [
    'auxiliary/tgsi/tgsi_dump.h',
    'auxiliary/tgsi/tgsi_util.c',
    'auxiliary/tgsi/tgsi_sanity.h',
-]
+)
 
 inc_gallium = include_directories('include', 'auxiliary', 'auxiliary/util')
 

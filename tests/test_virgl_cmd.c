@@ -28,7 +28,7 @@
 #include <virglrenderer.h>
 #include "virgl_hw.h"
 #include "vrend_iov.h"
-#include "pipe/p_format.h"
+#include "util/u_formats.h"
 #include "testvirgl_encode.h"
 #include "virgl_protocol.h"
 #include "util/u_memory.h"

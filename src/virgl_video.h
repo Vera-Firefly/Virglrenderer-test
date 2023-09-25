@@ -46,8 +46,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "pipe/p_format.h"
+#include "util/u_formats.h"
 #include "pipe/p_video_enums.h"
+#include "util/u_formats.h"
 
 struct virgl_video_codec;
 struct virgl_video_buffer;

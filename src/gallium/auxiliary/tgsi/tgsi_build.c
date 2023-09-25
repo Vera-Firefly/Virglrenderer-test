@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
-#include "pipe/p_format.h"
+#include "util/u_format.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi_build.h"
 #include "tgsi_parse.h"

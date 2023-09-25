@@ -28,7 +28,7 @@
 #include <check.h>
 #include <errno.h>
 #include "pipe/p_defines.h"
-#include "pipe/p_format.h"
+#include "util/u_formats.h"
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "testvirgl.h"

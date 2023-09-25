@@ -36,7 +36,7 @@
 #include "testvirgl.h"
 
 #include "pipe/p_defines.h"
-#include "pipe/p_format.h"
+#include "util/u_formats.h"
 
 #ifndef ARRAY_SIZE
 #  define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))

@@ -71,6 +71,7 @@
 #include <drm_fourcc.h>
 
 #include "pipe/p_video_state.h"
+#include "util/u_formats.h"
 #include "util/u_memory.h"
 #include "virgl_hw.h"
 #include "virgl_video_hw.h"
