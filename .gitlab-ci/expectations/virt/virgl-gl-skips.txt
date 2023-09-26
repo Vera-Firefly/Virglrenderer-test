@@ -63,11 +63,5 @@ spec@glsl-4.*@*dmat*
 spec@glsl-4.*@*dvec*
 spec@glsl-4.*@*double*
 
-# Currently crashes the host
-spec@arb_cull_distance@vs-cull-distance-vertex-outside-cull-volume
-spec@arb_cull_distance@basic-cull-4
-spec@arb_cull_distance@arb_cull_distance-exceed-limits cull
-spec@arb_cull_distance@basic-cull-3
-
 #OOM
 spec@!opengl 1.1@streaming-texture-leak
