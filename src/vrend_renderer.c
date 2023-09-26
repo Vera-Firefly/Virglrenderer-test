@@ -5855,6 +5855,16 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          virgl_error("VBO missing indexed array buffer\n");
          return 0;
       }
+
+      if (!indirect_handle) {
+         uint32_t expected_size = sub_ctx->ib.index_size * info->count + sub_ctx->ib.offset;
+         if (expected_size > res->base.width0) {
+            virgl_error("Indexed array buffer (%u) not large enough for draw operation "
+                        "(req. %u\n", res->base.width0, expected_size);
+            return 0;
+         }
+      }
+
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, res->id);
    } else
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
