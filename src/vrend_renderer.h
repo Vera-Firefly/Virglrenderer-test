@@ -183,7 +183,7 @@ void vrend_clear(struct vrend_context *ctx,
                  double depth, unsigned stencil);
 
 int vrend_clear_texture(struct vrend_context* ctx,
-                        uint32_t handle, uint32_t level,
+                        struct vrend_resource *res, uint32_t level,
                         const struct pipe_box *box,
                         const void * data);
 

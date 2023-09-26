@@ -4781,18 +4781,11 @@ void vrend_clear(struct vrend_context *ctx,
 }
 
 int vrend_clear_texture(struct vrend_context* ctx,
-                         uint32_t handle, uint32_t level,
+                         struct vrend_resource *res, uint32_t level,
                          const struct pipe_box *box,
                          const void * data)
 {
    GLenum format, type;
-   struct vrend_resource *res;
-
-   res = vrend_renderer_ctx_res_lookup(ctx, handle);
-   if (!res) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
-      return EINVAL;
-   }
 
    enum virgl_formats fmt = res->base.format;
    format = tex_conv_table[fmt].glformat;

@@ -123,6 +123,12 @@ int virgl_encoder_create_surface(struct virgl_context *ctx,
                                 struct virgl_resource *res,
                                 const struct pipe_surface *templat);
 
+int virgl_encoder_clear_texture(struct virgl_context *ctx,
+                                uint32_t handle,
+                                uint32_t level,
+                                struct virgl_box box,
+                                const union pipe_color_union *color);
+
 int virgl_encoder_flush_frontbuffer(struct virgl_context *ctx,
                                    struct virgl_resource *res);
 

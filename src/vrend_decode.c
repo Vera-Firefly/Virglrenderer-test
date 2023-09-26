@@ -225,6 +225,13 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
       return EINVAL;
 
    handle = get_buf_entry(buf, VIRGL_TEXTURE_HANDLE);
+
+   struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, handle);
+   if (!res) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
+      return EINVAL;
+   }
+
    level = get_buf_entry(buf, VIRGL_TEXTURE_LEVEL);
    box.x = get_buf_entry(buf, VIRGL_TEXTURE_SRC_X);
    box.y = get_buf_entry(buf, VIRGL_TEXTURE_SRC_Y);
@@ -237,7 +244,7 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
    arr[2] = get_buf_entry(buf, VIRGL_TEXTURE_ARRAY_C);
    arr[3] = get_buf_entry(buf, VIRGL_TEXTURE_ARRAY_D);
 
-   return vrend_clear_texture(ctx, handle, level, &box, (void *) &arr);
+   return vrend_clear_texture(ctx, res, level, &box, (void *) &arr);
 }
 
 static int vrend_decode_set_viewport_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)

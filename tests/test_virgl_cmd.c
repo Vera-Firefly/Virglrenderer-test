@@ -1390,6 +1390,62 @@ START_TEST(virgl_test_create_shader_fail)
 }
 END_TEST
 
+/* create a resource - clear it to a color, do a transfer */
+START_TEST(virgl_test_clear_texture)
+{
+   struct virgl_context ctx;
+   struct virgl_resource res;
+   union pipe_color_union color;
+   struct virgl_box box;
+   int ret;
+
+   ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res, 1, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* attach resource to context */
+   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+   /* clear the resource */
+   /* clear buffer to green */
+   color.f[0] = 0.0;
+   color.f[1] = 1.0;
+   color.f[2] = 0.0;
+   color.f[3] = 1.0;
+   box.x = 0;
+   box.y = 0;
+   box.z = 0;
+   box.w = 5;
+   box.h = 1;
+   box.d = 1;
+
+   ret = virgl_encoder_clear_texture(&ctx, res.handle, 0, box, &color);
+   ck_assert_int_eq(ret, 0);
+
+   /* submit the cmd stream */
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   /* Check usage with illegal resource */
+   virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
+
+   ret = virgl_encoder_clear_texture(&ctx, res.handle, 0, box, &color);
+   ck_assert_int_eq(ret, 0);
+
+   /* submit the cmd stream */
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* cleanup */
+   testvirgl_destroy_backed_res(&res);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static Suite *virgl_init_suite(void)
 {
   Suite *s;
@@ -1415,6 +1471,7 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_create_vertex_elements_fail);
   tcase_add_test(tc_core, virgl_test_create_shader_pass);
   tcase_add_test(tc_core, virgl_test_create_shader_fail);
+  tcase_add_test(tc_core, virgl_test_clear_texture);
 
   suite_add_tcase(s, tc_core);
   return s;

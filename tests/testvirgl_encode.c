@@ -442,6 +442,31 @@ int virgl_encoder_create_surface(struct virgl_context *ctx,
    return 0;
 }
 
+int virgl_encoder_clear_texture(struct virgl_context *ctx,
+                                 uint32_t handle,
+                                 uint32_t level,
+                                 struct virgl_box box,
+                                 const union pipe_color_union *color)
+{
+   virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_CLEAR_TEXTURE, 0, VIRGL_CLEAR_TEXTURE_SIZE));
+   virgl_encoder_write_dword(ctx->cbuf, handle);
+   virgl_encoder_write_dword(ctx->cbuf, level);
+
+   virgl_encoder_write_dword(ctx->cbuf, box.x);
+   virgl_encoder_write_dword(ctx->cbuf, box.y);
+   virgl_encoder_write_dword(ctx->cbuf, box.z);
+   virgl_encoder_write_dword(ctx->cbuf, box.w);
+   virgl_encoder_write_dword(ctx->cbuf, box.h);
+   virgl_encoder_write_dword(ctx->cbuf, box.d);
+
+   virgl_encoder_write_dword(ctx->cbuf, color->ui[0]);
+   virgl_encoder_write_dword(ctx->cbuf, color->ui[1]);
+   virgl_encoder_write_dword(ctx->cbuf, color->ui[2]);
+   virgl_encoder_write_dword(ctx->cbuf, color->ui[3]);
+
+   return 0;
+}
+
 int virgl_encoder_create_so_target(struct virgl_context *ctx,
                                   uint32_t handle,
                                   struct virgl_resource *res,
