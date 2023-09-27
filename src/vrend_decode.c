@@ -1652,13 +1652,13 @@ static int vrend_decode_send_string_marker(struct vrend_context *ctx, const uint
    size_t buf_len = sizeof(uint32_t) * (length - 1);
 
    if (length < VIRGL_SEND_STRING_MARKER_MIN_SIZE) {
-      fprintf(stderr, "minimal command length not okay\n");
+      virgl_error("VIRGL_SEND_STRING_MARKER: minimal command length not okay\n");
       return EINVAL;
    }
 
    uint32_t str_len = get_buf_entry(buf, VIRGL_SEND_STRING_MARKER_STRING_SIZE);
    if (str_len > buf_len) {
-       fprintf(stderr, "String len %u > buf_len %zu\n", str_len, buf_len);
+       virgl_error("VIRGL_SEND_STRING_MARKER: String len %u > buf_len %zu\n", str_len, buf_len);
        return EINVAL;
    }
 
