@@ -6572,8 +6572,7 @@ static inline GLenum translate_fill(uint32_t mode)
    case PIPE_POLYGON_MODE_FILL:
       return GL_FILL;
    default:
-      assert(0);
-      return 0;
+      return GL_NONE;
    }
 }
 
@@ -6616,11 +6615,12 @@ static void vrend_hw_emit_rs(struct vrend_context *ctx)
          glDisable(GL_RASTERIZER_DISCARD);
    }
 
+
    if (vrend_state.use_gles == true) {
-      if (translate_fill(state->fill_front) != GL_FILL) {
+      if (state->fill_front != PIPE_POLYGON_MODE_FILL) {
          report_gles_warn(ctx, GLES_WARN_POLYGON_MODE);
       }
-      if (translate_fill(state->fill_back) != GL_FILL) {
+      if (state->fill_back != PIPE_POLYGON_MODE_FILL) {
          report_gles_warn(ctx, GLES_WARN_POLYGON_MODE);
       }
    } else if (vrend_state.use_core_profile == false) {
