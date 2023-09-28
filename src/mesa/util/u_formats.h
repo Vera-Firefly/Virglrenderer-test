@@ -624,6 +624,18 @@ enum pipe_video_chroma_format
    PIPE_VIDEO_CHROMA_FORMAT_NONE
 };
 
+/**
+ * Texture swizzles
+ */
+enum pipe_swizzle {
+   PIPE_SWIZZLE_RED,
+   PIPE_SWIZZLE_GREEN,
+   PIPE_SWIZZLE_BLUE,
+   PIPE_SWIZZLE_ALPHA,
+   PIPE_SWIZZLE_ZERO,
+   PIPE_SWIZZLE_ONE,
+};
+
 #ifdef __cplusplus
 }
 #endif
