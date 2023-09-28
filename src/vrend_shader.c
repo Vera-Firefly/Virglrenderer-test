@@ -512,12 +512,12 @@ static inline const char *get_wm_string(unsigned wm)
 static inline const char *get_swizzle_string(uint8_t swizzle)
 {
    switch (swizzle) {
-   case PIPE_SWIZZLE_RED: return ".x";
-   case PIPE_SWIZZLE_GREEN: return ".y";
-   case PIPE_SWIZZLE_BLUE: return ".z";
-   case PIPE_SWIZZLE_ALPHA: return ".w";
-   case PIPE_SWIZZLE_ZERO: 
-   case PIPE_SWIZZLE_ONE: return ".0";
+   case PIPE_SWIZZLE_X: return ".x";
+   case PIPE_SWIZZLE_Y: return ".y";
+   case PIPE_SWIZZLE_Z: return ".z";
+   case PIPE_SWIZZLE_W: return ".w";
+   case PIPE_SWIZZLE_0:
+   case PIPE_SWIZZLE_1: return ".0";
    default:
       assert(0);
       return "";
@@ -3451,8 +3451,8 @@ static void translate_tex(struct dump_ctx *ctx,
 
                int swz = (packed_swizzles >> (i * 3)) & 7;
                switch (swz) {
-               case PIPE_SWIZZLE_ZERO : emit_buf(&ctx->glsl_strbufs,  "0.0"); break;
-               case PIPE_SWIZZLE_ONE :
+               case PIPE_SWIZZLE_0 : emit_buf(&ctx->glsl_strbufs,  "0.0"); break;
+               case PIPE_SWIZZLE_1 :
                   switch (dtypeprefix) {
                   case UINT_BITS_TO_FLOAT:
                      emit_buf(&ctx->glsl_strbufs,  "uintBitsToFloat(1u)");

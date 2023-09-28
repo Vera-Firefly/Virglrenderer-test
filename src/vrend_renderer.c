@@ -2635,12 +2635,12 @@ int vrend_create_sampler_state(struct vrend_context *ctx,
 static inline GLenum to_gl_swizzle(enum pipe_swizzle swizzle)
 {
    switch (swizzle) {
-   case PIPE_SWIZZLE_RED: return GL_RED;
-   case PIPE_SWIZZLE_GREEN: return GL_GREEN;
-   case PIPE_SWIZZLE_BLUE: return GL_BLUE;
-   case PIPE_SWIZZLE_ALPHA: return GL_ALPHA;
-   case PIPE_SWIZZLE_ZERO: return GL_ZERO;
-   case PIPE_SWIZZLE_ONE: return GL_ONE;
+   case PIPE_SWIZZLE_X: return GL_RED;
+   case PIPE_SWIZZLE_Y: return GL_GREEN;
+   case PIPE_SWIZZLE_Z: return GL_BLUE;
+   case PIPE_SWIZZLE_W: return GL_ALPHA;
+   case PIPE_SWIZZLE_0: return GL_ZERO;
+   case PIPE_SWIZZLE_1: return GL_ONE;
    default:
       assert(0);
       return 0;
@@ -2704,24 +2704,24 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    }
 
    if (!(util_format_has_alpha(view->format) || util_format_is_depth_or_stencil(view->format))) {
-      if (swizzle[0] == PIPE_SWIZZLE_ALPHA)
-          swizzle[0] = PIPE_SWIZZLE_ONE;
-      if (swizzle[1] == PIPE_SWIZZLE_ALPHA)
-          swizzle[1] = PIPE_SWIZZLE_ONE;
-      if (swizzle[2] == PIPE_SWIZZLE_ALPHA)
-          swizzle[2] = PIPE_SWIZZLE_ONE;
-      if (swizzle[3] == PIPE_SWIZZLE_ALPHA)
-          swizzle[3] = PIPE_SWIZZLE_ONE;
+      if (swizzle[0] == PIPE_SWIZZLE_W)
+          swizzle[0] = PIPE_SWIZZLE_1;
+      if (swizzle[1] == PIPE_SWIZZLE_W)
+          swizzle[1] = PIPE_SWIZZLE_1;
+      if (swizzle[2] == PIPE_SWIZZLE_W)
+          swizzle[2] = PIPE_SWIZZLE_1;
+      if (swizzle[3] == PIPE_SWIZZLE_W)
+          swizzle[3] = PIPE_SWIZZLE_1;
    }
 
    if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
-      if (swizzle[0] <= PIPE_SWIZZLE_ALPHA)
+      if (swizzle[0] <= PIPE_SWIZZLE_W)
          swizzle[0] = tex_conv_table[view->format].swizzle[swizzle[0]];
-      if (swizzle[1] <= PIPE_SWIZZLE_ALPHA)
+      if (swizzle[1] <= PIPE_SWIZZLE_W)
          swizzle[1] = tex_conv_table[view->format].swizzle[swizzle[1]];
-      if (swizzle[2] <= PIPE_SWIZZLE_ALPHA)
+      if (swizzle[2] <= PIPE_SWIZZLE_W)
          swizzle[2] = tex_conv_table[view->format].swizzle[swizzle[2]];
-      if (swizzle[3] <= PIPE_SWIZZLE_ALPHA)
+      if (swizzle[3] <= PIPE_SWIZZLE_W)
          swizzle[3] = tex_conv_table[view->format].swizzle[swizzle[3]];
    }
 
@@ -4083,12 +4083,12 @@ static inline void vrend_sync_shader_io(struct vrend_sub_context *sub_ctx,
 static bool vrend_get_swizzle(struct vrend_sampler_view *view,
                               enum pipe_swizzle swizzle[4])
 {
-   static const enum pipe_swizzle OOOR[] = {PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_RED};
-   static const enum pipe_swizzle RRR1[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ONE};
-   static const enum pipe_swizzle RRRG[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN};
-   static const enum pipe_swizzle RRRR[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED, PIPE_SWIZZLE_RED};
-   static const enum pipe_swizzle RG01[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_GREEN, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ONE};
-   static const enum pipe_swizzle R001[] = {PIPE_SWIZZLE_RED, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ZERO, PIPE_SWIZZLE_ONE};
+   static const enum pipe_swizzle OOOR[] = {PIPE_SWIZZLE_0, PIPE_SWIZZLE_0, PIPE_SWIZZLE_0, PIPE_SWIZZLE_X};
+   static const enum pipe_swizzle RRR1[] = {PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_1};
+   static const enum pipe_swizzle RRRG[] = {PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_Y};
+   static const enum pipe_swizzle RRRR[] = {PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_X, PIPE_SWIZZLE_X};
+   static const enum pipe_swizzle RG01[] = {PIPE_SWIZZLE_X, PIPE_SWIZZLE_Y, PIPE_SWIZZLE_0, PIPE_SWIZZLE_1};
+   static const enum pipe_swizzle R001[] = {PIPE_SWIZZLE_X, PIPE_SWIZZLE_0, PIPE_SWIZZLE_0, PIPE_SWIZZLE_1};
 
    if (tex_conv_table[view->format].flags & VIRGL_TEXTURE_NEED_SWIZZLE) {
       swizzle[0] = tex_conv_table[view->format].swizzle[0];

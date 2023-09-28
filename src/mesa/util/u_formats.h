@@ -628,12 +628,12 @@ enum pipe_video_chroma_format
  * Texture swizzles
  */
 enum pipe_swizzle {
-   PIPE_SWIZZLE_RED,
-   PIPE_SWIZZLE_GREEN,
-   PIPE_SWIZZLE_BLUE,
-   PIPE_SWIZZLE_ALPHA,
-   PIPE_SWIZZLE_ZERO,
-   PIPE_SWIZZLE_ONE,
+   PIPE_SWIZZLE_X,
+   PIPE_SWIZZLE_Y,
+   PIPE_SWIZZLE_Z,
+   PIPE_SWIZZLE_W,
+   PIPE_SWIZZLE_0,
+   PIPE_SWIZZLE_1,
 };
 
 #ifdef __cplusplus
