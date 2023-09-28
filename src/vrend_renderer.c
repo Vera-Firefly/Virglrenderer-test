@@ -2683,10 +2683,12 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    view->val0 = val0;
    view->val1 = val1;
 
-   swizzle[0] = swizzle_packed & 0x7;
-   swizzle[1] = (swizzle_packed >> 3) & 0x7;
-   swizzle[2] = (swizzle_packed >> 6) & 0x7;
-   swizzle[3] = (swizzle_packed >> 9) & 0x7;
+
+   for (int i = 0; i < 4; ++i) {
+      swizzle[i] = (swizzle_packed  >> (3 * i)) & 0x7;
+      if (swizzle[i] > PIPE_SWIZZLE_ONE)
+         return EINVAL;
+   }
 
    vrend_resource_reference(&view->texture, res);
 
