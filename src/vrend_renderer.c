@@ -12259,8 +12259,9 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
             set_format_bit(&caps->v2.supported_multisample_formats, fmt);
          }
          if (log_texture_feature)
-            VREND_DEBUG(dbg_features, NULL, "%s: Supports %s %s\n",
-                        util_format_name(fmt), readback_str, multisample_str);
+            VREND_DEBUG(dbg_features, NULL, "%s: Supports %s %s tv_class:%d\n",
+                        util_format_name(fmt), readback_str, multisample_str,
+                        tex_conv_table[i].view_class);
       }
 
       if (vrend_format_can_scanout(fmt))

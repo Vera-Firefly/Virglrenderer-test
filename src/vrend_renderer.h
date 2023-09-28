@@ -116,12 +116,54 @@ struct vrend_resource {
 #define VIRGL_TEXTURE_CAN_TARGET_RECTANGLE (1 << 3)
 #define VIRGL_TEXTURE_CAN_MULTISAMPLE      (1 << 4)
 
+enum view_class {
+   view_class_unsupported,
+   view_class_128,
+   view_class_96,
+   view_class_64,
+   view_class_48,
+   view_class_32,
+   view_class_24,
+   view_class_16,
+   view_class_8,
+   view_class_rgtc1_red,
+   view_class_rgtc2_rg,
+   view_class_bptc_unorm,
+   view_class_bptc_float,
+   view_class_dxt1_rgb,
+   view_class_dxt1_rgba,
+   view_class_dxt3_rgba,
+   view_class_dxt5_rgba,
+   view_class_eac_r11,
+   view_class_eac_rg11,
+   view_class_etc2_r11,
+   view_class_etc2_rgb,
+   view_class_etc2_rgba,
+   view_class_etc2_eac_rgba,
+   view_class_astc_4x4_rgba,
+   view_class_astc_5x4_rgba,
+   view_class_astc_5x5_rgba,
+   view_class_astc_6x5_rgba,
+   view_class_astc_6x6_rgba,
+   view_class_astc_8x5_rgba,
+   view_class_astc_8x6_rgba,
+   view_class_astc_8x8_rgba,
+   view_class_astc_10x5_rgba,
+   view_class_astc_10x6_rgba,
+   view_class_astc_10x8_rgba,
+   view_class_astc_10x10_rgba,
+   view_class_astc_12x10_rgba,
+   view_class_astc_12x12_rgba
+};
+
+
 struct vrend_format_table {
    enum virgl_formats format;
    GLenum internalformat;
    GLenum glformat;
    GLenum gltype;
    enum pipe_swizzle swizzle[4];
+   enum view_class view_class;
    uint32_t bindings;
    uint32_t flags;
 };
