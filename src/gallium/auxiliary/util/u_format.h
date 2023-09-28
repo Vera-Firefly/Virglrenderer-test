@@ -124,18 +124,6 @@ enum util_format_type {
 };
 
 
-enum util_format_swizzle {
-   UTIL_FORMAT_SWIZZLE_X = 0,
-   UTIL_FORMAT_SWIZZLE_Y = 1,
-   UTIL_FORMAT_SWIZZLE_Z = 2,
-   UTIL_FORMAT_SWIZZLE_W = 3,
-   UTIL_FORMAT_SWIZZLE_0 = 4,
-   UTIL_FORMAT_SWIZZLE_1 = 5,
-   UTIL_FORMAT_SWIZZLE_NONE = 6,
-   UTIL_FORMAT_SWIZZLE_MAX = 7  /**< Number of enums counter (must be last) */
-};
-
-
 enum util_format_colorspace {
    UTIL_FORMAT_COLORSPACE_RGB = 0,
    UTIL_FORMAT_COLORSPACE_SRGB = 1,
@@ -329,14 +317,14 @@ static inline boolean
 util_format_has_depth(const struct util_format_description *desc)
 {
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-          desc->swizzle[0] != UTIL_FORMAT_SWIZZLE_NONE;
+          desc->swizzle[0] != PIPE_SWIZZLE_NONE;
 }
 
 static inline boolean
 util_format_has_stencil(const struct util_format_description *desc)
 {
    return desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-          desc->swizzle[1] != UTIL_FORMAT_SWIZZLE_NONE;
+          desc->swizzle[1] != PIPE_SWIZZLE_NONE;
 }
 
 static inline boolean
@@ -374,7 +362,7 @@ util_get_depth_format_type(const struct util_format_description *desc)
 {
    unsigned depth_channel = desc->swizzle[0];
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_ZS &&
-       depth_channel != UTIL_FORMAT_SWIZZLE_NONE) {
+       depth_channel != PIPE_SWIZZLE_NONE) {
       return desc->channel[depth_channel].type;
    } else {
       return UTIL_FORMAT_TYPE_VOID;
@@ -638,13 +626,13 @@ util_format_get_component_bits(enum pipe_format format,
    }
 
    switch (desc->swizzle[component]) {
-   case UTIL_FORMAT_SWIZZLE_X:
+   case PIPE_SWIZZLE_X:
       return desc->channel[0].size;
-   case UTIL_FORMAT_SWIZZLE_Y:
+   case PIPE_SWIZZLE_Y:
       return desc->channel[1].size;
-   case UTIL_FORMAT_SWIZZLE_Z:
+   case PIPE_SWIZZLE_Z:
       return desc->channel[2].size;
-   case UTIL_FORMAT_SWIZZLE_W:
+   case PIPE_SWIZZLE_W:
       return desc->channel[3].size;
    default:
       return 0;

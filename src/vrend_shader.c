@@ -861,10 +861,10 @@ static bool add_images(struct dump_ctx *ctx, int first, int last,
 
    const struct util_format_description *descr = util_format_description(img_decl->Format);
    if (descr->nr_channels == 2 &&
-       descr->swizzle[0] == UTIL_FORMAT_SWIZZLE_X &&
-       descr->swizzle[1] == UTIL_FORMAT_SWIZZLE_Y &&
-       descr->swizzle[2] == UTIL_FORMAT_SWIZZLE_0 &&
-       descr->swizzle[3] == UTIL_FORMAT_SWIZZLE_1) {
+       descr->swizzle[0] == PIPE_SWIZZLE_X &&
+       descr->swizzle[1] == PIPE_SWIZZLE_Y &&
+       descr->swizzle[2] == PIPE_SWIZZLE_0 &&
+       descr->swizzle[3] == PIPE_SWIZZLE_1) {
       ctx->shader_req_bits |= SHADER_REQ_NV_IMAGE_FORMATS;
    } else if (img_decl->Format == PIPE_FORMAT_R11G11B10_FLOAT ||
               img_decl->Format == PIPE_FORMAT_R10G10B10A2_UINT ||
@@ -873,10 +873,10 @@ static bool add_images(struct dump_ctx *ctx, int first, int last,
               img_decl->Format == PIPE_FORMAT_R16G16B16A16_SNORM)
       ctx->shader_req_bits |= SHADER_REQ_NV_IMAGE_FORMATS;
    else if (descr->nr_channels == 1 &&
-            descr->swizzle[0] == UTIL_FORMAT_SWIZZLE_X &&
-            descr->swizzle[1] == UTIL_FORMAT_SWIZZLE_0 &&
-            descr->swizzle[2] == UTIL_FORMAT_SWIZZLE_0 &&
-            descr->swizzle[3] == UTIL_FORMAT_SWIZZLE_1 &&
+            descr->swizzle[0] == PIPE_SWIZZLE_X &&
+            descr->swizzle[1] == PIPE_SWIZZLE_0 &&
+            descr->swizzle[2] == PIPE_SWIZZLE_0 &&
+            descr->swizzle[3] == PIPE_SWIZZLE_1 &&
             (descr->channel[0].size == 8 || descr->channel[0].size ==16))
       ctx->shader_req_bits |= SHADER_REQ_NV_IMAGE_FORMATS;
 

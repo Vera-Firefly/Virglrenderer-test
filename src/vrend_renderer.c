@@ -2686,7 +2686,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
 
    for (int i = 0; i < 4; ++i) {
       swizzle[i] = (swizzle_packed  >> (3 * i)) & 0x7;
-      if (swizzle[i] > PIPE_SWIZZLE_ONE)
+      if (swizzle[i] > PIPE_SWIZZLE_1)
          return EINVAL;
    }
 
@@ -3377,7 +3377,7 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
       else
          v->elements[i].nr_chan = desc->nr_channels;
 
-      if (desc->nr_channels == 4 && desc->swizzle[0] == UTIL_FORMAT_SWIZZLE_Z)
+      if (desc->nr_channels == 4 && desc->swizzle[0] == PIPE_SWIZZLE_Z)
          v->zyxw_bitmask |= 1 << i;
    }
 

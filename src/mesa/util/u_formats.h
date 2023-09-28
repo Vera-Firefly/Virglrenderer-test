@@ -625,7 +625,7 @@ enum pipe_video_chroma_format
 };
 
 /**
- * Texture swizzles
+ * Texture & format swizzles
  */
 enum pipe_swizzle {
    PIPE_SWIZZLE_X,
@@ -634,6 +634,8 @@ enum pipe_swizzle {
    PIPE_SWIZZLE_W,
    PIPE_SWIZZLE_0,
    PIPE_SWIZZLE_1,
+   PIPE_SWIZZLE_NONE,
+   PIPE_SWIZZLE_MAX, /**< Number of enums counter (must be last) */
 };
 
 #ifdef __cplusplus
