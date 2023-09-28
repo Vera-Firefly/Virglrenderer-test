@@ -3127,8 +3127,6 @@ spec@arb_shader_draw_parameters@drawid-indirect-basevertex,Fail
 spec@arb_shader_draw_parameters@vertexid-zerobased,Fail
 spec@arb_viewport_array@display-list,Fail
 
-spec@khr_texture_compression_astc@void-extent-dl-bug,Crash
-
 KHR-GL31.transform_feedback.draw_xfb_stream_instanced_test,Fail
 KHR-GL32.transform_feedback.draw_xfb_stream_instanced_test,Fail
 KHR-GL30.transform_feedback.draw_xfb_stream_instanced_test,Fail

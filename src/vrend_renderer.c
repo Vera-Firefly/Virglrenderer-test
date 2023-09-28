@@ -10424,6 +10424,13 @@ void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
       glEnable(GL_SCISSOR_TEST);
 }
 
+
+static inline bool texture_view_compatible(enum virgl_formats src, enum virgl_formats dst)
+{
+   return (tex_conv_table[src].view_class != view_class_unsupported) &&
+         (tex_conv_table[src].view_class == tex_conv_table[dst].view_class);
+}
+
 static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats format)
 {
    GLuint view_id;
@@ -10432,6 +10439,9 @@ static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats for
    GLenum view_ifmt = tex_conv_table[format].internalformat;
 
    if (tex_ifmt == view_ifmt)
+      return res->id;
+
+   if (!texture_view_compatible(res->base.format, format))
       return res->id;
 
    /* If the format doesn't support TextureStorage it is not immutable, so no TextureView*/
