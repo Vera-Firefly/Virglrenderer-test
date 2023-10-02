@@ -803,6 +803,7 @@ enum virgl_ctx_errors {
         VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE,
         VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES,
         VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP,
+        VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE,
 };
 
 enum virgl_statistics_query_index {

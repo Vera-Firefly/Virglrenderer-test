@@ -1080,6 +1080,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_ILLEGAL_PROGRAM_PIPELINE] = "Illegal shader program pipeline",
    [VIRGL_ERROR_CTX_TOO_MANY_VERTEX_ATTRIBUTES] = "Too many vertex attributes are requested",
    [VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP] = "Unsupported texture mirror wrapping, default to GL_MIRROR_REPEAT",
+   [VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE] = "Cube map face out of range:",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -10882,6 +10883,18 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    if (unlikely(info->dst.format >= VIRGL_FORMAT_MAX ||
                 tex_conv_table[info->dst.format].format == VIRGL_FORMAT_NONE)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, info->dst.format);
+      return;
+   }
+
+   if ((src_res->base.target == PIPE_TEXTURE_CUBE) && (info->src.box.depth + info->src.box.z  - 1) >= 6) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE,
+                                 info->src.box.depth + info->src.box.z - 1);
+      return;
+   }
+
+   if (dst_res->base.target == PIPE_TEXTURE_CUBE && info->dst.box.depth + info->dst.box.z - 1 >= 6) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE,
+                                 info->src.box.depth + info->src.box.z - 1);
       return;
    }
 
