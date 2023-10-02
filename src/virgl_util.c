@@ -128,6 +128,7 @@ const struct log_levels_lut {
    {"info", VIRGL_LOG_LEVEL_INFO},
    {"warning", VIRGL_LOG_LEVEL_WARNING},
    {"error", VIRGL_LOG_LEVEL_ERROR},
+   {"silent", VIRGL_LOG_LEVEL_SILENT},
    { NULL, 0 },
 };
 

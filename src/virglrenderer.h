@@ -259,6 +259,10 @@ enum virgl_log_level_flags {
    VIRGL_LOG_LEVEL_INFO,
    VIRGL_LOG_LEVEL_WARNING,
    VIRGL_LOG_LEVEL_ERROR,
+
+   /* "SILENT" must be enum with the highest absolute value and it should not
+    * be used as actual log level in calls to virgl_logv and siblings .*/
+   VIRGL_LOG_LEVEL_SILENT,
 };
 
 typedef void (*virgl_free_data_callback_type)(void* user_data);
