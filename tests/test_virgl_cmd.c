@@ -1291,6 +1291,14 @@ static void test_create_surface(enum pipe_format format, int expected_error)
    /* cleanup */
    virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
 
+   /* Check usage with illegal resource */
+   ret = virgl_encoder_create_surface(&ctx, surf.handle, &res, &surf.base);
+   ck_assert_int_eq(ret, 0);
+
+   /* submit the cmd stream */
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
    testvirgl_destroy_backed_res(&res);
 
    testvirgl_fini_ctx_cmdbuf(&ctx);
