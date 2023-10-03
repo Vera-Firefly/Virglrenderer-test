@@ -5484,21 +5484,26 @@ vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
    return true;
 }
 
+enum select_program_result {
+    PROGRAMM_ERROR,
+    PROGRAMM_NO_CHANGE,
+    PROGRAMM_NEW
+};
 
-static bool
+static enum select_program_result
 vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch)
 {
    struct vrend_linked_shader_program *prog;
    bool fs_dirty, vs_dirty, gs_dirty, tcs_dirty, tes_dirty;
    bool dual_src = util_blend_state_is_dual(&sub_ctx->blend_state, 0);
-   bool new_program = false;
+
 
    struct vrend_shader_selector **shaders = sub_ctx->shaders;
 
    sub_ctx->shader_dirty = false;
 
    if (!shaders[PIPE_SHADER_VERTEX] || !shaders[PIPE_SHADER_FRAGMENT]) {
-      return false;
+      return PROGRAMM_ERROR;
    }
 
    // For some GPU, we'd like to use integer variable in generated GLSL if
@@ -5555,7 +5560,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       struct vrend_shader *shader = sel->current;
       if (shader && !shader->is_compiled) {
          if (!vrend_compile_shader(sub_ctx, shader))
-            return false;
+            return PROGRAMM_ERROR;
       }
       if (vrend_state.use_gles && sel->sinfo.gles_use_tex_query_level)
          gles_emulate_query_texture_levels_mask |= 1 << i;
@@ -5608,7 +5613,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
                                    tes_id ? sub_ctx->shaders[PIPE_SHADER_TESS_EVAL]->current : NULL,
                                    separable);
          if (!prog)
-            return false;
+            return PROGRAMM_ERROR;
          prog->gles_use_query_texturelevel_mask = gles_emulate_query_texture_levels_mask;
       } else if (separable) {
           /* UBO block bindings are reset to zero if the programs are
@@ -5638,8 +5643,10 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       sub_ctx->last_shader_idx = sub_ctx->shaders[PIPE_SHADER_TESS_EVAL] ? PIPE_SHADER_TESS_EVAL : (sub_ctx->shaders[PIPE_SHADER_GEOMETRY] ? PIPE_SHADER_GEOMETRY : PIPE_SHADER_FRAGMENT);
    } else
       prog = sub_ctx->prog;
+
+   enum select_program_result new_program = PROGRAMM_NO_CHANGE;
    if (sub_ctx->prog != prog) {
-      new_program = true;
+      new_program = PROGRAMM_NEW;
       sub_ctx->prog_ids[PIPE_SHADER_VERTEX] = vs_id;
       sub_ctx->prog_ids[PIPE_SHADER_FRAGMENT] = fs_id;
       sub_ctx->prog_ids[PIPE_SHADER_GEOMETRY] = gs_id;
@@ -5661,7 +5668,7 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
 
 fail:
    virgl_error("Failure to compile shader variants: %s\n", sub_ctx->parent->debug_name);
-   return false;
+   return PROGRAMM_ERROR;
 }
 
 void vrend_link_program_hook(struct vrend_context *ctx, uint32_t *handles)
@@ -5727,7 +5734,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
                    uint32_t cso, uint32_t indirect_handle,
                    uint32_t indirect_draw_count_handle)
 {
-   bool new_program = false;
+   enum select_program_result program_select_result = PROGRAMM_NO_CHANGE;
    struct vrend_resource *indirect_res = NULL;
    struct vrend_resource *indirect_params_res = NULL;
    struct vrend_sub_context *sub_ctx = ctx->sub;
@@ -5793,9 +5800,9 @@ int vrend_draw_vbo(struct vrend_context *ctx,
 
    if (sub_ctx->shader_dirty || sub_ctx->swizzle_output_rgb_to_bgr ||
        sub_ctx->needs_manual_srgb_encode_bitmask || sub_ctx->vbo_dirty)
-      new_program = vrend_select_program(sub_ctx, info->vertices_per_patch);
+      program_select_result = vrend_select_program(sub_ctx, info->vertices_per_patch);
 
-   if (!sub_ctx->prog) {
+   if (!sub_ctx->prog || program_select_result == PROGRAMM_ERROR) {
       virgl_error("Dropping rendering due to missing shaders: %s\n", ctx->debug_name);
       return 0;
    }
@@ -5825,7 +5832,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       }
    }
 
-   vrend_draw_bind_objects(sub_ctx, new_program);
+   vrend_draw_bind_objects(sub_ctx, program_select_result == PROGRAMM_NEW);
    vrend_fill_sysval_uniform_block(sub_ctx);
 
    if (has_feature(feat_gles31_vertex_attrib_binding)) {
