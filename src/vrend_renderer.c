@@ -2342,6 +2342,12 @@ int vrend_create_surface(struct vrend_context *ctx,
             last_layer = 5;
          }
 
+         int num_layers = last_layer - first_layer + 1;
+         if (num_layers <= 0) {
+            virgl_error("%s: Invalid number of layers (%d) requested\n", __func__, num_layers);
+            return EINVAL;
+         }
+
          VREND_DEBUG(dbg_tex, ctx, "Create texture view from %s for %s\n",
                      util_format_name(res->base.format),
                      util_format_name(surf->format));
@@ -2361,7 +2367,7 @@ int vrend_create_surface(struct vrend_context *ctx,
 
          glTextureView(surf->id, target, res->id, internalformat,
                        0, res->base.last_level + 1,
-                       first_layer, last_layer - first_layer + 1);
+                       first_layer, num_layers);
       }
    }
 
@@ -2775,11 +2781,19 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       if (needs_view &&
           has_bit(view->texture->storage_bits, VREND_STORAGE_GL_IMMUTABLE) &&
           has_feature(feat_texture_view)) {
-        glGenTextures(1, &view->id);
         GLenum internalformat = tex_conv_table[format].internalformat;
         unsigned max_layer = (view->val0 >> 16) & 0xffff;
         int max_level = (view->val1 >> 8) & 0xff;
         view->levels = (max_level - base_level) + 1;
+
+        int num_layers = max_layer - base_layer + 1;
+        if (view->levels == 0 || num_layers <= 0) {
+            virgl_error("%s: Invalid number of layers (%d) or zero levels requested\n",
+                        __func__, num_layers);
+            return EINVAL;
+        }
+
+        glGenTextures(1, &view->id);
 
         /* texture views for eglimage-backed bgr* resources are usually not
          * supported since they cause unintended red/blue channel-swapping.
@@ -2801,7 +2815,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
 
         glTextureView(view->id, view->target, view->texture->id, internalformat,
                       base_level, view->levels,
-                      base_layer, max_layer - base_layer + 1);
+                      base_layer, num_layers);
 
         glBindTexture(view->target, view->id);
 
@@ -5359,6 +5373,10 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
 
          /* Do we need a texture view? */
          uint32_t num_layers = iview->u.tex.last_layer - first_layer + 1;
+         if (num_layers == 0) {
+            virgl_error("%s: Zero layers requested\n", __func__);
+            return;
+         }
 
          if (layered &&
              (iview->u.tex.first_layer != 0 ||
