@@ -3,10 +3,6 @@ glx@.*
 # Skip because we don't care for fp64 for now
 spec@arb_gpu_shader_fp64@.*
 
-# Skip, this is expected
-# Refer to src/mesa/main/drawpix.c:100
-spec@ext_texture_integer@fbo-integer
-
 # Fails on iris too
 spec@arb_direct_state_access@gettextureimage-formats
 
