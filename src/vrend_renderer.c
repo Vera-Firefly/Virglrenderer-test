@@ -5518,8 +5518,6 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
 
    struct vrend_shader_selector **shaders = sub_ctx->shaders;
 
-   sub_ctx->shader_dirty = false;
-
    if (!shaders[PIPE_SHADER_VERTEX] || !shaders[PIPE_SHADER_FRAGMENT]) {
       return PROGRAMM_ERROR;
    }
@@ -5682,6 +5680,8 @@ vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch
       prog->ref_context = sub_ctx;
    }
    sub_ctx->cs_shader_dirty = true;
+   sub_ctx->shader_dirty = false;
+
    return new_program;
 
 fail:
