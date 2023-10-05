@@ -5763,7 +5763,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    struct vrend_sub_context *sub_ctx = ctx->sub;
 
    if (ctx->in_error)
-      return 0;
+      return ENOTRECOVERABLE;
 
    if (info->instance_count && !has_feature(feat_draw_instance))
       return EINVAL;
@@ -5780,7 +5780,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       indirect_res = vrend_renderer_ctx_res_lookup(ctx, indirect_handle);
       if (!indirect_res) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, indirect_handle);
-         return 0;
+         return EINVAL;
       }
    }
 
@@ -5792,7 +5792,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       indirect_params_res = vrend_renderer_ctx_res_lookup(ctx, indirect_draw_count_handle);
       if (!indirect_params_res){
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, indirect_draw_count_handle);
-         return 0;
+         return EINVAL;
       }
    }
 

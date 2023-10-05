@@ -403,6 +403,14 @@ int virgl_encoder_set_index_buffer(struct virgl_context *ctx,
 int virgl_encoder_draw_vbo(struct virgl_context *ctx,
                           const struct pipe_draw_info *info)
 {
+   return virgl_encoder_draw_vbo_indirect(ctx, info, 0, 0);
+}
+
+int virgl_encoder_draw_vbo_indirect(struct virgl_context *ctx,
+                                const struct pipe_draw_info *info,
+                                uint32_t indirect_handle,
+                                uint32_t indirect_draw_count_handle)
+{
    virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_DRAW_VBO, 0, VIRGL_DRAW_VBO_SIZE));
    virgl_encoder_write_dword(ctx->cbuf, info->start);
    virgl_encoder_write_dword(ctx->cbuf, info->count);
@@ -415,6 +423,16 @@ int virgl_encoder_draw_vbo(struct virgl_context *ctx,
    virgl_encoder_write_dword(ctx->cbuf, info->restart_index);
    virgl_encoder_write_dword(ctx->cbuf, info->min_index);
    virgl_encoder_write_dword(ctx->cbuf, info->max_index);
+
+   if (indirect_handle != 0) {
+      virgl_encoder_write_dword(ctx->cbuf, indirect_handle);
+      virgl_encoder_write_dword(ctx->cbuf, info->indirect.offset);
+      virgl_encoder_write_dword(ctx->cbuf, info->indirect.stride);
+      virgl_encoder_write_dword(ctx->cbuf, info->indirect.draw_count);
+      virgl_encoder_write_dword(ctx->cbuf, info->indirect.indirect_draw_count_offset);
+      virgl_encoder_write_dword(ctx->cbuf, indirect_draw_count_handle);
+   }
+
    if (info->count_from_stream_output)
       virgl_encoder_write_dword(ctx->cbuf, info->count_from_stream_output->buffer_size);
    else
