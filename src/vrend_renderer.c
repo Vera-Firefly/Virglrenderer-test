@@ -2663,6 +2663,11 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    int ret_handle;
    enum pipe_swizzle swizzle[4];
 
+   if (unlikely(!util_format_description(format))) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, format);
+      return EINVAL;
+   }
+
    view = CALLOC_STRUCT(vrend_sampler_view);
    if (!view)
       return ENOMEM;
