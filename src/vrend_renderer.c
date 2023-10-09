@@ -10868,12 +10868,14 @@ void vrend_renderer_blit(struct vrend_context *ctx,
    if (ctx->in_error)
       return;
 
-   if (!info->src.format || info->src.format >= VIRGL_FORMAT_MAX) {
+   if (unlikely(info->src.format >= VIRGL_FORMAT_MAX ||
+                tex_conv_table[info->src.format].format == VIRGL_FORMAT_NONE)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, info->src.format);
       return;
    }
 
-   if (!info->dst.format || info->dst.format >= VIRGL_FORMAT_MAX) {
+   if (unlikely(info->dst.format >= VIRGL_FORMAT_MAX ||
+                tex_conv_table[info->dst.format].format == VIRGL_FORMAT_NONE)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, info->dst.format);
       return;
    }
