@@ -265,7 +265,7 @@ static const  struct {
    FEAT(cull_distance, 45, UNAVAIL, "GL_ARB_cull_distance", "GL_EXT_clip_cull_distance" ),
    FEAT(debug_cb, UNAVAIL, UNAVAIL, NULL), /* special case */
    FEAT(draw_instance, 31, 30,  "GL_ARB_draw_instanced" ),
-   FEAT(draw_parameters, 46, 0, "ARB_shader_draw_parameters"),
+   FEAT(draw_parameters, 46, UNAVAIL, "ARB_shader_draw_parameters"),
    FEAT(dual_src_blend, 33, UNAVAIL,  "GL_ARB_blend_func_extended", "GL_EXT_blend_func_extended" ),
    FEAT(depth_clamp, 32, UNAVAIL, "GL_ARB_depth_clamp", "GL_EXT_depth_clamp", "GL_NV_depth_clamp"),
    FEAT(enhanced_layouts, 44, UNAVAIL, "GL_ARB_enhanced_layouts"),

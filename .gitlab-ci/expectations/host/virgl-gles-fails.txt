@@ -3055,21 +3055,6 @@ spec@arb_vertex_attrib_64bit@execution@unused-sub-dvec4-01,Fail
 spec@arb_vertex_attrib_64bit@execution@unused-sub-dvec4-02,Fail
 
 spec@arb_gl_spirv@execution@ssbo@unsized-array,Fail
-spec@arb_shader_draw_parameters@baseinstance,Fail
-spec@arb_shader_draw_parameters@baseinstance-indirect,Fail
-spec@arb_shader_draw_parameters@basevertex,Fail
-spec@arb_shader_draw_parameters@basevertex-baseinstance,Fail
-spec@arb_shader_draw_parameters@basevertex-baseinstance-indirect,Fail
-spec@arb_shader_draw_parameters@basevertex-indirect,Fail
-spec@arb_shader_draw_parameters@drawid,Fail
-spec@arb_shader_draw_parameters@drawid-indirect,Fail
-spec@arb_shader_draw_parameters@drawid-indirect-baseinstance,Fail
-spec@arb_shader_draw_parameters@drawid-indirect-basevertex,Fail
-spec@arb_shader_draw_parameters@drawid-single-draw,Fail
-spec@arb_shader_draw_parameters@drawid-single-draw-primitive-restart,Fail
-spec@arb_shader_draw_parameters@drawid-vertexid,Fail
-spec@arb_shader_draw_parameters@vertexid-zerobased,Fail
-spec@arb_shader_draw_parameters@vertexid-zerobased-indirect,Fail
 spec@arb_viewport_array@display-list,Fail
 
 shaders@glsl-novertexdata,Fail
