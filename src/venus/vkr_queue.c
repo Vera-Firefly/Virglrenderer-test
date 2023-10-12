@@ -70,6 +70,7 @@ vkr_device_free_queue_sync(struct vkr_device *dev, struct vkr_queue_sync *sync)
 static inline void
 vkr_queue_sync_retire(struct vkr_queue *queue, struct vkr_queue_sync *sync)
 {
+   TRACE_FUNC();
    queue->context->retire_fence(queue->context->ctx_id, sync->ring_idx, sync->fence_id);
    vkr_device_free_queue_sync(queue->device, sync);
 }
@@ -80,6 +81,7 @@ vkr_queue_sync_submit(struct vkr_queue *queue,
                       uint32_t ring_idx,
                       uint64_t fence_id)
 {
+   TRACE_FUNC();
    struct vkr_device *dev = queue->device;
    struct vn_device_proc_table *vk = &dev->proc_table;
 
@@ -370,6 +372,7 @@ static void
 vkr_dispatch_vkQueueSubmit(UNUSED struct vn_dispatch_context *dispatch,
                            struct vn_command_vkQueueSubmit *args)
 {
+   TRACE_FUNC();
    struct vkr_queue *queue = vkr_queue_from_handle(args->queue);
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 
@@ -385,6 +388,7 @@ static void
 vkr_dispatch_vkQueueBindSparse(UNUSED struct vn_dispatch_context *dispatch,
                                struct vn_command_vkQueueBindSparse *args)
 {
+   TRACE_FUNC();
    struct vkr_queue *queue = vkr_queue_from_handle(args->queue);
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 
@@ -409,6 +413,7 @@ static void
 vkr_dispatch_vkQueueSubmit2(UNUSED struct vn_dispatch_context *dispatch,
                             struct vn_command_vkQueueSubmit2 *args)
 {
+   TRACE_FUNC();
    struct vkr_queue *queue = vkr_queue_from_handle(args->queue);
    struct vn_device_proc_table *vk = &queue->device->proc_table;
 

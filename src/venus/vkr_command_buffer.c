@@ -121,6 +121,7 @@ static void
 vkr_dispatch_vkBeginCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
                                   struct vn_command_vkBeginCommandBuffer *args)
 {
+   TRACE_FUNC();
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    struct vn_device_proc_table *vk = &cmd->device->proc_table;
 
@@ -132,6 +133,7 @@ static void
 vkr_dispatch_vkEndCommandBuffer(UNUSED struct vn_dispatch_context *dispatch,
                                 struct vn_command_vkEndCommandBuffer *args)
 {
+   TRACE_FUNC();
    struct vkr_command_buffer *cmd = vkr_command_buffer_from_handle(args->commandBuffer);
    struct vn_device_proc_table *vk = &cmd->device->proc_table;
 

@@ -44,6 +44,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
    struct vn_dispatch_context *dispatch,
    struct vn_command_vkExecuteCommandStreamsMESA *args)
 {
+   TRACE_FUNC();
    struct vkr_context *ctx = dispatch->data;
    struct vkr_cs_decoder *dec = (struct vkr_cs_decoder *)dispatch->decoder;
    struct vkr_cs_encoder *enc = (struct vkr_cs_encoder *)dispatch->encoder;

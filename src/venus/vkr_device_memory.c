@@ -144,6 +144,7 @@ static void
 vkr_dispatch_vkAllocateMemory(struct vn_dispatch_context *dispatch,
                               struct vn_command_vkAllocateMemory *args)
 {
+   TRACE_FUNC();
    struct vkr_context *ctx = dispatch->data;
    struct vkr_device *dev = vkr_device_from_handle(args->device);
    struct vkr_physical_device *physical_dev = dev->physical_device;
@@ -263,6 +264,7 @@ static void
 vkr_dispatch_vkFreeMemory(struct vn_dispatch_context *dispatch,
                           struct vn_command_vkFreeMemory *args)
 {
+   TRACE_FUNC();
    struct vkr_device_memory *mem = vkr_device_memory_from_handle(args->memory);
    if (!mem)
       return;
@@ -372,6 +374,8 @@ vkr_device_memory_export_blob(struct vkr_device_memory *mem,
                               uint32_t blob_flags,
                               struct virgl_context_blob *out_blob)
 {
+   TRACE_FUNC();
+
    /* a memory can only be exported once; we don't want two resources to point
     * to the same storage.
     */
