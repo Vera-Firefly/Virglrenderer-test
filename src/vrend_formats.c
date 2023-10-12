@@ -471,12 +471,13 @@ static void vrend_add_formats(struct vrend_format_table *table, int num_entries)
     }
 
     if (table[i].format < VIRGL_FORMAT_MAX  && util_format_is_depth_or_stencil(table[i].format)) {
+      const struct util_format_description *desc = util_format_description(table[i].format);
       GLenum attachment;
 
-      if (table[i].format == VIRGL_FORMAT_Z24X8_UNORM || table[i].format == VIRGL_FORMAT_Z32_UNORM || table[i].format == VIRGL_FORMAT_Z16_UNORM || table[i].format == VIRGL_FORMAT_Z32_FLOAT)
-        attachment = GL_DEPTH_ATTACHMENT;
-      else
+      if (util_format_has_stencil(desc))
         attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+      else
+        attachment = GL_DEPTH_ATTACHMENT;
       glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex_id, 0);
 
       is_depth = true;
