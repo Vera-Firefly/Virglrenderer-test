@@ -162,3 +162,6 @@ spec@arb_shader_image_load_store@level@3D level binding test
 spec@arb_shader_image_load_store@level@CubeArray level binding test
 spec@arb_shader_image_load_store@level@Cube level binding test
 spec@arb_shader_image_load_store@level
+
+# Test uses a RGBA8 RW image and this is not supported on GLES
+spec@arb_shader_image_load_store@execution@disable_early_z

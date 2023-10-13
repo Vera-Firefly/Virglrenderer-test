@@ -172,3 +172,6 @@ spec@arb_shader_image_load_store@level
 
 #OOM
 spec@!opengl 1.1@streaming-texture-leak
+
+# Test uses a RGBA8 RW image and this is not supported on GLES
+spec@arb_shader_image_load_store@execution@disable_early_z
