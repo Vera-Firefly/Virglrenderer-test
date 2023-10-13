@@ -10,7 +10,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 991419
+  MESA_PIPELINE_ID: 1011360
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -19,7 +19,7 @@ variables:
   # per-job artifact storage on MinIO
   JOB_ARTIFACTS_BASE: ${PIPELINE_ARTIFACTS_BASE}/${CI_JOB_ID}
   # reference images stored for traces
-  PIGLIT_REPLAY_REFERENCE_IMAGES_BASE: "${STORAGE_HOST}/mesa-tracie-results/${FDO_UPSTREAM_REPO}"
+  PIGLIT_REPLAY_REFERENCE_IMAGES_BASE: "${STORAGE_HOST}/mesa-tracie-results/${MESA_PROJECT_PATH}"
 
 
 include:
@@ -36,7 +36,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: 08735fd90d458295a37f23c5ba5e49d91b3f68c1
+    ref: 7a83109835634c5b6c4c979d83b8aeb8a7c5f421
     file:
       - '/.gitlab-ci/image-tags.yml'
 
@@ -477,6 +477,7 @@ venus-lavapipe:
     DEQP_FRACTION: 15
     DEQP_SUITE: venus
     GPU_VERSION: venus
-    LP_NUM_THREADS: 1 # There will be FDO_CI_CONCURRENT Crosvm processes, so each should use a single thread
-    CROSVM_MEMORY: 3072
+    LP_NUM_THREADS: 2
+    CROSVM_MEMORY: 12288
+    CROSVM_CPU: $FDO_CI_CONCURRENT
     CROSVM_GPU_ARGS: "vulkan=true,gles=false,backend=virglrenderer,egl=true,surfaceless=true"
