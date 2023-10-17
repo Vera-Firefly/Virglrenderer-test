@@ -854,6 +854,7 @@ struct vrend_context {
 #endif
 };
 
+static int get_glsl_version(void);
 static void vrend_pause_render_condition(struct vrend_context *ctx, bool pause);
 static void vrend_update_viewport_state(struct vrend_sub_context *sub_ctx);
 static void vrend_update_scissor_state(struct vrend_sub_context *sub_ctx);
@@ -861,7 +862,6 @@ static void vrend_destroy_query_object(void *obj_ptr);
 static void vrend_finish_context_switch(struct vrend_context *ctx);
 static void vrend_patch_blend_state(struct vrend_sub_context *sub_ctx);
 static void vrend_update_frontface_state(struct vrend_sub_context *ctx);
-static int vrender_get_glsl_version(void);
 static void vrend_destroy_program(struct vrend_linked_shader_program *ent);
 static void vrend_apply_sampler_state(struct vrend_sub_context *sub_ctx,
                                       struct vrend_resource *res,
@@ -7851,7 +7851,7 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
 
-   grctx->shader_cfg.glsl_version = vrender_get_glsl_version();
+   grctx->shader_cfg.glsl_version = get_glsl_version();
 
    if (!grctx->ctx_id)
       grctx->fence_retire = vrend_clicbs->ctx0_fence_retire;
@@ -11736,7 +11736,7 @@ int vrend_create_so_target(struct vrend_context *ctx,
    return 0;
 }
 
-static int vrender_get_glsl_version(void)
+static int get_glsl_version(void)
 {
    int major_local = 0, minor_local = 0;
    const GLubyte *version_str;
