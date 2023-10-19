@@ -227,7 +227,7 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
    handle = get_buf_entry(buf, VIRGL_TEXTURE_HANDLE);
 
    struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, handle);
-   if (!res) {
+   if (!res || !res->gl_id) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
       return EINVAL;
    }
@@ -619,7 +619,7 @@ static int vrend_decode_create_surface_common(struct vrend_context *ctx, const u
    uint32_t res_handle = get_buf_entry(buf, VIRGL_OBJ_SURFACE_RES_HANDLE);
 
    struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-   if (!res) {
+   if (!res || !res->gl_id) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
    }
@@ -676,7 +676,7 @@ static int vrend_decode_create_sampler_view(struct vrend_context *ctx, const uin
    }
 
    struct vrend_resource *res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-   if (!res) {
+   if (!res || !res->gl_id) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
    }

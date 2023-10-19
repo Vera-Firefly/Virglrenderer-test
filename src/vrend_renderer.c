@@ -3499,7 +3499,7 @@ void vrend_set_uniform_buffer(struct vrend_context *ctx,
    if (res_handle) {
       res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
 
-      if (!res) {
+      if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
          return;
       }
@@ -3529,7 +3529,7 @@ void vrend_set_index_buffer(struct vrend_context *ctx,
    if (res_handle) {
       if (ctx->sub->index_buffer_res_id != res_handle) {
          res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-         if (!res) {
+         if (!res || !res->gl_id) {
             vrend_resource_reference((struct vrend_resource **)&ctx->sub->ib.buffer, NULL);
             ctx->sub->index_buffer_res_id = 0;
             vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
@@ -3566,7 +3566,7 @@ void vrend_set_single_vbo(struct vrend_context *ctx,
       vbo->res_id = 0;
    } else if (vbo->res_id != res_handle) {
       res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-      if (!res) {
+      if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
          vbo->res_id = 0;
          return;
@@ -3791,7 +3791,7 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
       }
 
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
-      if (!res) {
+      if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
@@ -3823,7 +3823,7 @@ void vrend_set_single_ssbo(struct vrend_context *ctx,
 
    if (handle) {
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
-      if (!res) {
+      if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
@@ -3853,7 +3853,7 @@ void vrend_set_single_abo(struct vrend_context *ctx,
 
    if (handle) {
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
-      if (!res) {
+      if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
          return;
       }
@@ -5780,7 +5780,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
       if (!has_feature(feat_indirect_draw))
          return EINVAL;
       indirect_res = vrend_renderer_ctx_res_lookup(ctx, indirect_handle);
-      if (!indirect_res) {
+      if (!indirect_res || !indirect_res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, indirect_handle);
          return EINVAL;
       }
@@ -5792,7 +5792,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          return EINVAL;
 
       indirect_params_res = vrend_renderer_ctx_res_lookup(ctx, indirect_draw_count_handle);
-      if (!indirect_params_res){
+      if (!indirect_params_res || !indirect_params_res->gl_id){
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, indirect_draw_count_handle);
          return EINVAL;
       }
@@ -6127,7 +6127,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
 
    if (indirect_handle) {
       indirect_res = vrend_renderer_ctx_res_lookup(ctx, indirect_handle);
-      if (!indirect_res) {
+      if (!indirect_res || !indirect_res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, indirect_handle);
          return;
       }
@@ -11710,7 +11710,7 @@ int vrend_create_so_target(struct vrend_context *ctx,
    struct vrend_resource *res;
    int ret_handle;
    res = vrend_renderer_ctx_res_lookup(ctx, res_handle);
-   if (!res) {
+   if (!res || !res->gl_id) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, res_handle);
       return EINVAL;
    }
