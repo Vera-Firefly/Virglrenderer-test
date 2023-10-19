@@ -634,7 +634,17 @@ static int vrend_decode_create_surface_common(struct vrend_context *ctx, const u
    uint32_t val0 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_FIRST_ELEMENT);
    uint32_t val1 = get_buf_entry(buf, VIRGL_OBJ_SURFACE_BUFFER_LAST_ELEMENT);
 
-   return vrend_create_surface(ctx, handle, res, format, val0, val1, sample_count);
+   int first_layer = val1 & 0xffff;
+   int last_layer = (val1 >> 16) & 0xffff;
+
+   int num_layers = last_layer - first_layer + 1;
+
+   if (num_layers <= 0) {
+      virgl_error("%s: Invalid number of layers (%d) requested\n", __func__, num_layers);
+      return EINVAL;
+   }
+
+   return vrend_create_surface(ctx, handle, res, format, val0, first_layer, last_layer, sample_count);
 }
 
 static int vrend_decode_create_surface(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)

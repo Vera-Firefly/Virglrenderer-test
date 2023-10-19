@@ -534,7 +534,9 @@ struct vrend_surface {
    struct pipe_reference reference;
    GLuint gl_id;
    GLuint format;
-   GLuint val0, val1;
+   GLuint val0;
+   GLuint first_layer;
+   GLuint last_layer;
    GLuint nr_samples;
    struct vrend_resource *texture;
 };
@@ -2299,7 +2301,8 @@ void vrend_sync_make_current(virgl_gl_context gl_cxt) {
 
 int vrend_create_surface(struct vrend_context *ctx,
                          uint32_t handle, struct vrend_resource *res,
-                         enum virgl_formats format, uint32_t val0, uint32_t val1,
+                         enum virgl_formats format, uint32_t val0,
+                         uint32_t first_layer, uint32_t last_layer,
                          uint32_t nr_samples)
 {
    struct vrend_surface *surf;
@@ -2312,7 +2315,8 @@ int vrend_create_surface(struct vrend_context *ctx,
    surf->format = format;
 
    surf->val0 = val0;
-   surf->val1 = val1;
+   surf->first_layer = first_layer;
+   surf->last_layer = last_layer;
    surf->gl_id = res->gl_id;
    surf->nr_samples = nr_samples;
 
@@ -2327,8 +2331,8 @@ int vrend_create_surface(struct vrend_context *ctx,
        * can map the whole texure fine. In those cases we don't
        * create a texture view.
        */
-      int first_layer = surf->val1 & 0xffff;
-      int last_layer = (surf->val1 >> 16) & 0xffff;
+      int first_layer = surf->first_layer;
+      int last_layer = surf->last_layer;
 
       bool needs_view = first_layer != last_layer &&
          (first_layer != 0 || (last_layer != (int)util_max_layer(&res->base, surf->val0)));
@@ -2345,10 +2349,6 @@ int vrend_create_surface(struct vrend_context *ctx,
          }
 
          int num_layers = last_layer - first_layer + 1;
-         if (num_layers <= 0) {
-            virgl_error("%s: Invalid number of layers (%d) requested\n", __func__, num_layers);
-            return EINVAL;
-         }
 
          VREND_DEBUG(dbg_tex, ctx, "Create texture view from %s for %s\n",
                      util_format_name(res->base.format),
@@ -3024,15 +3024,12 @@ static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
       glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                              GL_TEXTURE_2D, 0, 0);
    } else {
-      uint32_t first_layer = surf->val1 & 0xffff;
-      uint32_t last_layer = (surf->val1 >> 16) & 0xffff;
-
       if (!surf->texture)
          return;
 
       vrend_fb_bind_texture_id(surf->texture, surf->gl_id, 0, surf->val0,
-                               first_layer != last_layer ? 0xffffffff : first_layer,
-                               surf->nr_samples);
+                               surf->first_layer != surf->last_layer ? 0xffffffff :
+                               surf->first_layer, surf->nr_samples);
    }
 }
 
@@ -3046,8 +3043,8 @@ static void vrend_hw_set_color_surface(struct vrend_sub_context *sub_ctx, int in
       glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
                              GL_TEXTURE_2D, 0, 0);
    } else {
-      uint32_t first_layer = sub_ctx->surf[index]->val1 & 0xffff;
-      uint32_t last_layer = (sub_ctx->surf[index]->val1 >> 16) & 0xffff;
+      uint32_t first_layer = sub_ctx->surf[index]->first_layer;
+      uint32_t last_layer = sub_ctx->surf[index]->last_layer;
 
       vrend_fb_bind_texture_id(surf->texture, surf->gl_id, index, surf->val0,
                                first_layer != last_layer ? 0xffffffff : first_layer,
