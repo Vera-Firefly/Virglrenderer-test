@@ -532,7 +532,7 @@ struct vrend_texture {
 
 struct vrend_surface {
    struct pipe_reference reference;
-   GLuint id;
+   GLuint gl_id;
    GLuint format;
    GLuint val0, val1;
    GLuint nr_samples;
@@ -561,7 +561,7 @@ struct vrend_so_target {
 
 struct vrend_sampler_view {
    struct pipe_reference reference;
-   GLuint id;
+   GLuint gl_id;
    enum virgl_formats format;
    GLenum target;
    GLuint val0, val1;
@@ -1221,8 +1221,8 @@ static void init_features(int gl_ver, int gles_ver)
 
 static void vrend_destroy_surface(struct vrend_surface *surf)
 {
-   if (surf->id != surf->texture->id)
-      glDeleteTextures(1, &surf->id);
+   if (surf->gl_id != surf->texture->gl_id)
+      glDeleteTextures(1, &surf->gl_id);
    vrend_resource_reference(&surf->texture, NULL);
    free(surf);
 }
@@ -1239,8 +1239,8 @@ vrend_surface_reference(struct vrend_surface **ptr, struct vrend_surface *surf)
 
 static void vrend_destroy_sampler_view(struct vrend_sampler_view *samp)
 {
-   if (samp->texture->id != samp->id)
-      glDeleteTextures(1, &samp->id);
+   if (samp->texture->gl_id != samp->gl_id)
+      glDeleteTextures(1, &samp->gl_id);
    vrend_resource_reference(&samp->texture, NULL);
    free(samp);
 }
@@ -2313,7 +2313,7 @@ int vrend_create_surface(struct vrend_context *ctx,
 
    surf->val0 = val0;
    surf->val1 = val1;
-   surf->id = res->id;
+   surf->gl_id = res->gl_id;
    surf->nr_samples = nr_samples;
 
    if (!has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER) &&
@@ -2354,7 +2354,7 @@ int vrend_create_surface(struct vrend_context *ctx,
                      util_format_name(res->base.format),
                      util_format_name(surf->format));
 
-         glGenTextures(1, &surf->id);
+         glGenTextures(1, &surf->gl_id);
          if (vrend_state.use_gles) {
             if (target == GL_TEXTURE_1D)
                target = GL_TEXTURE_2D;
@@ -2367,7 +2367,7 @@ int vrend_create_surface(struct vrend_context *ctx,
             target = GL_TEXTURE_2D;
          }
 
-         glTextureView(surf->id, target, res->id, internalformat,
+         glTextureView(surf->gl_id, target, res->gl_id, internalformat,
                        0, res->base.last_level + 1,
                        first_layer, num_layers);
       }
@@ -2705,7 +2705,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
 
    vrend_resource_reference(&view->texture, res);
 
-   view->id = view->texture->id;
+   view->gl_id = view->texture->gl_id;
    if (view->target == PIPE_BUFFER)
       view->target = view->texture->target;
 
@@ -2800,7 +2800,7 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
             return EINVAL;
         }
 
-        glGenTextures(1, &view->id);
+        glGenTextures(1, &view->gl_id);
 
         /* texture views for eglimage-backed bgr* resources are usually not
          * supported since they cause unintended red/blue channel-swapping.
@@ -2820,11 +2820,11 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
               view->gl_swizzle[2] = temp;
         }
 
-        glTextureView(view->id, view->target, view->texture->id, internalformat,
+        glTextureView(view->gl_id, view->target, view->texture->gl_id, internalformat,
                       base_level, view->levels,
                       base_layer, num_layers);
 
-        glBindTexture(view->target, view->id);
+        glBindTexture(view->target, view->gl_id);
 
         if (util_format_is_depth_or_stencil(view->format)) {
            if (vrend_state.use_core_profile == false) {
@@ -2856,8 +2856,8 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       } else if (needs_view && view->val0 < ARRAY_SIZE(res->aux_plane_egl_image) &&
             res->aux_plane_egl_image[view->val0]) {
         void *image = res->aux_plane_egl_image[view->val0];
-        glGenTextures(1, &view->id);
-        glBindTexture(view->target, view->id);
+        glGenTextures(1, &view->gl_id);
+        glBindTexture(view->target, view->gl_id);
         glEGLImageTargetTexture2DOES(view->target, (GLeglImageOES) image);
         glBindTexture(view->target, 0);
       }
@@ -2926,7 +2926,7 @@ void debug_texture(ASSERTED const char *f, const struct vrend_resource *gt)
                   virgl_debug("UNKNOWN");
                }
                virgl_debug(" id:%d pipe_type:%d ms:%d format:%s size: %dx%dx%d mip:%d\n",
-                           gt->id, pr->target, pr->nr_samples, util_format_name(pr->format),
+                           gt->gl_id, pr->target, pr->nr_samples, util_format_name(pr->format),
                            pr->width0, pr->height0, pr->depth0, pr->last_level);
                );
 #undef PRINT_TARGET
@@ -3013,7 +3013,7 @@ void vrend_fb_bind_texture(struct vrend_resource *res,
                            int idx,
                            uint32_t level, uint32_t layer)
 {
-   vrend_fb_bind_texture_id(res, res->id, idx, level, layer, 0);
+   vrend_fb_bind_texture_id(res, res->gl_id, idx, level, layer, 0);
 }
 
 static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
@@ -3030,7 +3030,7 @@ static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
       if (!surf->texture)
          return;
 
-      vrend_fb_bind_texture_id(surf->texture, surf->id, 0, surf->val0,
+      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, 0, surf->val0,
                                first_layer != last_layer ? 0xffffffff : first_layer,
                                surf->nr_samples);
    }
@@ -3049,7 +3049,7 @@ static void vrend_hw_set_color_surface(struct vrend_sub_context *sub_ctx, int in
       uint32_t first_layer = sub_ctx->surf[index]->val1 & 0xffff;
       uint32_t last_layer = (sub_ctx->surf[index]->val1 >> 16) & 0xffff;
 
-      vrend_fb_bind_texture_id(surf->texture, surf->id, index, surf->val0,
+      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, index, surf->val0,
                                first_layer != last_layer ? 0xffffffff : first_layer,
                                surf->nr_samples);
    }
@@ -3672,8 +3672,8 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
       ctx->sub->sampler_views_dirty[shader_type] |= 1u << index;
 
       if (!has_bit(view->texture->storage_bits, VREND_STORAGE_GL_BUFFER)) {
-         if (view->texture->id == view->id) {
-            glBindTexture(view->target, view->id);
+         if (view->texture->gl_id == view->gl_id) {
+            glBindTexture(view->target, view->gl_id);
 
             if (util_format_is_depth_or_stencil(view->format)) {
                if (vrend_state.use_core_profile == false) {
@@ -3748,9 +3748,9 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
                size = vrend_state.max_texture_buffer_size - offset;
             offset *= blsize;
             size *= blsize;
-            glTexBufferRange(GL_TEXTURE_BUFFER, internalformat, view->texture->id, offset, size);
+            glTexBufferRange(GL_TEXTURE_BUFFER, internalformat, view->texture->gl_id, offset, size);
          } else
-            glTexBuffer(GL_TEXTURE_BUFFER, internalformat, view->texture->id);
+            glTexBuffer(GL_TEXTURE_BUFFER, internalformat, view->texture->gl_id);
       }
    }
 
@@ -4824,12 +4824,12 @@ int vrend_clear_texture(struct vrend_context* ctx,
    }
 
    if (vrend_state.use_gles) {
-      glClearTexSubImageEXT(res->id, level,
+      glClearTexSubImageEXT(res->gl_id, level,
                             box->x, box->y, box->z,
                             box->width, box->height, box->depth,
                             format, type, data);
    } else {
-      glClearTexSubImage(res->id, level,
+      glClearTexSubImage(res->gl_id, level,
                          box->x, box->y, box->z,
                          box->width, box->height, box->depth,
                          format, type, data);
@@ -4994,7 +4994,7 @@ static void vrend_draw_bind_vertex_legacy(struct vrend_context *ctx,
          return;
       }
 
-      glBindBuffer(GL_ARRAY_BUFFER, res->id);
+      glBindBuffer(GL_ARRAY_BUFFER, res->gl_id);
 
       struct vrend_vertex_buffer *vbo = &ctx->sub->vbo[vbo_index];
 
@@ -5070,7 +5070,7 @@ static void vrend_draw_bind_vertex_binding(struct vrend_context *ctx,
          for (i = 0; i < ctx->sub->num_vbos; i++) {
             struct vrend_resource *res = (struct vrend_resource *)vbo[i].base.buffer;
             if (res) {
-               buffers[i] = res->id;
+               buffers[i] = res->gl_id;
                offsets[i] = vbo[i].base.buffer_offset;
                strides[i] = vbo[i].base.stride;
             } else {
@@ -5091,7 +5091,7 @@ static void vrend_draw_bind_vertex_binding(struct vrend_context *ctx,
          for (i = 0; i < ctx->sub->num_vbos; i++) {
             struct vrend_resource *res = (struct vrend_resource *)vbo[i].base.buffer;
             if (res)
-               glBindVertexBuffer(i, res->id, vbo[i].base.buffer_offset, vbo[i].base.stride);
+               glBindVertexBuffer(i, res->gl_id, vbo[i].base.buffer_offset, vbo[i].base.stride);
             else
                glBindVertexBuffer(i, 0, 0, 0);
          }
@@ -5150,7 +5150,7 @@ static int vrend_draw_bind_samplers_shader(struct vrend_sub_context *sub_ctx,
          }
 
          if (tview->texture) {
-            GLuint id = tview->id;
+            GLuint id = tview->gl_id;
             struct vrend_resource *texture = tview->texture;
             GLenum target = tview->target;
 
@@ -5211,7 +5211,7 @@ static int vrend_draw_bind_ubo_shader(struct vrend_sub_context *sub_ctx,
          cb = &sub_ctx->cbs[shader_type][i];
          res = (struct vrend_resource *)cb->buffer;
 
-         glBindBufferRange(GL_UNIFORM_BUFFER, next_ubo_id, res->id,
+         glBindBufferRange(GL_UNIFORM_BUFFER, next_ubo_id, res->gl_id,
                            cb->buffer_offset, cb->buffer_size);
          dirty &= ~(1 << i);
       }
@@ -5261,7 +5261,7 @@ static void vrend_draw_bind_ssbo_shader(struct vrend_sub_context *sub_ctx,
 
       ssbo = &sub_ctx->ssbo[shader_type][i];
       res = (struct vrend_resource *)ssbo->res;
-      glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i + offset, res->id,
+      glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i + offset, res->gl_id,
                         ssbo->buffer_offset, ssbo->buffer_size);
    }
 }
@@ -5282,7 +5282,7 @@ static void vrend_draw_bind_abo_shader(struct vrend_sub_context *sub_ctx)
 
       abo = &sub_ctx->abo[i];
       res = (struct vrend_resource *)abo->res;
-      glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER, i, res->id,
+      glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER, i, res->gl_id,
                         abo->buffer_offset, abo->buffer_size);
    }
 }
@@ -5313,7 +5313,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
       if (binding == -1 || !(sub_ctx->prog->images_used_mask[shader_type] & (1 << i)))
           continue;
       iview = &sub_ctx->image_views[shader_type][i];
-      tex_id = iview->texture->id;
+      tex_id = iview->texture->gl_id;
       if (has_bit(iview->texture->storage_bits, VREND_STORAGE_GL_BUFFER)) {
          if (!iview->texture->tbo_tex_id)
             glGenTextures(1, &iview->texture->tbo_tex_id);
@@ -5347,7 +5347,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
             format = GL_R8UI;
          }
 
-         glBindBufferARB(GL_TEXTURE_BUFFER, iview->texture->id);
+         glBindBufferARB(GL_TEXTURE_BUFFER, iview->texture->gl_id);
          glBindTexture(GL_TEXTURE_BUFFER, iview->texture->tbo_tex_id);
 
          if (has_feature(feat_arb_or_gles_ext_texture_buffer)) {
@@ -5361,10 +5361,10 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
                unsigned size = iview->u.buf.size / blsize;
                if (offset + size > vrend_state.max_texture_buffer_size)
                   size = vrend_state.max_texture_buffer_size - offset;
-               glTexBufferRange(GL_TEXTURE_BUFFER, format, iview->texture->id, iview->u.buf.offset,
+               glTexBufferRange(GL_TEXTURE_BUFFER, format, iview->texture->gl_id, iview->u.buf.offset,
                                 size * blsize);
             } else {
-               glTexBuffer(GL_TEXTURE_BUFFER, format, iview->texture->id);
+               glTexBuffer(GL_TEXTURE_BUFFER, format, iview->texture->gl_id);
             }
          }
 
@@ -5393,7 +5393,7 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
                glDeleteTextures(1, &iview->view_id);
 
             glGenTextures(1, &iview->view_id);
-            glTextureView(iview->view_id, iview->texture->target, iview->texture->id,
+            glTextureView(iview->view_id, iview->texture->target, iview->texture->gl_id,
                           tex_conv_table[iview->texture->base.format].internalformat, level, 1,
                           first_layer, num_layers);
             tex_id = iview->view_id;
@@ -5892,7 +5892,7 @@ int vrend_draw_vbo(struct vrend_context *ctx,
          }
       }
 
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, res->id);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, res->gl_id);
    } else
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -5925,14 +5925,14 @@ int vrend_draw_vbo(struct vrend_context *ctx,
    }
 
    if (has_feature(feat_indirect_draw)) {
-      GLint buf = indirect_res ? indirect_res->id : 0;
+      GLint buf = indirect_res ? indirect_res->gl_id : 0;
       if (sub_ctx->draw_indirect_buffer != buf) {
          glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buf);
          sub_ctx->draw_indirect_buffer = buf;
       }
 
       if (has_feature(feat_indirect_params)) {
-         GLint buf = indirect_params_res ? indirect_params_res->id : 0;
+         GLint buf = indirect_params_res ? indirect_params_res->gl_id : 0;
          if (sub_ctx->draw_indirect_params_buffer != buf) {
             glBindBuffer(GL_PARAMETER_BUFFER_ARB, buf);
             sub_ctx->draw_indirect_params_buffer = buf;
@@ -6134,7 +6134,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
    }
 
    if (indirect_res)
-      glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, indirect_res->id);
+      glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, indirect_res->gl_id);
    else
       glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0);
 
@@ -8113,8 +8113,8 @@ static void vrend_create_buffer(struct vrend_resource *gr, uint32_t width, uint3
       buffer_storage_flags |= GL_MAP_COHERENT_BIT;
 
    gr->storage_bits |= VREND_STORAGE_GL_BUFFER;
-   glGenBuffersARB(1, &gr->id);
-   glBindBufferARB(gr->target, gr->id);
+   glGenBuffersARB(1, &gr->gl_id);
+   glBindBufferARB(gr->target, gr->gl_id);
 
    if (buffer_storage_flags) {
       if (has_feature(feat_arb_buffer_storage) && !vrend_state.use_external_blob) {
@@ -8502,8 +8502,8 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       gr->target = GL_TEXTURE_2D_ARRAY;
    }
 
-   glGenTextures(1, &gr->id);
-   glBindTexture(gr->target, gr->id);
+   glGenTextures(1, &gr->gl_id);
+   glBindTexture(gr->target, gr->gl_id);
 
    debug_texture(__func__, gr);
 
@@ -8704,9 +8704,9 @@ vrend_renderer_resource_create(const struct vrend_renderer_resource_create_args 
 void vrend_renderer_resource_destroy(struct vrend_resource *res)
 {
    if (has_bit(res->storage_bits, VREND_STORAGE_GL_TEXTURE)) {
-      glDeleteTextures(1, &res->id);
+      glDeleteTextures(1, &res->gl_id);
    } else if (has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER)) {
-      glDeleteBuffers(1, &res->id);
+      glDeleteBuffers(1, &res->gl_id);
       if (res->tbo_tex_id)
          glDeleteTextures(1, &res->tbo_tex_id);
    } else if (has_bit(res->storage_bits, VREND_STORAGE_HOST_SYSTEM_MEMORY)) {
@@ -9036,7 +9036,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
       if (!info->synchronized)
          map_flags |= GL_MAP_UNSYNCHRONIZED_BIT;
 
-      glBindBufferARB(res->target, res->id);
+      glBindBufferARB(res->target, res->gl_id);
       data = glMapBufferRange(res->target, info->box->x, info->box->width, map_flags);
       if (data == NULL) {
          virgl_error("Map failed for element buffer\n");
@@ -9169,7 +9169,7 @@ static int vrend_renderer_transfer_write_iov(struct vrend_context *ctx,
          glDeleteFramebuffers(1, &fb_id);
       } else {
          uint32_t comp_size;
-         glBindTexture(res->target, res->id);
+         glBindTexture(res->target, res->gl_id);
 
          if (compressed) {
             glformat = tex_conv_table[res->base.format].internalformat;
@@ -9340,7 +9340,7 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
       break;
    }
 
-   glBindTexture(res->target, res->id);
+   glBindTexture(res->target, res->gl_id);
    if (res->target == GL_TEXTURE_CUBE_MAP) {
       target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + info->box->z;
    } else
@@ -9628,7 +9628,7 @@ static int vrend_renderer_transfer_send_iov(struct vrend_context *ctx,
    }
 
    if (has_bit(res->storage_bits, VREND_STORAGE_GL_BUFFER)) {
-      glBindBufferARB(res->target, res->id);
+      glBindBufferARB(res->target, res->gl_id);
       void *data = glMapBufferRange(res->target, info->box->x, info->box->width, GL_MAP_READ_BIT);
       if (!data)
          virgl_error("Unable to open buffer for reading %d\n", res->target);
@@ -9690,12 +9690,12 @@ static int vrend_renderer_transfer_internal(struct vrend_context *ctx,
 #endif
 
    if (!resource_contains_box(res, info->box, info->level)) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS, res->id);
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS, res->gl_id);
       return EINVAL;
    }
 
    if (!check_iov_bounds(res, info, iov, num_iovs)) {
-      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS, res->id);
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_TRANSFER_IOV_BOUNDS, res->gl_id);
       return EINVAL;
    }
 
@@ -10040,9 +10040,9 @@ static void vrend_hw_emit_streamout_targets(UNUSED struct vrend_context *ctx, st
       if (!so_obj->so_targets[i])
          glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, i, 0);
       else if (so_obj->so_targets[i]->buffer_offset || so_obj->so_targets[i]->buffer_size < so_obj->so_targets[i]->buffer->base.width0)
-         glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i, so_obj->so_targets[i]->buffer->id, so_obj->so_targets[i]->buffer_offset, so_obj->so_targets[i]->buffer_size);
+         glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, i, so_obj->so_targets[i]->buffer->gl_id, so_obj->so_targets[i]->buffer_offset, so_obj->so_targets[i]->buffer_size);
       else
-         glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, i, so_obj->so_targets[i]->buffer->id);
+         glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, i, so_obj->so_targets[i]->buffer->gl_id);
    }
 }
 
@@ -10109,8 +10109,8 @@ static void vrend_resource_buffer_copy(UNUSED struct vrend_context *ctx,
                                        uint32_t dstx, uint32_t srcx,
                                        uint32_t width)
 {
-   glBindBuffer(GL_COPY_READ_BUFFER, src_res->id);
-   glBindBuffer(GL_COPY_WRITE_BUFFER, dst_res->id);
+   glBindBuffer(GL_COPY_READ_BUFFER, src_res->gl_id);
+   glBindBuffer(GL_COPY_WRITE_BUFFER, dst_res->gl_id);
 
    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, srcx, dstx, width);
    glBindBuffer(GL_COPY_READ_BUFFER, 0);
@@ -10219,7 +10219,7 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
          glPixelStorei(GL_PACK_ALIGNMENT, 8);
          break;
       }
-      glBindTexture(src_res->target, src_res->id);
+      glBindTexture(src_res->target, src_res->gl_id);
       slice_offset = 0;
       read_chunk_size = (src_res->target == GL_TEXTURE_CUBE_MAP) ? slice_size : total_size;
       for (i = 0; i < cube_slice; i++) {
@@ -10259,7 +10259,7 @@ static void vrend_resource_copy_fallback(struct vrend_resource *src_res,
       break;
    }
 
-   glBindTexture(dst_res->target, dst_res->id);
+   glBindTexture(dst_res->target, dst_res->gl_id);
    slice_offset = src_box->z * slice_size;
    cube_slice = (src_res->target == GL_TEXTURE_CUBE_MAP) ? src_box->z + src_box->depth : cube_slice;
    i = (src_res->target == GL_TEXTURE_CUBE_MAP) ? src_box->z : 0;
@@ -10306,9 +10306,9 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
                      uint32_t src_level, const struct pipe_box *src_box,
                      uint32_t dst_level, uint32_t dstx, uint32_t dsty, uint32_t dstz)
 {
-   glCopyImageSubData(src_res->id, src_res->target, src_level,
+   glCopyImageSubData(src_res->gl_id, src_res->target, src_level,
                       src_box->x, src_box->y, src_box->z,
-                      dst_res->id, dst_res->target, dst_level,
+                      dst_res->gl_id, dst_res->target, dst_level,
                       dstx, dsty, dstz,
                       src_box->width, src_box->height,src_box->depth);
 
@@ -10464,14 +10464,14 @@ static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats for
    GLenum view_ifmt = tex_conv_table[format].internalformat;
 
    if (tex_ifmt == view_ifmt)
-      return res->id;
+      return res->gl_id;
 
    if (!texture_view_compatible(res->base.format, format))
-      return res->id;
+      return res->gl_id;
 
    /* If the format doesn't support TextureStorage it is not immutable, so no TextureView*/
    if (!has_bit(res->storage_bits, VREND_STORAGE_GL_IMMUTABLE))
-      return res->id;
+      return res->gl_id;
 
    assert(vrend_resource_supports_view(res, format));
 
@@ -10486,7 +10486,7 @@ static GLuint vrend_make_view(struct vrend_resource *res, enum virgl_formats for
    }
 
    glGenTextures(1, &view_id);
-   glTextureView(view_id, res->target, res->id, view_ifmt, 0, res->base.last_level + 1,
+   glTextureView(view_id, res->target, res->gl_id, view_ifmt, 0, res->base.last_level + 1,
                  0, res->base.array_size);
    return view_id;
 }
@@ -10817,8 +10817,8 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
 {
    struct vrend_blit_info blit_info = {
       .b = *info,
-      .src_view = src_res->id,
-      .dst_view = dst_res->id,
+      .src_view = src_res->gl_id,
+      .dst_view = dst_res->gl_id,
       .swizzle =  {0, 1, 2, 3}
    };
 
@@ -10846,10 +10846,10 @@ static void vrend_renderer_blit_int(struct vrend_context *ctx,
       vrend_sync_make_current(ctx->sub->gl_context);
    }
 
-   if (blit_info.src_view != src_res->id)
+   if (blit_info.src_view != src_res->gl_id)
       glDeleteTextures(1, &blit_info.src_view);
 
-   if (blit_info.dst_view != dst_res->id)
+   if (blit_info.dst_view != dst_res->gl_id)
       glDeleteTextures(1, &blit_info.dst_view);
 }
 
@@ -11559,7 +11559,7 @@ void vrend_get_query_result_qbo(struct vrend_context *ctx, uint32_t handle,
      return;
 
   res = vrend_renderer_ctx_res_lookup(ctx, qbo_handle);
-  if (!res || !res->id) {
+  if (!res || !res->gl_id) {
      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, qbo_handle);
      return;
   }
@@ -11574,7 +11574,7 @@ void vrend_get_query_result_qbo(struct vrend_context *ctx, uint32_t handle,
      qtype = wait ? GL_QUERY_RESULT : GL_QUERY_RESULT_NO_WAIT;
 
   if (!q->fake_samples_passed) {
-     glBindBuffer(GL_QUERY_BUFFER, res->id);
+     glBindBuffer(GL_QUERY_BUFFER, res->gl_id);
      switch ((enum pipe_query_value_type)result_type) {
      case PIPE_QUERY_TYPE_I32:
         glGetQueryObjectiv(q->id, qtype, buffer_offset(offset));
@@ -12587,12 +12587,12 @@ void *vrend_renderer_get_cursor_contents(struct pipe_resource *pres,
    }
 
    if (has_feature(feat_arb_robustness)) {
-      glBindTexture(res->target, res->id);
+      glBindTexture(res->target, res->gl_id);
       glGetnTexImageARB(res->target, 0, format, type, size, data);
    } else if (vrend_state.use_gles) {
       do_readpixels(res, 0, 0, 0, 0, 0, *width, *height, format, type, size, data);
    } else {
-      glBindTexture(res->target, res->id);
+      glBindTexture(res->target, res->gl_id);
       glGetTexImage(res->target, 0, format, type, data);
    }
 
@@ -12731,7 +12731,7 @@ void vrend_renderer_resource_get_info(struct pipe_resource *pres,
 
    elsize = util_format_get_blocksize(res->base.format);
 
-   info->tex_id = res->id;
+   info->tex_id = res->gl_id;
    info->width = res->base.width0;
    info->height = res->base.height0;
    info->depth = res->base.depth0;
@@ -13109,8 +13109,8 @@ vrend_renderer_pipe_resource_set_type(struct vrend_context *ctx,
          gr->storage_bits |= VREND_STORAGE_GL_TEXTURE | VREND_STORAGE_GL_MEMOBJ;
 
          /* Create a GL texture which uses that memory as storage */
-         glGenTextures(1, &gr->id);
-         glBindTexture(gr->target, gr->id);
+         glGenTextures(1, &gr->gl_id);
+         glBindTexture(gr->target, gr->gl_id);
          GLsizei width = (GLsizei)args->width;
          GLsizei height = (GLsizei)args->height;
          glTexParameteri(gr->target, GL_TEXTURE_TILING_EXT, GL_LINEAR_TILING_EXT);
@@ -13140,7 +13140,7 @@ int vrend_renderer_resource_map(struct pipe_resource *pres, void **map, uint64_t
    if (!has_bits(res->storage_bits, VREND_STORAGE_GL_BUFFER | VREND_STORAGE_GL_IMMUTABLE))
       return -EINVAL;
 
-   glBindBufferARB(res->target, res->id);
+   glBindBufferARB(res->target, res->gl_id);
    *map = glMapBufferRange(res->target, 0, res->size, res->buffer_storage_flags);
    if (!*map)
       return -EINVAL;
@@ -13156,7 +13156,7 @@ int vrend_renderer_resource_unmap(struct pipe_resource *pres)
    if (!has_bits(res->storage_bits, VREND_STORAGE_GL_BUFFER | VREND_STORAGE_GL_IMMUTABLE))
       return -EINVAL;
 
-   glBindBufferARB(res->target, res->id);
+   glBindBufferARB(res->target, res->gl_id);
    glUnmapBuffer(res->target);
    glBindBufferARB(res->target, 0);
    return 0;

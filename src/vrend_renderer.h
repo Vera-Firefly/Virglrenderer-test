@@ -77,7 +77,7 @@ struct vrend_resource {
    uint32_t storage_bits;
    uint32_t map_info;
 
-   GLuint id;
+   GLuint gl_id;
    GLenum target;
 
    GLuint tbo_tex_id;/* tbos have two ids to track */
