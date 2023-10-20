@@ -3392,10 +3392,7 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
       v->elements[i].type = type;
       if (desc->channel[0].normalized)
          v->elements[i].norm = GL_TRUE;
-      if (elements[i].src_format == PIPE_FORMAT_R11G11B10_FLOAT)
-         v->elements[i].nr_chan = 3;
-      else
-         v->elements[i].nr_chan = desc->nr_channels;
+      v->elements[i].nr_chan = desc->nr_channels;
 
       if (desc->nr_channels == 4 && desc->swizzle[0] == PIPE_SWIZZLE_Z)
          v->zyxw_bitmask |= 1 << i;
