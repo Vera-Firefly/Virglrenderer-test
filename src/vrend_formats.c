@@ -85,7 +85,6 @@ static struct vrend_format_table gl_base_rgba_formats[] =
 static struct vrend_format_table base_depth_formats[] =
   {
     { VIRGL_FORMAT_Z16_UNORM, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NO_SWIZZLE, view_class_unsupported },
-    { VIRGL_FORMAT_Z32_UNORM, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NO_SWIZZLE, view_class_unsupported },
     { VIRGL_FORMAT_S8_UINT_Z24_UNORM, GL_DEPTH24_STENCIL8_EXT, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NO_SWIZZLE, view_class_unsupported },
     { VIRGL_FORMAT_Z24X8_UNORM, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NO_SWIZZLE, view_class_unsupported },
     { VIRGL_FORMAT_Z32_FLOAT, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, NO_SWIZZLE, view_class_unsupported },
@@ -93,6 +92,14 @@ static struct vrend_format_table base_depth_formats[] =
     { VIRGL_FORMAT_Z32_FLOAT_S8X24_UINT, GL_DEPTH32F_STENCIL8, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NO_SWIZZLE, view_class_unsupported },
     { VIRGL_FORMAT_X24S8_UINT, GL_STENCIL_INDEX8, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, NO_SWIZZLE, view_class_unsupported },
   };
+
+static struct vrend_format_table gl_z32_format[] = {
+   { VIRGL_FORMAT_Z32_UNORM, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NO_SWIZZLE, view_class_unsupported },
+};
+
+static struct vrend_format_table gles_z32_format[] = {
+   { VIRGL_FORMAT_Z32_UNORM, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NO_SWIZZLE, view_class_unsupported },
+};
 
 static struct vrend_format_table rg_base_formats[] = {
   { VIRGL_FORMAT_R8_UNORM, GL_R8, GL_RED, GL_UNSIGNED_BYTE, NO_SWIZZLE, view_class_8 },
@@ -312,12 +319,20 @@ static struct vrend_format_table srgb_formats[] = {
 };
 
 static struct vrend_format_table bit10_formats[] = {
-  { VIRGL_FORMAT_B10G10R10X2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE, view_class_32 },
-  { VIRGL_FORMAT_B10G10R10A2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_B10G10R10A2_UINT, GL_RGB10_A2UI, GL_BGRA_INTEGER, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_R10G10B10X2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_R10G10B10A2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_R10G10B10A2_UINT, GL_RGB10_A2UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
+};
+
+static struct vrend_format_table gl_bit10_formats[] = {
+   { VIRGL_FORMAT_B10G10R10X2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE, view_class_32 },
+   { VIRGL_FORMAT_B10G10R10A2_UNORM, GL_RGB10_A2, GL_BGRA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
+};
+
+static struct vrend_format_table gles_bit10_formats[] = {
+   { VIRGL_FORMAT_B10G10R10X2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE, view_class_32 },
+   { VIRGL_FORMAT_B10G10R10A2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
 };
 
 static struct vrend_format_table packed_float_formats[] = {
@@ -347,17 +362,6 @@ static struct vrend_format_table gles_bgra_formats[] = {
   { VIRGL_FORMAT_B8G8R8A8_UNORM, GL_RGBA8,        GL_RGBA,     GL_UNSIGNED_BYTE, NO_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_B8G8R8X8_SRGB,  GL_SRGB8_ALPHA8, GL_RGBA,     GL_UNSIGNED_BYTE, RGB1_SWIZZLE, view_class_32 },
   { VIRGL_FORMAT_B8G8R8A8_SRGB,  GL_SRGB8_ALPHA8, GL_RGBA,     GL_UNSIGNED_BYTE, NO_SWIZZLE, view_class_32 },
-};
-
-
-
-static struct vrend_format_table gles_z32_format[] = {
-  { VIRGL_FORMAT_Z32_UNORM, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NO_SWIZZLE, view_class_unsupported },
-};
-
-static struct vrend_format_table gles_bit10_formats[] = {
-  { VIRGL_FORMAT_B10G10R10X2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, RGB1_SWIZZLE, view_class_32 },
-  { VIRGL_FORMAT_B10G10R10A2_UNORM, GL_RGB10_A2, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, NO_SWIZZLE, view_class_32 },
 };
 
 static bool color_format_can_readback(struct vrend_format_table *virgl_format, int gles_ver)
@@ -584,11 +588,13 @@ void vrend_build_format_list_common(void)
 
 void vrend_build_format_list_gl(void)
 {
+  add_formats(gl_z32_format);
   /* GL_BGRA formats aren't as well supported in GLES as in GL, specially in
    * transfer operations. So we only register support for it in GL.
    */
   add_formats(gl_base_rgba_formats);
   add_formats(gl_bgra_formats);
+  add_formats(gl_bit10_formats);
 }
 
 void vrend_build_format_list_gles(void)
