@@ -190,12 +190,10 @@ static enum pipe_format pipe_format_from_va_fourcc(unsigned format)
    switch(format) {
    case VA_FOURCC('N','V','1','2'):
       return PIPE_FORMAT_NV12;
-/* TODO: These are already defined in mesa, but not yet in virglrenderer
    case VA_FOURCC('P','0','1','0'):
       return PIPE_FORMAT_P010;
    case VA_FOURCC('P','0','1','6'):
       return PIPE_FORMAT_P016;
-*/
    case VA_FOURCC('I','4','2','0'):
       return PIPE_FORMAT_IYUV;
    case VA_FOURCC('Y','V','1','2'):
@@ -288,6 +286,21 @@ static int va_entrypoint_from_pipe(enum pipe_video_entrypoint entrypoint)
     default:
         return VAEntrypointNone;
     }
+}
+
+static uint32_t va_format_from_pipe(uint32_t format)
+{
+    uint32_t va_format;
+
+    switch(format) {
+    case PIPE_FORMAT_P010:
+        va_format = VA_RT_FORMAT_YUV420_10;
+        break;
+    default:
+        va_format = VA_RT_FORMAT_YUV420;
+    }
+
+    return va_format;
 }
 
 static uint32_t va_format_from_pipe_chroma(
@@ -827,11 +840,7 @@ struct virgl_video_buffer *virgl_video_create_buffer(
     if (!va_dpy || !args)
         return NULL;
 
-    /*
-     * FIXME: always use YUV420 now,
-     * may be use va_format_from_pipe(args->format)
-     */
-    format = VA_RT_FORMAT_YUV420;
+    format = va_format_from_pipe(args->format);
     if (!format) {
         virgl_error("pipe format %d not supported\n", args->format);
         return NULL;
