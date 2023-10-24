@@ -1,3 +1,10 @@
+workflow:
+  rules:
+    # do not duplicate pipelines on merge pipelines
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - when: always
+
 variables:
   FDO_UPSTREAM_REPO: "virgl/virglrenderer"
   MESA_TEMPLATES_COMMIT: &ci-templates-commit d5aa3941aa03c2f716595116354fb81eb8012acb
