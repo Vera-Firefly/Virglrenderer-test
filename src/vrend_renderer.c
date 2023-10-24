@@ -534,7 +534,7 @@ struct vrend_surface {
    struct pipe_reference reference;
    GLuint gl_id;
    GLuint format;
-   GLuint val0;
+   GLuint level;
    GLuint first_layer;
    GLuint last_layer;
    GLuint nr_samples;
@@ -2301,7 +2301,7 @@ void vrend_sync_make_current(virgl_gl_context gl_cxt) {
 
 int vrend_create_surface(struct vrend_context *ctx,
                          uint32_t handle, struct vrend_resource *res,
-                         enum virgl_formats format, uint32_t val0,
+                         enum virgl_formats format, uint32_t level,
                          uint32_t first_layer, uint32_t last_layer,
                          uint32_t nr_samples)
 {
@@ -2314,7 +2314,7 @@ int vrend_create_surface(struct vrend_context *ctx,
 
    surf->format = format;
 
-   surf->val0 = val0;
+   surf->level = level;
    surf->first_layer = first_layer;
    surf->last_layer = last_layer;
    surf->gl_id = res->gl_id;
@@ -2335,7 +2335,7 @@ int vrend_create_surface(struct vrend_context *ctx,
       int last_layer = surf->last_layer;
 
       bool needs_view = first_layer != last_layer &&
-         (first_layer != 0 || (last_layer != (int)util_max_layer(&res->base, surf->val0)));
+         (first_layer != 0 || (last_layer != (int)util_max_layer(&res->base, surf->level)));
       if (!needs_view && surf->format != res->base.format)
          needs_view = true;
 
@@ -3027,7 +3027,7 @@ static void vrend_hw_set_zsurf_texture(struct vrend_context *ctx)
       if (!surf->texture)
          return;
 
-      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, 0, surf->val0,
+      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, 0, surf->level,
                                surf->first_layer != surf->last_layer ? 0xffffffff :
                                surf->first_layer, surf->nr_samples);
    }
@@ -3046,7 +3046,7 @@ static void vrend_hw_set_color_surface(struct vrend_sub_context *sub_ctx, int in
       uint32_t first_layer = sub_ctx->surf[index]->first_layer;
       uint32_t last_layer = sub_ctx->surf[index]->last_layer;
 
-      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, index, surf->val0,
+      vrend_fb_bind_texture_id(surf->texture, surf->gl_id, index, surf->level,
                                first_layer != last_layer ? 0xffffffff : first_layer,
                                surf->nr_samples);
    }
@@ -3184,7 +3184,7 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
       new_height = 0;
       new_fbo_origin_upper_left = false;
    } else if (sub_ctx->nr_cbufs == 0) {
-      new_height = u_minify(sub_ctx->zsurf->texture->base.height0, sub_ctx->zsurf->val0);
+      new_height = u_minify(sub_ctx->zsurf->texture->base.height0, sub_ctx->zsurf->level);
       new_fbo_origin_upper_left = sub_ctx->zsurf->texture->y_0_top ? true : false;
    }
    else {
@@ -3199,7 +3199,7 @@ void vrend_set_framebuffer_state(struct vrend_context *ctx,
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SURFACE, i);
          return;
       }
-      new_height = u_minify(surf->texture->base.height0, surf->val0);
+      new_height = u_minify(surf->texture->base.height0, surf->level);
       new_fbo_origin_upper_left = surf->texture->y_0_top ? true : false;
    }
 
