@@ -69,10 +69,10 @@ if [ "${VK_DRIVER}" = "virtio" ] || [ "${GALLIUM_DRIVER}" = "virgl" ]; then
 
     if [ -z "${DEQP_SUITE}" ]; then
         if [ -z "${PIGLIT_REPLAY_DESCRIPTION_FILE}" ]; then
-            FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-FDO_CI_CONCURRENT} \
+            FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-$FDO_CI_CONCURRENT} \
                 install/crosvm-runner.sh install/piglit/piglit-runner.sh
         else
-            FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-FDO_CI_CONCURRENT} \
+            FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-$FDO_CI_CONCURRENT} \
                 install/crosvm-runner.sh install/piglit/piglit-traces.sh
         fi
     else
@@ -96,6 +96,7 @@ else
     set +e
 
     if [ -z "${DEQP_SUITE}" ]; then
+        FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-$FDO_CI_CONCURRENT} \
         PIGLIT_RUNNER_OPTIONS="--timeout 180" \
             install/piglit/piglit-runner.sh
     else

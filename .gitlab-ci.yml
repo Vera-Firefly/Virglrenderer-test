@@ -348,6 +348,7 @@ make check venus:
   variables:
     GALLIUM_DRIVER: virpipe
     GALLIVM_PERF: nopt
+    LP_NUM_THREADS: 1
 
 .gl-virt-test:
   extends:
@@ -407,6 +408,7 @@ piglit-gl-host:
     - .piglit-host
   variables:
     GPU_VERSION: virgl-gl
+    DEQP_FRACTION: 4
 
 piglit-gles-host:
   extends:
@@ -414,6 +416,7 @@ piglit-gles-host:
   variables:
     VIRGL_HOST_API: GLES
     GPU_VERSION: virgl-gles
+    DEQP_FRACTION: 4
 
 # Virt runners (virgl/crosvm)
 
