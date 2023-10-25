@@ -696,7 +696,7 @@ int virgl_encode_sampler_view(struct virgl_context *ctx,
    virgl_encoder_write_dword(ctx->cbuf, handle);
    virgl_encoder_write_res(ctx, res);
    virgl_encoder_write_dword(ctx->cbuf, state->format);
-   if (1) {//TODOres->u.b.target == PIPE_BUFFER) {
+   if (res->base.target == PIPE_BUFFER) {
       virgl_encoder_write_dword(ctx->cbuf, state->u.buf.first_element);
       virgl_encoder_write_dword(ctx->cbuf, state->u.buf.last_element);
    } else {

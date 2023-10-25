@@ -1258,6 +1258,93 @@ START_TEST(virgl_test_encode_sampler_view)
 }
 END_TEST
 
+START_TEST(virgl_test_encode_sampler_view_fail_layers)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_sampler_view state1, state2;
+
+   memset(&state1, 0, sizeof(state1));
+   memset(&state2, 0, sizeof(state2));
+
+   struct virgl_resource res;
+   struct virgl_resource res2;
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res, 1, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_2d_res(&res2, 2, 50, 50);
+   ck_assert_int_eq(ret, 0);
+
+   /* attach resource to context */
+   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+   /* Try to hit limits of layers */
+   state1.format = VIRGL_FORMAT_B8G8R8A8_UNORM;
+   state1.u.tex.first_layer = 2;
+   state1.u.tex.last_layer = 0;
+
+   ret = virgl_encode_sampler_view(&ctx, res.handle,
+                                   &res,
+                                   &state1);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   /* Try to hit limits of levels */
+   state2.format = VIRGL_FORMAT_B8G8R8A8_UNORM;
+   state2.u.tex.first_level = 2;
+   state2.u.tex.last_level = 0;
+
+   ret = virgl_encode_sampler_view(&ctx, res.handle,
+                                   &res,
+                                   &state2);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, EINVAL);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
+START_TEST(virgl_test_encode_sampler_view_texture_buffer)
+{
+   struct virgl_context ctx;
+   int ret = testvirgl_init_ctx_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   struct pipe_sampler_view state1;
+
+   memset(&state1, 0, sizeof(state1));
+
+   struct virgl_resource res = {0};
+
+   /* init and create simple 2D resource */
+   ret = testvirgl_create_backed_simple_buffer(&res, 1, 50, PIPE_BIND_SAMPLER_VIEW);
+   ck_assert_int_eq(ret, 0);
+
+   state1.format = PIPE_FORMAT_R8_UNORM;
+   state1.u.buf.first_element = 0;
+   state1.u.buf.last_element = 2;
+
+   /* attach resource to context */
+   virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+   ret = virgl_encode_sampler_view(&ctx, res.handle,
+                                   &res,
+                                   &state1);
+   ck_assert_int_eq(ret, 0);
+   ret = testvirgl_ctx_send_cmdbuf(&ctx);
+   ck_assert_int_eq(ret, 0);
+
+   testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
 static void test_create_surface(enum pipe_format format, int expected_error)
 {
    struct virgl_context ctx;
@@ -1767,6 +1854,8 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_decode_set_constant_buffer);
   tcase_add_test(tc_core, virgl_decode_bind_sampler_states);
   tcase_add_test(tc_core, virgl_test_encode_sampler_view);
+  tcase_add_test(tc_core, virgl_test_encode_sampler_view_fail_layers);
+  tcase_add_test(tc_core, virgl_test_encode_sampler_view_texture_buffer);
   tcase_add_test(tc_core, virgl_test_create_surface_pass);
   tcase_add_test(tc_core, virgl_test_create_surface_fail_format);
   tcase_add_test(tc_core, virgl_test_create_surface_fail_layers);

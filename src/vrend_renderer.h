@@ -287,8 +287,8 @@ int vrend_create_surface(struct vrend_context *ctx, uint32_t handle,
                          uint32_t last_layer, uint32_t nr_samples);
 int vrend_create_sampler_view(struct vrend_context *ctx, uint32_t handle,
                               struct vrend_resource *res, enum virgl_formats format,
-                              enum pipe_texture_target pipe_target, uint32_t val0, uint32_t val1,
-                              uint32_t swizzle_packed);
+                              enum pipe_texture_target pipe_target, uint32_t val0,
+                              uint32_t val1, uint32_t swizzle_packed);
 
 int vrend_create_sampler_state(struct vrend_context *ctx,
                                uint32_t handle,

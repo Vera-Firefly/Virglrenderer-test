@@ -723,8 +723,9 @@ static int vrend_decode_create_sampler_view(struct vrend_context *ctx, const uin
 
    uint32_t val0 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_FIRST_ELEMENT);
    uint32_t val1 = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_BUFFER_LAST_ELEMENT);
+
    uint32_t swizzle_packed = get_buf_entry(buf, VIRGL_OBJ_SAMPLER_VIEW_SWIZZLE);
-   return vrend_create_sampler_view(ctx, handle, res, format, pipe_target, val0, val1,swizzle_packed);
+   return vrend_create_sampler_view(ctx, handle, res, format, pipe_target, val0, val1, swizzle_packed);
 }
 
 static int vrend_decode_create_sampler_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t handle, uint16_t length)

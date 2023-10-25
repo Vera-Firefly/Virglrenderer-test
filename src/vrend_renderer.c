@@ -566,7 +566,18 @@ struct vrend_sampler_view {
    GLuint gl_id;
    enum virgl_formats format;
    GLenum target;
-   GLuint val0, val1;
+   union {
+       struct {
+           GLuint first_layer:16;     /**< first layer to use for array textures */
+           GLuint last_layer:16;      /**< last layer to use for array textures */
+           GLuint first_level:8;      /**< first mipmap level to use */
+           GLuint last_level:8;       /**< last mipmap level to use */
+       } tex;
+       struct {
+           GLuint first_element;
+           GLuint last_element;
+       } buf;
+   } u;
    GLint gl_swizzle[4];
    GLuint srgb_decode;
    GLuint levels;
@@ -2695,10 +2706,6 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       view->target = GL_TEXTURE_2D;
    }
 
-   view->val0 = val0;
-   view->val1 = val1;
-
-
    for (int i = 0; i < 4; ++i) {
       swizzle[i] = (swizzle_packed  >> (3 * i)) & 0x7;
       if (swizzle[i] > PIPE_SWIZZLE_1)
@@ -2708,8 +2715,18 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
    vrend_resource_reference(&view->texture, res);
 
    view->gl_id = view->texture->gl_id;
-   if (view->target == PIPE_BUFFER)
+
+   if (view->target == PIPE_BUFFER) {
       view->target = view->texture->target;
+
+      view->u.buf.first_element = val0;
+      view->u.buf.last_element = val1;
+   } else {
+      view->u.tex.first_layer = val0 & 0xffff;
+      view->u.tex.last_layer = (val0 >> 16) & 0xffff;
+      view->u.tex.first_level = val1 & 0xff;
+      view->u.tex.last_level = (val1 >> 8) & 0xff;
+   }
 
    view->srgb_decode = GL_DECODE_EXT;
    if (view->format != view->texture->base.format) {
@@ -2781,21 +2798,17 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       else if (view->format != view->texture->base.format)
          needs_view = true;
 
-      unsigned base_layer = view->val0 & 0xffff;
-      int base_level = view->val1 & 0xff;
-
-      if (base_layer > 0 || base_level > 0)
+      if (view->u.tex.first_layer > 0 || view->u.tex.first_level > 0)
          needs_view = true;
 
       if (needs_view &&
           has_bit(view->texture->storage_bits, VREND_STORAGE_GL_IMMUTABLE) &&
           has_feature(feat_texture_view)) {
         GLenum internalformat = tex_conv_table[format].internalformat;
-        unsigned max_layer = (view->val0 >> 16) & 0xffff;
-        int max_level = (view->val1 >> 8) & 0xff;
-        view->levels = (max_level - base_level) + 1;
+        view->levels = (view->u.tex.last_level - view->u.tex.first_level) + 1;
 
-        int num_layers = max_layer - base_layer + 1;
+        int num_layers = view->u.tex.last_layer - view->u.tex.first_layer + 1;
+
         if (view->levels == 0 || num_layers <= 0) {
             virgl_error("%s: Invalid number of layers (%d) or zero levels requested\n",
                         __func__, num_layers);
@@ -2823,8 +2836,8 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
         }
 
         glTextureView(view->gl_id, view->target, view->texture->gl_id, internalformat,
-                      base_level, view->levels,
-                      base_layer, num_layers);
+                      view->u.tex.first_level, view->levels,
+                      view->u.tex.first_layer, num_layers);
 
         glBindTexture(view->target, view->gl_id);
 
@@ -2855,9 +2868,9 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
                             view->srgb_decode);
         }
         glBindTexture(view->target, 0);
-      } else if (needs_view && view->val0 < ARRAY_SIZE(res->aux_plane_egl_image) &&
-            res->aux_plane_egl_image[view->val0]) {
-        void *image = res->aux_plane_egl_image[view->val0];
+      } else if (needs_view && view->u.buf.first_element < ARRAY_SIZE(res->aux_plane_egl_image) &&
+            res->aux_plane_egl_image[view->u.buf.first_element]) {
+        void *image = res->aux_plane_egl_image[view->u.buf.first_element];
         glGenTextures(1, &view->gl_id);
         glBindTexture(view->target, view->gl_id);
         glEGLImageTargetTexture2DOES(view->target, (GLeglImageOES) image);
@@ -3686,17 +3699,15 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
                }
             }
 
-            GLuint base_level = view->val1 & 0xff;
-            GLuint max_level = (view->val1 >> 8) & 0xff;
-            view->levels = max_level - base_level + 1;
+            view->levels = view->u.tex.last_level - view->u.tex.first_level + 1;
 
-            if (tex->cur_base != base_level) {
-               glTexParameteri(view->texture->target, GL_TEXTURE_BASE_LEVEL, base_level);
-               tex->cur_base = base_level;
+            if (tex->cur_base != view->u.tex.first_level) {
+               glTexParameteri(view->texture->target, GL_TEXTURE_BASE_LEVEL, view->u.tex.first_level);
+               tex->cur_base = view->u.tex.first_level;
             }
-            if (tex->cur_max != max_level) {
-               glTexParameteri(view->texture->target, GL_TEXTURE_MAX_LEVEL, max_level);
-               tex->cur_max = max_level;
+            if (tex->cur_max != view->u.tex.last_level) {
+               glTexParameteri(view->texture->target, GL_TEXTURE_MAX_LEVEL, view->u.tex.last_level);
+               tex->cur_max = view->u.tex.last_level;
             }
             if (memcmp(tex->cur_swizzle, view->gl_swizzle, 4 * sizeof(GLint))) {
                if (vrend_state.use_gles) {
@@ -3736,8 +3747,8 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
          }
 
          if (has_feature(feat_texture_buffer_range)) {
-            unsigned offset = view->val0;
-            unsigned size = view->val1 - view->val0 + 1;
+            unsigned offset = view->u.buf.first_element;
+            unsigned size = view->u.buf.last_element - view->u.buf.first_element + 1;
             int blsize = util_format_get_blocksize(view->format);
 
             if (offset + size > vrend_state.max_texture_buffer_size)
