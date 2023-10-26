@@ -25,9 +25,7 @@ vkr_dispatch_vkSetReplyCommandStreamMESA(
    }
 
    struct vkr_cs_encoder *enc = (struct vkr_cs_encoder *)dispatch->encoder;
-   mtx_lock(&enc->mutex);
    vkr_cs_encoder_set_stream(enc, res, args->pStream->offset, args->pStream->size);
-   mtx_unlock(&enc->mutex);
 }
 
 static void

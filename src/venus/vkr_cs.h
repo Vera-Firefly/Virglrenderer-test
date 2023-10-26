@@ -94,13 +94,33 @@ vkr_cs_encoder_set_fatal(const struct vkr_cs_encoder *enc)
 }
 
 void
+vkr_cs_encoder_set_stream_locked(struct vkr_cs_encoder *enc,
+                                 const struct vkr_resource *res,
+                                 size_t offset,
+                                 size_t size);
+
+void
+vkr_cs_encoder_seek_stream_locked(struct vkr_cs_encoder *enc, size_t pos);
+
+static inline void
 vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
                           const struct vkr_resource *res,
                           size_t offset,
-                          size_t size);
+                          size_t size)
+{
 
-void
-vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos);
+   mtx_lock(&enc->mutex);
+   vkr_cs_encoder_set_stream_locked(enc, res, offset, size);
+   mtx_unlock(&enc->mutex);
+}
+
+static inline void
+vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
+{
+   mtx_lock(&enc->mutex);
+   vkr_cs_encoder_seek_stream_locked(enc, pos);
+   mtx_unlock(&enc->mutex);
+}
 
 static inline void
 vkr_cs_encoder_check_stream(struct vkr_cs_encoder *enc, const struct vkr_resource *res)
@@ -113,7 +133,7 @@ vkr_cs_encoder_check_stream(struct vkr_cs_encoder *enc, const struct vkr_resourc
        * shmem (it can still live in the driver side shmem cache but will be used for
        * other purposes the next time being allocated out).
        */
-      vkr_cs_encoder_set_stream(enc, NULL, 0, 0);
+      vkr_cs_encoder_set_stream_locked(enc, NULL, 0, 0);
    }
    mtx_unlock(&enc->mutex);
 }
@@ -126,7 +146,9 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
 {
    assert(val_size <= size);
 
+   mtx_lock(&enc->mutex);
    if (unlikely(size > (size_t)(enc->end - enc->cur))) {
+      mtx_unlock(&enc->mutex);
       vkr_log("failed to write the reply stream");
       vkr_cs_encoder_set_fatal(enc);
       return;
@@ -135,6 +157,7 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
    /* we should not rely on the compiler to optimize away memcpy... */
    memcpy(enc->cur, val, val_size);
    enc->cur += size;
+   mtx_unlock(&enc->mutex);
 }
 
 void

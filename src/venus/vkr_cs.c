@@ -8,10 +8,10 @@
 #include "vkr_context.h"
 
 void
-vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
-                          const struct vkr_resource *res,
-                          size_t offset,
-                          size_t size)
+vkr_cs_encoder_set_stream_locked(struct vkr_cs_encoder *enc,
+                                 const struct vkr_resource *res,
+                                 size_t offset,
+                                 size_t size)
 {
    if (!res) {
       memset(&enc->stream, 0, sizeof(enc->stream));
@@ -34,13 +34,13 @@ vkr_cs_encoder_set_stream(struct vkr_cs_encoder *enc,
 
    enc->end = res->u.data + res->size;
 
-   vkr_cs_encoder_seek_stream(enc, 0);
+   vkr_cs_encoder_seek_stream_locked(enc, 0);
 }
 
 void
-vkr_cs_encoder_seek_stream(struct vkr_cs_encoder *enc, size_t pos)
+vkr_cs_encoder_seek_stream_locked(struct vkr_cs_encoder *enc, size_t pos)
 {
-   if (unlikely(pos > enc->stream.size)) {
+   if (unlikely(!enc->stream.resource || pos > enc->stream.size)) {
       vkr_log("failed to seek the reply stream to %zu", pos);
       vkr_cs_encoder_set_fatal(enc);
       return;
