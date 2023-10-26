@@ -1084,6 +1084,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_UNSUPPORTED_TEX_WRAP] = "Unsupported texture mirror wrapping, default to GL_MIRROR_REPEAT",
    [VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE] = "Cube map face out of range:",
    [VIRGL_ERROR_CTX_BLIT_AREA_OUT_OF_RANGE] = "Blit z-slices out of range;",
+   [VIRGL_ERROR_CTX_SSBO_BINDING_RANGE] = "SSBO binding out of range for resource",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -3822,6 +3823,11 @@ void vrend_set_single_ssbo(struct vrend_context *ctx,
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
       if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
+         return;
+      }
+
+      if (offset > res->base.width0 || length > res->base.width0 - offset) {
+         vrend_report_context_error(ctx, VIRGL_ERROR_CTX_SSBO_BINDING_RANGE, handle);
          return;
       }
 
