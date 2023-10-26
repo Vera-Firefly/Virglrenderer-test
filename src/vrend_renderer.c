@@ -6068,8 +6068,6 @@ void vrend_launch_grid(struct vrend_context *ctx,
       struct vrend_linked_shader_program *prog;
       bool cs_dirty;
 
-      sub_ctx->cs_shader_dirty = false;
-
       if (!sub_ctx->shaders[PIPE_SHADER_COMPUTE]) {
          virgl_error("Dropping rendering due to missing shaders: %s\n", ctx->debug_name);
          return;
@@ -6104,6 +6102,7 @@ void vrend_launch_grid(struct vrend_context *ctx,
          prog->ref_context = sub_ctx;
       }
       sub_ctx->shader_dirty = true;
+      sub_ctx->cs_shader_dirty = false;
    }
 
    if (!sub_ctx->prog) {
