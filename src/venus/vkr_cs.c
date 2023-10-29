@@ -117,46 +117,42 @@ vkr_cs_decoder_reset(struct vkr_cs_decoder *dec)
 
    vkr_cs_decoder_gc_temp_pool(dec);
 
-   dec->saved_state_count = 0;
+   dec->saved_state_valid = false;
    dec->cur = NULL;
    dec->end = NULL;
 }
 
-bool
-vkr_cs_decoder_push_state(struct vkr_cs_decoder *dec)
+void
+vkr_cs_decoder_save_state(struct vkr_cs_decoder *dec)
 {
-   struct vkr_cs_decoder_temp_pool *pool = &dec->temp_pool;
-   struct vkr_cs_decoder_saved_state *saved;
+   assert(!dec->saved_state_valid);
+   dec->saved_state_valid = true;
 
-   if (dec->saved_state_count >= ARRAY_SIZE(dec->saved_states))
-      return false;
-
-   saved = &dec->saved_states[dec->saved_state_count++];
+   struct vkr_cs_decoder_saved_state *saved = &dec->saved_state;
    saved->cur = dec->cur;
    saved->end = dec->end;
 
+   struct vkr_cs_decoder_temp_pool *pool = &dec->temp_pool;
    saved->pool_buffer_count = pool->buffer_count;
    saved->pool_reset_to = pool->reset_to;
    /* avoid temp data corruption */
    pool->reset_to = pool->cur;
 
    vkr_cs_decoder_sanity_check(dec);
-
-   return true;
 }
 
 void
-vkr_cs_decoder_pop_state(struct vkr_cs_decoder *dec)
+vkr_cs_decoder_restore_state(struct vkr_cs_decoder *dec)
 {
-   struct vkr_cs_decoder_temp_pool *pool = &dec->temp_pool;
-   const struct vkr_cs_decoder_saved_state *saved;
+   assert(dec->saved_state_valid);
+   dec->saved_state_valid = false;
 
-   assert(dec->saved_state_count);
-   saved = &dec->saved_states[--dec->saved_state_count];
+   const struct vkr_cs_decoder_saved_state *saved = &dec->saved_state;
    dec->cur = saved->cur;
    dec->end = saved->end;
 
    /* restore only if pool->reset_to points to the same buffer */
+   struct vkr_cs_decoder_temp_pool *pool = &dec->temp_pool;
    if (pool->buffer_count == saved->pool_buffer_count)
       pool->reset_to = saved->pool_reset_to;
 

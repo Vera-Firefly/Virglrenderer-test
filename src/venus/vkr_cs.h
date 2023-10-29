@@ -65,8 +65,12 @@ struct vkr_cs_decoder {
    bool *fatal_error;
    struct vkr_cs_decoder_temp_pool temp_pool;
 
-   struct vkr_cs_decoder_saved_state saved_states[1];
-   uint32_t saved_state_count;
+   /* Support vkExecuteCommandStreamsMESA for command buffer recording and indirect
+    * submission. Only a single level nested decoder state is needed. Base level is
+    * always from context or ring submit buffer, and no resource tracking is needed.
+    */
+   struct vkr_cs_decoder_saved_state saved_state;
+   bool saved_state_valid;
 
    const uint8_t *cur;
    const uint8_t *end;
@@ -196,11 +200,17 @@ vkr_cs_decoder_has_command(const struct vkr_cs_decoder *dec)
    return dec->cur < dec->end;
 }
 
-bool
-vkr_cs_decoder_push_state(struct vkr_cs_decoder *dec);
+static inline bool
+vkr_cs_decoder_has_saved_state(struct vkr_cs_decoder *dec)
+{
+   return dec->saved_state_valid;
+}
 
 void
-vkr_cs_decoder_pop_state(struct vkr_cs_decoder *dec);
+vkr_cs_decoder_save_state(struct vkr_cs_decoder *dec);
+
+void
+vkr_cs_decoder_restore_state(struct vkr_cs_decoder *dec);
 
 static inline bool
 vkr_cs_decoder_peek_internal(const struct vkr_cs_decoder *dec,

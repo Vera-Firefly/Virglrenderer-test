@@ -54,11 +54,13 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
    }
 
    /* note that nested vkExecuteCommandStreamsMESA is not allowed */
-   if (unlikely(!vkr_cs_decoder_push_state(dec))) {
+   if (unlikely(vkr_cs_decoder_has_saved_state(dec))) {
       vkr_log("failed to execute command streams: nested execution");
       vkr_context_set_fatal(ctx);
       return;
    }
+
+   vkr_cs_decoder_save_state(dec);
 
    for (uint32_t i = 0; i < args->streamCount; i++) {
       const VkCommandStreamDescriptionMESA *stream = &args->pStreams[i];
@@ -96,7 +98,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
    }
 
-   vkr_cs_decoder_pop_state(dec);
+   vkr_cs_decoder_restore_state(dec);
 }
 
 static struct vkr_ring *
