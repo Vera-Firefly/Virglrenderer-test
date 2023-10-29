@@ -72,6 +72,10 @@ struct vkr_cs_decoder {
    struct vkr_cs_decoder_saved_state saved_state;
    bool saved_state_valid;
 
+   /* protect against resource destroy */
+   mtx_t mutex;
+   const struct vkr_resource *resource;
+
    const uint8_t *cur;
    const uint8_t *end;
 };
@@ -164,7 +168,7 @@ vkr_cs_encoder_write(struct vkr_cs_encoder *enc,
    mtx_unlock(&enc->mutex);
 }
 
-void
+int
 vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
                     bool *fatal_error,
                     const struct hash_table *object_table);
@@ -188,10 +192,28 @@ vkr_cs_decoder_get_fatal(const struct vkr_cs_decoder *dec)
 }
 
 static inline void
-vkr_cs_decoder_set_stream(struct vkr_cs_decoder *dec, const void *data, size_t size)
+vkr_cs_decoder_set_buffer_stream(struct vkr_cs_decoder *dec,
+                                 const void *data,
+                                 size_t size)
 {
    dec->cur = data;
    dec->end = dec->cur + size;
+}
+
+bool
+vkr_cs_decoder_set_resource_stream(struct vkr_cs_decoder *dec,
+                                   struct vkr_context *ctx,
+                                   uint32_t res_id,
+                                   size_t offset,
+                                   size_t size);
+
+static inline bool
+vkr_cs_decoder_check_stream(struct vkr_cs_decoder *dec, const struct vkr_resource *res)
+{
+   mtx_lock(&dec->mutex);
+   const bool ok = dec->resource != res;
+   mtx_unlock(&dec->mutex);
+   return ok;
 }
 
 static inline bool

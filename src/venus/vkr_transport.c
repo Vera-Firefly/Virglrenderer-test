@@ -71,23 +71,14 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
       if (!stream->size)
          continue;
 
-      struct vkr_resource *res = vkr_context_get_resource(ctx, stream->resourceId);
-      if (!res || res->fd_type != VIRGL_RESOURCE_FD_SHM) {
+      if (unlikely(!vkr_cs_decoder_set_resource_stream(dec, ctx, stream->resourceId,
+                                                       stream->offset, stream->size))) {
          vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
                  stream->resourceId);
          vkr_context_set_fatal(ctx);
          break;
       }
 
-      if (unlikely(stream->size > res->size ||
-                   stream->offset > res->size - stream->size)) {
-         vkr_log("failed to execute command streams: invalid stream %u res_id %u", i,
-                 stream->resourceId);
-         vkr_context_set_fatal(ctx);
-         break;
-      }
-
-      vkr_cs_decoder_set_stream(dec, res->u.data + stream->offset, stream->size);
       while (vkr_cs_decoder_has_command(dec)) {
          vn_dispatch_command(dispatch);
          if (vkr_context_get_fatal(ctx))
@@ -98,6 +89,7 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
          break;
    }
 
+   /* restore state unsets the last nested stream */
    vkr_cs_decoder_restore_state(dec);
 }
 

@@ -153,7 +153,7 @@ vkr_context_submit_cmd(struct vkr_context *ctx, const void *buffer, size_t size)
       return false;
    }
 
-   vkr_cs_decoder_set_stream(&ctx->decoder, buffer, size);
+   vkr_cs_decoder_set_buffer_stream(&ctx->decoder, buffer, size);
 
    while (vkr_cs_decoder_has_command(&ctx->decoder)) {
       vn_dispatch_command(&ctx->dispatch);
@@ -357,7 +357,7 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
       vkr_cs_encoder_check_stream(&ring->encoder, res);
 
-      if (ring->resource != res)
+      if (ring->resource != res && vkr_cs_decoder_check_stream(&ring->decoder, res))
          continue;
 
       vkr_context_set_fatal(ctx);
@@ -649,7 +649,9 @@ vkr_context_create(uint32_t ctx_id,
    if (!ctx->resource_table)
       goto err_ctx_resource_table;
 
-   vkr_cs_decoder_init(&ctx->decoder, &ctx->cs_fatal_error, ctx->object_table);
+   if (vkr_cs_decoder_init(&ctx->decoder, &ctx->cs_fatal_error, ctx->object_table))
+      goto err_cs_decoder_init;
+
    if (vkr_cs_encoder_init(&ctx->encoder, &ctx->cs_fatal_error))
       goto err_cs_encoder_init;
 
@@ -665,6 +667,8 @@ vkr_context_create(uint32_t ctx_id,
 err_ctx_ring_mutex:
    vkr_cs_encoder_fini(&ctx->encoder);
 err_cs_encoder_init:
+   vkr_cs_decoder_fini(&ctx->decoder);
+err_cs_decoder_init:
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);
 err_ctx_resource_table:
    mtx_destroy(&ctx->resource_mutex);

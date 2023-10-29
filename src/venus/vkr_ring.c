@@ -128,7 +128,9 @@ vkr_ring_create(const struct vkr_ring_layout *layout,
    if (!ring->cmd)
       goto err_cmd_malloc;
 
-   vkr_cs_decoder_init(&ring->decoder, &ctx->cs_fatal_error, ctx->object_table);
+   if (vkr_cs_decoder_init(&ring->decoder, &ctx->cs_fatal_error, ctx->object_table))
+      goto err_cs_decoder_init;
+
    if (vkr_cs_encoder_init(&ring->encoder, &ctx->cs_fatal_error))
       goto err_cs_encoder_init;
 
@@ -149,6 +151,8 @@ err_cond_init:
 err_mtx_init:
    vkr_cs_encoder_fini(&ring->encoder);
 err_cs_encoder_init:
+   vkr_cs_decoder_fini(&ring->decoder);
+err_cs_decoder_init:
    free(ring->cmd);
 err_cmd_malloc:
 err_init_control:
@@ -212,7 +216,7 @@ vkr_ring_submit_cmd(struct vkr_ring *ring,
       return false;
    }
 
-   vkr_cs_decoder_set_stream(dec, buffer, size);
+   vkr_cs_decoder_set_buffer_stream(dec, buffer, size);
 
    while (vkr_cs_decoder_has_command(dec)) {
       vn_dispatch_command(&ring->dispatch);

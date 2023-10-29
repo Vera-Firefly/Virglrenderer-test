@@ -49,7 +49,7 @@ vkr_cs_encoder_seek_stream_locked(struct vkr_cs_encoder *enc, size_t pos)
    enc->cur = enc->stream.resource->u.data + enc->stream.offset + pos;
 }
 
-void
+int
 vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
                     bool *fatal_error,
                     const struct hash_table *object_table)
@@ -57,6 +57,7 @@ vkr_cs_decoder_init(struct vkr_cs_decoder *dec,
    memset(dec, 0, sizeof(*dec));
    dec->fatal_error = fatal_error;
    dec->object_table = object_table;
+   return mtx_init(&dec->mutex, mtx_plain);
 }
 
 void
@@ -67,6 +68,30 @@ vkr_cs_decoder_fini(struct vkr_cs_decoder *dec)
       free(pool->buffers[i]);
    if (pool->buffers)
       free(pool->buffers);
+
+   mtx_destroy(&dec->mutex);
+}
+
+bool
+vkr_cs_decoder_set_resource_stream(struct vkr_cs_decoder *dec,
+                                   struct vkr_context *ctx,
+                                   uint32_t res_id,
+                                   size_t offset,
+                                   size_t size)
+{
+   mtx_lock(&dec->mutex);
+   struct vkr_resource *res = vkr_context_get_resource(ctx, res_id);
+   if (unlikely(!res || res->fd_type != VIRGL_RESOURCE_FD_SHM || size > res->size ||
+                offset > res->size - size)) {
+      mtx_unlock(&dec->mutex);
+      return false;
+   }
+
+   dec->resource = res;
+   dec->cur = res->u.data + offset;
+   dec->end = dec->cur + size;
+   mtx_unlock(&dec->mutex);
+   return true;
 }
 
 static void
@@ -118,6 +143,8 @@ vkr_cs_decoder_reset(struct vkr_cs_decoder *dec)
    vkr_cs_decoder_gc_temp_pool(dec);
 
    dec->saved_state_valid = false;
+   /* no need to lock decoder here */
+   dec->resource = NULL;
    dec->cur = NULL;
    dec->end = NULL;
 }
@@ -146,6 +173,9 @@ vkr_cs_decoder_restore_state(struct vkr_cs_decoder *dec)
 {
    assert(dec->saved_state_valid);
    dec->saved_state_valid = false;
+
+   /* no need to lock decoder here */
+   dec->resource = NULL;
 
    const struct vkr_cs_decoder_saved_state *saved = &dec->saved_state;
    dec->cur = saved->cur;
