@@ -247,6 +247,36 @@ static int vrend_decode_clear_texture(struct vrend_context *ctx, const uint32_t 
    return vrend_clear_texture(ctx, res, level, &box, (void *) &arr);
 }
 
+static int vrend_decode_clear_surface(struct vrend_context *ctx,
+                                      const uint32_t *buf, uint32_t length) {
+   union pipe_color_union color;
+   unsigned buffers, dstx, dsty, width, height;
+   uint32_t s0, surf_handle;
+   bool render_condition_enable;
+   int i;
+
+   if (length != VIRGL_CLEAR_SURFACE_SIZE)
+      return EINVAL;
+
+   s0 = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_S0);
+   render_condition_enable = s0 & 0x1;
+   buffers = (s0 >> 1) & 0x7;
+
+   surf_handle = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_HANDLE);
+
+   for (i = 0; i < 4; i++)
+      color.ui[i] = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_COLOR_0 + i);
+
+   dstx = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_DST_X);
+   dsty = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_DST_Y);
+   width = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_WIDTH);
+   height = get_buf_entry(buf, VIRGL_CLEAR_SURFACE_HEIGHT);
+
+   vrend_clear_surface(ctx, surf_handle, buffers, &color, dstx, dsty, width,
+                       height, render_condition_enable);
+   return 0;
+}
+
 static int vrend_decode_set_viewport_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
    struct pipe_viewport_state vps[PIPE_MAX_VIEWPORTS];
@@ -1882,6 +1912,7 @@ static const vrend_decode_callback decode_table[VIRGL_MAX_COMMANDS] = {
    [VIRGL_CCMD_DESTROY_OBJECT] = vrend_decode_destroy_object,
    [VIRGL_CCMD_CLEAR] = vrend_decode_clear,
    [VIRGL_CCMD_CLEAR_TEXTURE] = vrend_decode_clear_texture,
+   [VIRGL_CCMD_CLEAR_SURFACE] = vrend_decode_clear_surface,
    [VIRGL_CCMD_DRAW_VBO] = vrend_decode_draw_vbo,
    [VIRGL_CCMD_SET_FRAMEBUFFER_STATE] = vrend_decode_set_framebuffer_state,
    [VIRGL_CCMD_SET_VERTEX_BUFFERS] = vrend_decode_set_vertex_buffers,

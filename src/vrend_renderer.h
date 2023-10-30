@@ -229,6 +229,14 @@ int vrend_clear_texture(struct vrend_context* ctx,
                         const struct pipe_box *box,
                         const void * data);
 
+void vrend_clear_surface(struct vrend_context *ctx,
+                         uint32_t surf_handle,
+                         unsigned buffers,
+                         const union pipe_color_union *color,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height,
+                         bool render_condition_enabled);
+
 int vrend_draw_vbo(struct vrend_context *ctx,
                    const struct pipe_draw_info *info,
                    uint32_t cso, uint32_t indirect_handle, uint32_t indirect_draw_count_handle);

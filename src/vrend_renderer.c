@@ -4846,6 +4846,75 @@ int vrend_clear_texture(struct vrend_context* ctx,
    return 0;
 }
 
+void vrend_clear_surface(struct vrend_context *ctx, uint32_t surf_handle,
+                         unsigned buffers, const union pipe_color_union *color,
+                         unsigned dstx, unsigned dsty, unsigned width,
+                         unsigned height, bool render_condition_enabled) {
+   struct vrend_surface *surf;
+   GLbitfield bits = 0;
+   struct vrend_sub_context *sub_ctx = ctx->sub;
+
+   surf = vrend_object_lookup(sub_ctx->object_hash, surf_handle,
+                              VIRGL_OBJECT_SURFACE);
+   if (!surf) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_SURFACE,
+                                 surf_handle);
+      return;
+   }
+
+   if (!vrend_format_can_render(surf->format) &&
+       !vrend_format_is_ds(surf->format)) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT,
+                                 surf->format);
+      return;
+   }
+
+   if (render_condition_enabled == false)
+      vrend_pause_render_condition(ctx, true);
+
+   glScissor(dstx, dsty, width, height);
+   glEnable(GL_SCISSOR_TEST);
+   ctx->sub->scissor_state_dirty = (1 << 0);
+
+   // Do clear on blit framebuffer to avoid messing with main fb
+   glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->blit_fb_ids[0]);
+   vrend_fb_bind_texture_id(
+       surf->texture, surf->gl_id, 0, surf->level,
+       surf->first_layer != surf->last_layer ? 0xffffffff : surf->first_layer,
+       surf->nr_samples);
+
+   // When doing clear_render_target color->f contains clear color
+   float colorf[4];
+   memcpy(colorf, color->f, sizeof(colorf));
+
+   // When doing clear_depth_stencil color encodes depth and stencil 
+   double depth;
+   memcpy(&depth, color->ui, sizeof(double));
+   unsigned int stencil = color->ui[3];
+
+   vrend_clear_prepare(sub_ctx, surf, buffers, colorf, depth, stencil);
+
+   if (buffers & PIPE_CLEAR_COLOR0)
+      bits |= GL_COLOR_BUFFER_BIT;
+   if (buffers & PIPE_CLEAR_DEPTH)
+      bits |= GL_DEPTH_BUFFER_BIT;
+   if (buffers & PIPE_CLEAR_STENCIL)
+      bits |= GL_STENCIL_BUFFER_BIT;
+
+   glClear(bits);
+
+   vrend_clear_finish(sub_ctx, buffers);
+
+   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                          0, 0);
+   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                          GL_TEXTURE_2D, 0, 0);
+   glBindFramebuffer(GL_FRAMEBUFFER, ctx->sub->fb_id);
+
+   if (render_condition_enabled == false)
+      vrend_pause_render_condition(ctx, false);
+}
+
 static void vrend_update_scissor_state(struct vrend_sub_context *sub_ctx)
 {
    struct pipe_scissor_state *ss;
@@ -12111,7 +12180,7 @@ static void vrend_renderer_fill_caps_v2(int gl_ver, int gles_ver,  union virgl_c
     * this value to avoid regressions when a guest with a new mesa version is
     * run on an old virgl host. Use it also to indicate non-cap fixes on the
     * host that help enable features in the guest. */
-   caps->v2.host_feature_check_version = 20;
+   caps->v2.host_feature_check_version = 21;
 
    /* Forward host GL_RENDERER to the guest. */
    strncpy(caps->v2.renderer, renderer, sizeof(caps->v2.renderer) - 1);
