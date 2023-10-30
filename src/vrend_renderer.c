@@ -1085,6 +1085,7 @@ static const char *vrend_ctx_error_strings[] = {
    [VIRGL_ERROR_CTX_CUBE_MAP_FACE_OUT_OF_RANGE] = "Cube map face out of range:",
    [VIRGL_ERROR_CTX_BLIT_AREA_OUT_OF_RANGE] = "Blit z-slices out of range;",
    [VIRGL_ERROR_CTX_SSBO_BINDING_RANGE] = "SSBO binding out of range for resource",
+   [VIRGL_ERROR_CTX_RESOURCE_OUT_OF_RANGE] = "Resource copy out of range for resource",
 };
 
 void vrend_report_context_error_internal(const char *fname, struct vrend_context *ctx,
@@ -10326,6 +10327,51 @@ vrend_copy_sub_image(struct vrend_resource* src_res, struct vrend_resource * dst
    }
 }
 
+static bool resource_dest_contains_box(struct vrend_resource *src_res,
+                                       struct vrend_resource *dst_res,
+                                       uint32_t dst_level,
+                                       uint32_t dstx,
+                                       uint32_t dsty,
+                                       uint32_t dstz,
+                                       const struct pipe_box *src_box)
+{
+   enum pipe_format src_format;
+   enum pipe_format dst_format;
+   struct pipe_box dst_box = *src_box;
+   unsigned src_bw, dst_bw, src_bh, dst_bh;
+
+   src_format = src_res->base.format;
+   dst_format = dst_res->base.format;
+
+   /* init dst box */
+   dst_box.x = dstx;
+   dst_box.y = dsty;
+   dst_box.z = dstz;
+
+   src_bw = util_format_get_blockwidth(src_format);
+   src_bh = util_format_get_blockheight(src_format);
+   dst_bw = util_format_get_blockwidth(dst_format);
+   dst_bh = util_format_get_blockheight(dst_format);
+
+   /* Note: all box positions and sizes are in pixels */
+   if (src_bw > 1 && dst_bw == 1) {
+      /* Copy from compressed to uncompressed.
+       * Shrink dest box by the src block size.
+       */
+      dst_box.width /= src_bw;
+      dst_box.height /= src_bh;
+   }
+   else if (src_bw == 1 && dst_bw > 1) {
+      /* Copy from uncompressed to compressed.
+       * Expand dest box by the dest block size.
+       */
+      dst_box.width *= dst_bw;
+      dst_box.height *= dst_bh;
+   }
+
+   return resource_contains_box(dst_res, &dst_box, dst_level);
+}
+
 void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
                                          uint32_t dst_handle, uint32_t dst_level,
                                          uint32_t dstx, uint32_t dsty, uint32_t dstz,
@@ -10354,6 +10400,12 @@ void vrend_renderer_resource_copy_region(struct vrend_context *ctx,
 
    if (!resource_contains_box(src_res, src_box, src_level)) {
       vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_CMD_BUFFER, src_handle);
+      return;
+   }
+
+   if (!resource_dest_contains_box(src_res, dst_res, dst_level,
+                                   dstx, dsty, dstz, src_box)) {
+      vrend_report_context_error(ctx, VIRGL_ERROR_CTX_RESOURCE_OUT_OF_RANGE, dst_handle);
       return;
    }
 
