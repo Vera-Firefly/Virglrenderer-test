@@ -59,7 +59,7 @@ proxy_get_capset(uint32_t set, void *caps)
 {
    switch (set) {
    case VIRGL_RENDERER_CAPSET_VENUS:
-      return vkr_get_capset(caps);
+      return vkr_get_capset(caps, proxy_renderer.flags);
    default:
       break;
    }

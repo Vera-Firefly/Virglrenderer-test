@@ -27,7 +27,7 @@ struct vkr_renderer_callbacks {
 };
 
 size_t
-vkr_get_capset(void *capset);
+vkr_get_capset(void *capset, uint32_t flags);
 
 bool
 vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs);

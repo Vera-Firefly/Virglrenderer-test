@@ -164,6 +164,9 @@ struct virgl_renderer_callbacks {
 #define VIRGL_RENDERER_D3D11_SHARE_TEXTURE (1 << 12)
 #define VIRGL_RENDERER_COMPAT_PROFILE (1 << 13)
 
+/* Blob allocations must be done by guest from dedicated heap (Host visible memory). */
+#define VIRGL_RENDERER_USE_GUEST_VRAM (1 << 14)
+
 VIRGL_EXPORT int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks *cb);
 VIRGL_EXPORT void virgl_renderer_poll(void); /* force fences */
 

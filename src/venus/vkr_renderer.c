@@ -20,7 +20,7 @@ struct vkr_renderer_state {
 struct vkr_renderer_state vkr_state;
 
 size_t
-vkr_get_capset(void *capset)
+vkr_get_capset(void *capset, uint32_t flags)
 {
    struct virgl_renderer_capset_venus *c = capset;
    if (c) {
@@ -49,6 +49,8 @@ vkr_get_capset(void *capset)
 
       c->allow_vk_wait_syncs = 1;
       c->supports_multiple_timelines = 1;
+
+      c->use_guest_vram = (bool)(flags & VIRGL_RENDERER_USE_GUEST_VRAM);
    }
 
    return sizeof(*c);
