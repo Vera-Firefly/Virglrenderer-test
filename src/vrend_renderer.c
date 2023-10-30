@@ -4637,56 +4637,26 @@ vrend_color_encode_as_srgb(float color) {
       : 1.055f * powf(color, (1.f / 2.4f)) - 0.055f;
 }
 
-void vrend_clear(struct vrend_context *ctx,
-                 unsigned buffers,
-                 const union pipe_color_union *color,
-                 double depth, unsigned stencil)
-{
-   GLbitfield bits = 0;
-   struct vrend_sub_context *sub_ctx = ctx->sub;
-
-   if (ctx->in_error)
-      return;
-
-   if (ctx->ctx_switch_pending)
-      vrend_finish_context_switch(ctx);
-
-   vrend_update_frontface_state(sub_ctx);
-   if (sub_ctx->stencil_state_dirty)
-      vrend_update_stencil_state(sub_ctx);
-   if (sub_ctx->scissor_state_dirty)
-      vrend_update_scissor_state(sub_ctx);
-   if (sub_ctx->viewport_state_dirty)
-      vrend_update_viewport_state(sub_ctx);
-
-   vrend_use_program(ctx->sub, NULL);
-
-   glDisable(GL_SCISSOR_TEST);
-
-   float colorf[4];
-   memcpy(colorf, color->f, sizeof(colorf));
-
-   {
-      struct vrend_surface *surf = sub_ctx->surf[0];
-      if (sub_ctx->nr_cbufs && surf &&
-          util_format_is_srgb(surf->format) &&
-          !vrend_resource_supports_view(surf->texture, surf->format)) {
-         VREND_DEBUG(dbg_tex, ctx,
-                     "manually converting glClearColor from linear->srgb colorspace for EGL-backed framebuffer color attachment"
-                     " (surface format is %s; resource format is %s)\n",
-                     util_format_name(surf->format),
-                     util_format_name(surf->texture->base.format));
-         for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
-            colorf[i] = vrend_color_encode_as_srgb(colorf[i]);
-      }
+static void vrend_clear_prepare(struct vrend_sub_context *sub_ctx,
+                                struct vrend_surface *surf, unsigned buffers,
+                                float *colorf, double depth, unsigned stencil) {
+   if (surf && util_format_is_srgb(surf->format) &&
+       !vrend_resource_supports_view(surf->texture, surf->format)) {
+      VREND_DEBUG(dbg_tex, sub_ctx->parent,
+                  "manually converting glClearColor from linear->srgb colorspace for EGL-backed framebuffer color attachment"
+                  " (surface format is %s; resource format is %s)\n",
+                  util_format_name(surf->format),
+                  util_format_name(surf->texture->base.format));
+      for (int i = 0; i < 3; ++i) // i < 3: don't convert alpha channel
+         colorf[i] = vrend_color_encode_as_srgb(colorf[i]);
    }
 
    if (buffers & PIPE_CLEAR_COLOR) {
-      if (sub_ctx->nr_cbufs && sub_ctx->surf[0] && vrend_format_is_emulated_alpha(sub_ctx->surf[0]->format)) {
+      if (surf && vrend_format_is_emulated_alpha(surf->format)) {
          glClearColor(colorf[3], 0.0, 0.0, 0.0);
-      } else if (sub_ctx->nr_cbufs && sub_ctx->surf[0] &&
-                 vrend_resource_needs_redblue_swizzle(sub_ctx->surf[0]->texture, sub_ctx->surf[0]->format)) {
-         VREND_DEBUG(dbg_bgra, ctx, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
+      } else if (surf && 
+                 vrend_resource_needs_redblue_swizzle(surf->texture, surf->format)) {
+         VREND_DEBUG(dbg_bgra, sub_ctx->parent, "swizzling glClearColor() since rendering surface is an externally-stored BGR* resource\n");
          glClearColor(colorf[2], colorf[1], colorf[0], colorf[3]);
       } else {
          glClearColor(colorf[0], colorf[1], colorf[2], colorf[3]);
@@ -4710,7 +4680,7 @@ void vrend_clear(struct vrend_context *ctx,
       if (vrend_state.use_gles) {
          if (0.0f < depth && depth > 1.0f) {
             // Only warn, it is clamped by the function.
-            report_gles_warn(ctx, GLES_WARN_DEPTH_CLEAR);
+            report_gles_warn(sub_ctx->parent, GLES_WARN_DEPTH_CLEAR);
          }
          glClearDepthf(depth);
       } else {
@@ -4724,41 +4694,11 @@ void vrend_clear(struct vrend_context *ctx,
    }
 
    if (sub_ctx->hw_rs_state.rasterizer_discard)
-       glDisable(GL_RASTERIZER_DISCARD);
+      glDisable(GL_RASTERIZER_DISCARD);
+}
 
-   if (buffers & PIPE_CLEAR_COLOR) {
-      uint32_t mask = 0;
-      int i;
-      for (i = 0; i < sub_ctx->nr_cbufs; i++) {
-         if (sub_ctx->surf[i])
-            mask |= (1 << i);
-      }
-      if (mask != (buffers >> 2)) {
-         mask = buffers >> 2;
-         while (mask) {
-            i = u_bit_scan(&mask);
-            if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] && util_format_is_pure_uint(sub_ctx->surf[i] && sub_ctx->surf[i]->format))
-               glClearBufferuiv(GL_COLOR,
-                                i, (GLuint *)colorf);
-            else if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] && util_format_is_pure_sint(sub_ctx->surf[i] && sub_ctx->surf[i]->format))
-               glClearBufferiv(GL_COLOR,
-                                i, (GLint *)colorf);
-            else
-               glClearBufferfv(GL_COLOR,
-                                i, (GLfloat *)colorf);
-         }
-      }
-      else
-         bits |= GL_COLOR_BUFFER_BIT;
-   }
-   if (buffers & PIPE_CLEAR_DEPTH)
-      bits |= GL_DEPTH_BUFFER_BIT;
-   if (buffers & PIPE_CLEAR_STENCIL)
-      bits |= GL_STENCIL_BUFFER_BIT;
-
-   if (bits)
-      glClear(bits);
-
+static void vrend_clear_finish(struct vrend_sub_context *sub_ctx,
+                               unsigned buffers) {
    /* Is it really necessary to restore the old states? The only reason we
     * get here is because the guest cleared all those states but gallium
     * didn't forward them before calling the clear command
@@ -4796,10 +4736,78 @@ void vrend_clear(struct vrend_context *ctx,
                      sub_ctx->hw_blend_state.rt[0].colormask & PIPE_MASK_A ? GL_TRUE : GL_FALSE);
       }
    }
+
+   /* Restore previous scissor state */
    if (sub_ctx->hw_rs_state.scissor)
       glEnable(GL_SCISSOR_TEST);
    else
       glDisable(GL_SCISSOR_TEST);
+}
+
+void vrend_clear(struct vrend_context *ctx, unsigned buffers,
+                 const union pipe_color_union *color, double depth,
+                 unsigned stencil) {
+   GLbitfield bits = 0;
+   struct vrend_sub_context *sub_ctx = ctx->sub;
+
+   if (ctx->in_error)
+      return;
+
+   if (ctx->ctx_switch_pending)
+      vrend_finish_context_switch(ctx);
+
+   vrend_update_frontface_state(sub_ctx);
+   if (sub_ctx->stencil_state_dirty)
+      vrend_update_stencil_state(sub_ctx);
+   if (sub_ctx->scissor_state_dirty)
+      vrend_update_scissor_state(sub_ctx);
+   if (sub_ctx->viewport_state_dirty)
+      vrend_update_viewport_state(sub_ctx);
+
+   vrend_use_program(ctx->sub, NULL);
+
+   glDisable(GL_SCISSOR_TEST);
+
+   float colorf[4];
+   memcpy(colorf, color->f, sizeof(colorf));
+
+   vrend_clear_prepare(sub_ctx, sub_ctx->nr_cbufs ? sub_ctx->surf[0] : NULL,
+                       buffers, colorf, depth, stencil);
+
+   if (buffers & PIPE_CLEAR_COLOR) {
+      uint32_t mask = 0;
+      int i;
+      for (i = 0; i < sub_ctx->nr_cbufs; i++) {
+         if (sub_ctx->surf[i])
+            mask |= (1 << i);
+      }
+      if (mask != (buffers >> 2)) {
+         mask = buffers >> 2;
+         while (mask) {
+            i = u_bit_scan(&mask);
+            if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] &&
+                util_format_is_pure_uint(sub_ctx->surf[i] &&
+                                         sub_ctx->surf[i]->format))
+                glClearBufferuiv(GL_COLOR, i, (GLuint *)colorf);
+            else if (i < PIPE_MAX_COLOR_BUFS && sub_ctx->surf[i] &&
+                     util_format_is_pure_sint(sub_ctx->surf[i] &&
+                                              sub_ctx->surf[i]->format))
+                glClearBufferiv(GL_COLOR, i, (GLint *)colorf);
+            else
+                glClearBufferfv(GL_COLOR, i, (GLfloat *)colorf);
+         }
+      } else
+         bits |= GL_COLOR_BUFFER_BIT;
+   }
+   if (buffers & PIPE_CLEAR_DEPTH)
+      bits |= GL_DEPTH_BUFFER_BIT;
+   if (buffers & PIPE_CLEAR_STENCIL)
+      bits |= GL_STENCIL_BUFFER_BIT;
+
+   if (bits)
+      glClear(bits);
+
+   vrend_clear_finish(sub_ctx, buffers);
 }
 
 int vrend_clear_texture(struct vrend_context* ctx,
