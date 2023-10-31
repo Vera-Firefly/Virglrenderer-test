@@ -238,6 +238,27 @@ vkr_context_import_resource_internal(struct vkr_context *ctx,
 }
 
 static bool
+vkr_context_import_resource_from_shm(struct vkr_context *ctx,
+                                     uint32_t res_id,
+                                     uint64_t blob_size,
+                                     int fd)
+{
+   assert(!vkr_context_get_resource(ctx, res_id));
+
+   void *mmap_ptr = mmap(NULL, blob_size, PROT_WRITE | PROT_READ, MAP_SHARED, fd, 0);
+   if (mmap_ptr == MAP_FAILED)
+      return false;
+
+   if (!vkr_context_import_resource_internal(ctx, res_id, blob_size,
+                                             VIRGL_RESOURCE_FD_SHM, -1, mmap_ptr)) {
+      munmap(mmap_ptr, blob_size);
+      return false;
+   }
+
+   return true;
+}
+
+static bool
 vkr_context_create_resource_from_shm(struct vkr_context *ctx,
                                      uint32_t res_id,
                                      uint64_t blob_size,
@@ -340,6 +361,9 @@ vkr_context_import_resource(struct vkr_context *ctx,
                             int fd,
                             uint64_t size)
 {
+   if (fd_type == VIRGL_RESOURCE_FD_SHM)
+      return vkr_context_import_resource_from_shm(ctx, res_id, size, fd);
+
    return vkr_context_import_resource_internal(ctx, res_id, size, fd_type, fd, NULL);
 }
 

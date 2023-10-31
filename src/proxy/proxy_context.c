@@ -442,13 +442,13 @@ proxy_context_attach_resource(struct virgl_context *base, struct virgl_resource 
    if (proxy_context_resource_find(ctx, res_id))
       return;
 
-   /* The current render protocol only supports importing dma-buf or pipe resource that
-    * can be exported to dma-buf. A protocol change is needed when there exists use case
-    * for importing external Vulkan opaque resource. For shm, we only create with blob_id
-    * 0 via CREATE_RESOURCE above.
+   /* The current render protocol only supports importing dma-buf, shm or pipe resource
+    * that can be exported to dma-buf. A protocol change is needed when there exists use
+    * case for importing external Vulkan opaque resource.
     */
    if (res->fd_type != VIRGL_RESOURCE_FD_INVALID &&
-       res->fd_type != VIRGL_RESOURCE_FD_DMABUF) {
+       res->fd_type != VIRGL_RESOURCE_FD_DMABUF &&
+       res->fd_type != VIRGL_RESOURCE_FD_SHM) {
       proxy_log("failed to attach res %d with fd_type %d", res_id, res->fd_type);
       return;
    }
