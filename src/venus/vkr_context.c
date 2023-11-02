@@ -653,6 +653,12 @@ vkr_context_create(uint32_t ctx_id,
    if (VKR_DEBUG(VALIDATE))
       ctx->validate_level = VKR_CONTEXT_VALIDATE_FULL;
 
+#ifdef ENABLE_RENDER_SERVER_WORKER_THREAD
+   ctx->on_worker_thread = true;
+#else
+   ctx->on_worker_thread = false;
+#endif
+
    if (!vkr_context_wait_ring_init(ctx))
       goto err_ctx_wait_ring_init;
 

@@ -49,6 +49,9 @@ struct vkr_context {
    enum vkr_context_validate_level validate_level;
    bool validate_fatal;
 
+   /* true if ENABLE_RENDER_SERVER_WORKER_THREAD is defined */
+   bool on_worker_thread;
+
    mtx_t ring_mutex;
    struct list_head rings;
 
