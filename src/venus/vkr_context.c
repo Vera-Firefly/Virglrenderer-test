@@ -589,7 +589,7 @@ vkr_context_destroy(struct vkr_context *ctx)
       vkr_log("destroying context %d (%s) with a valid instance", ctx->ctx_id,
               vkr_context_get_name(ctx));
 
-      vkr_instance_destroy(ctx, ctx->instance);
+      vkr_instance_destroy(ctx, ctx->instance, false);
    }
 
    _mesa_hash_table_destroy(ctx->resource_table, vkr_context_free_resource);

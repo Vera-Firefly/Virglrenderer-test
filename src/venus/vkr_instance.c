@@ -224,7 +224,9 @@ vkr_dispatch_vkCreateInstance(struct vn_dispatch_context *dispatch,
 }
 
 void
-vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
+vkr_instance_destroy(struct vkr_context *ctx,
+                     struct vkr_instance *instance,
+                     bool destroy_vk)
 {
    for (uint32_t i = 0; i < instance->physical_device_count; i++) {
       struct vkr_physical_device *physical_dev = instance->physical_devices[i];
@@ -239,7 +241,8 @@ vkr_instance_destroy(struct vkr_context *ctx, struct vkr_instance *instance)
                                               instance->validation_messenger, NULL);
    }
 
-   vkDestroyInstance(instance->base.handle.instance, NULL);
+   if (destroy_vk || ctx->on_worker_thread)
+      vkDestroyInstance(instance->base.handle.instance, NULL);
 
    free(instance->physical_device_handles);
    free(instance->physical_devices);
@@ -259,7 +262,7 @@ vkr_dispatch_vkDestroyInstance(struct vn_dispatch_context *dispatch,
       return;
    }
 
-   vkr_instance_destroy(ctx, instance);
+   vkr_instance_destroy(ctx, instance, true);
 }
 
 void
