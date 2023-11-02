@@ -58,7 +58,7 @@ vkr_physical_device_destroy(struct vkr_context *ctx,
                             struct vkr_physical_device *physical_dev)
 {
    list_for_each_entry_safe (struct vkr_device, dev, &physical_dev->devices, base.track_head)
-      vkr_device_destroy(ctx, dev);
+      vkr_device_destroy(ctx, dev, false);
 
    free(physical_dev->extensions);
    free(physical_dev->queue_family_properties);

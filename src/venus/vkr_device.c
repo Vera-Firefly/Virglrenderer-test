@@ -299,7 +299,7 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 }
 
 void
-vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
+vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev, bool destroy_vk)
 {
    struct vn_device_proc_table *vk = &dev->proc_table;
    VkDevice device = dev->base.handle.device;
@@ -307,9 +307,12 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
    if (!list_is_empty(&dev->objects))
       vkr_log("destroying device with valid objects");
 
-   VkResult result = vk->DeviceWaitIdle(device);
-   if (result != VK_SUCCESS)
-      vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)result);
+   /* only wait if on workder thread to prepare for vk obj cleanup */
+   if (ctx->on_worker_thread) {
+      VkResult result = vk->DeviceWaitIdle(device);
+      if (result != VK_SUCCESS)
+         vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)result);
+   }
 
    if (!list_is_empty(&dev->objects)) {
       list_for_each_entry_safe (struct vkr_object, obj, &dev->objects, track_head)
@@ -326,7 +329,8 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
 
    mtx_destroy(&dev->free_sync_mutex);
 
-   vk->DestroyDevice(device, NULL);
+   if (destroy_vk || ctx->on_worker_thread)
+      vk->DestroyDevice(device, NULL);
 
    list_del(&dev->base.track_head);
 
@@ -344,7 +348,7 @@ vkr_dispatch_vkDestroyDevice(struct vn_dispatch_context *dispatch,
    if (!dev)
       return;
 
-   vkr_device_destroy(ctx, dev);
+   vkr_device_destroy(ctx, dev, true);
 }
 
 static void
