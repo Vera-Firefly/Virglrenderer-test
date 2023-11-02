@@ -203,82 +203,95 @@ vkr_device_object_destroy(struct vkr_context *ctx,
 
    assert(vkr_device_should_track_object(obj));
 
+   if (ctx->on_worker_thread) {
+      switch (obj->type) {
+      case VK_OBJECT_TYPE_SEMAPHORE:
+         vk->DestroySemaphore(device, obj->handle.semaphore, NULL);
+         break;
+      case VK_OBJECT_TYPE_FENCE:
+         vk->DestroyFence(device, obj->handle.fence, NULL);
+         break;
+      case VK_OBJECT_TYPE_DEVICE_MEMORY:
+         vk->FreeMemory(device, obj->handle.device_memory, NULL);
+         break;
+      case VK_OBJECT_TYPE_BUFFER:
+         vk->DestroyBuffer(device, obj->handle.buffer, NULL);
+         break;
+      case VK_OBJECT_TYPE_IMAGE:
+         vk->DestroyImage(device, obj->handle.image, NULL);
+         break;
+      case VK_OBJECT_TYPE_EVENT:
+         vk->DestroyEvent(device, obj->handle.event, NULL);
+         break;
+      case VK_OBJECT_TYPE_QUERY_POOL:
+         vk->DestroyQueryPool(device, obj->handle.query_pool, NULL);
+         break;
+      case VK_OBJECT_TYPE_BUFFER_VIEW:
+         vk->DestroyBufferView(device, obj->handle.buffer_view, NULL);
+         break;
+      case VK_OBJECT_TYPE_IMAGE_VIEW:
+         vk->DestroyImageView(device, obj->handle.image_view, NULL);
+         break;
+      case VK_OBJECT_TYPE_SHADER_MODULE:
+         vk->DestroyShaderModule(device, obj->handle.shader_module, NULL);
+         break;
+      case VK_OBJECT_TYPE_PIPELINE_CACHE:
+         vk->DestroyPipelineCache(device, obj->handle.pipeline_cache, NULL);
+         break;
+      case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
+         vk->DestroyPipelineLayout(device, obj->handle.pipeline_layout, NULL);
+         break;
+      case VK_OBJECT_TYPE_RENDER_PASS:
+         vk->DestroyRenderPass(device, obj->handle.render_pass, NULL);
+         break;
+      case VK_OBJECT_TYPE_PIPELINE:
+         vk->DestroyPipeline(device, obj->handle.pipeline, NULL);
+         break;
+      case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
+         vk->DestroyDescriptorSetLayout(device, obj->handle.descriptor_set_layout, NULL);
+         break;
+      case VK_OBJECT_TYPE_SAMPLER:
+         vk->DestroySampler(device, obj->handle.sampler, NULL);
+         break;
+      case VK_OBJECT_TYPE_DESCRIPTOR_POOL:
+         vk->DestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
+         break;
+      case VK_OBJECT_TYPE_FRAMEBUFFER:
+         vk->DestroyFramebuffer(device, obj->handle.framebuffer, NULL);
+         break;
+      case VK_OBJECT_TYPE_COMMAND_POOL:
+         vk->DestroyCommandPool(device, obj->handle.command_pool, NULL);
+         break;
+      case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
+         vk->DestroySamplerYcbcrConversion(device, obj->handle.sampler_ycbcr_conversion,
+                                           NULL);
+         break;
+      case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
+         vk->DestroyDescriptorUpdateTemplate(
+            device, obj->handle.descriptor_update_template, NULL);
+         break;
+      default:
+         vkr_log("Unhandled vkr_object(%p) with VkObjectType(%u)", obj,
+                 (uint32_t)obj->type);
+         assert(false);
+         break;
+      };
+   }
+
+   /* always cleanup vkr allocs */
    switch (obj->type) {
-   case VK_OBJECT_TYPE_SEMAPHORE:
-      vk->DestroySemaphore(device, obj->handle.semaphore, NULL);
-      break;
-   case VK_OBJECT_TYPE_FENCE:
-      vk->DestroyFence(device, obj->handle.fence, NULL);
-      break;
    case VK_OBJECT_TYPE_DEVICE_MEMORY:
-      vk->FreeMemory(device, obj->handle.device_memory, NULL);
       vkr_device_memory_release((struct vkr_device_memory *)obj);
       break;
-   case VK_OBJECT_TYPE_BUFFER:
-      vk->DestroyBuffer(device, obj->handle.buffer, NULL);
-      break;
-   case VK_OBJECT_TYPE_IMAGE:
-      vk->DestroyImage(device, obj->handle.image, NULL);
-      break;
-   case VK_OBJECT_TYPE_EVENT:
-      vk->DestroyEvent(device, obj->handle.event, NULL);
-      break;
-   case VK_OBJECT_TYPE_QUERY_POOL:
-      vk->DestroyQueryPool(device, obj->handle.query_pool, NULL);
-      break;
-   case VK_OBJECT_TYPE_BUFFER_VIEW:
-      vk->DestroyBufferView(device, obj->handle.buffer_view, NULL);
-      break;
-   case VK_OBJECT_TYPE_IMAGE_VIEW:
-      vk->DestroyImageView(device, obj->handle.image_view, NULL);
-      break;
-   case VK_OBJECT_TYPE_SHADER_MODULE:
-      vk->DestroyShaderModule(device, obj->handle.shader_module, NULL);
-      break;
-   case VK_OBJECT_TYPE_PIPELINE_CACHE:
-      vk->DestroyPipelineCache(device, obj->handle.pipeline_cache, NULL);
-      break;
-   case VK_OBJECT_TYPE_PIPELINE_LAYOUT:
-      vk->DestroyPipelineLayout(device, obj->handle.pipeline_layout, NULL);
-      break;
-   case VK_OBJECT_TYPE_RENDER_PASS:
-      vk->DestroyRenderPass(device, obj->handle.render_pass, NULL);
-      break;
-   case VK_OBJECT_TYPE_PIPELINE:
-      vk->DestroyPipeline(device, obj->handle.pipeline, NULL);
-      break;
-   case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT:
-      vk->DestroyDescriptorSetLayout(device, obj->handle.descriptor_set_layout, NULL);
-      break;
-   case VK_OBJECT_TYPE_SAMPLER:
-      vk->DestroySampler(device, obj->handle.sampler, NULL);
-      break;
-   case VK_OBJECT_TYPE_DESCRIPTOR_POOL: {
+   case VK_OBJECT_TYPE_DESCRIPTOR_POOL:
       /* Destroying VkDescriptorPool frees all VkDescriptorSet allocated inside. */
-      vk->DestroyDescriptorPool(device, obj->handle.descriptor_pool, NULL);
       vkr_descriptor_pool_release(ctx, (struct vkr_descriptor_pool *)obj);
       break;
-   }
-   case VK_OBJECT_TYPE_FRAMEBUFFER:
-      vk->DestroyFramebuffer(device, obj->handle.framebuffer, NULL);
-      break;
-   case VK_OBJECT_TYPE_COMMAND_POOL: {
+   case VK_OBJECT_TYPE_COMMAND_POOL:
       /* Destroying VkCommandPool frees all VkCommandBuffer allocated inside. */
-      vk->DestroyCommandPool(device, obj->handle.command_pool, NULL);
       vkr_command_pool_release(ctx, (struct vkr_command_pool *)obj);
       break;
-   }
-   case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION:
-      vk->DestroySamplerYcbcrConversion(device, obj->handle.sampler_ycbcr_conversion,
-                                        NULL);
-      break;
-   case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
-      vk->DestroyDescriptorUpdateTemplate(device, obj->handle.descriptor_update_template,
-                                          NULL);
-      break;
    default:
-      vkr_log("Unhandled vkr_object(%p) with VkObjectType(%u)", obj, (uint32_t)obj->type);
-      assert(false);
       break;
    };
 
