@@ -365,7 +365,7 @@ void vrend_set_index_buffer(struct vrend_context *ctx,
                             uint32_t res_handle,
                             uint32_t index_size,
                             uint32_t offset);
-void vrend_set_single_image_view(struct vrend_context *ctx,
+int vrend_set_single_image_view(struct vrend_context *ctx,
                                  uint32_t shader_type,
                                  uint32_t index,
                                  uint32_t format, uint32_t access,

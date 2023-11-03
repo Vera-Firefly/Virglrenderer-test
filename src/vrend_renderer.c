@@ -3758,11 +3758,11 @@ void vrend_set_num_sampler_views(struct vrend_context *ctx,
    ctx->sub->views[shader_type].num_views = last_slot;
 }
 
-void vrend_set_single_image_view(struct vrend_context *ctx,
+int vrend_set_single_image_view(struct vrend_context *ctx,
                                  uint32_t shader_type,
                                  uint32_t index,
                                  uint32_t format, uint32_t access,
-                                 uint32_t layer_offset, uint32_t level_size,
+                                 uint32_t layers_or_offset, uint32_t level_or_size,
                                  uint32_t handle)
 {
    struct vrend_image_view *iview = &ctx->sub->image_views[shader_type][index];
@@ -3770,30 +3770,46 @@ void vrend_set_single_image_view(struct vrend_context *ctx,
 
    if (handle) {
       if (!has_feature(feat_images))
-         return;
+         return EINVAL;
 
       if (unlikely(format >= ARRAY_SIZE(tex_conv_table))) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_FORMAT, format);
-         return;
+         return EINVAL;
       }
 
       res = vrend_renderer_ctx_res_lookup(ctx, handle);
       if (!res || !res->gl_id) {
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_RESOURCE, handle);
-         return;
+         return EINVAL;
       }
+
+      if (has_bit(res->storage_bits, VREND_STORAGE_GL_TEXTURE)) {
+         uint16_t first_layer = layers_or_offset & 0xffff;
+         uint16_t last_layer = (layers_or_offset >> 16) & 0xffff;
+         if (last_layer - first_layer + 1 == 0)
+            return EINVAL;
+
+         iview->u.tex.last_layer = last_layer;
+         iview->u.tex.first_layer = first_layer;
+         iview->u.tex.level = level_or_size;
+      } else {
+         iview->u.buf.offset = layers_or_offset;
+         iview->u.buf.size = level_or_size;
+      }
+
+
       vrend_resource_reference(&iview->texture, res);
       iview->vformat = format;
       iview->format = tex_conv_table[format].internalformat;
       iview->access = access;
-      iview->u.buf.offset = layer_offset;
-      iview->u.buf.size = level_size;
       ctx->sub->images_used_mask[shader_type] |= (1u << index);
    } else {
       vrend_resource_reference(&iview->texture, NULL);
       iview->format = 0;
       ctx->sub->images_used_mask[shader_type] &= ~(1u << index);
    }
+
+   return 0;
 }
 
 void vrend_set_single_ssbo(struct vrend_context *ctx,
@@ -5450,10 +5466,6 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
 
          /* Do we need a texture view? */
          uint32_t num_layers = iview->u.tex.last_layer - first_layer + 1;
-         if (num_layers == 0) {
-            virgl_error("%s: Zero layers requested\n", __func__);
-            return;
-         }
 
          if (layered &&
              (iview->u.tex.first_layer != 0 ||

@@ -442,12 +442,12 @@ START_TEST(virgl_test_render_simple)
         virgl_encoder_draw_vbo(&ctx, &info);
     }
 
-    testvirgl_ctx_send_cmdbuf(&ctx);
+    ret = testvirgl_ctx_send_cmdbuf(&ctx);
+    ck_assert_int_eq(ret, 0);
 
     /* create a fence */
     testvirgl_reset_fence();
-    ret = virgl_renderer_create_fence(1, ctx.ctx_id);
-    ck_assert_int_eq(ret, 0);
+    virgl_renderer_create_fence(1, ctx.ctx_id);
 
     do {
         int fence;
@@ -489,6 +489,60 @@ START_TEST(virgl_test_render_simple)
     testvirgl_destroy_backed_res(&res);
 
     testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+END_TEST
+
+static void virgl_test_bind_images_shader(int first_layer, int last_layer, int expected_error)
+{
+    struct virgl_context ctx;
+    struct virgl_resource res;
+    struct virgl_surface surf;
+    struct pipe_framebuffer_state fb_state;
+    int ret;
+    int tw = 300, th = 300;
+
+    ret = testvirgl_init_ctx_cmdbuf(&ctx);
+    ck_assert_int_eq(ret, 0);
+
+    /* init and create simple 2D resource */
+    ret = testvirgl_create_backed_simple_2d_res(&res, 1, tw, th);
+    ck_assert_int_eq(ret, 0);
+
+    /* attach resource to context */
+    virgl_renderer_ctx_attach_resource(ctx.ctx_id, res.handle);
+
+    /* set the framebuffer state */
+    fb_state.nr_cbufs = 1;
+    fb_state.zsbuf = NULL;
+    fb_state.cbufs[0] = &surf.base;
+    virgl_encoder_set_framebuffer_state(&ctx, &fb_state);
+
+    /* Create shader images */
+    struct vrend_image_view images[1] = {0};
+    images[0].u.tex.first_layer = first_layer;
+    images[0].u.tex.last_layer = last_layer;
+    virgl_encoder_set_shader_images(&ctx, PIPE_SHADER_FRAGMENT, 1, 1, images, res.handle);
+
+    ret = testvirgl_ctx_send_cmdbuf(&ctx);
+    ck_assert_int_eq(ret, expected_error);
+
+    /* cleanup */
+    virgl_renderer_ctx_detach_resource(ctx.ctx_id, res.handle);
+
+    testvirgl_destroy_backed_res(&res);
+
+    testvirgl_fini_ctx_cmdbuf(&ctx);
+}
+
+START_TEST(virgl_test_bind_images_shader_pass)
+{
+    virgl_test_bind_images_shader(0, 0, 0);
+}
+END_TEST
+
+START_TEST(virgl_test_bind_images_shader_fail_layers)
+{
+    virgl_test_bind_images_shader(1, 0, EINVAL);
 }
 END_TEST
 
@@ -1867,6 +1921,8 @@ static Suite *virgl_init_suite(void)
   tcase_add_test(tc_core, virgl_test_draw_vbo_pass);
   tcase_add_test(tc_core, virgl_test_draw_vbo_fail_indirect_missing_handle);
   tcase_add_test(tc_core, virgl_test_draw_vbo_fail_not_recoverable);
+  tcase_add_test(tc_core, virgl_test_bind_images_shader_pass);
+  tcase_add_test(tc_core, virgl_test_bind_images_shader_fail_layers);
 
   suite_add_tcase(s, tc_core);
   return s;

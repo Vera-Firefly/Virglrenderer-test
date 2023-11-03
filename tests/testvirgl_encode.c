@@ -773,6 +773,28 @@ int virgl_encoder_set_uniform_buffer(struct virgl_context *ctx,
    return 0;
 }
 
+int virgl_encoder_set_shader_images(struct virgl_context *ctx,
+                                     uint32_t shader_type,
+                                     uint32_t start_slot,
+                                     uint32_t num_images,
+                                    struct vrend_image_view *images,
+                                    uint32_t handle)
+{
+   virgl_encoder_write_cmd_dword(ctx, VIRGL_CMD0(VIRGL_CCMD_SET_SHADER_IMAGES, 0, VIRGL_SET_SHADER_IMAGE_SIZE(num_images)));
+   virgl_encoder_write_dword(ctx->cbuf, shader_type);
+   virgl_encoder_write_dword(ctx->cbuf, start_slot);
+
+   for (uint32_t i = 0; i < num_images; i++) {
+      virgl_encoder_write_dword(ctx->cbuf, images[i].format);
+      virgl_encoder_write_dword(ctx->cbuf, images[i].access);
+      virgl_encoder_write_dword(ctx->cbuf, images[i].u.buf.offset);
+      virgl_encoder_write_dword(ctx->cbuf, images[i].u.buf.size);
+
+      virgl_encoder_write_dword(ctx->cbuf, handle);
+   }
+
+   return 0;
+}
 
 int virgl_encoder_set_stencil_ref(struct virgl_context *ctx,
                                  const struct pipe_stencil_ref *ref)

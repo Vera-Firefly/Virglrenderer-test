@@ -1374,8 +1374,10 @@ static int vrend_decode_set_shader_images(struct vrend_context *ctx, const uint3
       uint32_t layer_offset = get_buf_entry(buf, VIRGL_SET_SHADER_IMAGE_LAYER_OFFSET(i));
       uint32_t level_size = get_buf_entry(buf, VIRGL_SET_SHADER_IMAGE_LEVEL_SIZE(i));
       uint32_t handle = get_buf_entry(buf, VIRGL_SET_SHADER_IMAGE_RES_HANDLE(i));
-      vrend_set_single_image_view(ctx, shader_type, start_slot + i, format, access,
+      int ret = vrend_set_single_image_view(ctx, shader_type, start_slot + i, format, access,
                                   layer_offset, level_size, handle);
+      if (ret)
+         return ret;
    }
    return 0;
 }

@@ -211,6 +211,34 @@ int virgl_encoder_set_uniform_buffer(struct virgl_context *ctx,
                                      uint32_t offset,
                                      uint32_t length,
                                      struct virgl_resource *res);
+
+struct vrend_image_view {
+   uint id;
+   int access;
+   int format;
+   uint32_t vformat;
+   union {
+      struct {
+          unsigned first_layer:16;     /**< first layer to use for array textures */
+          unsigned last_layer:16;      /**< last layer to use for array textures */
+          unsigned level:8;            /**< mipmap level to use */
+      } tex;
+      struct {
+          unsigned offset;   /**< offset in bytes */
+          unsigned size;     /**< size of the accessible sub-range in bytes */
+      } buf;
+   } u;
+   struct vrend_resource *texture;
+   uint view_id;
+};
+
+
+
+int virgl_encoder_set_shader_images(struct virgl_context *ctx,
+                                    uint32_t shader_type,
+                                    uint32_t start_slot,
+                                    uint32_t num_images,
+                                    struct vrend_image_view *images, uint32_t handle);
 int virgl_encode_dsa_state(struct virgl_context *ctx,
                           uint32_t handle,
                           const struct pipe_depth_stencil_alpha_state *dsa_state);
