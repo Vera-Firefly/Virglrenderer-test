@@ -7015,7 +7015,7 @@ void vrend_bind_sampler_states(struct vrend_context *ctx,
       if (state)
          state->sub_ctx = ctx->sub;
       ctx->sub->sampler_state[shader_type][start_slot + i] = state;
-      ctx->sub->sampler_views_dirty[shader_type] |= (1 << (start_slot + i));
+      ctx->sub->sampler_views_dirty[shader_type] |= (1u << (start_slot + i));
    }
 }
 

@@ -211,12 +211,12 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                /* check for indirect register reads */
                if (src->Register.Indirect) {
-                  info->indirect_files |= (1 << src->Register.File);
-                  info->indirect_files_read |= (1 << src->Register.File);
+                  info->indirect_files |= (1u << src->Register.File);
+                  info->indirect_files_read |= (1u << src->Register.File);
                }
 
                if (src->Register.Dimension && src->Dimension.Indirect) {
-                  info->dimension_indirect_files |= (1 << src->Register.File);
+                  info->dimension_indirect_files |= (1u << src->Register.File);
                }
                /* MSAA samplers */
                if (src->Register.File == TGSI_FILE_SAMPLER) {
@@ -241,11 +241,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             for (i = 0; i < fullinst->Instruction.NumDstRegs; i++) {
                const struct tgsi_full_dst_register *dst = &fullinst->Dst[i];
                if (dst->Register.Indirect) {
-                  info->indirect_files |= (1 << dst->Register.File);
-                  info->indirect_files_written |= (1 << dst->Register.File);
+                  info->indirect_files |= (1u << dst->Register.File);
+                  info->indirect_files_written |= (1u << dst->Register.File);
                }
                if (dst->Register.Dimension && dst->Dimension.Indirect)
-                  info->dimension_indirect_files |= (1 << dst->Register.File);
+                  info->dimension_indirect_files |= (1u << dst->Register.File);
             }
 
             info->num_instructions++;
@@ -298,7 +298,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   fulldecl->Semantic.Index + (reg - fulldecl->Range.First);
 
                /* only first 32 regs will appear in this bitfield */
-               info->file_mask[file] |= (1 << reg);
+               info->file_mask[file] |= 1u << reg;
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
@@ -435,7 +435,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
 
                   if (semName == TGSI_SEMANTIC_COLOR)
-                     info->colors_written |= 1 << semIndex;
+                     info->colors_written |= 1u << semIndex;
 
                   if (procType == TGSI_PROCESSOR_VERTEX ||
                       procType == TGSI_PROCESSOR_GEOMETRY ||
@@ -470,7 +470,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      }
                   }
                } else if (file == TGSI_FILE_SAMPLER) {
-                  info->samplers_declared |= 1 << reg;
+                  info->samplers_declared |= 1u << reg;
                }
             }
          }
@@ -481,7 +481,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             unsigned reg = info->immediate_count++;
             unsigned file = TGSI_FILE_IMMEDIATE;
 
-            info->file_mask[file] |= (1 << reg);
+            info->file_mask[file] |= (1u << reg);
             info->file_count[file]++;
             info->file_max[file] = MAX2(info->file_max[file], (int)reg);
          }
@@ -504,11 +504,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             switch (name) {
             case TGSI_PROPERTY_NUM_CLIPDIST_ENABLED:
                info->num_written_clipdistance = value;
-               info->clipdist_writemask |= (1 << value) - 1;
+               info->clipdist_writemask |= (1u << value) - 1;
                break;
             case TGSI_PROPERTY_NUM_CULLDIST_ENABLED:
                info->num_written_culldistance = value;
-               info->culldist_writemask |= (1 << value) - 1;
+               info->culldist_writemask |= (1u << value) - 1;
                break;
             }
          }
@@ -535,7 +535,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
       info->file_max[TGSI_FILE_INPUT] =
             MAX2(info->file_max[TGSI_FILE_INPUT], num_verts - 1);
       for (j = 0; j < num_verts; ++j) {
-         info->file_mask[TGSI_FILE_INPUT] |= (1 << j);
+         info->file_mask[TGSI_FILE_INPUT] |= (1u << j);
       }
    }
 
