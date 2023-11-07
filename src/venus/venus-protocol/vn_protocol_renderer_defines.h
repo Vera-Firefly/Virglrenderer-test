@@ -347,6 +347,27 @@ typedef enum VkCommandTypeEXT {
     VK_COMMAND_TYPE_vkCmdSetColorWriteEnableEXT_EXT = 254,
     VK_COMMAND_TYPE_vkCmdDrawMultiEXT_EXT = 247,
     VK_COMMAND_TYPE_vkCmdDrawMultiIndexedEXT_EXT = 248,
+    VK_COMMAND_TYPE_vkCmdSetTessellationDomainOriginEXT_EXT = 256,
+    VK_COMMAND_TYPE_vkCmdSetDepthClampEnableEXT_EXT = 257,
+    VK_COMMAND_TYPE_vkCmdSetPolygonModeEXT_EXT = 258,
+    VK_COMMAND_TYPE_vkCmdSetRasterizationSamplesEXT_EXT = 259,
+    VK_COMMAND_TYPE_vkCmdSetSampleMaskEXT_EXT = 260,
+    VK_COMMAND_TYPE_vkCmdSetAlphaToCoverageEnableEXT_EXT = 261,
+    VK_COMMAND_TYPE_vkCmdSetAlphaToOneEnableEXT_EXT = 262,
+    VK_COMMAND_TYPE_vkCmdSetLogicOpEnableEXT_EXT = 263,
+    VK_COMMAND_TYPE_vkCmdSetColorBlendEnableEXT_EXT = 264,
+    VK_COMMAND_TYPE_vkCmdSetColorBlendEquationEXT_EXT = 265,
+    VK_COMMAND_TYPE_vkCmdSetColorWriteMaskEXT_EXT = 266,
+    VK_COMMAND_TYPE_vkCmdSetRasterizationStreamEXT_EXT = 267,
+    VK_COMMAND_TYPE_vkCmdSetConservativeRasterizationModeEXT_EXT = 268,
+    VK_COMMAND_TYPE_vkCmdSetExtraPrimitiveOverestimationSizeEXT_EXT = 269,
+    VK_COMMAND_TYPE_vkCmdSetDepthClipEnableEXT_EXT = 270,
+    VK_COMMAND_TYPE_vkCmdSetSampleLocationsEnableEXT_EXT = 271,
+    VK_COMMAND_TYPE_vkCmdSetColorBlendAdvancedEXT_EXT = 272,
+    VK_COMMAND_TYPE_vkCmdSetProvokingVertexModeEXT_EXT = 273,
+    VK_COMMAND_TYPE_vkCmdSetLineRasterizationModeEXT_EXT = 274,
+    VK_COMMAND_TYPE_vkCmdSetLineStippleEnableEXT_EXT = 275,
+    VK_COMMAND_TYPE_vkCmdSetDepthClipNegativeOneToOneEXT_EXT = 276,
     VK_COMMAND_TYPE_vkSetReplyCommandStreamMESA_EXT = 178,
     VK_COMMAND_TYPE_vkSeekReplyCommandStreamMESA_EXT = 179,
     VK_COMMAND_TYPE_vkExecuteCommandStreamsMESA_EXT = 180,
@@ -2076,6 +2097,120 @@ struct vn_command_vkCmdSetPrimitiveRestartEnable {
     VkBool32 primitiveRestartEnable;
 };
 
+struct vn_command_vkCmdSetTessellationDomainOriginEXT {
+    VkCommandBuffer commandBuffer;
+    VkTessellationDomainOrigin domainOrigin;
+};
+
+struct vn_command_vkCmdSetDepthClampEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthClampEnable;
+};
+
+struct vn_command_vkCmdSetPolygonModeEXT {
+    VkCommandBuffer commandBuffer;
+    VkPolygonMode polygonMode;
+};
+
+struct vn_command_vkCmdSetRasterizationSamplesEXT {
+    VkCommandBuffer commandBuffer;
+    VkSampleCountFlagBits rasterizationSamples;
+};
+
+struct vn_command_vkCmdSetSampleMaskEXT {
+    VkCommandBuffer commandBuffer;
+    VkSampleCountFlagBits samples;
+    const VkSampleMask* pSampleMask;
+};
+
+struct vn_command_vkCmdSetAlphaToCoverageEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 alphaToCoverageEnable;
+};
+
+struct vn_command_vkCmdSetAlphaToOneEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 alphaToOneEnable;
+};
+
+struct vn_command_vkCmdSetLogicOpEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 logicOpEnable;
+};
+
+struct vn_command_vkCmdSetColorBlendEnableEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t firstAttachment;
+    uint32_t attachmentCount;
+    const VkBool32* pColorBlendEnables;
+};
+
+struct vn_command_vkCmdSetColorBlendEquationEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t firstAttachment;
+    uint32_t attachmentCount;
+    const VkColorBlendEquationEXT* pColorBlendEquations;
+};
+
+struct vn_command_vkCmdSetColorWriteMaskEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t firstAttachment;
+    uint32_t attachmentCount;
+    const VkColorComponentFlags* pColorWriteMasks;
+};
+
+struct vn_command_vkCmdSetRasterizationStreamEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t rasterizationStream;
+};
+
+struct vn_command_vkCmdSetConservativeRasterizationModeEXT {
+    VkCommandBuffer commandBuffer;
+    VkConservativeRasterizationModeEXT conservativeRasterizationMode;
+};
+
+struct vn_command_vkCmdSetExtraPrimitiveOverestimationSizeEXT {
+    VkCommandBuffer commandBuffer;
+    float extraPrimitiveOverestimationSize;
+};
+
+struct vn_command_vkCmdSetDepthClipEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 depthClipEnable;
+};
+
+struct vn_command_vkCmdSetSampleLocationsEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 sampleLocationsEnable;
+};
+
+struct vn_command_vkCmdSetColorBlendAdvancedEXT {
+    VkCommandBuffer commandBuffer;
+    uint32_t firstAttachment;
+    uint32_t attachmentCount;
+    const VkColorBlendAdvancedEXT* pColorBlendAdvanced;
+};
+
+struct vn_command_vkCmdSetProvokingVertexModeEXT {
+    VkCommandBuffer commandBuffer;
+    VkProvokingVertexModeEXT provokingVertexMode;
+};
+
+struct vn_command_vkCmdSetLineRasterizationModeEXT {
+    VkCommandBuffer commandBuffer;
+    VkLineRasterizationModeEXT lineRasterizationMode;
+};
+
+struct vn_command_vkCmdSetLineStippleEnableEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 stippledLineEnable;
+};
+
+struct vn_command_vkCmdSetDepthClipNegativeOneToOneEXT {
+    VkCommandBuffer commandBuffer;
+    VkBool32 negativeOneToOne;
+};
+
 struct vn_command_vkCreatePrivateDataSlot {
     VkDevice device;
     const VkPrivateDataSlotCreateInfo* pCreateInfo;
@@ -2505,6 +2640,27 @@ struct vn_dispatch_context {
     void (*dispatch_vkCmdSetDepthBiasEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthBiasEnable *args);
     void (*dispatch_vkCmdSetLogicOpEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLogicOpEXT *args);
     void (*dispatch_vkCmdSetPrimitiveRestartEnable)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetPrimitiveRestartEnable *args);
+    void (*dispatch_vkCmdSetTessellationDomainOriginEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetTessellationDomainOriginEXT *args);
+    void (*dispatch_vkCmdSetDepthClampEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthClampEnableEXT *args);
+    void (*dispatch_vkCmdSetPolygonModeEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetPolygonModeEXT *args);
+    void (*dispatch_vkCmdSetRasterizationSamplesEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetRasterizationSamplesEXT *args);
+    void (*dispatch_vkCmdSetSampleMaskEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetSampleMaskEXT *args);
+    void (*dispatch_vkCmdSetAlphaToCoverageEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetAlphaToCoverageEnableEXT *args);
+    void (*dispatch_vkCmdSetAlphaToOneEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetAlphaToOneEnableEXT *args);
+    void (*dispatch_vkCmdSetLogicOpEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLogicOpEnableEXT *args);
+    void (*dispatch_vkCmdSetColorBlendEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetColorBlendEnableEXT *args);
+    void (*dispatch_vkCmdSetColorBlendEquationEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetColorBlendEquationEXT *args);
+    void (*dispatch_vkCmdSetColorWriteMaskEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetColorWriteMaskEXT *args);
+    void (*dispatch_vkCmdSetRasterizationStreamEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetRasterizationStreamEXT *args);
+    void (*dispatch_vkCmdSetConservativeRasterizationModeEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetConservativeRasterizationModeEXT *args);
+    void (*dispatch_vkCmdSetExtraPrimitiveOverestimationSizeEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetExtraPrimitiveOverestimationSizeEXT *args);
+    void (*dispatch_vkCmdSetDepthClipEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthClipEnableEXT *args);
+    void (*dispatch_vkCmdSetSampleLocationsEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetSampleLocationsEnableEXT *args);
+    void (*dispatch_vkCmdSetColorBlendAdvancedEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetColorBlendAdvancedEXT *args);
+    void (*dispatch_vkCmdSetProvokingVertexModeEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetProvokingVertexModeEXT *args);
+    void (*dispatch_vkCmdSetLineRasterizationModeEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLineRasterizationModeEXT *args);
+    void (*dispatch_vkCmdSetLineStippleEnableEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetLineStippleEnableEXT *args);
+    void (*dispatch_vkCmdSetDepthClipNegativeOneToOneEXT)(struct vn_dispatch_context *ctx, struct vn_command_vkCmdSetDepthClipNegativeOneToOneEXT *args);
     void (*dispatch_vkCreatePrivateDataSlot)(struct vn_dispatch_context *ctx, struct vn_command_vkCreatePrivateDataSlot *args);
     void (*dispatch_vkDestroyPrivateDataSlot)(struct vn_dispatch_context *ctx, struct vn_command_vkDestroyPrivateDataSlot *args);
     void (*dispatch_vkSetPrivateData)(struct vn_dispatch_context *ctx, struct vn_command_vkSetPrivateData *args);

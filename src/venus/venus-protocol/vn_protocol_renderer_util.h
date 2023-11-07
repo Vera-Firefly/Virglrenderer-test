@@ -85,27 +85,47 @@ struct vn_device_proc_table {
    PFN_vkCmdResetQueryPool CmdResetQueryPool;
    PFN_vkCmdResolveImage CmdResolveImage;
    PFN_vkCmdResolveImage2 CmdResolveImage2;
+   PFN_vkCmdSetAlphaToCoverageEnableEXT CmdSetAlphaToCoverageEnableEXT;
+   PFN_vkCmdSetAlphaToOneEnableEXT CmdSetAlphaToOneEnableEXT;
    PFN_vkCmdSetBlendConstants CmdSetBlendConstants;
+   PFN_vkCmdSetColorBlendAdvancedEXT CmdSetColorBlendAdvancedEXT;
+   PFN_vkCmdSetColorBlendEnableEXT CmdSetColorBlendEnableEXT;
+   PFN_vkCmdSetColorBlendEquationEXT CmdSetColorBlendEquationEXT;
    PFN_vkCmdSetColorWriteEnableEXT CmdSetColorWriteEnableEXT;
+   PFN_vkCmdSetColorWriteMaskEXT CmdSetColorWriteMaskEXT;
+   PFN_vkCmdSetConservativeRasterizationModeEXT CmdSetConservativeRasterizationModeEXT;
    PFN_vkCmdSetCullMode CmdSetCullMode;
    PFN_vkCmdSetDepthBias CmdSetDepthBias;
    PFN_vkCmdSetDepthBiasEnable CmdSetDepthBiasEnable;
    PFN_vkCmdSetDepthBounds CmdSetDepthBounds;
    PFN_vkCmdSetDepthBoundsTestEnable CmdSetDepthBoundsTestEnable;
+   PFN_vkCmdSetDepthClampEnableEXT CmdSetDepthClampEnableEXT;
+   PFN_vkCmdSetDepthClipEnableEXT CmdSetDepthClipEnableEXT;
+   PFN_vkCmdSetDepthClipNegativeOneToOneEXT CmdSetDepthClipNegativeOneToOneEXT;
    PFN_vkCmdSetDepthCompareOp CmdSetDepthCompareOp;
    PFN_vkCmdSetDepthTestEnable CmdSetDepthTestEnable;
    PFN_vkCmdSetDepthWriteEnable CmdSetDepthWriteEnable;
    PFN_vkCmdSetDeviceMask CmdSetDeviceMask;
    PFN_vkCmdSetEvent CmdSetEvent;
    PFN_vkCmdSetEvent2 CmdSetEvent2;
+   PFN_vkCmdSetExtraPrimitiveOverestimationSizeEXT CmdSetExtraPrimitiveOverestimationSizeEXT;
    PFN_vkCmdSetFrontFace CmdSetFrontFace;
+   PFN_vkCmdSetLineRasterizationModeEXT CmdSetLineRasterizationModeEXT;
    PFN_vkCmdSetLineStippleEXT CmdSetLineStippleEXT;
+   PFN_vkCmdSetLineStippleEnableEXT CmdSetLineStippleEnableEXT;
    PFN_vkCmdSetLineWidth CmdSetLineWidth;
    PFN_vkCmdSetLogicOpEXT CmdSetLogicOpEXT;
+   PFN_vkCmdSetLogicOpEnableEXT CmdSetLogicOpEnableEXT;
    PFN_vkCmdSetPatchControlPointsEXT CmdSetPatchControlPointsEXT;
+   PFN_vkCmdSetPolygonModeEXT CmdSetPolygonModeEXT;
    PFN_vkCmdSetPrimitiveRestartEnable CmdSetPrimitiveRestartEnable;
    PFN_vkCmdSetPrimitiveTopology CmdSetPrimitiveTopology;
+   PFN_vkCmdSetProvokingVertexModeEXT CmdSetProvokingVertexModeEXT;
+   PFN_vkCmdSetRasterizationSamplesEXT CmdSetRasterizationSamplesEXT;
+   PFN_vkCmdSetRasterizationStreamEXT CmdSetRasterizationStreamEXT;
    PFN_vkCmdSetRasterizerDiscardEnable CmdSetRasterizerDiscardEnable;
+   PFN_vkCmdSetSampleLocationsEnableEXT CmdSetSampleLocationsEnableEXT;
+   PFN_vkCmdSetSampleMaskEXT CmdSetSampleMaskEXT;
    PFN_vkCmdSetScissor CmdSetScissor;
    PFN_vkCmdSetScissorWithCount CmdSetScissorWithCount;
    PFN_vkCmdSetStencilCompareMask CmdSetStencilCompareMask;
@@ -113,6 +133,7 @@ struct vn_device_proc_table {
    PFN_vkCmdSetStencilReference CmdSetStencilReference;
    PFN_vkCmdSetStencilTestEnable CmdSetStencilTestEnable;
    PFN_vkCmdSetStencilWriteMask CmdSetStencilWriteMask;
+   PFN_vkCmdSetTessellationDomainOriginEXT CmdSetTessellationDomainOriginEXT;
    PFN_vkCmdSetVertexInputEXT CmdSetVertexInputEXT;
    PFN_vkCmdSetViewport CmdSetViewport;
    PFN_vkCmdSetViewportWithCount CmdSetViewportWithCount;
@@ -399,9 +420,30 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdResolveImage2) :
       ext_table->KHR_copy_commands2 ? VN_GDPA(dev, vkCmdResolveImage2KHR) :
       NULL;
+   proc_table->CmdSetAlphaToCoverageEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetAlphaToCoverageEnableEXT) :
+      NULL;
+   proc_table->CmdSetAlphaToOneEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetAlphaToOneEnableEXT) :
+      NULL;
    proc_table->CmdSetBlendConstants = VN_GDPA(dev, vkCmdSetBlendConstants);
+   proc_table->CmdSetColorBlendAdvancedEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetColorBlendAdvancedEXT) :
+      NULL;
+   proc_table->CmdSetColorBlendEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetColorBlendEnableEXT) :
+      NULL;
+   proc_table->CmdSetColorBlendEquationEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetColorBlendEquationEXT) :
+      NULL;
    proc_table->CmdSetColorWriteEnableEXT =
       ext_table->EXT_color_write_enable ? VN_GDPA(dev, vkCmdSetColorWriteEnableEXT) :
+      NULL;
+   proc_table->CmdSetColorWriteMaskEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetColorWriteMaskEXT) :
+      NULL;
+   proc_table->CmdSetConservativeRasterizationModeEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetConservativeRasterizationModeEXT) :
       NULL;
    proc_table->CmdSetCullMode =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetCullMode) :
@@ -416,6 +458,15 @@ vn_util_init_device_proc_table(VkDevice dev,
    proc_table->CmdSetDepthBoundsTestEnable =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetDepthBoundsTestEnable) :
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetDepthBoundsTestEnableEXT) :
+      NULL;
+   proc_table->CmdSetDepthClampEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetDepthClampEnableEXT) :
+      NULL;
+   proc_table->CmdSetDepthClipEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetDepthClipEnableEXT) :
+      NULL;
+   proc_table->CmdSetDepthClipNegativeOneToOneEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetDepthClipNegativeOneToOneEXT) :
       NULL;
    proc_table->CmdSetDepthCompareOp =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetDepthCompareOp) :
@@ -438,19 +489,34 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetEvent2) :
       ext_table->KHR_synchronization2 ? VN_GDPA(dev, vkCmdSetEvent2KHR) :
       NULL;
+   proc_table->CmdSetExtraPrimitiveOverestimationSizeEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetExtraPrimitiveOverestimationSizeEXT) :
+      NULL;
    proc_table->CmdSetFrontFace =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetFrontFace) :
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetFrontFaceEXT) :
       NULL;
+   proc_table->CmdSetLineRasterizationModeEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetLineRasterizationModeEXT) :
+      NULL;
    proc_table->CmdSetLineStippleEXT =
       ext_table->EXT_line_rasterization ? VN_GDPA(dev, vkCmdSetLineStippleEXT) :
+      NULL;
+   proc_table->CmdSetLineStippleEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetLineStippleEnableEXT) :
       NULL;
    proc_table->CmdSetLineWidth = VN_GDPA(dev, vkCmdSetLineWidth);
    proc_table->CmdSetLogicOpEXT =
       ext_table->EXT_extended_dynamic_state2 ? VN_GDPA(dev, vkCmdSetLogicOpEXT) :
       NULL;
+   proc_table->CmdSetLogicOpEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetLogicOpEnableEXT) :
+      NULL;
    proc_table->CmdSetPatchControlPointsEXT =
       ext_table->EXT_extended_dynamic_state2 ? VN_GDPA(dev, vkCmdSetPatchControlPointsEXT) :
+      NULL;
+   proc_table->CmdSetPolygonModeEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetPolygonModeEXT) :
       NULL;
    proc_table->CmdSetPrimitiveRestartEnable =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetPrimitiveRestartEnable) :
@@ -460,9 +526,24 @@ vn_util_init_device_proc_table(VkDevice dev,
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetPrimitiveTopology) :
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetPrimitiveTopologyEXT) :
       NULL;
+   proc_table->CmdSetProvokingVertexModeEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetProvokingVertexModeEXT) :
+      NULL;
+   proc_table->CmdSetRasterizationSamplesEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetRasterizationSamplesEXT) :
+      NULL;
+   proc_table->CmdSetRasterizationStreamEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetRasterizationStreamEXT) :
+      NULL;
    proc_table->CmdSetRasterizerDiscardEnable =
       api_version >= VK_API_VERSION_1_3 ? VN_GDPA(dev, vkCmdSetRasterizerDiscardEnable) :
       ext_table->EXT_extended_dynamic_state2 ? VN_GDPA(dev, vkCmdSetRasterizerDiscardEnableEXT) :
+      NULL;
+   proc_table->CmdSetSampleLocationsEnableEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetSampleLocationsEnableEXT) :
+      NULL;
+   proc_table->CmdSetSampleMaskEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetSampleMaskEXT) :
       NULL;
    proc_table->CmdSetScissor = VN_GDPA(dev, vkCmdSetScissor);
    proc_table->CmdSetScissorWithCount =
@@ -480,6 +561,9 @@ vn_util_init_device_proc_table(VkDevice dev,
       ext_table->EXT_extended_dynamic_state ? VN_GDPA(dev, vkCmdSetStencilTestEnableEXT) :
       NULL;
    proc_table->CmdSetStencilWriteMask = VN_GDPA(dev, vkCmdSetStencilWriteMask);
+   proc_table->CmdSetTessellationDomainOriginEXT =
+      ext_table->EXT_extended_dynamic_state3 ? VN_GDPA(dev, vkCmdSetTessellationDomainOriginEXT) :
+      NULL;
    proc_table->CmdSetVertexInputEXT =
       ext_table->EXT_vertex_input_dynamic_state ? VN_GDPA(dev, vkCmdSetVertexInputEXT) :
       NULL;
