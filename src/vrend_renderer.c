@@ -5561,7 +5561,7 @@ static void vrend_draw_bind_objects(struct vrend_sub_context *sub_ctx, bool new_
 }
 
 static bool
-vrend_inject_tcs(struct vrend_sub_context *sub_ctx, int vertices_per_patch)
+vrend_inject_tcs(struct vrend_sub_context *sub_ctx, uint8_t vertices_per_patch)
 {
    struct pipe_stream_output_info so_info;
 
@@ -5605,7 +5605,7 @@ enum select_program_result {
 };
 
 static enum select_program_result
-vrend_select_program(struct vrend_sub_context *sub_ctx, ubyte vertices_per_patch)
+vrend_select_program(struct vrend_sub_context *sub_ctx, uint8_t vertices_per_patch)
 {
    struct vrend_linked_shader_program *prog;
    bool fs_dirty, vs_dirty, gs_dirty, tcs_dirty, tes_dirty;

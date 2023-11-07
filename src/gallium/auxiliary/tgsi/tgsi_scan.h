@@ -44,21 +44,21 @@ struct tgsi_shader_info
 {
    uint num_tokens;
 
-   ubyte num_inputs;
-   ubyte num_outputs;
-   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
-   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_interpolate[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_interpolate_loc[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_usage_mask[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_cylindrical_wrap[PIPE_MAX_SHADER_INPUTS];
-   ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
-   ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
+   uint8_t num_inputs;
+   uint8_t num_outputs;
+   uint8_t input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
+   uint8_t input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+   uint8_t input_interpolate[PIPE_MAX_SHADER_INPUTS];
+   uint8_t input_interpolate_loc[PIPE_MAX_SHADER_INPUTS];
+   uint8_t input_usage_mask[PIPE_MAX_SHADER_INPUTS];
+   uint8_t input_cylindrical_wrap[PIPE_MAX_SHADER_INPUTS];
+   uint8_t output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
+   uint8_t output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 
-   ubyte num_system_values;
-   ubyte system_value_semantic_name[PIPE_MAX_SHADER_INPUTS];
+   uint8_t num_system_values;
+   uint8_t system_value_semantic_name[PIPE_MAX_SHADER_INPUTS];
 
-   ubyte processor;
+   uint8_t processor;
 
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
@@ -66,10 +66,10 @@ struct tgsi_shader_info
    int const_file_max[PIPE_MAX_CONSTANT_BUFFERS];
    unsigned samplers_declared; /**< bitmask of declared samplers */
 
-   ubyte input_array_first[PIPE_MAX_SHADER_INPUTS];
-   ubyte input_array_last[PIPE_MAX_SHADER_INPUTS];
-   ubyte output_array_first[PIPE_MAX_SHADER_OUTPUTS];
-   ubyte output_array_last[PIPE_MAX_SHADER_OUTPUTS];
+   uint8_t input_array_first[PIPE_MAX_SHADER_INPUTS];
+   uint8_t input_array_last[PIPE_MAX_SHADER_INPUTS];
+   uint8_t output_array_first[PIPE_MAX_SHADER_OUTPUTS];
+   uint8_t output_array_last[PIPE_MAX_SHADER_OUTPUTS];
    unsigned array_max[TGSI_FILE_COUNT];  /**< highest index array per register file */
 
    uint immediate_count; /**< number of immediates declared */
@@ -77,7 +77,7 @@ struct tgsi_shader_info
 
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
-   ubyte colors_written;
+   uint8_t colors_written;
    boolean reads_position; /**< does fragment shader read position? */
    boolean reads_z; /**< does fragment shader read depth? */
    boolean writes_z;  /**< does fragment shader write Z value? */

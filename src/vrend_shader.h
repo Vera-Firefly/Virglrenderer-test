@@ -289,7 +289,7 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *ctx,
                                          const float tess_factors[6],
                                          struct vrend_shader_info *sinfo,
                                          struct vrend_strarray *shader,
-                                         int vertices_per_patch);
+                                         uint8_t vertices_per_patch);
 
 bool vrend_shader_needs_alpha_func(const struct vrend_shader_key *key);
 

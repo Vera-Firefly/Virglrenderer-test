@@ -75,7 +75,6 @@ typedef unsigned int       uint;
 #endif
 typedef unsigned short     ushort;
 #endif
-typedef unsigned char      ubyte;
 
 typedef unsigned char boolean;
 #ifndef TRUE

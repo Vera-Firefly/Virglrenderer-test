@@ -295,7 +295,7 @@ struct pipe_blend_color
 
 struct pipe_stencil_ref
 {
-   ubyte ref_value[2];
+   uint8_t ref_value[2];
 };
 
 struct pipe_framebuffer_state
@@ -574,7 +574,7 @@ struct pipe_draw_indirect_info
 struct pipe_draw_info
 {
    boolean indexed;  /**< use index buffer */
-   ubyte vertices_per_patch; /**< the number of vertices per patch */
+   uint8_t vertices_per_patch; /**< the number of vertices per patch */
 
    unsigned mode;  /**< the mode of the primitive */
    unsigned start;  /**< the index of the first vertex */

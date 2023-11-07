@@ -8353,7 +8353,7 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
                                          const float tess_factors[6],
                                          struct vrend_shader_info *sinfo,
                                          struct vrend_strarray *shader,
-                                         int vertices_per_patch)
+                                         uint8_t vertices_per_patch)
 {
    struct dump_ctx ctx;
 

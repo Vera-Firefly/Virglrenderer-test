@@ -322,11 +322,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      return false;
                   }
 
-                  info->input_semantic_name[reg] = (ubyte) semName;
-                  info->input_semantic_index[reg] = (ubyte) semIndex;
-                  info->input_interpolate[reg] = (ubyte)fulldecl->Interp.Interpolate;
-                  info->input_interpolate_loc[reg] = (ubyte)fulldecl->Interp.Location;
-                  info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Interp.CylindricalWrap;
+                  info->input_semantic_name[reg] = (uint8_t) semName;
+                  info->input_semantic_index[reg] = (uint8_t) semIndex;
+                  info->input_interpolate[reg] = (uint8_t)fulldecl->Interp.Interpolate;
+                  info->input_interpolate_loc[reg] = (uint8_t)fulldecl->Interp.Location;
+                  info->input_cylindrical_wrap[reg] = (uint8_t)fulldecl->Interp.CylindricalWrap;
                   info->num_inputs++;
 
                   if (info->num_inputs >= PIPE_MAX_SHADER_INPUTS) {
@@ -424,8 +424,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      return false;
                   }
 
-                  info->output_semantic_name[reg] = (ubyte) semName;
-                  info->output_semantic_index[reg] = (ubyte) semIndex;
+                  info->output_semantic_name[reg] = (uint8_t) semName;
+                  info->output_semantic_index[reg] = (uint8_t) semIndex;
                   info->num_outputs++;
 
                   if (info->num_outputs >= PIPE_MAX_SHADER_OUTPUTS) {
