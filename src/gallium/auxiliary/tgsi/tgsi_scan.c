@@ -297,8 +297,11 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                unsigned semIndex =
                   fulldecl->Semantic.Index + (reg - fulldecl->Range.First);
 
-               /* only first 32 regs will appear in this bitfield */
-               info->file_mask[file] |= 1u << reg;
+               /*
+                * only first 32 regs will appear in this bitfield, if larger
+                * bits will wrap around.
+                */
+               info->file_mask[file] |= (1u << (reg & 31));
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
