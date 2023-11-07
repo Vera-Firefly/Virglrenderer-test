@@ -38,7 +38,6 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <limits.h>
-/* (virglrenderer) To get uint typedef with musl */
 #include <sys/types.h>
 
 
@@ -70,9 +69,6 @@ extern "C" {
 
 
 #if !defined(__HAIKU__) && !defined(__USE_MISC)
-#if !defined(PIPE_OS_ANDROID)
-typedef unsigned int       uint;
-#endif
 typedef unsigned short     ushort;
 #endif
 

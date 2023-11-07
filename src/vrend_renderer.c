@@ -1199,7 +1199,7 @@ static void buffered_logger(const char *fmt,
 }
 
 static void vrend_dump_tgsi(const struct tgsi_token *tokens,
-                            uint flags)
+                            unsigned flags)
 {
    struct vrend_strbuf logger_buffer = { NULL, };
    strbuf_alloc(&logger_buffer, STRBUF_MIN_MALLOC);
@@ -1565,7 +1565,7 @@ static void set_stream_out_varyings(ASSERTED struct vrend_sub_context *sub_ctx,
    struct pipe_stream_output_info *so = &sinfo->so_info;
    char *varyings[PIPE_MAX_SHADER_OUTPUTS*2];
    int j;
-   uint i, n_outputs = 0;
+   unsigned i, n_outputs = 0;
    int last_buffer = 0;
    char *start_skip;
    int buf_offset = 0;
@@ -3272,7 +3272,7 @@ void vrend_set_viewport_states(struct vrend_context *ctx,
    GLsizei width, height;
    GLclampd near_val, far_val;
    bool viewport_is_negative = (state[0].scale[1] < 0) ? true : false;
-   uint i, idx;
+   unsigned i, idx;
 
    for (i = 0; i < num_viewports; i++) {
       GLfloat abs_s1 = fabsf(state[i].scale[1]);
@@ -3335,7 +3335,7 @@ int vrend_create_vertex_elements_state(struct vrend_context *ctx,
    struct vrend_vertex_element_array *v;
    const struct util_format_description *desc;
    GLenum type;
-   uint i;
+   unsigned i;
    uint32_t ret_handle;
 
    v = CALLOC_STRUCT(vrend_vertex_element_array);
@@ -8374,9 +8374,9 @@ static bool virgl_format_to_dxgi_format(uint32_t format, DXGI_FORMAT *dxgi)
    return false;
 }
 
-static UINT virgl_bind_to_d3d_bind_flags(uint32_t flags)
+static unsigned virgl_bind_to_d3d_bind_flags(uint32_t flags)
 {
-   UINT ret = 0;
+   unsigned ret = 0;
 
    if (flags & PIPE_BIND_VERTEX_BUFFER)
       ret |= D3D11_BIND_VERTEX_BUFFER;
@@ -8396,7 +8396,7 @@ static UINT virgl_bind_to_d3d_bind_flags(uint32_t flags)
    return ret;
 }
 
-static UINT virgl_usage_to_d3d_usage(uint32_t usage)
+static unsigned virgl_usage_to_d3d_usage(uint32_t usage)
 {
    switch (usage) {
    case PIPE_USAGE_DEFAULT:
@@ -8550,7 +8550,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
                                         enum virgl_formats format,
                                         void *image_oes)
 {
-   uint level;
+   unsigned level;
    GLenum internalformat, glformat, gltype;
    struct vrend_texture *gt = (struct vrend_texture *)gr;
    struct pipe_resource *pr = &gr->base;
@@ -9673,7 +9673,7 @@ static int vrend_transfer_send_readonly(struct vrend_resource *res,
                                         UNUSED const struct vrend_transfer_info *info)
 {
    bool same_iov = true;
-   uint i;
+   unsigned i;
 
    if (res->num_iovs == (uint32_t)num_iovs) {
       for (i = 0; i < res->num_iovs; i++) {
@@ -10050,8 +10050,8 @@ void vrend_set_scissor_state(struct vrend_context *ctx,
                              uint32_t num_scissor,
                              struct pipe_scissor_state *ss)
 {
-    for (uint i = 0; i < num_scissor; i++) {
-      uint idx = start_slot + i;
+    for (unsigned i = 0; i < num_scissor; i++) {
+      unsigned idx = start_slot + i;
       ctx->sub->ss[idx] = ss[i];
       ctx->sub->scissor_state_dirty |= (1 << idx);
     }
@@ -10125,7 +10125,7 @@ void vrend_set_tess_state(UNUSED struct vrend_context *ctx, const float tess_fac
 
 static void vrend_hw_emit_streamout_targets(UNUSED struct vrend_context *ctx, struct vrend_streamout_object *so_obj)
 {
-   uint i;
+   unsigned i;
 
    for (i = 0; i < so_obj->num_targets; i++) {
       if (!so_obj->so_targets[i])
@@ -10143,7 +10143,7 @@ void vrend_set_streamout_targets(struct vrend_context *ctx,
                                  uint32_t *handles)
 {
    struct vrend_so_target *target;
-   uint i;
+   unsigned i;
 
    if (!has_feature(feat_transform_feedback))
       return;
@@ -11794,7 +11794,7 @@ static void vrend_pause_render_condition(struct vrend_context *ctx, bool pause)
 void vrend_render_condition(struct vrend_context *ctx,
                             uint32_t handle,
                             bool condition,
-                            uint mode)
+                            uint32_t mode)
 {
    struct vrend_query *q;
    GLenum glmode = 0;
@@ -12710,7 +12710,7 @@ void *vrend_renderer_get_cursor_contents(struct pipe_resource *pres,
    int blsize;
    char *data, *data2;
    int size;
-   uint h;
+   unsigned h;
 
    if (res->base.width0 > 128 || res->base.height0 > 128)
       return NULL;

@@ -403,7 +403,7 @@ static GLuint blit_get_frag_tex_col(struct vrend_blitter_ctx *blit_ctx,
                                        uint32_t flags)
 {
    bool needs_swizzle = false;
-   for (uint i = 0; i < 4; ++i) {
+   for (unsigned i = 0; i < 4; ++i) {
       if (swizzle[i] != i) {
          needs_swizzle = true;
          break;

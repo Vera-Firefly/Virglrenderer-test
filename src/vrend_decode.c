@@ -69,7 +69,7 @@ static int vrend_decode_create_shader(struct vrend_context *ctx,
                                       uint16_t length)
 {
    struct pipe_stream_output_info so_info;
-   uint i;
+   unsigned i;
    int ret;
    uint32_t shader_offset, req_local_mem = 0;
    unsigned num_tokens, num_so_outputs, offlen;
@@ -280,7 +280,7 @@ static int vrend_decode_clear_surface(struct vrend_context *ctx,
 static int vrend_decode_set_viewport_state(struct vrend_context *ctx, const uint32_t *buf, uint32_t length)
 {
    struct pipe_viewport_state vps[PIPE_MAX_VIEWPORTS];
-   uint i, v;
+   unsigned i, v;
    uint32_t num_viewports, start_slot;
    if (length < 1)
       return EINVAL;
@@ -1203,7 +1203,7 @@ static int vrend_decode_set_render_condition(struct vrend_context *ctx, const ui
 
    uint32_t handle = get_buf_entry(buf, VIRGL_RENDER_CONDITION_HANDLE);
    bool condition = get_buf_entry(buf, VIRGL_RENDER_CONDITION_CONDITION) & 1;
-   uint mode = get_buf_entry(buf, VIRGL_RENDER_CONDITION_MODE);
+   uint32_t mode = get_buf_entry(buf, VIRGL_RENDER_CONDITION_MODE);
 
    vrend_render_condition(ctx, handle, condition, mode);
    return 0;
@@ -1415,7 +1415,7 @@ static int vrend_decode_set_streamout_targets(struct vrend_context *ctx,
    uint32_t handles[16];
    uint32_t num_handles = length - 1;
    uint32_t append_bitmask;
-   uint i;
+   unsigned i;
 
    if (length < 1)
       return EINVAL;

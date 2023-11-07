@@ -481,7 +481,7 @@ util_format_is_rgba8_variant(const struct util_format_description *desc)
 /**
  * Return total bits needed for the pixel format per block.
  */
-static inline uint
+static inline unsigned
 util_format_get_blocksizebits(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -496,11 +496,11 @@ util_format_get_blocksizebits(enum pipe_format format)
 /**
  * Return bytes per block (not pixel) for the given format.
  */
-static inline uint
+static inline unsigned
 util_format_get_blocksize(enum pipe_format format)
 {
-   uint bits = util_format_get_blocksizebits(format);
-   uint bytes = bits / 8;
+   unsigned bits = util_format_get_blocksizebits(format);
+   unsigned bytes = bits / 8;
 
    assert(bits % 8 == 0);
    assert(bytes > 0);
@@ -511,7 +511,7 @@ util_format_get_blocksize(enum pipe_format format)
    return bytes;
 }
 
-static inline uint
+static inline unsigned
 util_format_get_blockwidth(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -523,7 +523,7 @@ util_format_get_blockwidth(enum pipe_format format)
    return desc->block.width;
 }
 
-static inline uint
+static inline unsigned
 util_format_get_blockheight(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -535,7 +535,7 @@ util_format_get_blockheight(enum pipe_format format)
    return desc->block.height;
 }
 
-static inline uint
+static inline unsigned
 util_format_get_blockdepth(enum pipe_format format)
 {
    const struct util_format_description *desc = util_format_description(format);
@@ -596,10 +596,10 @@ util_format_get_2d_size(enum pipe_format format,
    return util_format_get_nblocksy(format, height) * stride;
 }
 
-static inline uint
+static inline unsigned
 util_format_get_component_bits(enum pipe_format format,
                                enum util_format_colorspace colorspace,
-                               uint component)
+                               unsigned component)
 {
    const struct util_format_description *desc = util_format_description(format);
    enum util_format_colorspace desc_colorspace;

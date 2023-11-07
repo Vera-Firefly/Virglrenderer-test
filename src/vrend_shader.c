@@ -206,7 +206,7 @@ struct dump_ctx {
    enum tgsi_processor_type prog_type;
    int size;
    struct vrend_glsl_strbufs glsl_strbufs;
-   uint instno;
+   unsigned instno;
 
    struct vrend_strbuf src_bufs[TGSI_FULL_MAX_SRC_REGISTERS];
    struct vrend_strbuf dst_bufs[TGSI_FULL_MAX_DST_REGISTERS];
@@ -2655,7 +2655,7 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
                               struct vrend_glsl_strbufs *glsl_strbufs)
 {
    int cbuf_id = 0;
-   for (uint i = 0; i < ctx->num_outputs; i++) {
+   for (unsigned i = 0; i < ctx->num_outputs; i++) {
       if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR) {
          if (ctx->key->fs.swizzle_output_rgb_to_bgr & (1 << cbuf_id)) {
             emit_buff(glsl_strbufs, "fsout_c%d = fsout_c%d.zyxw;\n", cbuf_id, cbuf_id);
@@ -2668,7 +2668,7 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
 static void emit_cbuf_colorspace_convert(const struct dump_ctx *ctx,
                                          struct vrend_glsl_strbufs *glsl_strbufs)
 {
-   for (uint i = 0; i < ctx->num_outputs; i++) {
+   for (unsigned i = 0; i < ctx->num_outputs; i++) {
       if (ctx->key->fs.needs_manual_srgb_encode_bitmask & (1 << i)) {
          emit_buff(glsl_strbufs,
                    "{\n"
@@ -3754,7 +3754,7 @@ static void make_ssbo_varstring(const struct dump_ctx *ctx, char result[128],
    const char *cname = tgsi_proc_to_prefix(ctx->prog_type);
    bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << register_index);
    const char *atomic_str = atomic_ssbo ? "atomic" : "";
-   uint base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
+   unsigned base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
 
    if (ctx->info.indirect_files & (1 << TGSI_FILE_BUFFER)) {
       if (indirect && !ctx->cfg->use_gles)
@@ -3997,7 +3997,7 @@ translate_load(const struct dump_ctx *ctx,
          char src[128] = "";
 
          bool atomic_ssbo = ctx->ssbo_atomic_mask & (1 << inst->Src[0].Register.Index);
-         uint base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
+         unsigned base = atomic_ssbo ? ctx->ssbo_atomic_array_base : ctx->ssbo_array_base;
          int start, array_count;
          uint32_t mask = ctx->ssbo_used_mask;
          u_bit_scan_consecutive_range(&mask, &start, &array_count);
@@ -5291,7 +5291,7 @@ void rewrite_vs_pos_array(struct dump_ctx *ctx)
    int range_end = 0;
    int io_idx = 0;
 
-   for (uint i = 0; i < ctx->num_inputs; ++i) {
+   for (unsigned i = 0; i < ctx->num_inputs; ++i) {
       if (ctx->inputs[i].name == TGSI_SEMANTIC_POSITION) {
          ctx->inputs[i].glsl_predefined_no_emit = true;
          if (ctx->inputs[i].first < range_start) {
@@ -5501,7 +5501,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
    const char *srcs[4];
    char *dsts[TGSI_FULL_MAX_DST_REGISTERS];
    char fp64_dsts[TGSI_FULL_MAX_DST_REGISTERS][255];
-   uint instno = ctx->instno++;
+   unsigned instno = ctx->instno++;
    char writemask[6] = "";
    char src_swizzle0[16];
 
@@ -6618,7 +6618,7 @@ static int emit_ios_common(const struct dump_ctx *ctx,
                            struct vrend_glsl_strbufs *glsl_strbufs,
                            uint32_t *shadow_samp_mask)
 {
-   uint i;
+   unsigned i;
    const char *sname = tgsi_proc_to_prefix(ctx->prog_type);
    int glsl_ver_required = ctx->glsl_ver_required;
 
@@ -6687,7 +6687,7 @@ static int emit_ios_common(const struct dump_ctx *ctx,
          emit_sampler_decl(ctx, glsl_strbufs, shadow_samp_mask, first, range, ctx->samplers + first);
       }
    } else {
-      uint nsamp = util_last_bit(ctx->samplers_used);
+      unsigned nsamp = util_last_bit(ctx->samplers_used);
       for (i = 0; i < nsamp; i++) {
 
          if ((ctx->samplers_used & (1 << i)) == 0)
@@ -6751,7 +6751,7 @@ static void emit_ios_streamout(const struct dump_ctx *ctx,
 {
    if (ctx->so) {
       char outtype[6] = "";
-      for (uint i = 0; i < ctx->so->num_outputs; i++) {
+      for (unsigned i = 0; i < ctx->so->num_outputs; i++) {
          if (!ctx->write_so_outputs[i])
             continue;
          if (ctx->so->output[i].num_components == 1)

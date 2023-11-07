@@ -475,7 +475,7 @@ void vrend_get_query_result_qbo(struct vrend_context *ctx, uint32_t handle,
 void vrend_render_condition(struct vrend_context *ctx,
                             uint32_t handle,
                             bool condtion,
-                            uint mode);
+                            uint32_t mode);
 void *vrend_renderer_get_cursor_contents(struct pipe_resource *pres,
                                          uint32_t *width,
                                          uint32_t *height);

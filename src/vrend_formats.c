@@ -708,8 +708,8 @@ unsigned vrend_renderer_query_multisample_caps(unsigned max_samples, struct virg
    GLuint fbo;
    GLenum status;
 
-   uint max_samples_confirmed = 1;
-   uint test_num_samples[4] = {2,4,8,16};
+   unsigned max_samples_confirmed = 1;
+   unsigned test_num_samples[4] = {2,4,8,16};
    int out_buf_offsets[4] = {0,1,2,4};
    int lowest_working_ms_count_idx = -1;
 
@@ -734,7 +734,7 @@ unsigned vrend_renderer_query_multisample_caps(unsigned max_samples, struct virg
             if (max_samples_confirmed < test_num_samples[i])
                max_samples_confirmed = test_num_samples[i];
 
-            for (uint k = 0; k < test_num_samples[i]; ++k) {
+            for (unsigned k = 0; k < test_num_samples[i]; ++k) {
                float msp[2];
                uint32_t compressed;
                glGetMultisamplefv(GL_SAMPLE_POSITION, k, msp);
@@ -747,7 +747,7 @@ unsigned vrend_renderer_query_multisample_caps(unsigned max_samples, struct virg
             /* If a framebuffer doesn't support low sample counts,
              * use the sample position from the last working larger count. */
             if (lowest_working_ms_count_idx > 0) {
-               for (uint k = 0; k < test_num_samples[i]; ++k) {
+               for (unsigned k = 0; k < test_num_samples[i]; ++k) {
                   caps->sample_locations[out_buf_offsets[i] + (k >> 2)] =
                         caps->sample_locations[out_buf_offsets[lowest_working_ms_count_idx]  + (k >> 2)];
                }
