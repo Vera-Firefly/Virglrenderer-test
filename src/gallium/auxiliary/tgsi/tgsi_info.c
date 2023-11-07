@@ -279,7 +279,7 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
 };
 
 const struct tgsi_opcode_info *
-tgsi_get_opcode_info( uint opcode )
+tgsi_get_opcode_info( unsigned opcode )
 {
    if (opcode < TGSI_OPCODE_LAST)
       return &opcode_info[opcode];
@@ -290,7 +290,7 @@ tgsi_get_opcode_info( uint opcode )
 
 
 const char *
-tgsi_get_opcode_name( uint opcode )
+tgsi_get_opcode_name( unsigned opcode )
 {
    const struct tgsi_opcode_info *info = tgsi_get_opcode_info(opcode);
    return info->mnemonic;
@@ -298,7 +298,7 @@ tgsi_get_opcode_name( uint opcode )
 
 
 const char *
-tgsi_get_processor_name( uint processor )
+tgsi_get_processor_name( unsigned processor )
 {
    switch (processor) {
    case TGSI_PROCESSOR_VERTEX:
@@ -322,7 +322,7 @@ tgsi_get_processor_name( uint processor )
  * MOV and UCMP is special so return VOID
  */
 static inline enum tgsi_opcode_type
-tgsi_opcode_infer_type( uint opcode )
+tgsi_opcode_infer_type( unsigned opcode )
 {
    switch (opcode) {
    case TGSI_OPCODE_MOV:
@@ -451,7 +451,7 @@ tgsi_opcode_infer_type( uint opcode )
  * infer the source type of a TGSI opcode.
  */
 enum tgsi_opcode_type
-tgsi_opcode_infer_src_type( uint opcode )
+tgsi_opcode_infer_src_type( unsigned opcode )
 {
    switch (opcode) {
    case TGSI_OPCODE_UIF:
@@ -517,7 +517,7 @@ tgsi_opcode_infer_src_type( uint opcode )
  * infer the destination type of a TGSI opcode.
  */
 enum tgsi_opcode_type
-tgsi_opcode_infer_dst_type( uint opcode )
+tgsi_opcode_infer_dst_type( unsigned opcode )
 {
    return tgsi_opcode_infer_type(opcode);
 }

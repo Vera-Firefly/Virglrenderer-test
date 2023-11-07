@@ -42,7 +42,7 @@ typedef struct {
    uint32_t file : 28;
    /* max 2 dimensions */
    uint32_t dimensions : 4;
-   uint indices[2];
+   unsigned indices[2];
 } scan_register;
 
 struct sanity_check_ctx
@@ -52,13 +52,13 @@ struct sanity_check_ctx
    struct cso_hash *regs_used;
    struct cso_hash *regs_ind_used;
 
-   uint num_imms;
-   uint num_instructions;
-   uint index_of_END;
+   unsigned num_imms;
+   unsigned num_instructions;
+   unsigned index_of_END;
 
-   uint errors;
-   uint warnings;
-   uint implied_array_size;
+   unsigned errors;
+   unsigned warnings;
+   unsigned implied_array_size;
 
    boolean print;
 };
@@ -75,7 +75,7 @@ scan_register_key(const scan_register *reg)
 
 static void
 fill_scan_register1d(scan_register *reg,
-                     uint file, uint index)
+                     unsigned file, unsigned index)
 {
    reg->file = file;
    reg->dimensions = 1;
@@ -85,7 +85,8 @@ fill_scan_register1d(scan_register *reg,
 
 static void
 fill_scan_register2d(scan_register *reg,
-                     uint file, uint index1, uint index2)
+                     unsigned file,
+                     unsigned index1, unsigned index2)
 {
    reg->file = file;
    reg->dimensions = 2;
@@ -188,7 +189,7 @@ report_warning(
 static boolean
 check_file_name(
    struct sanity_check_ctx *ctx,
-   uint file )
+   unsigned file )
 {
    if (file <= TGSI_FILE_NULL || file >= TGSI_FILE_COUNT) {
       report_error( ctx, "(%u): Invalid register file name", file );
@@ -211,7 +212,7 @@ is_register_declared(
 static boolean
 is_any_register_declared(
    struct sanity_check_ctx *ctx,
-   uint file )
+   unsigned file )
 {
    struct cso_hash_iter iter =
       cso_hash_first_node(ctx->regs_decl);
@@ -311,7 +312,7 @@ iter_instruction(
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
    const struct tgsi_opcode_info *info;
-   uint i;
+   unsigned i;
 
    if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
       if (ctx->index_of_END != ~0u) {
@@ -392,8 +393,8 @@ iter_declaration(
    struct tgsi_full_declaration *decl )
 {
    struct sanity_check_ctx *ctx = (struct sanity_check_ctx *) iter;
-   uint file;
-   uint i;
+   unsigned file;
+   unsigned i;
 
    /* No declarations allowed after the first instruction.
     */
@@ -411,7 +412,7 @@ iter_declaration(
        * have an implied second dimension */
       if (file == TGSI_FILE_INPUT &&
           ctx->iter.processor.Processor == TGSI_PROCESSOR_GEOMETRY) {
-         uint vert;
+         unsigned vert;
          for (vert = 0; vert < ctx->implied_array_size; ++vert) {
             scan_register *reg = MALLOC(sizeof(scan_register));
             fill_scan_register2d(reg, file, i, vert);

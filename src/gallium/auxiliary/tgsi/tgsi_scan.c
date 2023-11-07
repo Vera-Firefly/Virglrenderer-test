@@ -54,7 +54,7 @@ bool
 tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info)
 {
-   uint procType, i;
+   unsigned procType, i;
    struct tgsi_parse_context parse;
    unsigned current_depth = 0;
 
@@ -96,7 +96,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          {
             const struct tgsi_full_instruction *fullinst
                = &parse.FullToken.FullInstruction;
-            uint i;
+            unsigned i;
 
             assert(fullinst->Instruction.Opcode < TGSI_OPCODE_LAST);
             info->opcode_count[fullinst->Instruction.Opcode]++;
@@ -256,8 +256,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          {
             const struct tgsi_full_declaration *fulldecl
                = &parse.FullToken.FullDeclaration;
-            const uint file = fulldecl->Declaration.File;
-            uint reg;
+            const unsigned file = fulldecl->Declaration.File;
+            unsigned reg;
 
             if (file >= TGSI_FILE_COUNT) {
                debug_printf("TGSI Error: unknown file %d\n", file);
@@ -478,8 +478,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          {
-            uint reg = info->immediate_count++;
-            uint file = TGSI_FILE_IMMEDIATE;
+            unsigned reg = info->immediate_count++;
+            unsigned file = TGSI_FILE_IMMEDIATE;
 
             info->file_mask[file] |= (1 << reg);
             info->file_count[file]++;

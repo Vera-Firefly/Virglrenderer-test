@@ -42,7 +42,7 @@ extern "C" {
  */
 struct tgsi_shader_info
 {
-   uint num_tokens;
+   unsigned num_tokens;
 
    uint8_t num_inputs;
    uint8_t num_outputs;
@@ -61,7 +61,7 @@ struct tgsi_shader_info
    uint8_t processor;
 
    uint32_t file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
-   uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
+   unsigned file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
    int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
    int const_file_max[PIPE_MAX_CONSTANT_BUFFERS];
    unsigned samplers_declared; /**< bitmask of declared samplers */
@@ -72,10 +72,10 @@ struct tgsi_shader_info
    uint8_t output_array_last[PIPE_MAX_SHADER_OUTPUTS];
    unsigned array_max[TGSI_FILE_COUNT];  /**< highest index array per register file */
 
-   uint immediate_count; /**< number of immediates declared */
-   uint num_instructions;
+   unsigned immediate_count; /**< number of immediates declared */
+   unsigned num_instructions;
 
-   uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
+   unsigned opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    uint8_t colors_written;
    boolean reads_position; /**< does fragment shader read position? */
