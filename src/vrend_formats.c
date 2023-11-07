@@ -852,7 +852,7 @@ static int format_uncompressed_compressed_copy_compatible(enum virgl_formats src
    }
 }
 
-static boolean format_compressed_compressed_copy_compatible(enum virgl_formats src, enum virgl_formats dst)
+static bool format_compressed_compressed_copy_compatible(enum virgl_formats src, enum virgl_formats dst)
 {
    const bool is_desktop_gl = epoxy_is_desktop_gl();
 
@@ -888,8 +888,8 @@ static boolean format_compressed_compressed_copy_compatible(enum virgl_formats s
    return false;
 }
 
-boolean format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst,
-                                  unsigned int flags)
+bool format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst,
+                               unsigned int flags)
 {
    int r;
 

@@ -578,7 +578,7 @@ static void blitter_set_texcoords(struct vrend_blitter_ctx *blit_ctx,
                                         /* pointer, stride in floats */
                                         &face_coord[0][0], 2,
                                         &blit_ctx->vertices[0].tex.x, 8,
-                                        FALSE);
+                                        false);
    } else {
       set_texcoords_in_vertices(coord, &blit_ctx->vertices[0].tex.x, 8);
    }

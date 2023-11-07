@@ -46,7 +46,7 @@ struct dump_ctx
 {
    struct tgsi_iterate_context iter;
 
-   boolean dump_float_as_hex;
+   bool dump_float_as_hex;
 
    unsigned instno;
    unsigned immno;
@@ -306,13 +306,13 @@ dump_imm_data(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static boolean
+static bool
 iter_declaration(
    struct tgsi_iterate_context *iter,
    struct tgsi_full_declaration *decl )
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
-   boolean patch = decl->Semantic.Name == TGSI_SEMANTIC_PATCH ||
+   bool patch = decl->Semantic.Name == TGSI_SEMANTIC_PATCH ||
       decl->Semantic.Name == TGSI_SEMANTIC_TESSINNER ||
       decl->Semantic.Name == TGSI_SEMANTIC_TESSOUTER ||
       decl->Semantic.Name == TGSI_SEMANTIC_PRIMID;
@@ -459,7 +459,7 @@ iter_declaration(
 
    EOL();
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -475,7 +475,7 @@ tgsi_dump_declaration(
    iter_declaration( &ctx.iter, (struct tgsi_full_declaration *)decl );
 }
 
-static boolean
+static bool
 iter_property(
    struct tgsi_iterate_context *iter,
    struct tgsi_full_property *prop )
@@ -510,7 +510,7 @@ iter_property(
    }
    EOL();
 
-   return TRUE;
+   return true;
 }
 
 void tgsi_dump_property(
@@ -525,7 +525,7 @@ void tgsi_dump_property(
    iter_property( &ctx.iter, (struct tgsi_full_property *)prop );
 }
 
-static boolean
+static bool
 iter_immediate(
    struct tgsi_iterate_context *iter,
    struct tgsi_full_immediate *imm )
@@ -543,7 +543,7 @@ iter_immediate(
 
    EOL();
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -559,7 +559,7 @@ tgsi_dump_immediate(
    iter_immediate( &ctx.iter, (struct tgsi_full_immediate *)imm );
 }
 
-static boolean
+static bool
 iter_instruction(
    struct tgsi_iterate_context *iter,
    struct tgsi_full_instruction *inst )
@@ -568,7 +568,7 @@ iter_instruction(
    unsigned instno = ctx->instno++;
    const struct tgsi_opcode_info *info = tgsi_get_opcode_info( inst->Instruction.Opcode );
    unsigned i;
-   boolean first_reg = TRUE;
+   bool first_reg = true;
 
    INSTID( instno );
    TXT( ": " );
@@ -594,7 +594,7 @@ iter_instruction(
       _dump_register_dst( ctx, dst );
       _dump_writemask( ctx, dst->Register.WriteMask );
 
-      first_reg = FALSE;
+      first_reg = false;
    }
 
    for (i = 0; i < inst->Instruction.NumSrcRegs; i++) {
@@ -625,7 +625,7 @@ iter_instruction(
       if (src->Register.Absolute)
          CHR( '|' );
 
-      first_reg = FALSE;
+      first_reg = false;
    }
 
    if (inst->Instruction.Texture) {
@@ -690,7 +690,7 @@ iter_instruction(
 
    EOL();
 
-   return TRUE;
+   return true;
 }
 
 void
@@ -711,14 +711,14 @@ tgsi_dump_instruction(
    iter_instruction( &ctx.iter, (struct tgsi_full_instruction *)inst );
 }
 
-static boolean
+static bool
 prolog(
    struct tgsi_iterate_context *iter )
 {
    struct dump_ctx *ctx = (struct dump_ctx *) iter;
    ENM( iter->processor.Processor, tgsi_processor_type_names );
    EOL();
-   return TRUE;
+   return true;
 }
 
 
@@ -747,9 +747,9 @@ tgsi_dump_with_logger(
    ctx.user_data = user_data;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
-      ctx.dump_float_as_hex = TRUE;
+      ctx.dump_float_as_hex = true;
    else
-      ctx.dump_float_as_hex = FALSE;
+      ctx.dump_float_as_hex = false;
 
    tgsi_iterate_shader( tokens, &ctx.iter );
 }
@@ -775,9 +775,9 @@ tgsi_dump_to_file(const struct tgsi_token *tokens, unsigned flags, FILE *file)
    ctx.user_data = (void*)file;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
-      ctx.dump_float_as_hex = TRUE;
+      ctx.dump_float_as_hex = true;
    else
-      ctx.dump_float_as_hex = FALSE;
+      ctx.dump_float_as_hex = false;
 
    tgsi_iterate_shader( tokens, &ctx.iter );
 }
@@ -852,11 +852,11 @@ tgsi_dump_str(
    ctx.nospace = false;
 
    if (flags & TGSI_DUMP_FLOAT_AS_HEX)
-      ctx.base.dump_float_as_hex = TRUE;
+      ctx.base.dump_float_as_hex = true;
    else
-      ctx.base.dump_float_as_hex = FALSE;
+      ctx.base.dump_float_as_hex = false;
 
-   boolean success = tgsi_iterate_shader( tokens, &ctx.base.iter );
+   bool success = tgsi_iterate_shader( tokens, &ctx.base.iter );
 
    return !ctx.nospace && success;
 }

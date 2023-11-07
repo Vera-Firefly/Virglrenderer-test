@@ -78,37 +78,37 @@ struct tgsi_shader_info
    unsigned opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    uint8_t colors_written;
-   boolean reads_position; /**< does fragment shader read position? */
-   boolean reads_z; /**< does fragment shader read depth? */
-   boolean writes_z;  /**< does fragment shader write Z value? */
-   boolean writes_stencil; /**< does fragment shader write stencil value? */
-   boolean writes_edgeflag; /**< vertex shader outputs edgeflag */
-   boolean uses_kill;  /**< KILL or KILL_IF instruction used? */
-   boolean uses_persp_center;
-   boolean uses_persp_centroid;
-   boolean uses_persp_sample;
-   boolean uses_linear_center;
-   boolean uses_linear_centroid;
-   boolean uses_linear_sample;
-   boolean uses_persp_opcode_interp_centroid;
-   boolean uses_persp_opcode_interp_offset;
-   boolean uses_persp_opcode_interp_sample;
-   boolean uses_linear_opcode_interp_centroid;
-   boolean uses_linear_opcode_interp_offset;
-   boolean uses_linear_opcode_interp_sample;
-   boolean uses_instanceid;
-   boolean uses_vertexid;
-   boolean uses_vertexid_nobase;
-   boolean uses_basevertex;
-   boolean uses_primid;
-   boolean uses_frontface;
-   boolean uses_invocationid;
-   boolean writes_psize;
-   boolean writes_clipvertex;
-   boolean writes_viewport_index;
-   boolean writes_layer;
-   boolean is_msaa_sampler[PIPE_MAX_SAMPLERS];
-   boolean uses_doubles; /**< uses any of the double instructions */
+   bool reads_position; /**< does fragment shader read position? */
+   bool reads_z; /**< does fragment shader read depth? */
+   bool writes_z;  /**< does fragment shader write Z value? */
+   bool writes_stencil; /**< does fragment shader write stencil value? */
+   bool writes_edgeflag; /**< vertex shader outputs edgeflag */
+   bool uses_kill;  /**< KILL or KILL_IF instruction used? */
+   bool uses_persp_center;
+   bool uses_persp_centroid;
+   bool uses_persp_sample;
+   bool uses_linear_center;
+   bool uses_linear_centroid;
+   bool uses_linear_sample;
+   bool uses_persp_opcode_interp_centroid;
+   bool uses_persp_opcode_interp_offset;
+   bool uses_persp_opcode_interp_sample;
+   bool uses_linear_opcode_interp_centroid;
+   bool uses_linear_opcode_interp_offset;
+   bool uses_linear_opcode_interp_sample;
+   bool uses_instanceid;
+   bool uses_vertexid;
+   bool uses_vertexid_nobase;
+   bool uses_basevertex;
+   bool uses_primid;
+   bool uses_frontface;
+   bool uses_invocationid;
+   bool writes_psize;
+   bool writes_clipvertex;
+   bool writes_viewport_index;
+   bool writes_layer;
+   bool is_msaa_sampler[PIPE_MAX_SAMPLERS];
+   bool uses_doubles; /**< uses any of the double instructions */
    unsigned clipdist_writemask;
    unsigned culldist_writemask;
    unsigned num_written_culldistance;
@@ -140,7 +140,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info);
 
 
-extern boolean
+extern bool
 tgsi_is_passthrough_shader(const struct tgsi_token *tokens);
 
 #ifdef __cplusplus

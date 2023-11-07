@@ -205,7 +205,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                        src->Register.SwizzleY == TGSI_SWIZZLE_Z ||
                        src->Register.SwizzleZ == TGSI_SWIZZLE_Z ||
                        src->Register.SwizzleW == TGSI_SWIZZLE_Z)) {
-                     info->reads_z = TRUE;
+                     info->reads_z = true;
                   }
                }
 
@@ -232,7 +232,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                   if (fullinst->Texture.Texture == TGSI_TEXTURE_2D_MSAA ||
                        fullinst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY_MSAA) {
-                     info->is_msaa_sampler[src->Register.Index] = TRUE;
+                     info->is_msaa_sampler[src->Register.Index] = true;
                   }
                }
             }
@@ -379,12 +379,12 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   }
 
                   if (semName == TGSI_SEMANTIC_PRIMID)
-                     info->uses_primid = TRUE;
+                     info->uses_primid = true;
                   else if (procType == TGSI_PROCESSOR_FRAGMENT) {
                      if (semName == TGSI_SEMANTIC_POSITION)
-                        info->reads_position = TRUE;
+                        info->reads_position = true;
                      else if (semName == TGSI_SEMANTIC_FACE)
-                        info->uses_frontface = TRUE;
+                        info->uses_frontface = true;
                   }
                }
                else if (file == TGSI_FILE_SYSTEM_VALUE) {
@@ -400,21 +400,21 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                                                  index + 1);
 
                   if (semName == TGSI_SEMANTIC_INSTANCEID) {
-                     info->uses_instanceid = TRUE;
+                     info->uses_instanceid = true;
                   }
                   else if (semName == TGSI_SEMANTIC_VERTEXID) {
-                     info->uses_vertexid = TRUE;
+                     info->uses_vertexid = true;
                   }
                   else if (semName == TGSI_SEMANTIC_VERTEXID_NOBASE) {
-                     info->uses_vertexid_nobase = TRUE;
+                     info->uses_vertexid_nobase = true;
                   }
                   else if (semName == TGSI_SEMANTIC_BASEVERTEX) {
-                     info->uses_basevertex = TRUE;
+                     info->uses_basevertex = true;
                   }
                   else if (semName == TGSI_SEMANTIC_PRIMID) {
-                     info->uses_primid = TRUE;
+                     info->uses_primid = true;
                   } else if (semName == TGSI_SEMANTIC_INVOCATIONID) {
-                     info->uses_invocationid = TRUE;
+                     info->uses_invocationid = true;
                   }
                }
                else if (file == TGSI_FILE_OUTPUT) {
@@ -442,31 +442,31 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                       procType == TGSI_PROCESSOR_TESS_CTRL ||
                       procType == TGSI_PROCESSOR_TESS_EVAL) {
                      if (semName == TGSI_SEMANTIC_VIEWPORT_INDEX) {
-                        info->writes_viewport_index = TRUE;
+                        info->writes_viewport_index = true;
                      }
                      else if (semName == TGSI_SEMANTIC_LAYER) {
-                        info->writes_layer = TRUE;
+                        info->writes_layer = true;
                      }
                      else if (semName == TGSI_SEMANTIC_PSIZE) {
-                        info->writes_psize = TRUE;
+                        info->writes_psize = true;
                      }
                      else if (semName == TGSI_SEMANTIC_CLIPVERTEX) {
-                        info->writes_clipvertex = TRUE;
+                        info->writes_clipvertex = true;
                      }
                   }
 
                   if (procType == TGSI_PROCESSOR_FRAGMENT) {
                      if (semName == TGSI_SEMANTIC_POSITION) {
-                        info->writes_z = TRUE;
+                        info->writes_z = true;
                      }
                      else if (semName == TGSI_SEMANTIC_STENCIL) {
-                        info->writes_stencil = TRUE;
+                        info->writes_stencil = true;
                      }
                   }
 
                   if (procType == TGSI_PROCESSOR_VERTEX) {
                      if (semName == TGSI_SEMANTIC_EDGEFLAG) {
-                        info->writes_edgeflag = TRUE;
+                        info->writes_edgeflag = true;
                      }
                   }
                } else if (file == TGSI_FILE_SAMPLER) {
@@ -551,7 +551,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
  * MOV instructions of the form:  MOV OUT[n], IN[n]
  *  
  */
-boolean
+bool
 tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
 {
    struct tgsi_parse_context parse;
@@ -561,7 +561,7 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
     **/
    if (tgsi_parse_init(&parse, tokens) != TGSI_PARSE_OK) {
       debug_printf("tgsi_parse_init() failed in tgsi_is_passthrough_shader()!\n");
-      return FALSE;
+      return false;
    }
 
    /**
@@ -599,7 +599,7 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
                 dst->Register.WriteMask != TGSI_WRITEMASK_XYZW)
             {
                tgsi_parse_free(&parse);
-               return FALSE;
+               return false;
             }
          }
          break;
@@ -618,5 +618,5 @@ tgsi_is_passthrough_shader(const struct tgsi_token *tokens)
    tgsi_parse_free(&parse);
 
    /* if we get here, it's a pass-through shader */
-   return TRUE;
+   return true;
 }

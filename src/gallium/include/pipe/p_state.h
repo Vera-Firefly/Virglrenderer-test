@@ -573,7 +573,7 @@ struct pipe_draw_indirect_info
  */
 struct pipe_draw_info
 {
-   boolean indexed;  /**< use index buffer */
+   bool indexed;  /**< use index buffer */
    uint8_t vertices_per_patch; /**< the number of vertices per patch */
 
    unsigned mode;  /**< the mode of the primitive */
@@ -594,7 +594,7 @@ struct pipe_draw_info
    /**
     * Primitive restart enable/index (only applies to indexed drawing)
     */
-   boolean primitive_restart;
+   bool primitive_restart;
    unsigned restart_index;
 
    struct pipe_draw_indirect_info indirect;
@@ -633,12 +633,12 @@ struct pipe_blit_info
    unsigned mask; /**< bitmask of PIPE_MASK_R/G/B/A/Z/S */
    unsigned filter; /**< PIPE_TEX_FILTER_* */
 
-   boolean scissor_enable;
+   bool scissor_enable;
    struct pipe_scissor_state scissor;
 
-   boolean render_condition_enable; /**< whether the blit should honor the
+   bool render_condition_enable; /**< whether the blit should honor the
                                        current render condition */
-   boolean alpha_blend; /* dst.rgb = src.rgb * src.a + dst.rgb * (1 - src.a) */
+   bool alpha_blend; /* dst.rgb = src.rgb * src.a + dst.rgb * (1 - src.a) */
 };
 
 

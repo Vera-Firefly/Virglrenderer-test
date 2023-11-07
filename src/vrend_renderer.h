@@ -579,8 +579,8 @@ bool vrend_format_is_bgra(enum virgl_formats format);
 
 #define VREND_COPY_COMPAT_FLAG_ALLOW_COMPRESSED (1u << 0)
 #define VREND_COPY_COMPAT_FLAG_ONE_IS_EGL_IMAGE (1u << 1)
-boolean format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst,
-                                  unsigned int flags);
+bool format_is_copy_compatible(enum virgl_formats src, enum virgl_formats dst,
+                               unsigned int flags);
 
 void vrend_renderer_prepare_reset(void);
 void vrend_renderer_reset(void);

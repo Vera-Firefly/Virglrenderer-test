@@ -748,7 +748,7 @@ struct pipe_query_data_so_statistics
 struct pipe_query_data_timestamp_disjoint
 {
    uint64_t frequency;
-   boolean  disjoint;
+   bool  disjoint;
 };
 
 /**
@@ -777,7 +777,7 @@ union pipe_query_result
    /* PIPE_QUERY_OCCLUSION_PREDICATE */
    /* PIPE_QUERY_SO_OVERFLOW_PREDICATE */
    /* PIPE_QUERY_GPU_FINISHED */
-   boolean b;
+   bool b;
 
    /* PIPE_QUERY_OCCLUSION_COUNTER */
    /* PIPE_QUERY_TIMESTAMP */
@@ -816,7 +816,7 @@ struct pipe_driver_query_info
    const char *name;
    unsigned query_type; /* PIPE_QUERY_DRIVER_SPECIFIC + i */
    uint64_t max_value; /* max value that can be returned */
-   boolean uses_byte_units; /* whether the result is in bytes */
+   bool uses_byte_units; /* whether the result is in bytes */
 };
 
 #ifdef __cplusplus

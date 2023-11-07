@@ -54,7 +54,7 @@ pipe_reference_init(struct pipe_reference *reference, unsigned count)
    p_atomic_set(&reference->count, count);
 }
 
-static inline boolean
+static inline bool
 pipe_is_referenced(struct pipe_reference *reference)
 {
    return p_atomic_read(&reference->count) != 0;
@@ -64,14 +64,14 @@ pipe_is_referenced(struct pipe_reference *reference)
  * Update reference counting.
  * The old thing pointed to, if any, will be unreferenced.
  * Both 'ptr' and 'reference' may be NULL.
- * \return TRUE if the object's refcount hits zero and should be destroyed.
+ * \return true if the object's refcount hits zero and should be destroyed.
  */
-static inline boolean
+static inline bool
 pipe_reference_described(struct pipe_reference *ptr, 
                          struct pipe_reference *reference, 
                          debug_reference_descriptor get_desc)
 {
-   boolean destroy = FALSE;
+   bool destroy = false;
 
    if(ptr != reference) {
       /* bump the reference.count first */
@@ -84,7 +84,7 @@ pipe_reference_described(struct pipe_reference *ptr,
       if (ptr) {
          assert(pipe_is_referenced(ptr));
          if (p_atomic_dec_zero(&ptr->count)) {
-            destroy = TRUE;
+            destroy = true;
          }
          debug_reference(ptr, get_desc, -1);
       }
@@ -93,7 +93,7 @@ pipe_reference_described(struct pipe_reference *ptr,
    return destroy;
 }
 
-static inline boolean
+static inline bool
 pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 {
    return pipe_reference_described(ptr, reference, 
@@ -101,7 +101,7 @@ pipe_reference(struct pipe_reference *ptr, struct pipe_reference *reference)
 }
 
 /* Return true if the surfaces are equal. */
-static inline boolean
+static inline bool
 pipe_surface_equal(struct pipe_surface *s1, struct pipe_surface *s2)
 {
    return s1->texture == s2->texture &&
@@ -119,7 +119,7 @@ pipe_surface_equal(struct pipe_surface *s1, struct pipe_surface *s2)
  * Get the polygon offset enable/disable flag for the given polygon fill mode.
  * \param fill_mode  one of PIPE_POLYGON_MODE_POINT/LINE/FILL
  */
-static inline boolean
+static inline bool
 util_get_offset(const struct pipe_rasterizer_state *templ,
                 unsigned fill_mode)
 {
@@ -132,7 +132,7 @@ util_get_offset(const struct pipe_rasterizer_state *templ,
       return templ->offset_tri;
    default:
       assert(0);
-      return FALSE;
+      return false;
    }
 }
 
@@ -153,7 +153,7 @@ util_query_clear_result(union pipe_query_result *result, unsigned type)
    case PIPE_QUERY_OCCLUSION_PREDICATE:
    case PIPE_QUERY_SO_OVERFLOW_PREDICATE:
    case PIPE_QUERY_GPU_FINISHED:
-      result->b = FALSE;
+      result->b = false;
       break;
    case PIPE_QUERY_OCCLUSION_COUNTER:
    case PIPE_QUERY_TIMESTAMP:

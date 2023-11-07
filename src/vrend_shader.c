@@ -1142,7 +1142,7 @@ static int lookup_image_array(const struct dump_ctx *ctx, int index)
    return image ? image->first : -1;
 }
 
-static boolean
+static bool
 iter_decls(struct tgsi_iterate_context *iter,
            struct tgsi_full_declaration *decl)
 {
@@ -1283,7 +1283,7 @@ struct syvalue_prop_map {
 };
 
 
-static boolean
+static bool
 iter_declaration(struct tgsi_iterate_context *iter,
                  struct tgsi_full_declaration *decl)
 {
@@ -2010,7 +2010,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static boolean
+static bool
 iter_property(struct tgsi_iterate_context *iter,
               struct tgsi_full_property *prop)
 {
@@ -2111,7 +2111,7 @@ iter_property(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static boolean
+static bool
 iter_immediate(struct tgsi_iterate_context *iter,
                struct tgsi_full_immediate *imm)
 {
@@ -4686,7 +4686,7 @@ get_source_info(struct dump_ctx *ctx,
       char arrayname[16] = "";
       char fp64_src[255];
       int swz_idx = 0, pre_idx = 0;
-      boolean isfloatabsolute = src->Register.Absolute && stype != TGSI_TYPE_DOUBLE;
+      bool isfloatabsolute = src->Register.Absolute && stype != TGSI_TYPE_DOUBLE;
 
       sinfo->override_no_wm[i] = false;
       sinfo->override_no_cast[i] = false;
@@ -5169,7 +5169,7 @@ get_source_info(struct dump_ctx *ctx,
       }
 
       if (stype == TGSI_TYPE_DOUBLE) {
-         boolean isabsolute = src->Register.Absolute;
+         bool isabsolute = src->Register.Absolute;
          snprintf(fp64_src, sizeof(fp64_src), "%s", src_buf->buf);
          strbuf_fmt(src_buf, "fp64_src[%d]", i);
          emit_buff(&ctx->glsl_strbufs, "%s.x = %spackDouble2x32(uvec2(%s%s))%s;\n", src_buf->buf, isabsolute ? "abs(" : "", fp64_src, swizzle, isabsolute ? ")" : "");
@@ -5491,7 +5491,7 @@ add_missing_inputs(const struct dump_ctx *ctx, struct vrend_shader_io *inputs,
    return num_inputs;
 }
 
-static boolean
+static bool
 iter_instruction(struct tgsi_iterate_context *iter,
                  struct tgsi_full_instruction *inst)
 {
@@ -6140,7 +6140,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static boolean
+static bool
 prolog(struct tgsi_iterate_context *iter)
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
@@ -7745,7 +7745,7 @@ static int emit_ios(const struct dump_ctx *ctx,
    return glsl_ver_required;
 }
 
-static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vrend_fs_shader_info *fs_info)
+static bool fill_fragment_interpolants(const struct dump_ctx *ctx, struct vrend_fs_shader_info *fs_info)
 {
    uint32_t i, index = 0;
 
@@ -7762,7 +7762,7 @@ static boolean fill_fragment_interpolants(const struct dump_ctx *ctx, struct vre
    return true;
 }
 
-static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_variable_shader_info *sinfo)
+static bool fill_interpolants(const struct dump_ctx *ctx, struct vrend_variable_shader_info *sinfo)
 {
    if (!ctx->interp_input_mask)
       return true;
@@ -7772,7 +7772,7 @@ static boolean fill_interpolants(const struct dump_ctx *ctx, struct vrend_variab
    return fill_fragment_interpolants(ctx, &sinfo->fs_info);
 }
 
-static boolean analyze_instruction(struct tgsi_iterate_context *iter,
+static bool analyze_instruction(struct tgsi_iterate_context *iter,
                                    struct tgsi_full_instruction *inst)
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
@@ -7981,7 +7981,7 @@ struct sso_scan_ctx {
    bool unsupported_io;
 };
 
-static boolean
+static bool
 iter_prop_for_separable(struct tgsi_iterate_context *iter,
           struct tgsi_full_property *prop)
 {
@@ -7992,7 +7992,7 @@ iter_prop_for_separable(struct tgsi_iterate_context *iter,
    return true;
 }
 
-static boolean
+static bool
 iter_decl_for_overlap(struct tgsi_iterate_context *iter,
                       struct tgsi_full_declaration *decl)
 {
@@ -8076,7 +8076,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
                           struct vrend_strarray *shader)
 {
    struct dump_ctx ctx;
-   boolean bret;
+   bool bret;
 
    memset(&ctx, 0, sizeof(struct dump_ctx));
    ctx.cfg = cfg;
@@ -8240,7 +8240,7 @@ bool vrend_convert_shader(const struct vrend_context *rctx,
    return false;
 }
 
-static boolean
+static bool
 iter_vs_declaration(struct tgsi_iterate_context *iter,
                     struct tgsi_full_declaration *decl)
 {

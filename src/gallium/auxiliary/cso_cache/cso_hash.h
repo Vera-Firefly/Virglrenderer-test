@@ -99,7 +99,7 @@ struct cso_hash_iter cso_hash_find(struct cso_hash *hash, unsigned key);
 /**
  * Returns true if a value with the given key exists in the hash
  */
-boolean   cso_hash_contains(struct cso_hash *hash, unsigned key);
+bool      cso_hash_contains(struct cso_hash *hash, unsigned key);
 
 
 int       cso_hash_iter_is_null(struct cso_hash_iter iter);
