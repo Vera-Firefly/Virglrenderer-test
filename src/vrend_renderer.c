@@ -3489,7 +3489,9 @@ void vrend_set_constants(struct vrend_context *ctx,
       consts->num_allocated_consts = num_constant;
    }
 
-   memcpy(consts->consts, data, num_constant * sizeof(unsigned int));
+   if (num_constant > 0)
+      memcpy(consts->consts, data, num_constant * sizeof(unsigned int));
+
    consts->num_consts = num_constant;
 }
 
