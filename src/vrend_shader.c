@@ -7832,7 +7832,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->fog_input_mask = ctx->fog_input_mask;
    sinfo->fog_output_mask = ctx->fog_output_mask;
 
-   sinfo->ssbo_used_mask = ctx->ssbo_used_mask >> ctx->ssbo_first_binding;
+   sinfo->ssbo_used_mask = ctx->ssbo_used_mask >> (ctx->ssbo_first_binding != UINT32_MAX ? ctx->ssbo_first_binding : 0);
    sinfo->ssbo_binding_offset  = ctx->key->ssbo_binding_offset;
 
    sinfo->ssbo_last_binding = ctx->key->ssbo_binding_offset + ctx->ssbo_last_binding -
