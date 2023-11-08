@@ -8855,7 +8855,7 @@ static void vrend_scale_depth(void *ptr, int size, float scale_val)
       GLuint value = ival[i];
       GLfloat d = ((float)(value >> 8) * myscale) * scale_val;
       d = CLAMP(d, 0.0F, 1.0F);
-      ival[i] = (int)(d / myscale) << 8;
+      ival[i] = (GLuint)(d / myscale) << 8;
    }
 }
 
