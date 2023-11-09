@@ -122,8 +122,7 @@ vkr_queue_sync_thread_fini(struct vkr_queue *queue)
 
    thrd_join(queue->sync_thread.thread, NULL);
 
-   struct vkr_queue_sync *sync, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (sync, tmp, &queue->sync_thread.syncs, head)
+   list_for_each_entry_safe (struct vkr_queue_sync, sync, &queue->sync_thread.syncs, head)
       vkr_queue_sync_retire(queue, sync);
 
    mtx_destroy(&queue->sync_thread.mutex);
@@ -311,9 +310,7 @@ vkr_device_lookup_queue(struct vkr_device *dev,
                         uint32_t family,
                         uint32_t index)
 {
-   struct vkr_queue *queue;
-
-   LIST_FOR_EACH_ENTRY (queue, &dev->queues, base.track_head) {
+   list_for_each_entry (struct vkr_queue, queue, &dev->queues, base.track_head) {
       if (queue->flags == flags && queue->family == family && queue->index == index)
          return queue;
    }

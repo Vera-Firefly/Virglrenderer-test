@@ -47,8 +47,7 @@ vkr_device_create_queues(struct vkr_context *ctx,
          struct vkr_queue *queue = vkr_queue_create(
             ctx, dev, info.flags, info.queueFamilyIndex, info.queueIndex, handle);
          if (!queue) {
-            struct vkr_queue *entry, *tmp;
-            LIST_FOR_EACH_ENTRY_SAFE (entry, tmp, &dev->queues, base.track_head)
+            list_for_each_entry_safe (struct vkr_queue, entry, &dev->queues, base.track_head)
                vkr_queue_destroy(ctx, entry);
 
             return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -300,17 +299,14 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
       vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)result);
 
    if (!list_is_empty(&dev->objects)) {
-      struct vkr_object *obj, *obj_tmp;
-      LIST_FOR_EACH_ENTRY_SAFE (obj, obj_tmp, &dev->objects, track_head)
+      list_for_each_entry_safe (struct vkr_object, obj, &dev->objects, track_head)
          vkr_device_object_destroy(ctx, dev, obj);
    }
 
-   struct vkr_queue *queue, *queue_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (queue, queue_tmp, &dev->queues, base.track_head)
+   list_for_each_entry_safe (struct vkr_queue, queue, &dev->queues, base.track_head)
       vkr_queue_destroy(ctx, queue);
 
-   struct vkr_queue_sync *sync, *sync_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (sync, sync_tmp, &dev->free_syncs, head) {
+   list_for_each_entry_safe (struct vkr_queue_sync, sync, &dev->free_syncs, head) {
       vk->DestroyFence(dev->base.handle.device, sync->fence, NULL);
       free(sync);
    }

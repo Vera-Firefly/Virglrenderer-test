@@ -79,8 +79,7 @@ vkr_renderer_init(uint32_t flags, const struct vkr_renderer_callbacks *cbs)
 void
 vkr_renderer_fini(void)
 {
-   struct vkr_context *ctx, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (ctx, tmp, &vkr_state.contexts, head)
+   list_for_each_entry_safe (struct vkr_context, ctx, &vkr_state.contexts, head)
       vkr_context_destroy(ctx);
 
    list_inithead(&vkr_state.contexts);

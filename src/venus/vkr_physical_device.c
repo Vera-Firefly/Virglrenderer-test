@@ -57,8 +57,7 @@ void
 vkr_physical_device_destroy(struct vkr_context *ctx,
                             struct vkr_physical_device *physical_dev)
 {
-   struct vkr_device *dev, *tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (dev, tmp, &physical_dev->devices, base.track_head)
+   list_for_each_entry_safe (struct vkr_device, dev, &physical_dev->devices, base.track_head)
       vkr_device_destroy(ctx, dev);
 
    free(physical_dev->extensions);

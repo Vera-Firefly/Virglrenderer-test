@@ -223,9 +223,8 @@ vkr_context_remove_object(struct vkr_context *ctx, struct vkr_object *obj)
 static inline void
 vkr_context_remove_objects(struct vkr_context *ctx, struct list_head *objects)
 {
-   struct vkr_object *obj, *tmp;
    mtx_lock(&ctx->object_mutex);
-   LIST_FOR_EACH_ENTRY_SAFE (obj, tmp, objects, track_head)
+   list_for_each_entry_safe (struct vkr_object, obj, objects, track_head)
       vkr_context_remove_object_locked(ctx, obj);
    mtx_unlock(&ctx->object_mutex);
    /* objects should be reinitialized if to be reused */

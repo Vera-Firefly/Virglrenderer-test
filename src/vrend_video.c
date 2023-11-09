@@ -125,9 +125,7 @@ static struct vrend_video_codec *get_video_codec(
                                         struct vrend_video_context *ctx,
                                         uint32_t cdc_handle)
 {
-    struct vrend_video_codec *cdc;
-
-    LIST_FOR_EACH_ENTRY(cdc, &ctx->codecs, head) {
+    list_for_each_entry(struct vrend_video_codec, cdc, &ctx->codecs, head) {
         if (cdc->handle == cdc_handle)
             return cdc;
     }
@@ -139,9 +137,7 @@ static struct vrend_video_buffer *get_video_buffer(
                                         struct vrend_video_context *ctx,
                                         uint32_t buf_handle)
 {
-    struct vrend_video_buffer *buf;
-
-    LIST_FOR_EACH_ENTRY(buf, &ctx->buffers, head) {
+    list_for_each_entry(struct vrend_video_buffer, buf, &ctx->buffers, head) {
         if (buf->handle == buf_handle)
             return buf;
     }
@@ -563,13 +559,10 @@ struct vrend_video_context *vrend_video_create_context(struct vrend_context *ctx
 
 void vrend_video_destroy_context(struct vrend_video_context *ctx)
 {
-   struct vrend_video_codec *vcdc, *vcdc_tmp;
-   struct vrend_video_buffer *vbuf, *vbuf_tmp;
-
-   LIST_FOR_EACH_ENTRY_SAFE(vcdc, vcdc_tmp, &ctx->codecs, head)
+   list_for_each_entry_safe(struct vrend_video_codec, vcdc, &ctx->codecs, head)
       destroy_video_codec(vcdc);
 
-   LIST_FOR_EACH_ENTRY_SAFE(vbuf, vbuf_tmp, &ctx->buffers, head)
+   list_for_each_entry_safe(struct vrend_video_buffer, vbuf, &ctx->buffers, head)
       destroy_video_buffer(vbuf);
 
    free(ctx);

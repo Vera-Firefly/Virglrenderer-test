@@ -96,9 +96,8 @@ vkr_dispatch_vkExecuteCommandStreamsMESA(
 static struct vkr_ring *
 lookup_ring(struct vkr_context *ctx, uint64_t ring_id)
 {
-   struct vkr_ring *ring;
    mtx_lock(&ctx->ring_mutex);
-   LIST_FOR_EACH_ENTRY (ring, &ctx->rings, head) {
+   list_for_each_entry (struct vkr_ring, ring, &ctx->rings, head) {
       if (ring->id == ring_id) {
          mtx_unlock(&ctx->ring_mutex);
          return ring;

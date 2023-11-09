@@ -377,8 +377,7 @@ vkr_context_destroy_resource(struct vkr_context *ctx, uint32_t res_id)
    vkr_cs_encoder_check_stream(&ctx->encoder, res);
 
    mtx_lock(&ctx->ring_mutex);
-   struct vkr_ring *ring, *ring_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
+   list_for_each_entry_safe (struct vkr_ring, ring, &ctx->rings, head) {
       vkr_cs_encoder_check_stream(&ring->encoder, res);
 
       if (ring->resource != res && vkr_cs_decoder_check_stream(&ring->decoder, res))
@@ -575,8 +574,7 @@ vkr_context_destroy(struct vkr_context *ctx)
    /* TODO Move the entire teardown process to a separate thread so that the main thread
     * cannot get blocked by the vkDeviceWaitIdle upon device destruction.
     */
-   struct vkr_ring *ring, *ring_tmp;
-   LIST_FOR_EACH_ENTRY_SAFE (ring, ring_tmp, &ctx->rings, head) {
+   list_for_each_entry_safe (struct vkr_ring, ring, &ctx->rings, head) {
       vkr_ring_stop(ring);
       vkr_ring_destroy(ring);
    }

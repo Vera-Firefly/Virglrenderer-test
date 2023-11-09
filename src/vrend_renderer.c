@@ -1301,11 +1301,8 @@ static void vrend_shader_dump(struct vrend_shader *shader)
 
 static void vrend_shader_destroy(struct vrend_shader *shader)
 {
-   struct vrend_linked_shader_program *ent, *tmp;
-
-   LIST_FOR_EACH_ENTRY_SAFE(ent, tmp, &shader->programs, sl[shader->sel->type]) {
+   list_for_each_entry_safe(struct vrend_linked_shader_program, ent, &shader->programs, sl[shader->sel->type])
       vrend_destroy_program(ent);
-   }
 
    if (shader->sel->sinfo.separable_program)
        glDeleteProgram(shader->program_id);
@@ -2190,8 +2187,7 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
 static struct vrend_linked_shader_program *lookup_cs_shader_program(struct vrend_context *ctx,
                                                                     GLuint cs_id)
 {
-   struct vrend_linked_shader_program *ent;
-   LIST_FOR_EACH_ENTRY(ent, &ctx->sub->cs_programs, head) {
+   list_for_each_entry(struct vrend_linked_shader_program, ent, &ctx->sub->cs_programs, head) {
       if (ent->ss[PIPE_SHADER_COMPUTE]->id == cs_id) {
          list_del(&ent->head);
          list_add(&ent->head, &ctx->sub->cs_programs);
@@ -2212,10 +2208,8 @@ static struct vrend_linked_shader_program *lookup_shader_program(struct vrend_su
    uint64_t vs_fs_key = (((uint64_t)fs_id) << 32) | (vs_id & ~VREND_PROGRAM_NQUEUE_MASK) |
                         (dual_src ? 1 : 0);
 
-   struct vrend_linked_shader_program *ent;
-
    struct list_head *programs = &sub_ctx->gl_programs[vs_id & VREND_PROGRAM_NQUEUE_MASK];
-   LIST_FOR_EACH_ENTRY(ent, programs, head) {
+   list_for_each_entry(struct vrend_linked_shader_program, ent, programs, head) {
       if (likely(ent->vs_fs_key != vs_fs_key))
          continue;
       if (ent->ss[PIPE_SHADER_GEOMETRY] &&
@@ -2268,16 +2262,14 @@ static void vrend_destroy_program(struct vrend_linked_shader_program *ent)
 
 static void vrend_free_programs(struct vrend_sub_context *sub)
 {
-   struct vrend_linked_shader_program *ent, *tmp;
-
    if (!list_is_empty(&sub->cs_programs)) {
-      LIST_FOR_EACH_ENTRY_SAFE(ent, tmp, &sub->cs_programs, head)
+      list_for_each_entry_safe(struct vrend_linked_shader_program, ent, &sub->cs_programs, head)
          vrend_destroy_program(ent);
    }
 
    for (unsigned i = 0; i < VREND_PROGRAM_NQUEUES; ++i) {
       if (!list_is_empty(&sub->gl_programs[i])) {
-         LIST_FOR_EACH_ENTRY_SAFE(ent, tmp, &sub->gl_programs[i], head)
+         list_for_each_entry_safe(struct vrend_linked_shader_program, ent, &sub->gl_programs[i], head)
             vrend_destroy_program(ent);
       }
    }
@@ -2428,29 +2420,23 @@ static void vrend_destroy_so_target_object(void *obj_ptr)
 {
    struct vrend_so_target *target = obj_ptr;
    struct vrend_sub_context *sub_ctx = target->sub_ctx;
-   struct vrend_streamout_object *obj, *tmp;
-   bool found;
    unsigned i;
 
-   LIST_FOR_EACH_ENTRY_SAFE(obj, tmp, &sub_ctx->streamout_list, head) {
-      found = false;
+   list_for_each_entry_safe(struct vrend_streamout_object, obj, &sub_ctx->streamout_list, head) {
       for (i = 0; i < obj->num_targets; i++) {
          if (obj->so_targets[i] == target) {
-            found = true;
+            if (obj == sub_ctx->current_so)
+               sub_ctx->current_so = NULL;
+            if (obj->xfb_state == XFB_STATE_PAUSED) {
+                  if (has_feature(feat_transform_feedback2))
+                     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, obj->id);
+                  glEndTransformFeedback();
+               if (sub_ctx->current_so && has_feature(feat_transform_feedback2))
+                  glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, sub_ctx->current_so->id);
+            }
+            vrend_destroy_streamout_object(obj);
             break;
          }
-      }
-      if (found) {
-         if (obj == sub_ctx->current_so)
-            sub_ctx->current_so = NULL;
-         if (obj->xfb_state == XFB_STATE_PAUSED) {
-               if (has_feature(feat_transform_feedback2))
-                  glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, obj->id);
-               glEndTransformFeedback();
-            if (sub_ctx->current_so && has_feature(feat_transform_feedback2))
-               glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, sub_ctx->current_so->id);
-         }
-         vrend_destroy_streamout_object(obj);
       }
    }
 
@@ -7183,28 +7169,24 @@ static void free_fence_locked(struct vrend_fence *fence)
 
 static void vrend_free_fences(void)
 {
-   struct vrend_fence *fence, *stor;
-
    /* this is called after vrend_free_sync_thread */
    assert(!vrend_state.sync_thread);
 
-   LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences)
+   list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_list, fences)
       free_fence_locked(fence);
-   LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_wait_list, fences)
+   list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_wait_list, fences)
       free_fence_locked(fence);
 }
 
 static void vrend_free_fences_for_context(struct vrend_context *ctx)
 {
-   struct vrend_fence *fence, *stor;
-
    if (vrend_state.sync_thread) {
       mtx_lock(&vrend_state.fence_mutex);
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_list, fences) {
          if (fence->ctx == ctx)
             free_fence_locked(fence);
       }
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_wait_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_wait_list, fences) {
          if (fence->ctx == ctx)
             free_fence_locked(fence);
       }
@@ -7214,7 +7196,7 @@ static void vrend_free_fences_for_context(struct vrend_context *ctx)
       }
       mtx_unlock(&vrend_state.fence_mutex);
    } else {
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_list, fences) {
          if (fence->ctx == ctx)
             free_fence_locked(fence);
       }
@@ -7323,7 +7305,6 @@ static void wait_sync(struct vrend_fence *fence)
 static int thread_sync(UNUSED void *arg)
 {
    virgl_gl_context gl_context = vrend_state.sync_context;
-   struct vrend_fence *fence, *stor;
 
    u_thread_setname("vrend-sync");
 
@@ -7337,7 +7318,7 @@ static int thread_sync(UNUSED void *arg)
          break;
       }
 
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_wait_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_wait_list, fences) {
          if (vrend_state.stop_sync_thread)
             break;
          list_del(&fence->fences);
@@ -7700,8 +7681,6 @@ vrend_renderer_fini(void)
 
 static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
 {
-   struct vrend_streamout_object *obj, *tmp;
-
    vrend_clicbs->make_current(sub->gl_context);
 
    if (has_feature(feat_images)) {
@@ -7764,9 +7743,8 @@ static void vrend_destroy_sub_context(struct vrend_sub_context *sub)
    if (sub->current_so)
       glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
 
-   LIST_FOR_EACH_ENTRY_SAFE(obj, tmp, &sub->streamout_list, head) {
+   list_for_each_entry_safe(struct vrend_streamout_object, obj, &sub->streamout_list, head)
       vrend_destroy_streamout_object(obj);
-   }
 
    vrend_shader_state_reference(&sub->shaders[PIPE_SHADER_VERTEX], NULL);
    vrend_shader_state_reference(&sub->shaders[PIPE_SHADER_FRAGMENT], NULL);
@@ -7829,8 +7807,6 @@ void vrend_destroy_context(struct vrend_context *ctx)
 {
    bool switch_0 = (ctx == vrend_state.current_ctx);
    struct vrend_context *cur = vrend_state.current_ctx;
-   struct vrend_sub_context *sub, *tmp;
-   struct vrend_untyped_resource *untyped_res, *untyped_res_tmp;
    if (switch_0) {
       vrend_state.current_ctx = NULL;
       vrend_state.current_hw_ctx = NULL;
@@ -7851,7 +7827,7 @@ void vrend_destroy_context(struct vrend_context *ctx)
 
    vrend_set_index_buffer(ctx, 0, 0, 0);
 
-   LIST_FOR_EACH_ENTRY_SAFE_REV(sub, tmp, &ctx->sub_ctxs, head) {
+   list_for_each_entry_safe_rev(struct vrend_sub_context, sub, &ctx->sub_ctxs, head) {
       ctx->sub = sub;
       vrend_destroy_sub_context(sub);
    }
@@ -7867,7 +7843,7 @@ void vrend_destroy_context(struct vrend_context *ctx)
    vrend_video_destroy_context(ctx->video);
 #endif
 
-   LIST_FOR_EACH_ENTRY_SAFE(untyped_res, untyped_res_tmp, &ctx->untyped_resources, head)
+   list_for_each_entry_safe(struct vrend_untyped_resource, untyped_res, &ctx->untyped_resources, head)
       free(untyped_res);
    vrend_ctx_resource_fini_table(ctx->res_hash);
 
@@ -10140,23 +10116,17 @@ void vrend_set_streamout_targets(struct vrend_context *ctx,
       return;
 
    if (num_targets) {
-      bool found = false;
-      struct vrend_streamout_object *obj;
-      LIST_FOR_EACH_ENTRY(obj, &ctx->sub->streamout_list, head) {
+      list_for_each_entry(struct vrend_streamout_object, obj, &ctx->sub->streamout_list, head) {
          if (obj->num_targets == num_targets) {
             if (!memcmp(handles, obj->handles, num_targets * 4)) {
-               found = true;
-               break;
+               ctx->sub->current_so = obj;
+               glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, obj->id);
+               return;
             }
          }
       }
-      if (found) {
-         ctx->sub->current_so = obj;
-         glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, obj->id);
-         return;
-      }
 
-      obj = CALLOC_STRUCT(vrend_streamout_object);
+      struct vrend_streamout_object *obj = CALLOC_STRUCT(vrend_streamout_object);
       if (has_feature(feat_transform_feedback2)) {
          glGenTransformFeedbacks(1, &obj->id);
          glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, obj->id);
@@ -11206,7 +11176,6 @@ static bool need_fence_retire_signal_locked(struct vrend_fence *fence,
 void vrend_renderer_check_fences(void)
 {
    struct list_head retired_fences;
-   struct vrend_fence *fence, *stor;
 
    assert(!vrend_state.use_async_fence_cb);
 
@@ -11215,7 +11184,7 @@ void vrend_renderer_check_fences(void)
    if (vrend_state.sync_thread) {
       flush_eventfd(vrend_state.eventfd);
       mtx_lock(&vrend_state.fence_mutex);
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_list, fences) {
          /* vrend_free_fences_for_context might have marked the fence invalid
           * by setting fence->ctx to NULL
           */
@@ -11235,7 +11204,7 @@ void vrend_renderer_check_fences(void)
    } else {
       vrend_renderer_force_ctx_0();
 
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &vrend_state.fence_list, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &vrend_state.fence_list, fences) {
          if (do_wait(fence, /* can_block */ false)) {
             list_del(&fence->fences);
             list_addtail(&fence->fences, &retired_fences);
@@ -11245,7 +11214,7 @@ void vrend_renderer_check_fences(void)
          }
       }
 
-      LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &retired_fences, fences) {
+      list_for_each_entry_safe(struct vrend_fence, fence, &retired_fences, fences) {
          if (!need_fence_retire_signal_locked(fence, &retired_fences))
             free_fence_locked(fence);
       }
@@ -11256,7 +11225,7 @@ void vrend_renderer_check_fences(void)
 
    vrend_renderer_check_queries();
 
-   LIST_FOR_EACH_ENTRY_SAFE(fence, stor, &retired_fences, fences) {
+   list_for_each_entry_safe(struct vrend_fence, fence, &retired_fences, fences) {
       struct vrend_context *ctx = fence->ctx;
       ctx->fence_retire(fence->fence_id, ctx->fence_retire_data);
 
@@ -11336,12 +11305,10 @@ static bool vrend_check_query(struct vrend_query *query)
 static struct vrend_sub_context *vrend_renderer_find_sub_ctx(struct vrend_context *ctx,
                                                              int sub_ctx_id)
 {
-   struct vrend_sub_context *sub;
-
    if (ctx->sub && ctx->sub->sub_ctx_id == sub_ctx_id)
       return ctx->sub;
 
-   LIST_FOR_EACH_ENTRY(sub, &ctx->sub_ctxs, head) {
+   list_for_each_entry_safe(struct vrend_sub_context, sub, &ctx->sub_ctxs, head) {
       if (sub->sub_ctx_id == sub_ctx_id)
          return sub;
    }
@@ -11381,9 +11348,7 @@ static bool vrend_hw_switch_context_with_sub(struct vrend_context *ctx, int sub_
 
 static void vrend_renderer_check_queries(void)
 {
-   struct vrend_query *query, *stor;
-
-   LIST_FOR_EACH_ENTRY_SAFE(query, stor, &vrend_state.waiting_query_list, waiting_queries) {
+   list_for_each_entry_safe(struct vrend_query, query, &vrend_state.waiting_query_list, waiting_queries) {
       if (!vrend_hw_switch_context_with_sub(query->ctx, query->sub_ctx_id)) {
          virgl_warn("Failed to switch to context (%d) with sub (%d) for query %u\n",
                       query->ctx->ctx_id, query->sub_ctx_id, query->id);
@@ -12792,8 +12757,7 @@ void vrend_renderer_get_rect(struct pipe_resource *pres,
 static struct vrend_untyped_resource *
 vrend_renderer_find_untyped_resource(struct vrend_context *ctx, uint32_t res_id)
 {
-   struct vrend_untyped_resource *iter;
-   LIST_FOR_EACH_ENTRY(iter, &ctx->untyped_resources, head) {
+   list_for_each_entry(struct vrend_untyped_resource, iter, &ctx->untyped_resources, head) {
       if (iter->resource->res_id == res_id)
          return iter;
    }
@@ -12921,17 +12885,16 @@ void vrend_renderer_get_cap_set(uint32_t cap_set, uint32_t *max_ver,
 
 void vrend_renderer_create_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
 {
-   struct vrend_sub_context *sub;
    struct virgl_gl_ctx_param ctx_params;
    GLuint i;
 
-   LIST_FOR_EACH_ENTRY(sub, &ctx->sub_ctxs, head) {
+   list_for_each_entry(struct vrend_sub_context, sub, &ctx->sub_ctxs, head) {
       if (sub->sub_ctx_id == sub_ctx_id) {
          return;
       }
    }
 
-   sub = CALLOC_STRUCT(vrend_sub_context);
+   struct vrend_sub_context *sub = CALLOC_STRUCT(vrend_sub_context);
    if (!sub)
       return;
 
@@ -13004,24 +12967,19 @@ void vrend_print_context_name(const struct vrend_context *ctx)
 
 void vrend_renderer_destroy_sub_ctx(struct vrend_context *ctx, int sub_ctx_id)
 {
-   struct vrend_sub_context *sub, *tofree = NULL;
-
    /* never destroy sub context id 0 */
    if (sub_ctx_id == 0)
       return;
 
-   LIST_FOR_EACH_ENTRY(sub, &ctx->sub_ctxs, head) {
+   list_for_each_entry(struct vrend_sub_context, sub, &ctx->sub_ctxs, head) {
       if (sub->sub_ctx_id == sub_ctx_id) {
-         tofree = sub;
+         if (ctx->sub == sub) {
+            ctx->sub = ctx->sub0;
+         }
+         vrend_destroy_sub_context(sub);
+         vrend_clicbs->make_current(ctx->sub->gl_context);
+         break;
       }
-   }
-
-   if (tofree) {
-      if (ctx->sub == tofree) {
-         ctx->sub = ctx->sub0;
-      }
-      vrend_destroy_sub_context(tofree);
-      vrend_clicbs->make_current(ctx->sub->gl_context);
    }
 }
 
@@ -13101,9 +13059,8 @@ int vrend_renderer_pipe_resource_create(struct vrend_context *ctx, uint32_t blob
 struct pipe_resource *vrend_get_blob_pipe(struct vrend_context *ctx, uint64_t blob_id)
 {
    uint32_t id = (uint32_t)blob_id;
-   struct vrend_resource *res, *stor;
 
-   LIST_FOR_EACH_ENTRY_SAFE(res, stor, &ctx->vrend_resources, head) {
+   list_for_each_entry_safe(struct vrend_resource, res, &ctx->vrend_resources, head) {
       if (res->blob_id != id)
          continue;
 
@@ -13316,9 +13273,7 @@ static bool find_ctx0_fence_locked(struct list_head *fence_list,
                                    bool *seen_first,
                                    struct vrend_fence **fence)
 {
-   struct vrend_fence *iter;
-
-   LIST_FOR_EACH_ENTRY(iter, fence_list, fences) {
+   list_for_each_entry(struct vrend_fence, iter, fence_list, fences) {
       /* only consider ctx0 fences */
       if (iter->ctx != vrend_state.ctx0)
          continue;
