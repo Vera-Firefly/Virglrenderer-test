@@ -21,7 +21,7 @@ vkr_device_alloc_queue_sync(struct vkr_device *dev,
    struct vkr_queue_sync *sync;
 
    mtx_lock(&dev->free_sync_mutex);
-   if (LIST_IS_EMPTY(&dev->free_syncs)) {
+   if (list_is_empty(&dev->free_syncs)) {
       mtx_unlock(&dev->free_sync_mutex);
 
       sync = malloc(sizeof(*sync));
@@ -163,7 +163,7 @@ vkr_queue_thread(void *arg)
 
    mtx_lock(&queue->sync_thread.mutex);
    while (true) {
-      while (LIST_IS_EMPTY(&queue->sync_thread.syncs) && !queue->sync_thread.join)
+      while (list_is_empty(&queue->sync_thread.syncs) && !queue->sync_thread.join)
          cnd_wait(&queue->sync_thread.cond, &queue->sync_thread.mutex);
 
       if (queue->sync_thread.join)

@@ -2270,13 +2270,13 @@ static void vrend_free_programs(struct vrend_sub_context *sub)
 {
    struct vrend_linked_shader_program *ent, *tmp;
 
-   if (!LIST_IS_EMPTY(&sub->cs_programs)) {
+   if (!list_is_empty(&sub->cs_programs)) {
       LIST_FOR_EACH_ENTRY_SAFE(ent, tmp, &sub->cs_programs, head)
          vrend_destroy_program(ent);
    }
 
    for (unsigned i = 0; i < VREND_PROGRAM_NQUEUES; ++i) {
-      if (!LIST_IS_EMPTY(&sub->gl_programs[i])) {
+      if (!list_is_empty(&sub->gl_programs[i])) {
          LIST_FOR_EACH_ENTRY_SAFE(ent, tmp, &sub->gl_programs[i], head)
             vrend_destroy_program(ent);
       }
@@ -7331,7 +7331,7 @@ static int thread_sync(UNUSED void *arg)
    vrend_clicbs->make_current_surfaceless(gl_context);
 
    while (!vrend_state.stop_sync_thread) {
-      if (LIST_IS_EMPTY(&vrend_state.fence_wait_list) &&
+      if (list_is_empty(&vrend_state.fence_wait_list) &&
           cnd_wait(&vrend_state.fence_cond, &vrend_state.fence_mutex) != 0) {
          virgl_warn("Error while waiting on condition\n");
          break;
@@ -11251,7 +11251,7 @@ void vrend_renderer_check_fences(void)
       }
    }
 
-   if (LIST_IS_EMPTY(&retired_fences))
+   if (list_is_empty(&retired_fences))
       return;
 
    vrend_renderer_check_queries();
@@ -11396,7 +11396,7 @@ static void vrend_renderer_check_queries(void)
    }
 
    atomic_store(&vrend_state.has_waiting_queries,
-                !LIST_IS_EMPTY(&vrend_state.waiting_query_list));
+                !list_is_empty(&vrend_state.waiting_query_list));
 }
 
 bool vrend_hw_switch_context(struct vrend_context *ctx, bool now)
@@ -11656,12 +11656,12 @@ void vrend_get_query_result(struct vrend_context *ctx, uint32_t handle,
    ret = vrend_check_query(q);
    if (ret) {
       list_delinit(&q->waiting_queries);
-   } else if (LIST_IS_EMPTY(&q->waiting_queries)) {
+   } else if (list_is_empty(&q->waiting_queries)) {
       list_addtail(&q->waiting_queries, &vrend_state.waiting_query_list);
    }
 
    atomic_store(&vrend_state.has_waiting_queries,
-                !LIST_IS_EMPTY(&vrend_state.waiting_query_list));
+                !list_is_empty(&vrend_state.waiting_query_list));
 }
 
 #define COPY_QUERY_RESULT_TO_BUFFER(resid, offset, pvalue, size, multiplier) \

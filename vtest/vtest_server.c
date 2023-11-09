@@ -40,7 +40,7 @@
 #include <string.h>
 
 #include "util.h"
-#include "util/u_double_list.h"
+#include "util/list.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "vtest.h"
@@ -445,7 +445,7 @@ static void vtest_server_wait_clients(void)
    }
 
    if (max_fd < 0) {
-      if (!LIST_IS_EMPTY(&server.new_clients)) {
+      if (!list_is_empty(&server.new_clients)) {
          return;
       }
 
@@ -625,7 +625,7 @@ static void vtest_server_run(void)
    }
 
    while (run) {
-      const bool was_empty = LIST_IS_EMPTY(&server.active_clients);
+      const bool was_empty = list_is_empty(&server.active_clients);
       bool is_empty;
 
       vtest_server_wait_clients();
@@ -638,7 +638,7 @@ static void vtest_server_run(void)
       }
 
       /* init renderer after the first active client is added */
-      is_empty = LIST_IS_EMPTY(&server.active_clients);
+      is_empty = list_is_empty(&server.active_clients);
       if (was_empty && !is_empty) {
          int ret = vtest_init_renderer(server.multi_clients,
                                        server.ctx_flags,

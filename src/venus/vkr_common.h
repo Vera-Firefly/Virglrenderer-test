@@ -20,10 +20,10 @@
 
 #include "c11/threads.h"
 #include "util/hash_table.h"
+#include "util/list.h"
 #include "util/macros.h"
 #include "util/os_file.h"
 #include "util/os_misc.h"
-#include "util/u_double_list.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"

@@ -35,7 +35,6 @@ sources_libgallium = files(
    'auxiliary/util/u_dual_blend.h',
    'auxiliary/util/u_texture.h',
    'auxiliary/util/u_hash_table.h',
-   'auxiliary/util/u_double_list.h',
    'auxiliary/util/u_debug_refcnt.h',
    'auxiliary/util/u_format_s3tc.h',
    'auxiliary/util/u_half.h',

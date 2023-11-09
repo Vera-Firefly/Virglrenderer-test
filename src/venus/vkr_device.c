@@ -292,14 +292,14 @@ vkr_device_destroy(struct vkr_context *ctx, struct vkr_device *dev)
    struct vn_device_proc_table *vk = &dev->proc_table;
    VkDevice device = dev->base.handle.device;
 
-   if (!LIST_IS_EMPTY(&dev->objects))
+   if (!list_is_empty(&dev->objects))
       vkr_log("destroying device with valid objects");
 
    VkResult result = vk->DeviceWaitIdle(device);
    if (result != VK_SUCCESS)
       vkr_log("vkDeviceWaitIdle(%p) failed(%d)", dev, (int32_t)result);
 
-   if (!LIST_IS_EMPTY(&dev->objects)) {
+   if (!list_is_empty(&dev->objects)) {
       struct vkr_object *obj, *obj_tmp;
       LIST_FOR_EACH_ENTRY_SAFE (obj, obj_tmp, &dev->objects, track_head)
          vkr_device_object_destroy(ctx, dev, obj);

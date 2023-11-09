@@ -49,8 +49,8 @@
 #include "vtest_protocol.h"
 
 #include "util.h"
+#include "util/list.h"
 #include "util/u_debug.h"
-#include "util/u_double_list.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
@@ -209,7 +209,7 @@ static struct vtest_resource *vtest_new_resource(uint32_t client_res_id)
 {
    struct vtest_resource *res;
 
-   if (LIST_IS_EMPTY(&renderer.free_resources)) {
+   if (list_is_empty(&renderer.free_resources)) {
       res = malloc(sizeof(*res));
       if (!res) {
          return NULL;
@@ -245,7 +245,7 @@ static struct vtest_sync *vtest_new_sync(uint64_t value)
 {
    struct vtest_sync *sync;
 
-   if (LIST_IS_EMPTY(&renderer.free_syncs)) {
+   if (list_is_empty(&renderer.free_syncs)) {
       sync = malloc(sizeof(*sync));
       if (!sync) {
          return NULL;
@@ -508,7 +508,7 @@ static struct vtest_context *vtest_new_context(struct vtest_input *input,
 {
    struct vtest_context *ctx;
 
-   if (LIST_IS_EMPTY(&renderer.free_contexts)) {
+   if (list_is_empty(&renderer.free_contexts)) {
       uint32_t i;
 
       ctx = malloc(sizeof(*ctx));
