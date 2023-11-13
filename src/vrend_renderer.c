@@ -5547,9 +5547,14 @@ vrend_inject_tcs(struct vrend_sub_context *sub_ctx, uint8_t vertices_per_patch)
    memset(&so_info, 0, sizeof(so_info));
    struct vrend_shader_selector *sel = vrend_create_shader_state(&so_info,
                                                                  false, PIPE_SHADER_TESS_CTRL);
-   struct vrend_shader *shader = CALLOC_STRUCT(vrend_shader);
-   if (!shader)
+   if (!sel)
       return false;
+
+   struct vrend_shader *shader = CALLOC_STRUCT(vrend_shader);
+   if (!shader) {
+      vrend_destroy_shader_selector(sel);
+      return false;
+   }
 
    vrend_fill_shader_key(sub_ctx, sel, &shader->key);
 
