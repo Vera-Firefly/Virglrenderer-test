@@ -389,7 +389,7 @@ struct dest_info {
   enum vrend_type_qualifier dstconv;
   enum vrend_type_qualifier udstconv;
   enum vrend_type_qualifier idstconv;
-  bool dst_override_no_wm[2];
+  bool dst_override_no_wm[TGSI_FULL_MAX_DST_REGISTERS];
   int32_t dest_index;
 };
 
@@ -397,8 +397,8 @@ struct source_info {
    enum vrend_type_qualifier svec4;
    int32_t sreg_index;
    bool tg4_has_component;
-   bool override_no_wm[3];
-   bool override_no_cast[3];
+   bool override_no_wm[TGSI_FULL_MAX_SRC_REGISTERS];
+   bool override_no_cast[TGSI_FULL_MAX_SRC_REGISTERS];
    int imm_value;
 };
 
