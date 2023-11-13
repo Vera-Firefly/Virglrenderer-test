@@ -28,6 +28,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 #include <errno.h>
@@ -7280,7 +7281,7 @@ static void emit_ios_fs(const struct dump_ctx *ctx,
             if (!prefix)
                prefix = "";
             auxprefix = get_aux_string(ctx->inputs[i].location);
-            *interp_input_mask |= 1 << i;
+            *interp_input_mask |= UINT64_C(1) << i;
          }
 
          char prefixes[64];
@@ -7471,7 +7472,7 @@ static void emit_ios_geom(const struct dump_ctx *ctx,
          if (ctx->outputs[i].name == TGSI_SEMANTIC_GENERIC ||
              ctx->outputs[i].name == TGSI_SEMANTIC_COLOR ||
              ctx->outputs[i].name == TGSI_SEMANTIC_BCOLOR) {
-            *interp_input_mask |= 1 << i;
+            *interp_input_mask |= UINT64_C(1) << i;
          }
 
          emit_hdrf(glsl_strbufs, "layout (stream = %d) %s%s%sout vec4 %s;\n", ctx->outputs[i].stream, prefix,
