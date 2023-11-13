@@ -253,6 +253,7 @@ vkr_is_recognized_object_type(VkObjectType type)
    case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE:
       return true;
    default:
+      vkr_log("unrecognized object type %u", type);
       return false;
    }
 }
