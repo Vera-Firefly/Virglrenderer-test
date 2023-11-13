@@ -155,6 +155,7 @@ static inline void strbuf_vappendf(struct vrend_strbuf *sb, const char *fmt, va_
    }
    sb->size += len;
 end:
+   va_end(cp);
    va_end(ap);
 }
 
@@ -180,6 +181,7 @@ static inline void strbuf_vfmt(struct vrend_strbuf *sb, const char *fmt, va_list
    }
    sb->size = len;
 end:
+   va_end(cp);
    va_end(ap);
 }
 
