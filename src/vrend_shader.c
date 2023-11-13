@@ -1288,7 +1288,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                  struct tgsi_full_declaration *decl)
 {
    struct dump_ctx *ctx = (struct dump_ctx *)iter;
-   int i;
+   uint32_t i;
    int color_offset = 0;
    const char *name_prefix;
    bool add_two_side = false;
@@ -1388,7 +1388,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                ctx->inputs[i].glsl_no_index = true;
             } else {
                if (ctx->key->color_two_side) {
-                  int j = ctx->num_inputs++;
+                  uint32_t j = ctx->num_inputs++;
                   if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
                      virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
                      return false;
@@ -1407,7 +1407,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
                   ctx->color_in_mask |= (1 << decl->Semantic.Index);
 
                   if (ctx->front_face_emitted == false) {
-                     int k = ctx->num_inputs++;
+                     uint32_t k = ctx->num_inputs++;
                      if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
                         virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
                         return false;
@@ -2282,10 +2282,10 @@ static void prepare_so_movs(struct dump_ctx *ctx)
    }
 }
 
-static const struct vrend_shader_io *get_io_slot(const struct vrend_shader_io *slots, unsigned nslots, int idx)
+static const struct vrend_shader_io *get_io_slot(const struct vrend_shader_io *slots, uint32_t nslots, int idx)
 {
    const struct vrend_shader_io *result = slots;
-   for (unsigned i = 0; i < nslots; ++i, ++result) {
+   for (uint32_t i = 0; i < nslots; ++i, ++result) {
       if ((result->first <=  idx) && (result->last >=  idx))
          return result;
    }
@@ -2550,7 +2550,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
    }
 
 
-   for (unsigned i = 0; i < ctx->num_outputs; i++) {
+   for (uint32_t i = 0; i < ctx->num_outputs; i++) {
       mask[i] = (1 << ctx->key->fs.surface_component_bits[i]) - 1;
       scale[i] = mask[i];
       switch (ctx->key->fs.logicop_func) {
@@ -2583,7 +2583,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
       }
    }
 
-   for (unsigned i = 0; i < ctx->num_outputs; i++) {
+   for (uint32_t i = 0; i < ctx->num_outputs; i++) {
       switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_CLEAR:
          strbuf_fmt(&full_op_buf[i], "%s", "vec4(0)");
@@ -2636,7 +2636,7 @@ static void emit_fragment_logicop(const struct dump_ctx *ctx,
       }
    }
 
-   for (unsigned i = 0; i < ctx->num_outputs; i++) {
+   for (uint32_t i = 0; i < ctx->num_outputs; i++) {
       switch (ctx->key->fs.logicop_func) {
       case PIPE_LOGICOP_NOOP:
          break;
@@ -2655,7 +2655,7 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
                               struct vrend_glsl_strbufs *glsl_strbufs)
 {
    int cbuf_id = 0;
-   for (unsigned i = 0; i < ctx->num_outputs; i++) {
+   for (uint32_t i = 0; i < ctx->num_outputs; i++) {
       if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR) {
          if (ctx->key->fs.swizzle_output_rgb_to_bgr & (1 << cbuf_id)) {
             emit_buff(glsl_strbufs, "fsout_c%d = fsout_c%d.zyxw;\n", cbuf_id, cbuf_id);
@@ -2668,7 +2668,7 @@ static void emit_cbuf_swizzle(const struct dump_ctx *ctx,
 static void emit_cbuf_colorspace_convert(const struct dump_ctx *ctx,
                                          struct vrend_glsl_strbufs *glsl_strbufs)
 {
-   for (unsigned i = 0; i < ctx->num_outputs; i++) {
+   for (uint32_t i = 0; i < ctx->num_outputs; i++) {
       if (ctx->key->fs.needs_manual_srgb_encode_bitmask & (1 << i)) {
          emit_buff(glsl_strbufs,
                    "{\n"
@@ -5291,7 +5291,7 @@ void rewrite_vs_pos_array(struct dump_ctx *ctx)
    int range_end = 0;
    int io_idx = 0;
 
-   for (unsigned i = 0; i < ctx->num_inputs; ++i) {
+   for (uint32_t i = 0; i < ctx->num_inputs; ++i) {
       if (ctx->inputs[i].name == TGSI_SEMANTIC_POSITION) {
          ctx->inputs[i].glsl_predefined_no_emit = true;
          if (ctx->inputs[i].first < range_start) {
@@ -5355,10 +5355,10 @@ void emit_fs_clipdistance_load(const struct dump_ctx *ctx,
 }
 
 static
-void renumber_io_arrays(unsigned nio, struct vrend_shader_io *io)
+void renumber_io_arrays(uint32_t nio, struct vrend_shader_io *io)
 {
    int next_array_id = 1;
-   for (unsigned i = 0; i < nio; ++i) {
+   for (uint32_t i = 0; i < nio; ++i) {
       if (io[i].name != TGSI_SEMANTIC_GENERIC &&
           io[i].name != TGSI_SEMANTIC_PATCH)
          continue;
@@ -5534,7 +5534,7 @@ iter_instruction(struct tgsi_iterate_context *iter,
       /* GLES doesn't allow invariant specifiers on inputs, but on GL with
        * GLSL < 4.30 it is required to match the output of the previous stage */
       if (!ctx->cfg->use_gles) {
-         for (unsigned i = 0; i < ctx->num_inputs; ++i) {
+         for (uint32_t i = 0; i < ctx->num_inputs; ++i) {
             uint32_t bit_pos = varying_bit_from_semantic_and_index(ctx->inputs[i].name, ctx->inputs[i].sid);
             uint32_t slot = bit_pos / 32;
             uint32_t bit = 1u << (bit_pos & 0x1f);
@@ -6618,7 +6618,7 @@ static int emit_ios_common(const struct dump_ctx *ctx,
                            struct vrend_glsl_strbufs *glsl_strbufs,
                            uint32_t *shadow_samp_mask)
 {
-   unsigned i;
+   uint32_t i;
    const char *sname = tgsi_proc_to_prefix(ctx->prog_type);
    int glsl_ver_required = ctx->glsl_ver_required;
 
@@ -6751,7 +6751,7 @@ static void emit_ios_streamout(const struct dump_ctx *ctx,
 {
    if (ctx->so) {
       char outtype[6] = "";
-      for (unsigned i = 0; i < ctx->so->num_outputs; i++) {
+      for (uint32_t i = 0; i < ctx->so->num_outputs; i++) {
          if (!ctx->write_so_outputs[i])
             continue;
          if (ctx->so->output[i].num_components == 1)
@@ -7789,7 +7789,7 @@ static bool analyze_instruction(struct tgsi_iterate_context *iter,
       for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
          if (inst->Src[i].Register.File == TGSI_FILE_INPUT) {
             int idx = inst->Src[i].Register.Index;
-            for (unsigned j = 0; j < ctx->num_inputs; ++j) {
+            for (uint32_t j = 0; j < ctx->num_inputs; ++j) {
                if (ctx->inputs[j].first <= idx && ctx->inputs[j].last >= idx &&
                    ctx->inputs[j].name == TGSI_SEMANTIC_CLIPDIST) {
                   ctx->fs_uses_clipdist_input = true;
@@ -7859,7 +7859,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
 
    if (sinfo->so_names || ctx->so_names) {
       if (sinfo->so_names) {
-         for (unsigned i = 0; i < sinfo->so_info.num_outputs; ++i)
+         for (uint32_t i = 0; i < sinfo->so_info.num_outputs; ++i)
             free(sinfo->so_names[i]);
          free(sinfo->so_names);
       }
@@ -7869,7 +7869,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
     * to the next shader stage. mesa/tgsi doesn't provide this information for
     * TCS, TES, and GEOM shaders.
     */
-   for(unsigned i = 0; i < ctx->num_outputs; i++) {
+   for(uint32_t i = 0; i < ctx->num_outputs; i++) {
       if (ctx->prog_type == TGSI_PROCESSOR_FRAGMENT) {
          if (ctx->outputs[i].name == TGSI_SEMANTIC_COLOR)
             sinfo->fs_output_layout[i] = ctx->outputs[i].sid;
@@ -7891,7 +7891,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
    sinfo->in_generic_emitted_mask = ctx->generic_ios.match.inputs_emitted_mask;
    sinfo->in_texcoord_emitted_mask = ctx->texcoord_ios.match.inputs_emitted_mask;
 
-   for (unsigned i = 0; i < ctx->num_outputs; ++i) {
+   for (uint32_t i = 0; i < ctx->num_outputs; ++i) {
       if (ctx->outputs[i].invariant) {
          uint32_t bit_pos = varying_bit_from_semantic_and_index(ctx->outputs[i].name, ctx->outputs[i].sid);
          uint32_t slot = bit_pos / 32;
@@ -7903,7 +7903,7 @@ static void fill_sinfo(const struct dump_ctx *ctx, struct vrend_shader_info *sin
 
    if (ctx->guest_sent_io_arrays) {
       sinfo->output_arrays.num_arrays = 0;
-      for (unsigned i = 0; i < ctx->num_outputs; ++i) {
+      for (uint32_t i = 0; i < ctx->num_outputs; ++i) {
          const struct vrend_shader_io *io = &ctx->outputs[i];
          if (io->array_id  > 0) {
             struct vrend_shader_io_array *array =
@@ -8249,7 +8249,7 @@ iter_vs_declaration(struct tgsi_iterate_context *iter,
    const char *shader_in_prefix = "vso";
    const char *shader_out_prefix = "tco";
    const char *name_prefix = "";
-   unsigned i;
+   uint32_t i;
 
    // Generate a shader that passes through all VS outputs
    if (decl->Declaration.File == TGSI_FILE_OUTPUT) {
@@ -8389,7 +8389,7 @@ bool vrend_shader_create_passthrough_tcs(const struct vrend_context *rctx,
 
    emit_buf(&ctx.glsl_strbufs, "void main() {\n");
 
-   for (unsigned int i = 0; i < ctx.num_inputs; ++i) {
+   for (uint32_t i = 0; i < ctx.num_inputs; ++i) {
       const char *out_prefix = "";
       const char *in_prefix = "";
 
