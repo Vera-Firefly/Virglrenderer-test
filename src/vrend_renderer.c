@@ -2785,6 +2785,8 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
         int num_layers = view->u.tex.last_layer - view->u.tex.first_layer + 1;
 
         if (view->levels == 0 || num_layers <= 0) {
+            vrend_resource_reference(&view->texture, NULL);
+            FREE(view);
             virgl_error("%s: Invalid number of layers (%d) or zero levels requested\n",
                         __func__, num_layers);
             return EINVAL;
