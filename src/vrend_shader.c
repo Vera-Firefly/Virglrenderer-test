@@ -1390,7 +1390,7 @@ iter_declaration(struct tgsi_iterate_context *iter,
             } else {
                if (ctx->key->color_two_side) {
                   uint32_t j = ctx->num_inputs++;
-                  if (ctx->num_inputs > ARRAY_SIZE(ctx->inputs)) {
+                  if (ctx->num_inputs >= ARRAY_SIZE(ctx->inputs)) {
                      virgl_error( "Number of inputs exceeded, max is %zd\n", ARRAY_SIZE(ctx->inputs));
                      return false;
                   }
