@@ -17,7 +17,7 @@ variables:
   #
   # Pick a pipeline on https://gitlab.freedesktop.org/mesa/mesa/-/pipelines/
   #
-  MESA_PIPELINE_ID: 1012059
+  MESA_PIPELINE_ID: 1035750
   MESA_PROJECT_PATH: mesa/mesa
   STORAGE_HOST: s3.freedesktop.org
   CI_REGISTRY_IMAGE: "registry.freedesktop.org/${MESA_PROJECT_PATH}"
@@ -43,7 +43,7 @@ include:
     # IMPORTANT: Use a recent Mesa Git revision
     # The commit ref must be in sync with the pipeline picked above
     # It can be found on the pipeline page below the commit message
-    ref: e891c78af1656b0de91f91bd6daae727f0baed58
+    ref: 8b36d230bbe089b184cb2c23aca742a80e200e42
     file:
       - '/.gitlab-ci/image-tags.yml'
 
@@ -484,7 +484,7 @@ venus-lavapipe:
   extends:
     - .venus-lavapipe-test
   variables:
-    DEQP_FRACTION: 15
+    DEQP_FRACTION: 35
     DEQP_SUITE: venus
     GPU_VERSION: venus
     LP_NUM_THREADS: 2

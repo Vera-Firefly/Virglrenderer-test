@@ -238,10 +238,6 @@ spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 2d_projvec
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 2dshadow,Fail
 spec@arb_shader_texture_lod@execution@tex-miplevel-selection *projlod 3d,Fail
 
-spec@arb_tessellation_shader@arb_tessellation_shader-minmax,Fail
-spec@arb_tessellation_shader@built-in-constants,Fail
-spec@arb_tessellation_shader@built-in-constants@gl_MaxTessControlOutputComponents,Fail
-spec@arb_tessellation_shader@built-in-constants@gl_MaxTessEvaluationOutputComponents,Fail
 spec@arb_tessellation_shader@execution@gs-primitiveid-instanced,Fail
 spec@arb_tessellation_shader@execution@double-array-vs-tcs-tes,Fail
 spec@arb_tessellation_shader@execution@double-vs-tcs-tes,Fail
