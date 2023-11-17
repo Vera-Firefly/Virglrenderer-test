@@ -10146,6 +10146,9 @@ void vrend_set_streamout_targets(struct vrend_context *ctx,
             continue;
          target = vrend_object_lookup(ctx->sub->object_hash, handles[i], VIRGL_OBJECT_STREAMOUT_TARGET);
          if (!target) {
+            /* Remove the reference to the already bound targets because we will destroy the obj */
+            for (unsigned j = 0; j < i; ++j)
+               vrend_so_target_reference(&obj->so_targets[j], NULL);
             vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_HANDLE, handles[i]);
             free(obj);
             return;
