@@ -68,7 +68,7 @@ if [ "${VK_DRIVER}" = "virtio" ] || [ "${GALLIUM_DRIVER}" = "virgl" ]; then
     set +e
 
     if [ -z "${DEQP_SUITE}" ]; then
-        if [ -z "${PIGLIT_REPLAY_DESCRIPTION_FILE}" ]; then
+        if [ -z "${PIGLIT_TRACES_FILE}" ]; then
             FDO_CI_CONCURRENT=${FORCE_FDO_CI_CONCURRENT:-$FDO_CI_CONCURRENT} \
                 install/crosvm-runner.sh install/piglit/piglit-runner.sh
         else
