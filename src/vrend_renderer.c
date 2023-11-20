@@ -5373,13 +5373,14 @@ static void vrend_draw_bind_images_shader(struct vrend_sub_context *sub_ctx, int
    if (!has_feature(feat_images))
       return;
 
-   mask = sub_ctx->images_used_mask[shader_type];
+   mask = sub_ctx->images_used_mask[shader_type] & sub_ctx->prog->images_used_mask[shader_type];
+
    while (mask) {
       unsigned i = u_bit_scan(&mask);
       int image_unit = i + sub_ctx->prog->ss[shader_type]->sel->sinfo.image_binding_offset;
       int binding = sub_ctx->prog->img_locs[shader_type][i];
 
-      if (binding == -1 || !(sub_ctx->prog->images_used_mask[shader_type] & (1 << i)))
+      if (binding == -1)
           continue;
       iview = &sub_ctx->image_views[shader_type][i];
       tex_id = iview->texture->gl_id;
