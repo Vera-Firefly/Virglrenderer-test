@@ -2658,6 +2658,13 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
       return EINVAL;
    }
 
+   for (int i = 0; i < 4; ++i) {
+      swizzle[i] = (swizzle_packed  >> (3 * i)) & 0x7;
+      if (swizzle[i] > PIPE_SWIZZLE_1) {
+         return EINVAL;
+      }
+   }
+
    view = CALLOC_STRUCT(vrend_sampler_view);
    if (!view)
       return ENOMEM;
@@ -2679,12 +2686,6 @@ int vrend_create_sampler_view(struct vrend_context *ctx,
        !(tex_conv_table[view->format].flags & VIRGL_TEXTURE_CAN_TARGET_RECTANGLE)) {
       view->emulated_rect = true;
       view->target = GL_TEXTURE_2D;
-   }
-
-   for (int i = 0; i < 4; ++i) {
-      swizzle[i] = (swizzle_packed  >> (3 * i)) & 0x7;
-      if (swizzle[i] > PIPE_SWIZZLE_1)
-         return EINVAL;
    }
 
    vrend_resource_reference(&view->texture, res);
