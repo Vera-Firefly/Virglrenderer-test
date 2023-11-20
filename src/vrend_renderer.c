@@ -3645,7 +3645,7 @@ void vrend_set_single_sampler_view(struct vrend_context *ctx,
    if (handle) {
       view = vrend_object_lookup(ctx->sub->object_hash, handle, VIRGL_OBJECT_SAMPLER_VIEW);
       if (!view) {
-         ctx->sub->views[shader_type].views[index] = NULL;
+         vrend_sampler_view_reference(&ctx->sub->views[shader_type].views[index], NULL);
          vrend_report_context_error(ctx, VIRGL_ERROR_CTX_ILLEGAL_HANDLE, handle);
          return;
       }
