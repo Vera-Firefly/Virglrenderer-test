@@ -33,6 +33,7 @@
 #include <string.h>
 #include <xf86drm.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -350,7 +351,7 @@ int virgl_gbm_transfer(struct gbm_bo *bo, uint32_t direction, const struct iovec
       map_flags |= GBM_BO_TRANSFER_READ;
 
    void *addr = gbm_bo_map(bo, 0, 0, width, height, map_flags, &host_map_stride0, &map_data);
-   if (!addr)
+   if (!addr || addr == MAP_FAILED)
       return -1;
 
    guest_plane_offset = info->offset;
