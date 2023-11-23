@@ -9763,8 +9763,11 @@ static int vrend_renderer_transfer_internal(struct vrend_context *ctx,
 #if defined(HAVE_EPOXY_EGL_H) && defined(ENABLE_MINIGBM_ALLOCATION)
    if (res->gbm_bo && (transfer_mode == VIRGL_TRANSFER_TO_HOST ||
                        !has_bit(res->storage_bits, VREND_STORAGE_EGL_IMAGE))) {
-      assert(!info->synchronized);
-      return virgl_gbm_transfer(res->gbm_bo, transfer_mode, iov, num_iovs, info);
+      const bool success = virgl_gbm_transfer(res->gbm_bo, transfer_mode, iov, num_iovs, info) == 0;
+      if (success)
+         return 0;
+      else
+         virgl_warn("GBM upload failed, try GL code path\n");
    }
 #endif
 
