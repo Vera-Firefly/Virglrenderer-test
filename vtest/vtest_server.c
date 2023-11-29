@@ -197,6 +197,12 @@ static void vtest_server_parse_args(int argc, char **argv)
    /* getopt_long stores the option index here. */
    int option_index = 0;
 
+#ifdef ENABLE_VENUS
+   char* ven = " [--venus]";
+#else
+   char* ven = "";
+#endif
+
    do {
       ret = getopt_long(argc, argv, "", long_options, &option_index);
 
@@ -244,10 +250,8 @@ static void vtest_server_parse_args(int argc, char **argv)
          printf("Usage: %s [--no-fork] [--no-loop-or-fork] [--multi-clients] "
                 "[--use-glx] [--use-egl-surfaceless] [--use-gles] [--no-virgl]"
                 "[--rendernode <dev>] [--socket-path <path>] "
-#ifdef ENABLE_VENUS
-                " [--venus]"
-#endif
-                " [file]\n", argv[0]);
+                "%s"
+                " [file]\n", argv[0], ven);
          exit(EXIT_FAILURE);
          break;
       }
