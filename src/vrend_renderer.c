@@ -7880,9 +7880,6 @@ void vrend_destroy_context(struct vrend_context *ctx)
 
 struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *debug_name)
 {
-   int glsl_version = get_glsl_version();
-   if (glsl_version < 0)
-      return NULL;
 
    struct vrend_context *grctx = CALLOC_STRUCT(vrend_context);
 
@@ -7910,7 +7907,6 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
    grctx->res_hash = vrend_ctx_resource_init_table();
    list_inithead(&grctx->untyped_resources);
 
-   grctx->shader_cfg.glsl_version = glsl_version;
    grctx->shader_cfg.max_shader_patch_varyings = vrend_state.max_shader_patch_varyings;
    grctx->shader_cfg.use_gles = vrend_state.use_gles;
    grctx->shader_cfg.use_core_profile = vrend_state.use_core_profile;
@@ -7931,6 +7927,15 @@ struct vrend_context *vrend_create_context(int id, uint32_t nlen, const char *de
 
    vrend_renderer_create_sub_ctx(grctx, 0);
    vrend_renderer_set_sub_ctx(grctx, 0);
+
+   int glver = get_glsl_version();
+   if (glver < 0) {
+      virgl_error("Unable to query GL version\n");
+      vrend_destroy_context(grctx);
+      return NULL;
+   }
+
+   grctx->shader_cfg.glsl_version = glver;
 
    if (!grctx->ctx_id)
       grctx->fence_retire = vrend_clicbs->ctx0_fence_retire;
