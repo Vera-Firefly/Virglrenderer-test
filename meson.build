@@ -266,7 +266,6 @@ with_render_server = with_venus
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
 if with_venus
-   gbm_dep = dependency('gbm')
    venus_dep = dependency('vulkan')
 
    conf_data.set('ENABLE_VENUS', 1)
