@@ -216,7 +216,7 @@ have_glx = false
 have_gbm = true
 
 with_minigbm_allocation = get_option('minigbm_allocation')
-if with_minigbm_allocationrue
+if with_minigbm_allocation
    conf_data.set('ENABLE_MINIGBM_ALLOCATION', 1)
    _gbm_ver = '18.0.0'
 else
