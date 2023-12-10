@@ -1,0 +1,3 @@
+Name: libdrm
+Description: Android fake libdrm
+Version: 2.4.50
