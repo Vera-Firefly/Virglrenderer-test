@@ -1,0 +1,62 @@
+name: Build for Android
+
+on:
+  [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [ "aarch64" ]
+      fail-fast: false
+
+    name: "Build ${{matrix.arch}}"
+
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_NDK_HOME: "${ANDROID_SDK_ROOT}/ndk-bundle"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup
+        run: |
+          sudo pip3 install meson ninja
+          mkdir -p /tmp/build/lib/pkgconfig
+          cp libdrm.pc /tmp/build/lib/pkgconfig/
+          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
+          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
+          
+      - name: Build libepoxy
+        run: |
+          git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
+          cd libepoxy
+          meson "build-android-${{matrix.arch}}" \
+            --prefix=/tmp/build \
+            --cross-file "../android-${{matrix.arch}}" \
+            -Degl=yes -Dglx=no -Dx11=false
+          ninja -C "build-android-${{matrix.arch}}" install
+
+      - name: Build virglrenderer
+        run: |
+          meson "build-android-${{matrix.arch}}" \
+            --prefix=/tmp/build \
+            --cross-file "android-${{matrix.arch}}" \
+            -Dplatforms=egl
+          ninja -C "build-android-${{matrix.arch}}" install
+          cp "build-android-${{matrix.arch}}/vtest/libvirgl_test_server.so" /tmp/build/lib/
+
+      - name: Change suffix
+        run: |
+          cd /tmp/build/lib
+          rm libepoxy.so libepoxy.so.0 libvirglrenderer.so libvirglrenderer.so.1
+          mv libepoxy.so.0.* libepoxy_0.so
+          mv libvirglrenderer.so.1.* libvirglrenderer_1.so
+          perl -pi -e 's/libepoxy.so.0/libepoxy_0.so/g' *.so
+          perl -pi -e 's/libvirglrenderer.so.1/libvirglrenderer_1.so/g' *.so ../bin/*
+      - name: Upload libraries
+        uses: actions/upload-artifact@v2
+        with:
+          name: build_${{matrix.arch}}
+          path: /tmp/build
