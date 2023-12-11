@@ -45,7 +45,7 @@ jobs:
             --cross-file "android-${{matrix.arch}}" \
             -Dplatforms=egl
           ninja -C "build-android-${{matrix.arch}}" install
-          cp "build-android-${{matrix.arch}}/vtest/libvirgl_test_server.so" /tmp/build/lib/
+          cp "build-android-${{matrix.arch}}/vtest/libvtest.so" /tmp/build/lib/
 
       - name: Change suffix
         run: |
