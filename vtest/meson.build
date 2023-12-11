@@ -32,11 +32,10 @@ vtest_sources = [
    'vtest.h'
 ]
 
-libvtest = static_library(
-   'vtest',
-   vtest_sources,
+virgl_test_server_shared = shared_library(
+   'virgl_test_server',
+   virgl_test_server_sources,
    dependencies : [libvirglrenderer_dep, gallium_dep],
-   install : true,
    c_args : [ '-D_EXPORT_MAIN=0' ]
 )
 
