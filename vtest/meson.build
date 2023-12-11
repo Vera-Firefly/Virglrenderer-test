@@ -32,6 +32,12 @@ vtest_sources = [
    'vtest.h'
 ]
 
+libvtest = static_library(
+   'vtest',
+   vtest_sources,
+   dependencies : [libvirglrenderer_dep, gallium_dep],
+)
+
 virgl_test_server_shared = shared_library(
    'virgl_test_server',
    vtest_sources,
