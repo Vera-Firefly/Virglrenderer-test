@@ -123,3 +123,4 @@ option(
   choices : [ 'percetto', 'perfetto', 'sysprof', 'stderr', 'none' ],
   description : 'enable emitting traces using the selected backend'
 )
+
