@@ -18,49 +18,40 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build
+      - name: Setup
         run: |
           sudo apt update
-          sudo apt install -y libepoxy* meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev virgl-server libvirglrenderer-dev libvirglrenderer1 libx11-dev
-          pip3 install mako
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
-          git clone --depth 1 https://github.com/anholt/libepoxy.git
-          envsubst <android-drm-${{matrix.arch}} >build-crossfile-epoxy
+          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          pip3 install mako ninja
+          mkdir -p /tmp/build/lib/pkgconfig
+          cp libdrm.pc /tmp/build/lib/pkgconfig/
+          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
+          wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
+          
+      - name: Build libepoxy
+        run: |
+          git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
           cd libepoxy
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
-            -Ddefault_library=static \
-            --cross-file "../build-crossfile-epoxy" \
+            --cross-file "../android-${{matrix.arch}}" \
             -Degl=yes -Dglx=no -Dx11=false
           ninja -C "build-android-${{matrix.arch}}" install
-          cd ..
-          git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
-          envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
-          cd drm
-          meson setup "build-android" \
-            --prefix=/tmp/drm-static \
-            --cross-file "../build-crossfile-drm" \
-            -Ddefault_library=static \
-            -Dintel=disabled \
-            -Dradeon=disabled \
-            -Damdgpu=disabled \
-            -Dnouveau=disabled \
-            -Dvmwgfx=disabled \
-            -Dfreedreno=enabled \
-            -Dvc4=disabled \
-            -Detnaviv=disabled \
-            -Dfreedreno-kgsl=true
-          ninja -C "build-android" install
-          cd ..
-          envsubst <android-${{matrix.arch}} >build-crossfile
+
+      - name: Build virglrenderer
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
-            --cross-file "build-crossfile" \
-            -Dplatforms=egl \
-            -Ddrm=enabled
+            --cross-file "android-${{matrix.arch}}" \
+            -Dplatforms=egl
           ninja -C "build-android-${{matrix.arch}}" install
           cp "build-android-${{matrix.arch}}/vtest/libvirgl_test_server.so" /tmp/build/lib/
 
+      - name: Change suffix
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           cd /tmp/build/lib
           rm libepoxy.so libepoxy.so.0 libvirglrenderer.so libvirglrenderer.so.1
           mv libepoxy.so.0.* libepoxy_0.so
@@ -72,4 +63,3 @@ jobs:
         with:
           name: build_${{matrix.arch}}
           path: /tmp/build
-
