@@ -60,17 +60,21 @@ int vrend_winsys_init(uint32_t flags, int preferred_fd)
        * If the user specifies a preferred DRM fd and we can't use it, fail. If the user doesn't
        * specify an fd, it's possible to initialize EGL without one.
        */
+#if HAVE_EGL_GBM_H == 1
       gbm = virgl_gbm_init(preferred_fd);
       if (preferred_fd > 0 && !gbm)
          return -1;
+#endif
 
       egl = virgl_egl_init(gbm, flags & VIRGL_RENDERER_USE_SURFACELESS,
                            flags & VIRGL_RENDERER_USE_GLES);
       if (!egl) {
+#if HAVE_EGL_GBM_H == 1
          if (gbm) {
             virgl_gbm_fini(gbm);
             gbm = NULL;
          }
+#endif
 
          return -1;
       }

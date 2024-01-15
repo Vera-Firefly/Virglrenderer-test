@@ -754,7 +754,11 @@ int virgl_egl_get_fd_for_texture(struct virgl_egl *egl, uint32_t tex_id, int *fd
       if (!egl->gbm)
          goto out_destroy;
 
+#if HAVE_EGL_GBM_H == 1
       ret = virgl_gbm_export_fd(egl->gbm->device, handle, fd);
+#else
+      ret = 0;
+#endif
       if (ret < 0)
          goto out_destroy;
    } else {

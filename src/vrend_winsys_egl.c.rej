@@ -1,0 +1,77 @@
+diff a/src/vrend_winsys_egl.c b/src/vrend_winsys_egl.c	(rejected hunks)
+@@ -42,7 +42,9 @@
+ #include "vrend_winsys.h"
+ #include "vrend_winsys_egl.h"
+ #include "virgl_hw.h"
++#if HAVE_EGL_GBM_H == 1
+ #include "vrend_winsys_gbm.h"
++#endif
+ #include "virgl_util.h"
+ 
+ #define EGL_KHR_SURFACELESS_CONTEXT            BIT(0)
+@@ -196,6 +198,7 @@ static EGLint virgl_egl_find_matching_device(struct gbm_device_info *dev_infos,
+    return -1;
+ }
+ 
++#if HAVE_EGL_GBM_H == 1
+ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs *funcs) {
+    EGLint num_devices = 0;
+    EGLint max_devices = 64;
+@@ -246,24 +249,31 @@ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl, struct egl_funcs
+ 
+   return devices[device_num];
+ }
++#endif
+ 
+ static bool virgl_egl_get_display(struct virgl_egl *egl)
+ {
+    struct egl_funcs funcs = { 0 };
++#if HAVE_EGL_GBM_H == 1
+    EGLDeviceEXT device;
+ 
+    if (!egl->gbm)
+       return false;
++#endif
+ 
+    if (!virgl_egl_get_interface(&funcs))
+       return false;
+ 
++#if HAVE_EGL_GBM_H == 1
+    device = virgl_egl_get_device(egl, &funcs);
+ 
+    if (device == EGL_NO_DEVICE_EXT)
+       return false;
+ 
+    egl->egl_display = funcs.eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, NULL);
++#else
++   egl->egl_display = funcs.eglGetDisplay(EGL_DEFAULT_DISPLAY);
++#endif
+    return true;
+ }
+ #endif /* ENABLE_MINIGBM_ALLOCATION */
+@@ -303,6 +313,7 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
+ 
+    egl->gbm = gbm;
+    egl->different_gpu = false;
++#if HAVE_EGL_GBM_H == 1
+    const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
+ 
+ #ifdef ENABLE_MINIGBM_ALLOCATION
+@@ -339,14 +350,17 @@ struct virgl_egl *virgl_egl_init(struct virgl_gbm *gbm, bool surfaceless, bool g
+    } else {
+       egl->egl_display = eglGetDisplay((EGLNativeDisplayType)egl->gbm->device);
+    }
++#endif
+ 
+    if (!egl->egl_display) {
++#if HAVE_EGL_GBM_H == 1
+       /*
+        * Don't fallback to the default display if the fd provided by (*get_drm_fd)
+        * can't be used.
+        */
+       if (egl->gbm && egl->gbm->fd < 0)
+          goto fail;
++#endif
+ 
+       egl->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+       if (!egl->egl_display)
