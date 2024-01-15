@@ -50,6 +50,7 @@ jobs:
             -Detnaviv=disabled \
             -Dfreedreno-kgsl=true
           ninja -C "build-android" install
+          cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
