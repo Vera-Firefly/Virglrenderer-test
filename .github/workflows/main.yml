@@ -44,8 +44,8 @@ jobs:
           ninja -C "build-android" install
           cd ..
           git clone --depth 1 https://github.com/anholt/libepoxy.git
-          cd libepoxy
           envsubst <android-${{matrix.arch}} >build-crossfile-epoxy
+          cd libepoxy
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "../build-crossfile-epoxy" \
