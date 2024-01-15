@@ -55,7 +55,8 @@ jobs:
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "build-crossfile" \
-            -Dplatforms=egl
+            -Dplatforms=egl \
+            -Ddrm=enabled
           ninja -C "build-android-${{matrix.arch}}" install
           cp "build-android-${{matrix.arch}}/vtest/libvirgl_test_server.so" /tmp/build/lib/
 
