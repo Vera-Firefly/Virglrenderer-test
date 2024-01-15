@@ -47,7 +47,7 @@ jobs:
           envsubst <android-${{matrix.arch}} >build-crossfile-epoxy
           cd libepoxy
           meson "build-android-${{matrix.arch}}" \
-            --prefix=/tmp/build
+            --prefix=/tmp/build \
             --cross-file "../build-crossfile-epoxy" \
             -Degl=yes -Dglx=no -Dx11=false
           ninja -C "build-android-${{matrix.arch}}" install
