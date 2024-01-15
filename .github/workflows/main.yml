@@ -16,7 +16,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      ANDROID_NDK_HOME: "${ANDROID_SDK_ROOT}/ndk-bundle"
+      ANDROID_NDK_ROOT: "${ANDROID_SDK_ROOT}/ndk-bundle"
 
     steps:
       - uses: actions/checkout@v2
