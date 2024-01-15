@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          sudo apt install -y libepoxy* meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-${{matrix.arch}} >build-crossfile
@@ -47,13 +47,10 @@ jobs:
           envsubst <android-${{matrix.arch}} >build-crossfile-epoxy
           cd libepoxy
           meson "build-android-${{matrix.arch}}" \
+            --prefix=/tmp/build
             --cross-file "../build-crossfile-epoxy" \
             -Degl=yes -Dglx=no -Dx11=false
-          sudo ninja -C "build-android-${{matrix.arch}}" install
-          meson "build-android-${{matrix.arch}}-package" \
-            --cross-file "../build-crossfile-epoxy" \
-            -Degl=yes -Dglx=no -Dx11=false
-          ninja -C "build-android-${{matrix.arch}}-package" install
+          ninja -C "build-android-${{matrix.arch}}" install
           cd ..
           envsubst <android-${{matrix.arch}} >build-crossfile
           meson "build-android-${{matrix.arch}}" \
