@@ -14,6 +14,8 @@ jobs:
     name: "Build ${{matrix.arch}}"
 
     runs-on: ubuntu-latest
+    env:
+      ANDROID_NDK_HOME: "${ANDROID_SDK_ROOT}/ndk-bundle"
 
     steps:
       - uses: actions/checkout@v2
@@ -27,12 +29,16 @@ jobs:
           cp libdrm.pc /tmp/build/lib/pkgconfig/
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
-          
+      - name: Download NDK
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
+          unzip android-ndk-r26b-linux.zip
+
       - name: Build libepoxy
         run: |
+          export ANDROID_NDK_ROOT=`pwd`/android-ndk-r26b
           git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
           cd libepoxy
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "../android-${{matrix.arch}}" \
@@ -41,7 +47,7 @@ jobs:
 
       - name: Build virglrenderer
         run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          export ANDROID_NDK_ROOT=`pwd`/android-ndk-r26b
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "android-${{matrix.arch}}" \
@@ -51,7 +57,6 @@ jobs:
 
       - name: Change suffix
         run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           cd /tmp/build/lib
           rm libepoxy.so libepoxy.so.0 libvirglrenderer.so libvirglrenderer.so.1
           mv libepoxy.so.0.* libepoxy_0.so
