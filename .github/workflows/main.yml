@@ -29,6 +29,7 @@ jobs:
           cp libdrm.pc /tmp/build/lib/pkgconfig/
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
+
       - name: Download NDK
         run: |
           wget https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
@@ -36,7 +37,6 @@ jobs:
 
       - name: Build libepoxy
         run: |
-          export ANDROID_NDK_ROOT=`pwd`/android-ndk-r26b
           git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
           cd libepoxy
           meson "build-android-${{matrix.arch}}" \
@@ -47,7 +47,6 @@ jobs:
 
       - name: Build virglrenderer
         run: |
-          export ANDROID_NDK_ROOT=`pwd`/android-ndk-r26b
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "android-${{matrix.arch}}" \
