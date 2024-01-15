@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: |
           sudo apt update
-          sudo apt install -y libepoxy* meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev libx11-dev
+          sudo apt install -y libepoxy* meson libxrandr-dev libxxf86vm-dev libxcb-*-dev libx11-xcb-dev libxfixes-dev libdrm-dev virgl-server libvirglrenderer-dev libvirglrenderer1 libx11-dev
           pip3 install mako
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           git clone --depth 1 https://github.com/anholt/libepoxy.git
