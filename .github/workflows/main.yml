@@ -31,17 +31,19 @@ jobs:
       - name: Build libepoxy
         run: |
           git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
-          cd libepoxy
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          envsubst <android-${{matrix.arch}} >build-crossfile
+          cd libepoxy
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
-            --cross-file "../android-${{matrix.arch}}" \
+            --cross-file "../build-crossfile" \
             -Degl=yes -Dglx=no -Dx11=false
           ninja -C "build-android-${{matrix.arch}}" install
 
       - name: Build virglrenderer
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
+          envsubst <android-${{matrix.arch}} >build-crossfile
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "android-${{matrix.arch}}" \
@@ -51,7 +53,6 @@ jobs:
 
       - name: Change suffix
         run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           cd /tmp/build/lib
           rm libepoxy.so libepoxy.so.0 libvirglrenderer.so libvirglrenderer.so.1
           mv libepoxy.so.0.* libepoxy_0.so
