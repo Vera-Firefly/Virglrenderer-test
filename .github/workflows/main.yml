@@ -49,7 +49,7 @@ jobs:
           meson "build-android-${{matrix.arch}}" \
             --cross-file "../build-crossfile-epoxy" \
             -Degl=yes -Dglx=no -Dx11=false
-          ninja -C "build-android-${{matrix.arch}}" install
+          sudo ninja -C "build-android-${{matrix.arch}}" install
           meson "build-android-${{matrix.arch}}-package" \
             --cross-file "../build-crossfile-epoxy" \
             -Degl=yes -Dglx=no -Dx11=false
