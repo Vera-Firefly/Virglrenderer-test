@@ -26,8 +26,8 @@ jobs:
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
           envsubst <android-${{matrix.arch}} >build-crossfile
           git clone --depth 1 https://gitlab.freedesktop.org/mesa/drm.git
-          cd drm
           envsubst <android-drm-${{matrix.arch}} >build-crossfile-drm
+          cd drm
           meson setup "build-android" \
             --prefix=/tmp/drm-static \
             --cross-file "../build-crossfile-drm" \
