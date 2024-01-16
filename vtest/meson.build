@@ -24,7 +24,6 @@
 vtest_sources = [
    'util.c',
    'util.h',
-   'vtest_main.c',
    'vtest_shm.c',
    'vtest_shm.h',
    'vtest_server.c',
