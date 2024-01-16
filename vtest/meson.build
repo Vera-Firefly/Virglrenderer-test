@@ -24,6 +24,7 @@
 vtest_sources = [
    'util.c',
    'util.h',
+   'vtest_main.c',
    'vtest_shm.c',
    'vtest_shm.h',
    'vtest_server.c',
@@ -56,16 +57,13 @@ libvtest_dep = declare_dependency(
    ]
 )
 
-virgl_test_server_sources = [
-   'vtest_main.c',
-]
-
 virgl_test_server = executable(
    'virgl_test_server',
-   virgl_test_server_sources,
+   vtest_sources,
    link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
-   install : true
+   install : true,
+   c_args : [ '-D_EXPORT_MAIN=1' ]
 )
 
 
