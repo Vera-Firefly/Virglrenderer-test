@@ -111,8 +111,6 @@ static const struct format_conversion conversions[] = {
     { GBM_FORMAT_YVU420, VIRGL_FORMAT_YV12},
 };
 
-#if HAVE_EGL_GBM_H == 1
-
 static int rendernode_open(void)
 {
    DIR *dir;
@@ -307,8 +305,6 @@ void virgl_gbm_fini(struct virgl_gbm *gbm)
    free(gbm);
 }
 
-#endif
-
 int virgl_gbm_convert_format(uint32_t *virgl_format, uint32_t *gbm_format)
 {
 
@@ -329,8 +325,6 @@ int virgl_gbm_convert_format(uint32_t *virgl_format, uint32_t *gbm_format)
 
     return -1;
 }
-
-#if HAVE_EGL_GBM_H == 1
 
 #ifdef ENABLE_MINIGBM_ALLOCATION
 int virgl_gbm_transfer(struct gbm_bo *bo, uint32_t direction, const struct iovec *iovecs,
@@ -569,5 +563,3 @@ bool virgl_gbm_gpu_import_required(uint32_t flags) {
    return !virgl_gbm_external_allocation_preferred(flags) ||
           (flags & (VIRGL_BIND_RENDER_TARGET | VIRGL_BIND_SAMPLER_VIEW)) != 0;
 }
-
-#endif

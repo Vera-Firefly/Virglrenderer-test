@@ -25,7 +25,7 @@
 #ifndef VIRGL_GBM_H
 #define VIRGL_GBM_H
 
-#include "gbm.h"
+#include <gbm.h>
 #include "vrend_iov.h"
 #include "virglrenderer.h"
 

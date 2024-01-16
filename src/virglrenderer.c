@@ -834,7 +834,6 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
 
    if (!state.winsys_initialized && !(flags & VIRGL_RENDERER_NO_VIRGL) &&
        (flags & (VIRGL_RENDERER_USE_EGL | VIRGL_RENDERER_USE_GLX))) {
-#if HAVE_EGL_GBM_H == 1
       int drm_fd = -1;
 
       if (flags & VIRGL_RENDERER_USE_EGL) {
@@ -848,7 +847,6 @@ int virgl_renderer_init(void *cookie, int flags, struct virgl_renderer_callbacks
             close(drm_fd);
          goto fail;
       }
-#endif
       state.winsys_initialized = true;
    }
 

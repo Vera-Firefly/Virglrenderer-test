@@ -147,9 +147,7 @@ while (__AFL_LOOP(1000)) {
    if (server.do_fork) {
       vtest_server_set_signal_child();
    } else {
-#if _EXPORT_MAIN == 1
       vtest_server_set_signal_segv();
-#endif
    }
 
    vtest_server_run();
