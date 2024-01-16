@@ -1,25 +1,14 @@
 name: Build for Android
 
 on:
-  pull_request:
+  [pull_request, push, workflow_dispatch]
 
-    branches-ignore:
-
-      - ''
-
-  push:
-
-    branches-ignore:
-
-      - ''
-
-  workflow_dispatch:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     strategy:
       matrix:
-        arch: [ "arm32" , "aarch64" , "x86_64" ]
+        arch: [ "aarch64" ]
       fail-fast: false
 
     name: "Build ${{matrix.arch}}"
@@ -40,7 +29,12 @@ jobs:
           cp libdrm.pc /tmp/build/lib/pkgconfig/
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/EGL/eglplatform.h -P EGL
           wget https://github.com/Vera-Firefly/libepoxy/raw/master/include/KHR/khrplatform.h -P KHR
-          
+
+      - name: Download NDK
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r26b-linux.zip
+          unzip android-ndk-r26b-linux.zip
+
       - name: Build libepoxy
         run: |
           git clone --depth 1 https://github.com/Vera-Firefly/libepoxy.git
@@ -56,7 +50,8 @@ jobs:
           meson "build-android-${{matrix.arch}}" \
             --prefix=/tmp/build \
             --cross-file "android-${{matrix.arch}}" \
-            -Dplatforms=egl
+            -Dplatforms=egl \
+            -Dc_args='-Wno-error=gnu-offsetof-extensions'
           ninja -C "build-android-${{matrix.arch}}" install
           cp "build-android-${{matrix.arch}}/vtest/libvirgl_test_server.so" /tmp/build/lib/
 
@@ -73,4 +68,3 @@ jobs:
         with:
           name: build_${{matrix.arch}}
           path: /tmp/build
-

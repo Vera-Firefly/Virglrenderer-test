@@ -303,6 +303,10 @@ static void vtest_server_getenv(void)
    server.use_egl_surfaceless = getenv("VTEST_USE_EGL_SURFACELESS") != NULL;
    server.use_gles = getenv("VTEST_USE_GLES") != NULL;
    server.render_device = getenv("VTEST_RENDERNODE");
+   const char *socket_name = getenv("VTEST_SOCKET_NAME");
+   if (socket_name) {
+       server.socket_name = socket_name;
+   }
    server.use_compat_profile = getenv("VTEST_USE_COMPATIBILITY_PROFILE");
 }
 
