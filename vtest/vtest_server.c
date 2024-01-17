@@ -131,7 +131,12 @@ static void vtest_server_close_socket(void);
 static int vtest_client_dispatch_commands(struct vtest_client *client);
 
 
+#if _EXPORT_MAIN == 1
+int main(int argc, char **argv)
+#else
+VIRGL_EXPORT int vtest_main(int argc, char **argv);
 int vtest_main(int argc, char **argv)
+#endif
 {
 #ifdef __AFL_LOOP
 while (__AFL_LOOP(1000)) {
@@ -147,7 +152,9 @@ while (__AFL_LOOP(1000)) {
    if (server.do_fork) {
       vtest_server_set_signal_child();
    } else {
+   #if _EXPORT_MAIN == 1
       vtest_server_set_signal_segv();
+   #endif
    }
 
    vtest_server_run();
