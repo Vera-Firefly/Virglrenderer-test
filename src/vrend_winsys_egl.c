@@ -51,7 +51,7 @@
 #include "vrend_winsys.h"
 #include "vrend_winsys_egl.h"
 #include "virgl_hw.h"
-#ifdef ENABLE_GBM
+#if HAVE_EGL_GBM_H == 1
 #include "vrend_winsys_gbm.h"
 #endif
 #include "virgl_util.h"
@@ -223,6 +223,7 @@ static EGLint virgl_egl_find_matching_device(struct gbm_device_info *dev_infos, 
    return -1;
 }
 
+#if HAVE_EGL_GBM_H == 1
 static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl) {
    EGLint num_devices = 0;
    EGLint max_devices = 64;
@@ -273,13 +274,16 @@ static EGLDeviceEXT virgl_egl_get_device(struct virgl_egl *egl) {
 
   return devices[device_num];
 }
+#endif
 
 static bool virgl_egl_get_display(struct virgl_egl *egl)
 {
+#if HAVE_EGL_GBM_H == 1
    EGLDeviceEXT device;
 
    if (!egl->gbm)
       return false;
+#endif
 
    if (!has_bits(egl->extension_bits,
                  EGL_EXT_PLATFORM_BASE |
@@ -288,12 +292,16 @@ static bool virgl_egl_get_display(struct virgl_egl *egl)
                  EGL_EXT_DEVICE_QUERY))
       return false;
 
+#if HAVE_EGL_GBM_H == 1
    device = virgl_egl_get_device(egl);
 
    if (device == EGL_NO_DEVICE_EXT)
       return false;
 
    egl->egl_display = egl->funcs.eglGetPlatformDisplay(EGL_PLATFORM_DEVICE_EXT, device, NULL);
+#else
+   egl->egl_display = egl->funcs.eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
    return true;
 }
 #endif /* ENABLE_MINIGBM_ALLOCATION */
@@ -323,6 +331,7 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
    const char *extensions;
    struct virgl_egl *egl;
 
+#if HAVE_EGL_GBM_H == 1
    const char *client_extensions = eglQueryString (NULL, EGL_EXTENSIONS);
    bool has_egl_base = virgl_egl_has_extension_in_string(client_extensions, "EGL_EXT_platform_base");
 
@@ -370,9 +379,10 @@ struct virgl_egl *virgl_egl_init(EGLNativeDisplayType display_id, bool surfacele
       egl->egl_display = eglGetDisplay(display_id);
 #endif
    }
+#endif
 
    if (!egl->egl_display) {
-#ifdef ENABLE_GBM
+#if HAVE_EGL_GBM_H == 1
       /*
        * Don't fallback to the default display if the fd provided by (*get_drm_fd)
        * can't be used.
@@ -754,7 +764,11 @@ int virgl_egl_get_fd_for_texture(struct virgl_egl *egl, uint32_t tex_id, int *fd
       if (!egl->gbm)
          goto out_destroy;
 
+#if HAVE_EGL_GBM_H == 1
       ret = virgl_gbm_export_fd(egl->gbm->device, handle, fd);
+#else
+      ret = 0;
+#endif
       if (ret < 0)
          goto out_destroy;
    } else {
