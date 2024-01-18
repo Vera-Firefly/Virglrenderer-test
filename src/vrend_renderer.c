@@ -8624,7 +8624,7 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
          glformat = tex_conv_table[format].glformat;
          gltype = tex_conv_table[format].gltype;
 
-         vrend_error("unknown format is %d\n", pr->format);
+         virgl_error("unknown format is %d\n", pr->format);
          //glBindTexture(gr->target, 0);
          //return EINVAL;
       }
