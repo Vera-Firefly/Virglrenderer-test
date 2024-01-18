@@ -8617,9 +8617,16 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       gltype = tex_conv_table[format].gltype;
 
       if (internalformat == 0) {
-         virgl_error("Unknown format is %d\n", pr->format);
-         glBindTexture(gr->target, 0);
-         return EINVAL;
+         // Fallback to RGBA8 (FIXME: is it correct?) since we are initializing context with OSMesa,
+         // which caused virgl to recognize wrong format.
+         format = 2;
+         internalformat = tex_conv_table[format].internalformat;
+         glformat = tex_conv_table[format].glformat;
+         gltype = tex_conv_table[format].gltype;
+
+         vrend_printf("unknown format is %d\n", pr->format);
+         //glBindTexture(gr->target, 0);
+         //return EINVAL;
       }
 
       if (pr->nr_samples > 1) {
