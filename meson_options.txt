@@ -124,3 +124,9 @@ option(
   description : 'enable emitting traces using the selected backend'
 )
 
+option(
+  'unstable-apis',
+  type : 'boolean',
+  value : 'false',
+  description : 'enable unstable apis'
+)

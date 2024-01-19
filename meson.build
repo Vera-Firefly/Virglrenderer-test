@@ -23,7 +23,7 @@
 
 project(
    'virglrenderer', 'c',
-   version: '1.0.0',
+   version: '1.0.1',
    license : 'MIT',
    meson_version : '>= 0.55',
    default_options : ['buildtype=release', 'b_ndebug=if-release',
@@ -39,7 +39,13 @@ project(
 #    and set revision and interface_age to zero
 binary_age    = 1
 interface_age = 8
-revision      = 8
+revision      = 9
+
+virgl_version = meson.project_version()
+version_array = virgl_version.split('.')
+virgl_major_version = version_array[0].to_int()
+virgl_minor_version = version_array[1].to_int()
+virgl_micro_version = version_array[2].to_int()
 
 cc = meson.get_compiler('c')
 
@@ -80,8 +86,13 @@ m_dep = cc.find_library('m', required : false)
 conf_data = configuration_data()
 conf_data.set('VERSION', meson.project_version())
 conf_data.set('_GNU_SOURCE', 1)
+# Compile unstable APIs unconditionally to avoid building two variants of
+# the lib. It's up to virglrenderer users to decide whether to use these
+# APIs. Unstable APIs may be changed or removed without a notice.
 conf_data.set('VIRGL_RENDERER_UNSTABLE_APIS', 1)
 conf_data.set('ENABLE_DRM', libdrm_dep.found())
+
+pkg_cflags = []
 
 has_attribute_cleanup = cc.compiles('''
    void func(void *v) {}
@@ -215,7 +226,6 @@ with_glx = require_glx or auto_egl_glx
 
 have_egl = false
 have_glx = false
-have_gbm = true
 
 with_minigbm_allocation = get_option('minigbm_allocation')
 if with_minigbm_allocation
@@ -228,28 +238,20 @@ endif
 
 if with_egl
    if cc.has_header('epoxy/egl.h', dependencies: epoxy_dep) and epoxy_dep.get_variable(pkgconfig: 'epoxy_has_egl') == '1'
-      have_egl = true
-      conf_data.set('HAVE_EPOXY_EGL_H', 1)
-      if (have_egl)
-         conf_data.set('HAVE_EPOXY_EGL_H', 1)
-         conf_data.set('HAVE_EGL_GBM_H', 1)
+      if with_host_windows
+         have_egl = true
       else
-         have_gbm = false
-         # assert(not require_egl,
-         #        'egl was explicitely requested which requires gbm, and this is not available')
+         if libdrm_dep.found()
+            gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: require_egl)
+         endif
+         have_egl = gbm_dep.found() and cc.has_header('sys/mman.h', required: require_egl)
+         conf_data.set('ENABLE_GBM', have_egl)
       endif
+      conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
    else
-      have_gbm = false
-      # assert(not require_egl,
-      #        'egl was explicitely requested but it is not supported by epoxy')
+      assert(not require_egl,
+             'egl was explicitely requested but it is not supported by epoxy')
    endif
-endif
-
-if not have_gbm
-   gbm_dep = dependency('gbm', required: false)
-   have_egl = true
-   conf_data.set('HAVE_EPOXY_EGL_H', 1)
-   conf_data.set('HAVE_EGL_GBM_H', 0)
 endif
 
 if with_glx
@@ -282,6 +284,9 @@ with_render_server = with_venus
 with_render_server_worker = get_option('render-server-worker')
 render_server_install_dir = get_option('prefix') / get_option('libexecdir')
 if with_venus
+   if with_minigbm_allocation
+      gbm_dep = dependency('gbm')
+   endif
    venus_dep = dependency('vulkan')
 
    conf_data.set('ENABLE_VENUS', 1)
@@ -337,6 +342,11 @@ with_fuzzer = get_option('fuzzer')
 with_tests = get_option('tests')
 with_valgrind = get_option('valgrind')
 
+with_unstable_apis = get_option('unstable-apis')
+if with_unstable_apis
+  pkg_cflags += '-DVIRGL_RENDERER_UNSTABLE_APIS=1'
+endif
+
 subdir('src')
 if not with_host_windows
    subdir('vtest')
@@ -367,4 +377,5 @@ summary({'c_args': (' ').join(get_option('c_args')),
         'tests': with_tests,
         'fuzzer': with_fuzzer,
         'tracing': with_tracing,
+        'unstable-apis': with_unstable_apis,
         }, section: 'Configuration')
