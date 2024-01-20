@@ -226,6 +226,7 @@ with_glx = require_glx or auto_egl_glx
 
 have_egl = false
 have_glx = false
+have_gbm = true
 
 with_minigbm_allocation = get_option('minigbm_allocation')
 if with_minigbm_allocation
@@ -242,16 +243,25 @@ if with_egl
          have_egl = true
       else
          if libdrm_dep.found()
-            gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: require_egl)
+            gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: false) # require_egl
          endif
          have_egl = gbm_dep.found() and cc.has_header('sys/mman.h', required: require_egl)
          conf_data.set('ENABLE_GBM', have_egl)
       endif
       conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
+      conf_data.set('HAVE_EGL_GBM_H', have_egl)
    else
-      assert(not require_egl,
-             'egl was explicitely requested but it is not supported by epoxy')
+      have_gbm = false
+         # assert(not require_egl,
+         #        'egl was explicitely requested which requires gbm, and this is not available')
    endif
+endif
+
+if not have_gbm
+   gbm_dep = dependency('gbm', required: false)
+   have_egl = true
+   conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
+   conf_data.set('HAVE_EGL_GBM_H', 0)
 endif
 
 if with_glx
