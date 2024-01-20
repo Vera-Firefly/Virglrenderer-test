@@ -59,7 +59,7 @@ libvtest_dep = declare_dependency(
 
 virgl_test_server = executable(
    'virgl_test_server',
-   virgl_sources,
+   vtest_sources,
    link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
    install : true,
