@@ -249,7 +249,7 @@ if with_egl
          conf_data.set('ENABLE_GBM', have_egl)
       endif
       conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
-      conf_data.set('HAVE_EGL_GBM_H', have_egl)
+      conf_data.set('HAVE_EGL_GBM_H', 1)
    else
       have_gbm = false
          # assert(not require_egl,
