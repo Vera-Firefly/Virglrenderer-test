@@ -38,6 +38,13 @@ libvtest = static_library(
    dependencies : [libvirglrenderer_dep, gallium_dep],
 )
 
+virgl_test_server_shared = shared_library(
+   'virgl_test_server',
+   vtest_sources,
+   dependencies : [libvirglrenderer_dep, gallium_dep],
+   c_args : [ '-D_EXPORT_MAIN=0' ]
+)
+
 libvtest_dep = declare_dependency(
    link_with: [libvtest],
    include_directories: [
@@ -49,16 +56,13 @@ libvtest_dep = declare_dependency(
    ]
 )
 
-virgl_test_server_sources = [
-   'vtest_main.c',
-]
-
 virgl_test_server = executable(
    'virgl_test_server',
-   virgl_test_server_sources,
+   virgl_sources,
    link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
-   install : true
+   install : true,
+   c_args : [ '-D_EXPORT_MAIN=1' ]
 )
 
 if with_fuzzer
