@@ -32,16 +32,35 @@ vtest_sources = [
    'vtest.h'
 ]
 
+libvtest = static_library(
+   'vtest',
+   vtest_sources,
+   dependencies : [libvirglrenderer_dep, gallium_dep],
+)
+
 virgl_test_server_shared = shared_library(
    'virgl_test_server',
    vtest_sources,
+   link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
    c_args : [ '-D_EXPORT_MAIN=0' ]
+)
+
+libvtest_dep = declare_dependency(
+   link_with: [libvtest],
+   include_directories: [
+      include_directories('.'),
+   ],
+   dependencies: [
+      libvirgl_dep,
+      gallium_dep,
+   ]
 )
 
 virgl_test_server = executable(
    'virgl_test_server',
    vtest_sources,
+   link_with: [libvtest],
    dependencies : [libvirglrenderer_dep, gallium_dep],
    install : true,
    c_args : [ '-D_EXPORT_MAIN=1' ]
