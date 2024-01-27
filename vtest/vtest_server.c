@@ -801,3 +801,8 @@ static void vtest_server_close_socket(void)
       server.socket = -1;
    }
 }
+
+void vtest_swap_buffers(void)
+{
+   server.will_swap_buffers = true;
+}
