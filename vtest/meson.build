@@ -35,14 +35,14 @@ vtest_sources = [
 libvtest = static_library(
    'vtest',
    vtest_sources,
-   dependencies : [libvirglrenderer_dep, gallium_dep],
+   dependencies : [libvirglrenderer_dep, gallium_dep, epoxy_dep],
 )
 
 virgl_test_server_shared = shared_library(
    'virgl_test_server',
    vtest_sources,
    link_with: [libvtest],
-   dependencies : [libvirglrenderer_dep, gallium_dep],
+   dependencies : [libvirglrenderer_dep, gallium_dep, epoxy_dep],
    c_args : [ '-D_EXPORT_MAIN=0' ]
 )
 
@@ -61,7 +61,7 @@ virgl_test_server = executable(
    'virgl_test_server',
    vtest_sources,
    link_with: [libvtest],
-   dependencies : [libvirglrenderer_dep, gallium_dep],
+   dependencies : [libvirglrenderer_dep, gallium_dep, epoxy_dep],
    install : true,
    c_args : [ '-D_EXPORT_MAIN=1' ]
 )
