@@ -87,6 +87,7 @@ struct vtest_server
    bool do_fork;
    bool loop;
    bool multi_clients;
+   bool will_swap_buffers;
 
    bool use_glx;
    bool use_egl_surfaceless;
@@ -116,6 +117,7 @@ struct vtest_server server = {
    .do_fork = true,
    .loop = true,
    .multi_clients = false,
+   .will_swap_buffers = false,
 
    .ctx_flags = 0,
 };
