@@ -58,7 +58,7 @@ jobs:
       - name: Change suffix
         run: |
           cd /tmp/build/lib
-          rm libepoxy.so libepoxy.so.0 libvirglrenderer.so
+          rm libepoxy.so libepoxy.so.0
           mv libepoxy.so.0.* libepoxy_0.so
           perl -pi -e 's/libepoxy.so.0/libepoxy_0.so/g' *.so ../bin/*
       - name: Upload libraries
