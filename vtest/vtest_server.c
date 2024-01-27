@@ -651,9 +651,8 @@ static void vtest_server_run(void)
    setenv("VTEST_TEXTUREID_PTR", ptrStr, 1);
    free(ptrStr);
 
-   // int dimensions[5] = {0,0,0,0}; // x, y, w, h
+   int dimensions[5] = {0,0,0,0}; // x, y, w, h
    while (run) {
-      /*
       if (server.will_swap_buffers) {
          server.will_swap_buffers = false;
          glGetIntegerv(GL_VIEWPORT, dimensions);
@@ -663,7 +662,6 @@ static void vtest_server_run(void)
          glBlitFramebuffer(0, dimensions[3], dimensions[2], 0, 0, 0, dimensions[2], dimensions[3], GL_COLOR_BUFFER_BIT, GL_NEAREST);
          eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW));
       }
-      */
 
       const bool was_empty = list_is_empty(&server.active_clients);
       bool is_empty;
