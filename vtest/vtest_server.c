@@ -629,6 +629,8 @@ static void vtest_server_tidy_clients(void)
    list_inithead(&server.inactive_clients);
 }
 
+int texture_id;
+
 static void vtest_server_run(void)
 {
    bool run = true;
@@ -639,7 +641,26 @@ static void vtest_server_run(void)
       vtest_server_open_socket();
    }
 
+   GLuint fb_id;
+   glGenFramebuffers(1, &fb_id);
+
+   char *ptrStr;
+   asprintf(&ptrStr, "%ld", (long) &texture_id);
+   setenv("VTEST_TEXTUREID_PTR", ptrStr, 1);
+   free(ptrStr);
+
+   int dimensions[5] = {0,0,0,0}; // x, y, w, h
    while (run) {
+      if (server.will_swap_buffers) {
+         server.will_swap_buffers = false;
+         glGetIntegerv(GL_VIEWPORT, dimensions);
+         glBindFramebuffer(GL_READ_FRAMEBUFFER, fb_id);
+         glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+         glBlitFramebuffer(0, dimensions[3], dimensions[2], 0, 0, 0, dimensions[2], dimensions[3], GL_COLOR_BUFFER_BIT, GL_NEAREST);
+         eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW));
+      }
+
       const bool was_empty = list_is_empty(&server.active_clients);
       bool is_empty;
 
