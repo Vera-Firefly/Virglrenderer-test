@@ -9490,7 +9490,7 @@ static void do_readpixels(struct vrend_resource *res,
    if (shouldSetTextureID) {
       char *tidPtr = getenv("VTEST_TEXTUREID_PTR");
       if (tidPtr) {
-         *((int *)atol(tidPtr)) = res->id;
+         *((int *)atol(tidPtr)) = res->gl_id;
          --shouldSetTextureID;
       }
    }
