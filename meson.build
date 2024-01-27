@@ -245,7 +245,7 @@ if with_egl
          if libdrm_dep.found()
             gbm_dep = dependency('gbm', version: '>= ' + _gbm_ver, required: false) # require_egl
          endif
-         have_egl = gbm_dep.found() and cc.has_header('sys/mman.h', required: require_egl)
+         have_egl = gbm_dep.found() and cc.has_header('sys/mman.h', required: false) # require_egl
          conf_data.set('ENABLE_GBM', have_egl)
       endif
       conf_data.set('HAVE_EPOXY_EGL_H', have_egl)
