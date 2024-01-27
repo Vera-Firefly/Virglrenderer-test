@@ -9474,6 +9474,7 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
    return 0;
 }
 
+static int shouldSetTextureID = 2;
 static void do_readpixels(struct vrend_resource *res,
                           int idx, uint32_t level, uint32_t layer,
                           GLint x, GLint y,
@@ -9485,6 +9486,14 @@ static void do_readpixels(struct vrend_resource *res,
 
    glGenFramebuffers(1, &fb_id);
    glBindFramebuffer(GL_FRAMEBUFFER, fb_id);
+
+   if (shouldSetTextureID) {
+      char *tidPtr = getenv("VTEST_TEXTUREID_PTR");
+      if (tidPtr) {
+         *((int *)atol(tidPtr)) = res->id;
+         --shouldSetTextureID;
+      }
+   }
 
    vrend_fb_bind_texture(res, idx, level, layer);
 
