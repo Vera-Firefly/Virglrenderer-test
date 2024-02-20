@@ -646,7 +646,7 @@ static void vtest_server_run(void)
       vtest_server_open_socket();
    }
 
-   uint fb_id;
+   GLuint fb_id;
    glGenFramebuffers(1, &fb_id);
 
    char *ptrStr;
