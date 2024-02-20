@@ -39,6 +39,8 @@
 #include <getopt.h>
 #include <string.h>
 
+#include <epoxy/egl.h>
+
 #include "util.h"
 #include "util/list.h"
 #include "util/u_math.h"
@@ -131,6 +133,7 @@ static void vtest_server_open_socket(void);
 static void vtest_server_run(void);
 static void vtest_server_close_socket(void);
 static int vtest_client_dispatch_commands(struct vtest_client *client);
+VIRGL_EXPORT void vtest_swap_buffers(void);
 
 
 #if _EXPORT_MAIN == 1
@@ -651,9 +654,8 @@ static void vtest_server_run(void)
    setenv("VTEST_TEXTUREID_PTR", ptrStr, 1);
    free(ptrStr);
 
-   // int dimensions[5] = {0,0,0,0}; // x, y, w, h
+   int dimensions[5] = {0,0,0,0}; // x, y, w, h
    while (run) {
-      /*
       if (server.will_swap_buffers) {
          server.will_swap_buffers = false;
          glGetIntegerv(GL_VIEWPORT, dimensions);
@@ -663,7 +665,6 @@ static void vtest_server_run(void)
          glBlitFramebuffer(0, dimensions[3], dimensions[2], 0, 0, 0, dimensions[2], dimensions[3], GL_COLOR_BUFFER_BIT, GL_NEAREST);
          eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW));
       }
-      */
 
       const bool was_empty = list_is_empty(&server.active_clients);
       bool is_empty;
