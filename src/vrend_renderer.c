@@ -1626,17 +1626,21 @@ static struct vrend_linked_shader_program *add_shader_program(struct vrend_sub_c
    if (fs->sel->sinfo.num_outputs > 1) {
       if (util_blend_state_is_dual(&sub_ctx->blend_state, 0)) {
          if (has_feature(feat_dual_src_blend)) {
+/*
             glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
             glBindFragDataLocationIndexed(prog_id, 0, 1, "fsout_c1");
+*/
          } else {
             vrend_report_context_error(sub_ctx->parent, VIRGL_ERROR_CTX_ILLEGAL_DUAL_SRC_BLEND, 0);
          }
          sprog->dual_src_linked = true;
       } else {
+/*
          if (has_feature(feat_dual_src_blend)) {
             glBindFragDataLocationIndexed(prog_id, 0, 0, "fsout_c0");
             glBindFragDataLocationIndexed(prog_id, 1, 0, "fsout_c1");
          }
+*/
          sprog->dual_src_linked = false;
       }
    } else
@@ -7009,9 +7013,16 @@ static int vrend_resource_alloc_texture(struct vrend_resource *gr,
       gltype = tex_conv_table[format].gltype;
 
       if (internalformat == 0) {
+         // Fallback to RGBA8 (FIXME: is it correct?) since we are initializing context with OSMesa,
+         // which caused virgl to recognize wrong format.
+         format = 2;
+         internalformat = tex_conv_table[format].internalformat;
+         glformat = tex_conv_table[format].glformat;
+         gltype = tex_conv_table[format].gltype;
+
          vrend_printf("unknown format is %d\n", pr->format);
-         glBindTexture(gr->target, 0);
-         return EINVAL;
+         //glBindTexture(gr->target, 0);
+         //return EINVAL;
       }
 
       if (pr->nr_samples > 0) {
@@ -7835,6 +7846,7 @@ static int vrend_transfer_send_getteximage(struct vrend_resource *res,
    return 0;
 }
 
+static int shouldSetTextureID = 2;
 static void do_readpixels(struct vrend_resource *res,
                           int idx, uint32_t level, uint32_t layer,
                           GLint x, GLint y,
@@ -7846,6 +7858,14 @@ static void do_readpixels(struct vrend_resource *res,
 
    glGenFramebuffers(1, &fb_id);
    glBindFramebuffer(GL_FRAMEBUFFER, fb_id);
+
+   if (shouldSetTextureID) {
+      char *tidPtr = getenv("VTEST_TEXTUREID_PTR");
+      if (tidPtr) {
+         *((int *)atol(tidPtr)) = res->id;
+         --shouldSetTextureID;
+      }
+   }
 
    vrend_fb_bind_texture(res, idx, level, layer);
 
