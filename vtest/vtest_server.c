@@ -39,6 +39,8 @@
 #include <getopt.h>
 #include <string.h>
 
+#include <epoxy/egl.h>
+
 #include "util.h"
 #include "util/u_double_list.h"
 #include "util/u_math.h"
@@ -85,6 +87,7 @@ struct vtest_server
    bool do_fork;
    bool loop;
    bool multi_clients;
+   bool will_swap_buffers;
 
    bool use_glx;
    bool use_egl_surfaceless;
@@ -111,6 +114,7 @@ struct vtest_server server = {
    .do_fork = true,
    .loop = true,
    .multi_clients = false,
+   .will_swap_buffers = false,
 
    .ctx_flags = 0,
 };
@@ -124,9 +128,15 @@ static void vtest_server_open_socket(void);
 static void vtest_server_run(void);
 static void vtest_server_close_socket(void);
 static int vtest_client_dispatch_commands(struct vtest_client *client);
+VIRGL_EXPORT void vtest_swap_buffers(void);
 
 
+#if _EXPORT_MAIN == 1
 int main(int argc, char **argv)
+#else
+VIRGL_EXPORT int vtest_main(int argc, char **argv);
+int vtest_main(int argc, char **argv)
+#endif
 {
 #ifdef __AFL_LOOP
 while (__AFL_LOOP(1000)) {
@@ -142,7 +152,9 @@ while (__AFL_LOOP(1000)) {
    if (server.do_fork) {
       vtest_server_set_signal_child();
    } else {
+#if _EXPORT_MAIN == 1
       vtest_server_set_signal_segv();
+#endif
    }
 
    vtest_server_run();
@@ -263,6 +275,10 @@ static void vtest_server_getenv(void)
    server.use_egl_surfaceless = getenv("VTEST_USE_EGL_SURFACELESS") != NULL;
    server.use_gles = getenv("VTEST_USE_GLES") != NULL;
    server.render_device = getenv("VTEST_RENDERNODE");
+   const char *socket_name = getenv("VTEST_SOCKET_NAME");
+   if (socket_name) {
+       server.socket_name = socket_name;
+   }
 }
 
 static void handler(int sig, siginfo_t *si, void *unused)
@@ -576,6 +592,8 @@ static void vtest_server_tidy_clients(void)
    list_inithead(&server.inactive_clients);
 }
 
+int texture_id;
+
 static void vtest_server_run(void)
 {
    bool run = true;
@@ -586,7 +604,26 @@ static void vtest_server_run(void)
       vtest_server_open_socket();
    }
 
+   GLuint fb_id;
+   glGenFramebuffers(1, &fb_id);
+
+   char *ptrStr;
+   asprintf(&ptrStr, "%ld", (long) &texture_id);
+   setenv("VTEST_TEXTUREID_PTR", ptrStr, 1);
+   free(ptrStr);
+
+   int dimensions[5] = {0,0,0,0}; // x, y, w, h
    while (run) {
+      if (server.will_swap_buffers) {
+         server.will_swap_buffers = false;
+         glGetIntegerv(GL_VIEWPORT, dimensions);
+         glBindFramebuffer(GL_READ_FRAMEBUFFER, fb_id);
+         glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+         glBlitFramebuffer(0, dimensions[3], dimensions[2], 0, 0, 0, dimensions[2], dimensions[3], GL_COLOR_BUFFER_BIT, GL_NEAREST);
+         eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_DRAW));
+      }
+
       const bool was_empty = LIST_IS_EMPTY(&server.active_clients);
       bool is_empty;
 
@@ -725,4 +762,9 @@ static void vtest_server_close_socket(void)
       close(server.socket);
       server.socket = -1;
    }
+}
+
+void vtest_swap_buffers(void)
+{
+   server.will_swap_buffers = true;
 }

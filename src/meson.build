@@ -62,6 +62,7 @@ virglrenderer_sources = [
    'virglrenderer_hw.h',
 ]
 
+
 vrend_winsys_egl_sources = [
    'vrend_winsys_gbm.c',
    'vrend_winsys_gbm.h',
@@ -137,16 +138,16 @@ libvirgl_dep = declare_dependency(
    include_directories: libvirgl_inc
 )
 
-libvirglrenderer = shared_library(
+libvirglrenderer = static_library(
    'virglrenderer',
    virglrenderer_sources,
    include_directories: [inc_gallium, inc_configuration],
    dependencies : [virgl_depends, libvirgl_dep],
-   version : binary_age.to_string() + '.'
-             + interface_age.to_string() + '.'
-             + revision.to_string(),
    install : true
 )
+#   version : binary_age.to_string() + '.'
+#             + interface_age.to_string() + '.'
+#             + revision.to_string(),
 
 libvirglrenderer_dep = declare_dependency(
    link_with: libvirglrenderer,
