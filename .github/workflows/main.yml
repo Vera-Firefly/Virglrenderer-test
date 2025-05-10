@@ -18,7 +18,7 @@ jobs:
       ANDROID_NDK_HOME: "${ANDROID_SDK_ROOT}/ndk-bundle"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup
         run: |
@@ -64,7 +64,7 @@ jobs:
           perl -pi -e 's/libepoxy.so.0/libepoxy_0.so/g' *.so
           perl -pi -e 's/libvirglrenderer.so.1/libvirglrenderer_1.so/g' *.so ../bin/*
       - name: Upload libraries
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: build_${{matrix.arch}}
           path: /tmp/build
